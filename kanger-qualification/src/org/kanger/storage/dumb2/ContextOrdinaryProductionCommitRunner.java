@@ -54,6 +54,12 @@ public final class ContextOrdinaryProductionCommitRunner {
         try(Fixture f=new Fixture(dir,"ExplicitLimit")){
             require(f.root.compile("!anchor(1);",null,false),"explicit limit anchor");f.connect(false);ContextPendingNativeWrite scope=f.db.beginGroundWrite(f.root,1000,1,16,16,WORK,100000,100000,1000000);try{StorageLifecycleException failure=refuse(f.root,"!p(1)||q(1);");require(failure instanceof ContextGroundProductionCommitException&&failure.getErrorCode()==StorageLifecycleErrorCode.STORAGE_CONTEXT_INCOMPLETE,"ordinary hook preserves explicit attempt engine and smaller round limit");}finally{f.db.endNativeWrite(scope);}
         }
+        System.out.println("ORDINARY_NONTRUST_ACTIVATION_CONTROLS_PASSED checks="+(checks+ContextSevenPremiseNativeWriteRunner.checks));
+        ContextSevenPremiseNativeWriteRunner.create(dir,"TR","!@x p(x)->q(x);");ContextSevenPremiseNativeWriteRunner.create(dir,"TF","!p(1);");
+        try(Fixture f=new Fixture(dir,"TrustAdmission")){
+            require(f.root.compile("!anchor(1);",null,false),"trust admission anchor");command(f,"ctx connect TR trust own");command(f,"ctx connect TF trust own");long before=f.db.getRevision();
+            require(Boolean.TRUE.equals(f.root.query("!unrelated(1);",null,false)),"safe actual authoring over a trusted shared view remains admissible");require(f.db.getRevision()>before,"safe trusted authoring settles physically");
+        }
         System.out.println("CONTEXT_ORDINARY_PRODUCTION_COMMIT_PASS checks="+(checks+ContextSevenPremiseNativeWriteRunner.checks));System.exit(0);
     }catch(Throwable e){e.printStackTrace();System.exit(1);}}
 }

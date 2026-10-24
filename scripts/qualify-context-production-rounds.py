@@ -183,6 +183,7 @@ def main():
                  ('org.kanger.storage.dumb2.ContextAuthorityQuantifiedConjunctionDiagonalNegativeReverseRunner', 'CONTEXT_AUTHORITY_QUANTIFIED_CONJUNCTION_DIAGONAL_NEGATIVE_REVERSE_PASS'),
                  ('org.kanger.ContextConjunctiveQuantifierScopeRunner', 'CONTEXT_CONJUNCTIVE_QUANTIFIER_SCOPE_PASS'),
                  ('org.kanger.ContextAntecedentQuantifierScopeRunner', 'CONTEXT_ANTECEDENT_QUANTIFIER_SCOPE_PASS'),
+                 ('org.kanger.OperationalCommitScopeRunner', 'OPERATIONAL_COMMIT_SCOPE_PASS'),
                  ('org.kanger.storage.dumb2.ContextOrdinaryCommitCompatibilityRunner', 'CONTEXT_ORDINARY_COMMIT_COMPATIBILITY_PASS'),
                  ('org.kanger.ContextDisjunctiveOuterExistentialScopeRunner', 'CONTEXT_DISJUNCTIVE_OUTER_EXISTENTIAL_SCOPE_PASS'),
                  ('org.kanger.storage.dumb2.ContextDisjunctiveOuterExistentialMiddlePositiveRunner', 'CONTEXT_DISJUNCTIVE_OUTER_EXISTENTIAL_MIDDLE_POSITIVE_PASS'),
@@ -569,10 +570,10 @@ def main():
         original = root / 'kanger-data-dumb2/src/org/kanger/storage/dumb2/DB.java'
         before = """            validateEffectiveConnections((Mind) proposed, workingConnections);
             if(pendingNativeWrite!=null) pendingNativeWrite.validate((Mind)proposed);"""
-        after = """            if(pendingNativeWrite==null) validatePendingProductionCommit((Mind)proposed);
+        after = """            if(pendingNativeWrite==null && !((Mind)proposed).isOperationalCommit()) validatePendingProductionCommit((Mind)proposed);
             else {
                 validateEffectiveConnections((Mind) proposed, workingConnections);
-                pendingNativeWrite.validate((Mind)proposed);
+                if(pendingNativeWrite!=null) pendingNativeWrite.validate((Mind)proposed);
             }"""
         source = original.read_text(encoding='utf-8')
         if source.count(before) != 1:

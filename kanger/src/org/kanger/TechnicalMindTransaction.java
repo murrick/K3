@@ -79,9 +79,17 @@ final class TechnicalMindTransaction implements AutoCloseable {
     }
 
     boolean commit() throws Exception {
+        return commit(false);
+    }
+
+    boolean commitRefresh() throws Exception {
+        return commit(true);
+    }
+
+    private boolean commit(boolean refresh) throws Exception {
         beginSettlement();
         try {
-            boolean committed = parent.commit(child);
+            boolean committed = refresh ? parent.commitOperationalChild(child) : parent.commit(child);
             DmzReplayProvenance.transactionSettled(child, committed);
             TerminalSupportCapture.transactionSettled(child, committed
                     ? TerminalSupportCapture.Outcome.COMMITTED : TerminalSupportCapture.Outcome.ROLLED_BACK);

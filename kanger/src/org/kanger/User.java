@@ -317,8 +317,7 @@ public class User implements IUser {
         }
 
         IMind root = mind.getTop();
-        Mind checkpoint = new Mind(root);
-        boolean applied = root.commit(checkpoint);
+        boolean applied = ((Mind)root).checkpointStorageState();
         if (!applied) {
             throw new IllegalStateException("Empty root checkpoint was rejected");
         }

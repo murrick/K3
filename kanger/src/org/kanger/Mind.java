@@ -445,20 +445,65 @@ public class Mind implements IMind {
     }
 
     private boolean commit(IMind m, boolean settleRejectedChild) throws Exception {
+        return commit(m, settleRejectedChild, false);
+    }
+
+    // Only operation-owned refresh/checkpoint callers can enter this frame.
+    final boolean commitOperationalChild(Mind child) throws Exception {
+        return commit(child, true, true);
+    }
+
+    final boolean checkpointStorageState() throws Exception {
+        return commitOperationalChild(new Mind(this));
+    }
+
+    private Thread operationalCommitOwner;
+
+    /** Provider observation only: never a caller-supplied permission flag. */
+    public final boolean isOperationalCommit() {
+        return operationalCommitOwner == Thread.currentThread();
+    }
+
+    private static Map<Long, List<Object>> primaryCommitState(Mind view) throws Exception {
+        Map<Long, List<Object>> state = new TreeMap<>();
+        for (IRule item : view.rules) {
+            Rule rule = (Rule)item;
+            if (view.rules.isGenerated(rule) || rule.isDeleted(view)) continue;
+            // Select the view before reading the complete native declaration packet.
+            rule.setMind(view);
+            List<Object> declaration = new ArrayList<>();
+            declaration.add(rule.getOrigin());
+            declaration.add(java.nio.ByteBuffer.wrap(rule.pack().getBuffer()));
+            for (List<Domain> branch : rule.getTree()) for (Domain domain : branch)
+                declaration.add(java.nio.ByteBuffer.wrap(domain.pack().getBuffer()));
+            state.put(rule.getId(), declaration);
+        }
+        return state;
+    }
+
+    private boolean commit(IMind m, boolean settleRejectedChild, boolean operational) throws Exception {
         user.getContextOpinionSession().invalidate();
         synchronized (locker) {
             Mind child = (Mind) m;
-            // The provider must see the proposed child while the parent is still intact.
-            // Publication-time rejection is too late to undo a settled native commit.
-            if (next == null && isStorageUsed()
-                    && !user.getData().isReadOnly()
-                    && user.getData() instanceof org.kanger.interfaces.internal.IRevisionPublication) {
-                try {
-                    ((org.kanger.interfaces.internal.IRevisionPublication) user.getData()).validateCommit(child);
-                } catch (Exception rejection) {
-                    if (settleRejectedChild) release(child);
-                    throw rejection;
+            // Verify the owning operation before exposing its frame to the provider.
+            try {
+                Map<Long, List<Object>> originalPrimary = operational ? primaryCommitState(this) : null;
+                if (operational && !originalPrimary.equals(primaryCommitState(child)))
+                    throw new IllegalStateException("Operational commit changed primary declarations");
+                // The proposed child is still unsettled and the parent intact here.
+                if (next == null && isStorageUsed() && !user.getData().isReadOnly()
+                        && user.getData() instanceof org.kanger.interfaces.internal.IRevisionPublication) {
+                    child.operationalCommitOwner = operational ? Thread.currentThread() : null;
+                    try {
+                        ((org.kanger.interfaces.internal.IRevisionPublication) user.getData()).validateCommit(child);
+                    } finally { child.operationalCommitOwner = null; }
                 }
+                if (operational && (!originalPrimary.equals(primaryCommitState(this))
+                        || !originalPrimary.equals(primaryCommitState(child))))
+                    throw new IllegalStateException("Operational validation changed primary declarations");
+            } catch (Exception rejection) {
+                if (settleRejectedChild) release(child);
+                throw rejection;
             }
             boolean sequencedBy = rules.isSequencedBy((RuleFactory) child.getRules());
             boolean[] activeCheckpoints = new boolean[8];
@@ -1785,7 +1830,7 @@ public class Mind implements IMind {
                 }
                 m.rollbackQualificationSibling=retained;
                 m.rollbackQualificationOwner=retained==null?null:Thread.currentThread();
-                try {tx.commit();} finally {
+                try {tx.commitRefresh();} finally {
                     m.rollbackQualificationSibling=null;
                     m.rollbackQualificationOwner=null;
                 }
