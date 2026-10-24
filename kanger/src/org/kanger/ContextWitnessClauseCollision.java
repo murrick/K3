@@ -7,6 +7,7 @@ import org.kanger.ContextProductionInputs.Declaration;
 import org.kanger.ContextWitnessResultTransport.Cut;
 import org.kanger.ContextWitnessResultTransport.Item;
 import org.kanger.ContextWitnessResultTransport.Packet;
+import org.kanger.ContextWitnessResultTransport.PrivatePool;
 import org.kanger.ContextWitnessResultTransport.Slot;
 
 /** Positive refutations only: universal elimination and a falsified sourced clause. */
@@ -98,15 +99,29 @@ final class ContextWitnessClauseCollision {
         return inspect(input,cut,declarations,maximumDepth,maximumWork,maximumEvents,null);
     }
     static Result inspect(Packet input,Cut cut,List<Declaration> declarations,int maximumDepth,int maximumWork,int maximumEvents,ContextWitnessEmptyTarget emptyTarget) {
+        return inspectPool(input,cut,declarations,maximumDepth,maximumWork,maximumEvents,emptyTarget,null);
+    }
+    /** Direct local refutation only; never private coverage or family admission. */
+    static Result inspectPrivate(PrivatePool pool,int maximumDepth,int maximumWork,int maximumEvents) {
+        if(pool==null)throw new IllegalArgumentException("Sealed private pool required");
+        return inspectPool(pool.common,pool.cut,pool.declarations,maximumDepth,maximumWork,maximumEvents,null,pool);
+    }
+    private static Result inspectPool(Packet input,Cut cut,List<Declaration> declarations,int maximumDepth,int maximumWork,int maximumEvents,
+            ContextWitnessEmptyTarget emptyTarget,PrivatePool privatePool) {
         if (maximumDepth < 0 || maximumWork < 1 || maximumEvents < 1) throw new IllegalArgumentException("Bounded collision verification required");
         int[] remaining = {maximumWork}; Runnable work = () -> { if (--remaining[0] < 0) throw new IllegalStateException("Clause collision work limit"); };
         try {
             List<Input> inputs = ContextWitnessDeclarationCut.capture(input,cut,declarations,work,maximumWork,maximumEvents,emptyTarget);
             List<Evidence> evidence = new ArrayList<>();
             for (Input declaration : inputs) for (Clause clause : declaration.shapes)
-                instances(declaration.source,clause,input,0,new LinkedHashMap<>(),new ArrayList<>(),maximumDepth,evidence,work);
+                instances(declaration.source,clause,privatePool==null?input:privatePool.local,0,new LinkedHashMap<>(),new ArrayList<>(),maximumDepth,evidence,work);
+            if(privatePool!=null){
+                List<Evidence> anchored=new ArrayList<>();for(Evidence e:evidence){work.run();List<Support> proofs=new ArrayList<>();for(Support p:e.proofs){work.run();if(p.sources.stream().anyMatch(source->source.localX))proofs.add(p);}if(!proofs.isEmpty())anchored.add(new Evidence(e.producer,e.clause,e.assignment,e.opponents,proofs));}
+                evidence=anchored;
+            }
             return new Result(evidence.isEmpty() ? Status.INCOMPLETE : Status.COLLISION,
-                    evidence.isEmpty() ? "No falsified clause instance proved; coverage unknown" : "Sourced universal clause refuted by carried proofs",
+                    privatePool==null ? (evidence.isEmpty()?"No falsified clause instance proved; coverage unknown":"Sourced universal clause refuted by carried proofs")
+                        : (evidence.isEmpty()?"No X-dependent local refutation proved; coverage unknown":"Sourced clause refuted by common and sealed private proofs"),
                     input,cut,evidence,true);
         } catch (Exception failure) {
             return new Result(Status.INCOMPLETE,failure.getMessage(),input,cut,Collections.emptyList(),false);

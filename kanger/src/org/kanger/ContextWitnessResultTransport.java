@@ -86,6 +86,49 @@ final class ContextWitnessResultTransport {
             this.coveredCut = coveredCut;
         }
     }
+    /** Sealed branch-local evidence. Its raw items are never a shared family Packet. */
+    static final class PrivatePool {
+        final Packet common;
+        final ContextProductionNativeBinding.Snapshot x,snapshot;
+        final List<ContextProductionInputs.Declaration> declarations;
+        final Cut cut;
+        final Packet local;
+        final Set<Source> sources;
+        private PrivatePool(Packet common,ContextProductionNativeBinding.Snapshot x,ContextProductionNativeBinding.Snapshot snapshot,Packet local,Set<Source> sources,List<ContextProductionInputs.Declaration> declarations) {
+            this.common=common;this.x=x;this.snapshot=snapshot;this.cut=Cut.of(snapshot);this.local=local;
+            this.declarations=Collections.unmodifiableList(new ArrayList<>(declarations));
+            this.sources=Collections.unmodifiableSet(new LinkedHashSet<>(sources));
+        }
+    }
+    static PrivatePool privatePool(Packet common,ContextProductionNativeBinding.Snapshot x,ContextProductionNativeBinding.Snapshot target,int maximumWork) {
+        Runnable work=budget(maximumWork);ContextProductionFamilyAssembly.identity(x,true,work);ContextProductionFamilyAssembly.identity(target,false,work);
+        if(!Cut.of(x).equals(parentX(common.items,work)))throw new IllegalStateException("Private pool has another X view");
+        if(x.primary.size()+target.primary.size()>64)throw new IllegalStateException("Private whole declaration limit");
+        for(Item item:common.items){work.run();if(!item.atom.positive)throw new IllegalStateException("Positive common witness pool required");}
+        family(common,Collections.singletonList(Cut.of(target)),maximumWork);
+        List<Item> local=new ArrayList<>(common.items);Set<Source> sources=new LinkedHashSet<>();
+        for(ContextProductionNativeBinding.Entry entry:target.primary) {
+            work.run();if(entry.bundle==null)continue;
+            if(!sources.add(entry.source))throw new IllegalStateException("Repeated private bundle Source");
+            Support proof=new Support(Collections.singleton(entry.source),0);
+            for(ContextWitnessBundle.Atom atom:entry.bundle.atoms) {
+                work.run();if(!atom.positive)throw new IllegalStateException("Positive private witness bundle required");
+                List<Slot> slots=new ArrayList<>();Origin root=null;
+                for(ContextWitnessBundle.Slot slot:atom.arguments) {
+                    work.run();Origin origin=slot.witness<0?null:new Origin(entry.source,slot.witness);
+                    if(origin!=null){if(root!=null&&!root.equals(origin))throw new IllegalStateException("Private literal with multiple witnesses outside transport scope");root=origin;}
+                    slots.add(new Slot(origin,slot.value));
+                }
+                add(local,new Atom(atom.predicate,true,slots),proof,work);
+            }
+        }
+        if(sources.isEmpty())throw new IllegalStateException("Private witness bundle required");
+        Set<Origin> rank=new HashSet<>();for(Item item:local)for(Slot slot:item.atom.arguments){work.run();if(slot.origin!=null)rank.add(slot.origin);}
+        if(rank.size()>8)throw new IllegalStateException("Private carrier witness rank limit");
+        List<ContextProductionInputs.Declaration> declarations=new ArrayList<>();
+        for(ContextProductionNativeBinding.Snapshot view:Arrays.asList(x,target))for(ContextProductionNativeBinding.Entry entry:view.primary){work.run();if(entry.bundle==null)declarations.add(new ContextProductionInputs.Declaration(entry.source,entry.statement));}
+        return new PrivatePool(common,x,target,new Packet(local),sources,declarations);
+    }
     static final class Result {
         final boolean exported;
         final String reason;
@@ -405,6 +448,7 @@ final class ContextWitnessResultTransport {
     }
     private static Result exportVerifiedNext(ContextWitnessSeedReplay round,Cut cut,List<ContextProductionInputs.Declaration> declarations,
             int maximumDepth,int maximumWork,int maximumEvents,boolean roundStep,ContextWitnessEmptyTarget emptyTarget) {
+        if(round.hasPrivateSeeds())return new Result(false,"Private local replay has no family coverage authority",null);
         try {round.requireTarget(cut);}catch(IllegalStateException failure){return new Result(false,failure.getMessage(),null);}
         Result observed = exportNext(round,maximumDepth,maximumWork);
         if (!observed.exported) return observed;

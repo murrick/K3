@@ -10,7 +10,7 @@ import tempfile
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--mode', choices=('contract', 'reference', 'witness-contract', 'independent-reopen-contract', 'ordinary-commit-contract'), default='contract')
+    parser.add_argument('--mode', choices=('contract', 'reference', 'witness-contract', 'independent-reopen-contract', 'ordinary-commit-contract', 'private-witness-contract'), default='contract')
     parser.add_argument('--ordinary-integration-candidate', action='store_true',
                         help='Compile an isolated experimental default hook; never edit production sources')
     args = parser.parse_args()
@@ -31,6 +31,8 @@ def main():
     if args.mode == 'ordinary-commit-contract':
         names = [('org.kanger.storage.dumb2.ContextOrdinaryProductionCommitRunner', 'CONTEXT_ORDINARY_PRODUCTION_COMMIT_PASS'),
                  ('org.kanger.storage.dumb2.ContextOrdinaryCommitCompatibilityRunner', 'CONTEXT_ORDINARY_COMMIT_COMPATIBILITY_PASS')]
+    if args.mode == 'private-witness-contract':
+        names = [('org.kanger.storage.dumb2.ContextPrivateWitnessAdmissionContractRunner', 'CONTEXT_PRIVATE_WITNESS_ADMISSION_CONTRACT_PASS')]
     if args.mode == 'reference':
         names = [('org.kanger.ContextProductionCaptureRunner', 'CONTEXT_PRODUCTION_CAPTURE_PASS'),
                  ('org.kanger.ContextProductionRoundsReferenceRunner', 'CONTEXT_PRODUCTION_ROUNDS_REFERENCE_PASS'),
@@ -183,6 +185,7 @@ def main():
                  ('org.kanger.storage.dumb2.ContextAuthorityQuantifiedConjunctionDiagonalNegativeReverseRunner', 'CONTEXT_AUTHORITY_QUANTIFIED_CONJUNCTION_DIAGONAL_NEGATIVE_REVERSE_PASS'),
                  ('org.kanger.ContextConjunctiveQuantifierScopeRunner', 'CONTEXT_CONJUNCTIVE_QUANTIFIER_SCOPE_PASS'),
                  ('org.kanger.ContextAntecedentQuantifierScopeRunner', 'CONTEXT_ANTECEDENT_QUANTIFIER_SCOPE_PASS'),
+                 ('org.kanger.ContextPrivateWitnessPoolRunner', 'CONTEXT_PRIVATE_WITNESS_POOL_PASS'),
                  ('org.kanger.ContextTrustedWitnessScopeRunner', 'CONTEXT_TRUSTED_WITNESS_SCOPE_PASS'),
                  ('org.kanger.storage.dumb2.ContextTrustedWitnessCommitRunner', 'CONTEXT_TRUSTED_WITNESS_COMMIT_PASS'),
                  ('org.kanger.storage.dumb2.ContextTrustedDuplicateSupportRunner', 'CONTEXT_TRUSTED_DUPLICATE_SUPPORT_PASS'),
@@ -625,6 +628,7 @@ def main():
                   scope={'contract': 'Pending runtime authoring contract',
                          'witness-contract': 'Native primary existential witness consistency contract',
                          'independent-reopen-contract': 'Certified independent-coordinate source must reopen after publication',
+                         'private-witness-contract': 'Full private witness admission/local refutation; required incomplete integration gate',
                          'ordinary-commit-contract': 'Ordinary admission and observational/publication compatibility; activation gate',
                          'reference': 'Capture, witness identity and scoped Horn reference; round gate unchanged'}[args.mode],
                   source_dirty=bool(subprocess.check_output(

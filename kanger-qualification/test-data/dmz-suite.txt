@@ -599,3 +599,4 @@ org.kanger.storage.dumb2.ContextTrustedProductionCommitRunner | CONTEXT_TRUSTED_
 org.kanger.storage.dumb2.ContextTrustedDuplicateSupportRunner | CONTEXT_TRUSTED_DUPLICATE_SUPPORT_PASS
 org.kanger.ContextTrustedWitnessScopeRunner | CONTEXT_TRUSTED_WITNESS_SCOPE_PASS
 org.kanger.storage.dumb2.ContextTrustedWitnessCommitRunner | CONTEXT_TRUSTED_WITNESS_COMMIT_PASS
+org.kanger.ContextPrivateWitnessPoolRunner | CONTEXT_PRIVATE_WITNESS_POOL_PASS
