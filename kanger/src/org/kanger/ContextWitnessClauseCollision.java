@@ -111,7 +111,8 @@ final class ContextWitnessClauseCollision {
         if (maximumDepth < 0 || maximumWork < 1 || maximumEvents < 1) throw new IllegalArgumentException("Bounded collision verification required");
         int[] remaining = {maximumWork}; Runnable work = () -> { if (--remaining[0] < 0) throw new IllegalStateException("Clause collision work limit"); };
         try {
-            List<Input> inputs = ContextWitnessDeclarationCut.capture(input,cut,declarations,work,maximumWork,maximumEvents,emptyTarget);
+            List<Input> inputs = privatePool==null ? ContextWitnessDeclarationCut.capture(input,cut,declarations,work,maximumWork,maximumEvents,emptyTarget)
+                    : ContextWitnessDeclarationCut.capturePrivate(privatePool,declarations,work,maximumWork,maximumEvents);
             List<Evidence> evidence = new ArrayList<>();
             for (Input declaration : inputs) for (Clause clause : declaration.shapes)
                 instances(declaration.source,clause,privatePool==null?input:privatePool.local,0,new LinkedHashMap<>(),new ArrayList<>(),maximumDepth,evidence,work);

@@ -18,6 +18,19 @@ final class ContextWitnessDeclarationCut {
     }
     static List<Input> capture(Packet input,Cut cut,List<Declaration> declarations,Runnable work,
             int maximumWork,int maximumEvents,ContextWitnessEmptyTarget emptyTarget) throws Exception {
+        return capture(input,cut,declarations,work,maximumWork,maximumEvents,emptyTarget,false);
+    }
+    /** Exact private seed capability supplies target ownership, including bundle-only targets. */
+    static List<Input> capturePrivate(PrivatePool pool,List<Declaration> declarations,Runnable work,
+            int maximumWork,int maximumEvents)throws Exception {
+        Map<Source,String> owning=new HashMap<>();
+        for(Declaration declaration:pool.declarations){work.run();owning.put(declaration.source,declaration.statement);}
+        for(Declaration declaration:declarations){work.run();if(!declaration.statement.equals(owning.get(declaration.source)))
+            throw new IllegalStateException("Private declaration differs from owning whole snapshot");}
+        return capture(pool.common,pool.cut,declarations,work,maximumWork,maximumEvents,null,true);
+    }
+    private static List<Input> capture(Packet input,Cut cut,List<Declaration> declarations,Runnable work,
+            int maximumWork,int maximumEvents,ContextWitnessEmptyTarget emptyTarget,boolean privateTarget)throws Exception {
         if (emptyTarget != null) emptyTarget.validate(cut,work);
         // Validate the entire supplied declaration snapshot before using shapes.
         ContextWitnessResultTransport.family(input,Collections.singletonList(cut),maximumWork);
@@ -25,9 +38,9 @@ final class ContextWitnessDeclarationCut {
         for (Item item : input.items) for (Support proof : item.proofs) for (Source source : proof.sources) {
             work.run(); if (source.localX) parent = Cut.of(source);
         }
-        if (declarations.isEmpty() && emptyTarget == null || declarations.size() > 64) throw new IllegalStateException("Bounded nonempty declaration cut required");
+        if (declarations.isEmpty() && emptyTarget == null && !privateTarget || declarations.size() > 64) throw new IllegalStateException("Bounded nonempty declaration cut required");
         List<Declaration> snapshot = new ArrayList<>(declarations); Set<Source> seen = new HashSet<>();
-        boolean target = emptyTarget != null;
+        boolean target = emptyTarget != null || privateTarget;
         User user = new User(); Mind mind = new Mind(user); user.setCurrentMind(mind);
         List<Input> inputs;
         try (ContextProductionCapture capture = ContextProductionCapture.begin(mind,maximumEvents)) {

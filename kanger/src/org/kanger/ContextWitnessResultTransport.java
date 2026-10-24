@@ -64,6 +64,7 @@ final class ContextWitnessResultTransport {
         final Cut coveredCut;
         final Cut roundCut;
         final ContextWitnessEmptyTarget emptyTarget;
+        final PrivatePool privateTarget;
         private Packet(List<Item> items) { this(items,null,Collections.emptySet(),false); }
         private Packet(List<Item> items,UUID basis,Set<Source> producers,boolean observedStep) {
             this(items,basis,producers,observedStep,null);
@@ -78,6 +79,10 @@ final class ContextWitnessResultTransport {
             this(items,basis,producers,observedStep,emptyCut,coveredCut,roundCut,null);
         }
         private Packet(List<Item> items,UUID basis,Set<Source> producers,boolean observedStep,Cut emptyCut,Cut coveredCut,Cut roundCut,ContextWitnessEmptyTarget emptyTarget) {
+            this(items,basis,producers,observedStep,emptyCut,coveredCut,roundCut,emptyTarget,null);
+        }
+        private Packet(List<Item> items,UUID basis,Set<Source> producers,boolean observedStep,Cut emptyCut,Cut coveredCut,Cut roundCut,ContextWitnessEmptyTarget emptyTarget,PrivatePool privateTarget) {
+            this.privateTarget=privateTarget;
             this.emptyTarget = emptyTarget;
             this.roundCut = roundCut;
             this.items = Collections.unmodifiableList(new ArrayList<>(items)); this.basis = basis;
@@ -135,8 +140,10 @@ final class ContextWitnessResultTransport {
         final Packet output;
         final boolean localChanged, commonChanged;
         final int obligations;
-        private PrivateAdvance(PrivatePool before,PrivatePool after,Packet output,int obligations,Runnable work) {
+        final Set<Source> producers;
+        private PrivateAdvance(PrivatePool before,PrivatePool after,Packet output,int obligations,Set<Source> producers,Runnable work) {
             this.before=before;this.after=after;this.output=output;this.obligations=obligations;
+            this.producers=Collections.unmodifiableSet(new LinkedHashSet<>(producers));
             localChanged=!sameItems(before.local.items,after.local.items,work);
             commonChanged=!sameItems(before.common.items,output.items,work);
         }
@@ -154,7 +161,7 @@ final class ContextWitnessResultTransport {
     /** Select whole declarations from the owning native snapshots; never accept alleged caller statements. */
     private static List<Input> privateDefinitions(PrivatePool pool,Set<Source> selected,int maximumWork,int maximumEvents,Runnable work)throws Exception {
         if(selected.isEmpty()||selected.size()>64)throw new IllegalStateException("Bounded nonempty private producer selection required");
-        List<Input> all=ContextWitnessDeclarationCut.capture(pool.common,pool.cut,pool.declarations,work,maximumWork,maximumEvents);
+        List<Input> all=ContextWitnessDeclarationCut.capturePrivate(pool,pool.declarations,work,maximumWork,maximumEvents);
         List<Input> definitions=new ArrayList<>();Set<Source> remaining=new HashSet<>(selected);
         for(Input input:all){work.run();if(remaining.remove(input.source))definitions.add(input);}
         if(!remaining.isEmpty())throw new IllegalStateException("Private producer outside owning whole declaration snapshots");
@@ -164,6 +171,19 @@ final class ContextWitnessResultTransport {
     static int verifyPrivateClosed(PrivatePool pool,Set<Source> selected,int maximumDepth,int maximumWork,int maximumEvents)throws Exception {
         Runnable work=budget(maximumWork);
         return ContextWitnessHornClosure.verify(pool.local,privateDefinitions(pool,selected,maximumWork,maximumEvents,work),maximumDepth,work);
+    }
+    /** A dormant or already closed local theory needs no new native chain application. */
+    static PrivateAdvance closedPrivate(PrivatePool pool,Set<Source> selected,int maximumDepth,int maximumWork,int maximumEvents)throws Exception {
+        Runnable work=budget(maximumWork);
+        List<Input> definitions=privateDefinitions(pool,selected,maximumWork,maximumEvents,work);
+        int obligations=ContextWitnessHornClosure.verify(pool.local,definitions,maximumDepth,work);
+        Set<Source> producers=new LinkedHashSet<>();for(Input definition:definitions){work.run();producers.add(definition.source);}
+        return new PrivateAdvance(pool,pool,privateShared(pool.common,pool.local,work),obligations,producers,work);
+    }
+    private static Packet privateShared(Packet common,Packet local,Runnable work) {
+        List<Item> shared=new ArrayList<>(common.items);
+        for(Item item:local.items)for(Support proof:item.proofs){work.run();if(usesX(proof))add(shared,item.atom,proof,work);}
+        Packet output=new Packet(shared);parentX(output.items,work);return output;
     }
     /** One native pass with input-enabled obligations over local before/after pools, not just X exports. */
     static PrivateAdvance advancePrivate(PrivatePool pool,Set<Source> selected,int maximumDepth,int maximumWork,int maximumEvents)throws Exception {
@@ -185,13 +205,19 @@ final class ContextWitnessResultTransport {
             for(Route route:verified.routes){work.run();if(route.proof.depth>0)add(local,transportAtom(route,origins,pass.namespace,work),route.proof,work);}
             privateRank(local,work);Packet after=new Packet(local);
             int obligations=ContextWitnessHornClosure.verifyRound(pool.local,after,definitions,maximumDepth,work);
-            List<Item> shared=new ArrayList<>(pool.common.items);
-            for(Item item:after.items)for(Support proof:item.proofs){work.run();if(usesX(proof))add(shared,item.atom,proof,work);}
-            // No roundCut/coveredCut/basis: this local receipt has no shared-family authority.
-            Packet output=new Packet(shared);parentX(output.items,work);
+            // No roundCut/coveredCut/basis until the owning round receipt is requested.
+            Packet output=privateShared(pool.common,after,work);
             PrivatePool next=new PrivatePool(pool.common,pool.x,pool.snapshot,after,pool.sources,pool.declarations);
-            return new PrivateAdvance(pool,next,output,obligations,work);
+            return new PrivateAdvance(pool,next,output,obligations,pass.producerSources(work),work);
         }
+    }
+    /** Only a verified local input-enabled continuation can issue this common-output round receipt. */
+    static Packet privateRoundOutput(PrivateAdvance step,int maximumWork) {
+        Runnable work=budget(maximumWork);
+        parentX(step.output.items,work);
+        if(!retains(step.before.common,step.output,work))throw new IllegalStateException("Private round lost common input");
+        return new Packet(step.output.items,step.before.common.identity,step.producers,step.localChanged,
+                step.localChanged?null:step.before.cut,null,step.before.cut,null,step.before);
     }
     private static void privateRank(List<Item> items,Runnable work) {
         Set<Origin> rank=new HashSet<>();
@@ -307,6 +333,11 @@ final class ContextWitnessResultTransport {
                     if (!parent.equals(parentX(output.items,work))) throw new IllegalStateException("Witness branch changed parent X");
                     boolean matched = output.emptyTarget != null;
                     if (matched) output.emptyTarget.validate(cut,work);
+                    if(output.privateTarget!=null) {
+                        if(!cut.equals(output.privateTarget.cut)||output.privateTarget.common!=input)
+                            throw new IllegalStateException("Private round has another owning cut/common input");
+                        matched=true;
+                    }
                     for (Source producer : output.producers) {
                         work.run(); Cut actual = Cut.of(producer);
                         if (producer.localX) {

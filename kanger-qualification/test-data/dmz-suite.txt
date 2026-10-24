@@ -601,3 +601,4 @@ org.kanger.ContextTrustedWitnessScopeRunner | CONTEXT_TRUSTED_WITNESS_SCOPE_PASS
 org.kanger.storage.dumb2.ContextTrustedWitnessCommitRunner | CONTEXT_TRUSTED_WITNESS_COMMIT_PASS
 org.kanger.ContextPrivateWitnessPoolRunner | CONTEXT_PRIVATE_WITNESS_POOL_PASS
 org.kanger.ContextPrivateWitnessContinuationRunner | CONTEXT_PRIVATE_WITNESS_CONTINUATION_PASS
+org.kanger.ContextPrivateWitnessFamilyRunner | CONTEXT_PRIVATE_WITNESS_FAMILY_PASS
