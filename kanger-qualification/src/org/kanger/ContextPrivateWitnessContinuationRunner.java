@@ -65,7 +65,7 @@ public final class ContextPrivateWitnessContinuationRunner {
         require(has(laterSibling.local,"out")&&!item(laterSibling.local,"out").atom.arguments.get(0).origin.equals(item(laterSibling.local,"flag").atom.arguments.get(0).origin),"common product retains other cut origin beside sibling private witness");
         ContextWitnessClauseCollision.Result separateScan=ContextWitnessClauseCollision.inspectPrivate(laterSibling,16,WORK,EVENTS);
         require(separateScan.scanned&&separateScan.evidence.isEmpty(),"same spelling in independent private cut cannot refute carried common witness");
-        require(!ContextProductionFamilyAssembly.assemble(x,Arrays.asList(group),WORK).assembled,"local continuation alone does not activate incomplete family admission");
+        require(ContextProductionFamilyAssembly.assemble(x,Arrays.asList(group),WORK).assembled,"complete owning private family now assembled from native snapshots");
     }
     static void alternatives()throws Exception{
         Snapshot x=bind(true,"!anchor(1); "+OUT),a=bind(false,"!$w seed(w,1);"),b=bind(false,FIRST+" "+SECOND),c=bind(false,FIRST);

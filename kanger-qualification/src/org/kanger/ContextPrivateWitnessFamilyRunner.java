@@ -66,7 +66,7 @@ public final class ContextPrivateWitnessFamilyRunner {
                 if(barrier[0]==2)require(has(packet,"done"),"B consumes A output only from the next common input");
             });require(reverseResult.status==Status.FIXED_POINT&&ContextWitnessResultTransport.sameContents(r.packet,reverseResult.packet,WORK)&&reverseResult.rounds.size()==r.rounds.size(),"branch order preserves common proof pool and activation rounds");
         }
-        require(!ContextProductionFamilyAssembly.assemble(x,Arrays.asList(ContextProductionNativeBinding.trusted("own",Arrays.asList(a,b),WORK)),WORK).assembled,"detached Plan support does not bypass full native admission guard");
+        require(ContextProductionFamilyAssembly.assemble(x,Arrays.asList(ContextProductionNativeBinding.trusted("own",Arrays.asList(a,b),WORK)),WORK).assembled,"complete private family assembly is available; live admission qualified separately");
     }
     static void alternatives()throws Exception{
         String warm="!@w never(w,1)->warm(w,1);",hidden="!@w seed(w,1)->hidden(w,1);";

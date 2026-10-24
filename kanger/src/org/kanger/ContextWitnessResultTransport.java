@@ -105,6 +105,16 @@ final class ContextWitnessResultTransport {
             this.sources=Collections.unmodifiableSet(new LinkedHashSet<>(sources));
         }
     }
+    /** Entire positive ground-fact rows are seeds; mixed whole rows remain declarations. */
+    static int privateSeedLiterals(ContextProductionNativeBinding.Entry entry,Runnable work) {
+        if(entry.bundle!=null)return entry.bundle.atoms.size();
+        if(entry.clauses.isEmpty())return 0;
+        for(Clause clause:entry.clauses){
+            work.run();if(!clause.variables.isEmpty()||clause.literals.size()!=1||!clause.literals.get(0).positive)return 0;
+            for(ContextProductionCapture.Slot slot:clause.literals.get(0).arguments){work.run();if(slot.variable>=0||slot.value==null)return 0;}
+        }
+        return entry.clauses.size();
+    }
     static PrivatePool privatePool(Packet common,ContextProductionNativeBinding.Snapshot x,ContextProductionNativeBinding.Snapshot target,int maximumWork) {
         Runnable work=budget(maximumWork);ContextProductionFamilyAssembly.identity(x,true,work);ContextProductionFamilyAssembly.identity(target,false,work);
         if(!Cut.of(x).equals(parentX(common.items,work)))throw new IllegalStateException("Private pool has another X view");
@@ -113,9 +123,17 @@ final class ContextWitnessResultTransport {
         family(common,Collections.singletonList(Cut.of(target)),maximumWork);
         List<Item> local=new ArrayList<>(common.items);Set<Source> sources=new LinkedHashSet<>();
         for(ContextProductionNativeBinding.Entry entry:target.primary) {
-            work.run();if(entry.bundle==null)continue;
-            if(!sources.add(entry.source))throw new IllegalStateException("Repeated private bundle Source");
+            work.run();if(privateSeedLiterals(entry,work)==0)continue;
+            if(!sources.add(entry.source))throw new IllegalStateException("Repeated private primary seed Source");
             Support proof=new Support(Collections.singleton(entry.source),0);
+            if(entry.bundle==null) {
+                for(Clause clause:entry.clauses){
+                    ContextProductionCapture.Atom atom=clause.literals.get(0);List<Slot> slots=new ArrayList<>();
+                    for(ContextProductionCapture.Slot slot:atom.arguments){work.run();slots.add(new Slot(null,slot.value));}
+                    add(local,new Atom(atom.predicate,true,slots),proof,work);
+                }
+                continue;
+            }
             for(ContextWitnessBundle.Atom atom:entry.bundle.atoms) {
                 work.run();if(!atom.positive)throw new IllegalStateException("Positive private witness bundle required");
                 List<Slot> slots=new ArrayList<>();Origin root=null;
@@ -127,7 +145,7 @@ final class ContextWitnessResultTransport {
                 add(local,new Atom(atom.predicate,true,slots),proof,work);
             }
         }
-        if(sources.isEmpty())throw new IllegalStateException("Private witness bundle required");
+        if(sources.isEmpty())throw new IllegalStateException("Private positive primary seed required");
         Set<Origin> rank=new HashSet<>();for(Item item:local)for(Slot slot:item.atom.arguments){work.run();if(slot.origin!=null)rank.add(slot.origin);}
         if(rank.size()>8)throw new IllegalStateException("Private carrier witness rank limit");
         List<ContextProductionInputs.Declaration> declarations=new ArrayList<>();
@@ -170,12 +188,15 @@ final class ContextWitnessResultTransport {
     /** Checks the complete selected local proof pool; unchanged common contents alone prove nothing. */
     static int verifyPrivateClosed(PrivatePool pool,Set<Source> selected,int maximumDepth,int maximumWork,int maximumEvents)throws Exception {
         Runnable work=budget(maximumWork);
-        return ContextWitnessHornClosure.verify(pool.local,privateDefinitions(pool,selected,maximumWork,maximumEvents,work),maximumDepth,work);
+        return ContextWitnessHornClosure.verify(pool.local,selected.isEmpty()
+                ? ContextWitnessDeclarationCut.capturePrivate(pool,Collections.emptyList(),work,maximumWork,maximumEvents)
+                : privateDefinitions(pool,selected,maximumWork,maximumEvents,work),maximumDepth,work);
     }
     /** A dormant or already closed local theory needs no new native chain application. */
     static PrivateAdvance closedPrivate(PrivatePool pool,Set<Source> selected,int maximumDepth,int maximumWork,int maximumEvents)throws Exception {
         Runnable work=budget(maximumWork);
-        List<Input> definitions=privateDefinitions(pool,selected,maximumWork,maximumEvents,work);
+        List<Input> definitions=selected.isEmpty() ? ContextWitnessDeclarationCut.capturePrivate(pool,Collections.emptyList(),work,maximumWork,maximumEvents)
+                : privateDefinitions(pool,selected,maximumWork,maximumEvents,work);
         int obligations=ContextWitnessHornClosure.verify(pool.local,definitions,maximumDepth,work);
         Set<Source> producers=new LinkedHashSet<>();for(Input definition:definitions){work.run();producers.add(definition.source);}
         return new PrivateAdvance(pool,pool,privateShared(pool.common,pool.local,work),obligations,producers,work);

@@ -6,7 +6,7 @@ import org.kanger.*;
 import org.kanger.exception.*;
 import org.kanger.enums.StorageLifecycleErrorCode;
 
-/** Desired full private-witness admission; remains RED until local coverage/family integration. */
+/** Required bounded actual private-witness admission; no expected-refusal waiver. */
 public final class ContextPrivateWitnessAdmissionContractRunner {
     static int checks;static void require(boolean b,String why){++checks;if(!b)throw new AssertionError(why);}
     static void one(boolean reverse,boolean conflict)throws Exception{

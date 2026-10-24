@@ -46,7 +46,13 @@ public final class ContextTrustedProductionCommitRunner {
         try(ContextAutomaticPendingCommitRunner.Fixture f=new ContextAutomaticPendingCommitRunner.Fixture(dir,"X")){
             require(f.root.compile(witness?"!anchor(1); !$w seed(w,1);":"!anchor(1);",null,false),"boundary original X");command(f,"ctx connect TR trust own");command(f,"ctx connect TF trust own");if(!witness)command(f,"ctx connect Bad trust own");f.db.saveConnections(f.root);long rev=f.db.getRevision();String before=inventory(f).fingerprint;
             f.guard.install();StorageLifecycleException failure=null;try{f.root.query("!unrelated(1);",null,false);}catch(StorageLifecycleException e){failure=e;}finally{f.guard.restore();}
-            require(failure!=null&&failure.getErrorCode()==StorageLifecycleErrorCode.STORAGE_CONTEXT_INCOMPLETE&&failure.getCollisions().isEmpty(),"unsupported whole member/witness group remains incomplete, never prefix permission or fake conflict");require(f.db.getRevision()==rev&&inventory(f).fingerprint.equals(before),"bounded group refusal keeps exact physical source");
+            if(witness){
+                require(failure==null&&f.db.getRevision()>rev,"supported X witness plus sealed private ground fact now admits safe write");
+                require(ContextSevenPremiseNativeWriteRunner.origins(inventory(f)).equals(new HashSet<>(Arrays.asList("!anchor(1);","!$w seed(w,1);","!unrelated(1);"))),"safe write publishes only whole candidate, never private p or derived q");
+            }else{
+                require(failure!=null&&failure.getErrorCode()==StorageLifecycleErrorCode.STORAGE_CONTEXT_INCOMPLETE&&failure.getCollisions().isEmpty(),"unsupported whole function member remains incomplete, never prefix permission or fake conflict");
+                require(f.db.getRevision()==rev&&inventory(f).fingerprint.equals(before),"bounded group refusal keeps exact physical source");
+            }
         }
     }
     static void staleInitialization()throws Exception{

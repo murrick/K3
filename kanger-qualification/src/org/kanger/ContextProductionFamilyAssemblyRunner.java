@@ -53,12 +53,12 @@ public final class ContextProductionFamilyAssemblyRunner {
             require(assemble(x,b,a).evaluate(12,16,WORK,100000).status == Status.FIXED_POINT,"snapshot order cannot obstruct common-input qualification");
             Snapshot rawFact = snapshot(3,false,"!private(4); !@w p(w,1)->tail(w,1);"); Artifact privateCut = assemble(x,rawFact);
             require(privateCut.input.items.stream().noneMatch(i -> i.atom.predicate.equals("private")),"foreign ground fact stays outside X primary seed pool");
-            require(privateCut.plan.branches.get(1).declarations.size() == 3,"foreign raw fact remains in the complete own-cut declarations");
+            require(privateCut.plan.branches.get(1).declarations.size() == 2 && privateCut.rows.stream().anyMatch(r->r.source.equals(source(rawFact,"private"))&&r.use==Use.PRIVATE_SEEDS&&r.seedLiterals==1),"whole foreign ground fact accounted as private seed, not fake producer");
             Evaluation incomplete = privateCut.evaluate(12,16,WORK,100000);
-            require(incomplete.status == Status.INCOMPLETE && incomplete.qualification.uncovered.contains(source(rawFact,"private")),"unsupported scalar producer coverage cannot disappear into a positive verdict");
+            require(incomplete.status == Status.FIXED_POINT && incomplete.qualification.uncovered.isEmpty() && incomplete.qualification.fixedPoint.packet.items.stream().noneMatch(i->i.atom.predicate.equals("private")),"positive private scalar seed has coverage without raw import into common X");
             Snapshot rawWitness = snapshot(4,false,"!$v foreignseed(v,1); !@w p(w,1)->tail(w,1);"); Artifact foreignBundle = assemble(x,rawWitness);
-            require(foreignBundle.input.items.stream().noneMatch(i -> i.atom.predicate.equals("foreignseed")) && foreignBundle.plan.branches.get(1).declarations.stream().anyMatch(d -> d.statement.contains("$v")),"whole foreign witness remains an explicit raw own-cut declaration");
-            require(foreignBundle.evaluate(12,16,WORK,100000).status == Status.INCOMPLETE,"unsupported foreign existential replay is not omitted");
+            require(foreignBundle.input.items.stream().noneMatch(i -> i.atom.predicate.equals("foreignseed")) && foreignBundle.plan.branches.get(1).privatePool!=null && foreignBundle.rows.stream().anyMatch(r->r.source.equals(source(rawWitness,"$v"))&&r.use==Use.PRIVATE_SEEDS),"whole foreign witness has explicit private seed coverage");
+            require(foreignBundle.evaluate(12,16,WORK,100000).status == Status.FIXED_POINT,"bounded foreign existential replay closes with its own authenticated seed pool");
             Snapshot mixed = snapshot(5,true,"!$w p(w,1); !@x (scalar(1)&&(p(x,1)->warm(x,1)));"); Artifact mixedFamily = assemble(mixed);
             require(mixedFamily.rows.stream().anyMatch(r -> r.use == Use.X_SEEDS_AND_PRODUCER && r.seedLiterals == 1),"mixed source row has both explicit seed and whole producer disposition");
             require(mixedFamily.plan.branches.get(0).declarations.get(0).statement.contains("scalar") && item(mixedFamily.input,"scalar").proofs.get(0).sources.contains(source(mixed,"scalar")),"mixed conjunction is never split into synthetic source identities");

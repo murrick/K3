@@ -11,7 +11,7 @@ import org.kanger.ContextWitnessFamilyFixedPoint.Branch;
 
 /** Complete row accounting and diagnostic family assembly from native-bound snapshots; never admission. */
 public final class ContextProductionFamilyAssembly {
-    public enum Use { X_SEEDS, X_PRODUCER, X_SEEDS_AND_PRODUCER, FOREIGN_CUT }
+    public enum Use { X_SEEDS, X_PRODUCER, X_SEEDS_AND_PRODUCER, FOREIGN_CUT, PRIVATE_SEEDS }
     public static final class RowUse {
         public final Source source;
         public final Use use;
@@ -102,8 +102,6 @@ public final class ContextProductionFamilyAssembly {
         try {
             List<Snapshot> sources = new ArrayList<>(foreign);
             if (sources.size() > 15) throw new IllegalStateException("Family source limit");
-            for(Snapshot source:sources)if(source.trustedGroup!=null&&source.primary.stream().anyMatch(e->e.bundle!=null))
-                throw new IllegalStateException("Foreign trusted witness bundles require private seed evidence");
             identity(x,true,work); Set<UUID> contexts = new HashSet<>(); contexts.add(x.inventory.context);
             for (Snapshot source : sources) {
                 identity(source,false,work);claimContexts(source,contexts,work);
@@ -125,14 +123,19 @@ public final class ContextProductionFamilyAssembly {
                     : ContextWitnessFamilyFixedPoint.branch(cut(x),xProducers));
             for (Snapshot source : sources) {
                 List<Declaration> declarations = new ArrayList<>(xProducers);
+                boolean privateSeeds=false;
                 for (Entry entry : source.primary) {
-                    work.run(); declarations.add(new Declaration(entry.source,entry.statement)); rows.add(new RowUse(entry.source,Use.FOREIGN_CUT,0));
+                    work.run();int literals=ContextWitnessResultTransport.privateSeedLiterals(entry,work);
+                    if(literals>0){privateSeeds=true;rows.add(new RowUse(entry.source,Use.PRIVATE_SEEDS,literals));}
+                    else {declarations.add(new Declaration(entry.source,entry.statement));rows.add(new RowUse(entry.source,Use.FOREIGN_CUT,0));}
                 }
-                branches.add(source.primary.isEmpty() ? ContextWitnessFamilyFixedPoint.emptyBranch(ContextWitnessEmptyTarget.of(source,work),declarations)
+                if(privateSeeds)branches.add(ContextWitnessFamilyFixedPoint.privateBranch(
+                        ContextWitnessResultTransport.privatePool(seeds.packet,x,source,maximumWork),declarations));
+                else branches.add(source.primary.isEmpty() ? ContextWitnessFamilyFixedPoint.emptyBranch(ContextWitnessEmptyTarget.of(source,work),declarations)
                         : ContextWitnessFamilyFixedPoint.branch(cut(source),declarations));
             }
             ContextWitnessFamilyFixedPoint.Plan plan = ContextWitnessFamilyFixedPoint.plan(branches);
-            return new Result(true,"Every bound primary row accounted as X seeds/producers or its own foreign cut",new Artifact(x,sources,rows,seeds.packet,plan));
+            return new Result(true,"Every bound whole primary row accounted as common X seeds/producers or private foreign seeds/declarations",new Artifact(x,sources,rows,seeds.packet,plan));
         } catch (Exception failure) { return new Result(false,failure.getMessage(),null); }
     }
 }
