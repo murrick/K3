@@ -186,6 +186,7 @@ def main():
                  ('org.kanger.ContextConjunctiveQuantifierScopeRunner', 'CONTEXT_CONJUNCTIVE_QUANTIFIER_SCOPE_PASS'),
                  ('org.kanger.ContextAntecedentQuantifierScopeRunner', 'CONTEXT_ANTECEDENT_QUANTIFIER_SCOPE_PASS'),
                  ('org.kanger.ContextPrivateWitnessPoolRunner', 'CONTEXT_PRIVATE_WITNESS_POOL_PASS'),
+                 ('org.kanger.ContextPrivateWitnessContinuationRunner', 'CONTEXT_PRIVATE_WITNESS_CONTINUATION_PASS'),
                  ('org.kanger.ContextTrustedWitnessScopeRunner', 'CONTEXT_TRUSTED_WITNESS_SCOPE_PASS'),
                  ('org.kanger.storage.dumb2.ContextTrustedWitnessCommitRunner', 'CONTEXT_TRUSTED_WITNESS_COMMIT_PASS'),
                  ('org.kanger.storage.dumb2.ContextTrustedDuplicateSupportRunner', 'CONTEXT_TRUSTED_DUPLICATE_SUPPORT_PASS'),

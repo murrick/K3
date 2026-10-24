@@ -129,6 +129,83 @@ final class ContextWitnessResultTransport {
         for(ContextProductionNativeBinding.Snapshot view:Arrays.asList(x,target))for(ContextProductionNativeBinding.Entry entry:view.primary){work.run();if(entry.bundle==null)declarations.add(new ContextProductionInputs.Declaration(entry.source,entry.statement));}
         return new PrivatePool(common,x,target,new Packet(local),sources,declarations);
     }
+    /** A local continuation receipt, deliberately not a shared-family coverage receipt. */
+    static final class PrivateAdvance {
+        final PrivatePool before, after;
+        final Packet output;
+        final boolean localChanged, commonChanged;
+        final int obligations;
+        private PrivateAdvance(PrivatePool before,PrivatePool after,Packet output,int obligations,Runnable work) {
+            this.before=before;this.after=after;this.output=output;this.obligations=obligations;
+            localChanged=!sameItems(before.local.items,after.local.items,work);
+            commonChanged=!sameItems(before.common.items,output.items,work);
+        }
+    }
+    /** Rebase only a sealed local continuation, keeping private proofs at their original cut. */
+    static PrivatePool rebasePrivate(PrivatePool previous,Packet common,int maximumWork) {
+        Runnable work=budget(maximumWork);
+        if(!retains(previous.common,common,work))throw new IllegalStateException("Private rebase lost a common input proof");
+        PrivatePool fresh=privatePool(common,previous.x,previous.snapshot,maximumWork);
+        List<Item> local=new ArrayList<>(fresh.local.items);
+        for(Item item:previous.local.items)for(Support proof:item.proofs){work.run();add(local,item.atom,proof,work);}
+        privateRank(local,work);
+        return new PrivatePool(common,previous.x,previous.snapshot,new Packet(local),previous.sources,previous.declarations);
+    }
+    /** Select whole declarations from the owning native snapshots; never accept alleged caller statements. */
+    private static List<Input> privateDefinitions(PrivatePool pool,Set<Source> selected,int maximumWork,int maximumEvents,Runnable work)throws Exception {
+        if(selected.isEmpty()||selected.size()>64)throw new IllegalStateException("Bounded nonempty private producer selection required");
+        List<Input> all=ContextWitnessDeclarationCut.capture(pool.common,pool.cut,pool.declarations,work,maximumWork,maximumEvents);
+        List<Input> definitions=new ArrayList<>();Set<Source> remaining=new HashSet<>(selected);
+        for(Input input:all){work.run();if(remaining.remove(input.source))definitions.add(input);}
+        if(!remaining.isEmpty())throw new IllegalStateException("Private producer outside owning whole declaration snapshots");
+        return definitions;
+    }
+    /** Checks the complete selected local proof pool; unchanged common contents alone prove nothing. */
+    static int verifyPrivateClosed(PrivatePool pool,Set<Source> selected,int maximumDepth,int maximumWork,int maximumEvents)throws Exception {
+        Runnable work=budget(maximumWork);
+        return ContextWitnessHornClosure.verify(pool.local,privateDefinitions(pool,selected,maximumWork,maximumEvents,work),maximumDepth,work);
+    }
+    /** One native pass with input-enabled obligations over local before/after pools, not just X exports. */
+    static PrivateAdvance advancePrivate(PrivatePool pool,Set<Source> selected,int maximumDepth,int maximumWork,int maximumEvents)throws Exception {
+        Runnable work=budget(maximumWork);
+        List<Input> definitions=privateDefinitions(pool,selected,maximumWork,maximumEvents,work);
+        ContextWitnessHornClosure.validate(pool.local,definitions,maximumDepth,work);
+        try(ContextWitnessSeedReplay pass=ContextWitnessSeedReplay.openPrivate(pool,maximumWork,maximumEvents)) {
+            for(ContextProductionInputs.Declaration declaration:pool.declarations)if(selected.contains(declaration.source)){
+                work.run();pass.rule(declaration.source,declaration.statement);
+            }
+            ContextWitnessUnaryChainVerifier.Result verified=pass.inspect(maximumDepth,maximumWork);
+            if(!verified.reconstructed)throw new IllegalStateException(verified.reason);
+            ContextWitnessHornClosure.sameDeclarations(definitions,pass.producerInputs(work),work);
+            Map<Root,Origin> origins=new HashMap<>();
+            for(Map.Entry<Origin,Root> entry:pass.bindings.entrySet()){
+                work.run();if(origins.put(entry.getValue(),entry.getKey())!=null)throw new IllegalStateException("Ambiguous private carried origin");
+            }
+            List<Item> local=new ArrayList<>(pool.local.items);
+            for(Route route:verified.routes){work.run();if(route.proof.depth>0)add(local,transportAtom(route,origins,pass.namespace,work),route.proof,work);}
+            privateRank(local,work);Packet after=new Packet(local);
+            int obligations=ContextWitnessHornClosure.verifyRound(pool.local,after,definitions,maximumDepth,work);
+            List<Item> shared=new ArrayList<>(pool.common.items);
+            for(Item item:after.items)for(Support proof:item.proofs){work.run();if(usesX(proof))add(shared,item.atom,proof,work);}
+            // No roundCut/coveredCut/basis: this local receipt has no shared-family authority.
+            Packet output=new Packet(shared);parentX(output.items,work);
+            PrivatePool next=new PrivatePool(pool.common,pool.x,pool.snapshot,after,pool.sources,pool.declarations);
+            return new PrivateAdvance(pool,next,output,obligations,work);
+        }
+    }
+    private static void privateRank(List<Item> items,Runnable work) {
+        Set<Origin> rank=new HashSet<>();
+        for(Item item:items)for(Slot slot:item.atom.arguments){work.run();if(slot.origin!=null)rank.add(slot.origin);}
+        if(rank.size()>8)throw new IllegalStateException("Private carrier witness rank limit");
+    }
+    private static Atom transportAtom(Route route,Map<Root,Origin> origins,UUID namespace,Runnable work) {
+        if(!route.replay.equals(namespace)||!Objects.equals(route.physical.root,route.origin))throw new IllegalStateException("Non-primary carrier cannot be transported");
+        Origin origin=origins.get(route.origin);
+        if(origin==null&&route.origin!=null)throw new IllegalStateException("Unbound transport origin");
+        List<Slot> arguments=new ArrayList<>();
+        for(Argument argument:route.physical.arguments){work.run();arguments.add(new Slot(argument.root==null?null:origin,argument.value));}
+        return new Atom(route.physical.predicate,route.physical.positive,arguments);
+    }
     static final class Result {
         final boolean exported;
         final String reason;
