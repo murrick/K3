@@ -12,10 +12,14 @@ final class ContextWitnessEmptyTarget {
     final Snapshot snapshot;
     final Cut cut;
     private ContextWitnessEmptyTarget(Snapshot snapshot) {
-        this.snapshot = snapshot; cut = Cut.of(snapshot.inventory);
+        this.snapshot = snapshot; cut = Cut.of(snapshot);
     }
     static ContextWitnessEmptyTarget of(Snapshot snapshot,Runnable work) {
-        if(snapshot.trustedGroup!=null)throw new IllegalStateException("Trusted empty witness target requires shared replay evidence");
+        if(snapshot.trustedGroup!=null){
+            ContextProductionFamilyAssembly.identity(snapshot,false,work);
+            if(!snapshot.primary.isEmpty())throw new IllegalStateException("Foreign shared target contains primary declarations");
+            return new ContextWitnessEmptyTarget(snapshot);
+        }
         ContextProductionInventory inventory = snapshot.inventory;
         Set<Long> ids = new HashSet<>();
         for (ContextProductionInventory.Row row : inventory.primary) { work.run(); ids.add(row.nativeRule); }

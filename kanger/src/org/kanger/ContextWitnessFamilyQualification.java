@@ -71,7 +71,7 @@ final class ContextWitnessFamilyQualification {
                 }
                 List<Declaration> producers = new ArrayList<>(); boolean target = branch.emptyTarget != null;
                 for (Declaration declaration : branch.declarations) if (eligible.get(declaration.source)) {
-                    producers.add(declaration); target |= Cut.of(declaration.source).equals(branch.cut);
+                    producers.add(declaration); target |= branch.cut.contains(Cut.of(declaration.source));
                 }
                 if (target) {
                     producerBranches.add(branch.emptyTarget == null ? ContextWitnessFamilyFixedPoint.branch(branch.cut,producers)

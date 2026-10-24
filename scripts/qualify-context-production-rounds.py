@@ -183,6 +183,8 @@ def main():
                  ('org.kanger.storage.dumb2.ContextAuthorityQuantifiedConjunctionDiagonalNegativeReverseRunner', 'CONTEXT_AUTHORITY_QUANTIFIED_CONJUNCTION_DIAGONAL_NEGATIVE_REVERSE_PASS'),
                  ('org.kanger.ContextConjunctiveQuantifierScopeRunner', 'CONTEXT_CONJUNCTIVE_QUANTIFIER_SCOPE_PASS'),
                  ('org.kanger.ContextAntecedentQuantifierScopeRunner', 'CONTEXT_ANTECEDENT_QUANTIFIER_SCOPE_PASS'),
+                 ('org.kanger.ContextTrustedWitnessScopeRunner', 'CONTEXT_TRUSTED_WITNESS_SCOPE_PASS'),
+                 ('org.kanger.storage.dumb2.ContextTrustedWitnessCommitRunner', 'CONTEXT_TRUSTED_WITNESS_COMMIT_PASS'),
                  ('org.kanger.storage.dumb2.ContextTrustedDuplicateSupportRunner', 'CONTEXT_TRUSTED_DUPLICATE_SUPPORT_PASS'),
                  ('org.kanger.ContextTrustedCutScopeRunner', 'CONTEXT_TRUSTED_CUT_SCOPE_PASS'),
                  ('org.kanger.storage.dumb2.ContextTrustedProductionCommitRunner', 'CONTEXT_TRUSTED_PRODUCTION_COMMIT_PASS'),

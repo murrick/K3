@@ -20,11 +20,12 @@ final class ContextWitnessSeedReplay implements AutoCloseable {
     final List<Item> seeds;
     final Map<Origin,Root> bindings;
     private final Replay replay;
+    private final ContextWitnessResultTransport.Cut target;
     private final ContextProductionCapture capture;
     private boolean linked, closed;
     private String nativeFailure;
-    private ContextWitnessSeedReplay(Replay replay,Packet input,int maximumEvents) throws Exception {
-        this.replay = replay; this.input = input; this.inputIdentity = input.identity; namespace = replay.namespace; seeds = replay.seeds;
+    private ContextWitnessSeedReplay(Replay replay,Packet input,int maximumEvents,ContextWitnessResultTransport.Cut target) throws Exception {
+        this.target=target;this.replay = replay; this.input = input; this.inputIdentity = input.identity; namespace = replay.namespace; seeds = replay.seeds;
         Map<Origin,Root> roots = new LinkedHashMap<>();
         for (Map.Entry<Origin,Long> entry : replay.witnesses.entrySet()) {
             Term term = (Term)replay.mind.getTerms().get(entry.getValue());
@@ -36,11 +37,22 @@ final class ContextWitnessSeedReplay implements AutoCloseable {
         capture.observeWitnessProjections();
     }
     static ContextWitnessSeedReplay open(Packet packet,int maximumWork,int maximumEvents) throws Exception {
-        return new ContextWitnessSeedReplay(ContextWitnessResultTransport.restore(packet,maximumWork),packet,maximumEvents);
+        return new ContextWitnessSeedReplay(ContextWitnessResultTransport.restore(packet,maximumWork),packet,maximumEvents,null);
+    }
+    static ContextWitnessSeedReplay open(Packet packet,ContextWitnessResultTransport.Cut target,int maximumWork,int maximumEvents)throws Exception{
+        if(target==null)throw new IllegalArgumentException("Exact replay target required");
+        return new ContextWitnessSeedReplay(ContextWitnessResultTransport.restore(packet,maximumWork),packet,maximumEvents,target);
+    }
+    void requireTarget(ContextWitnessResultTransport.Cut expected){
+        if(target!=null&&!target.equals(expected))throw new IllegalStateException("Witness replay has a different sealed target cut");
     }
     void rule(Source source,String statement) throws Exception {
         if (closed || linked) throw new IllegalStateException("Witness pass input is sealed");
-        try { capture.replay(replay.mind,source,statement); }
+        try {
+            if(source!=null&&!source.localX&&target!=null&&!target.contains(ContextWitnessResultTransport.Cut.of(source)))
+                throw new IllegalStateException("Foreign producer outside sealed witness replay members");
+            capture.replay(replay.mind,source,statement);
+        }
         catch (Exception failure) { linked = true; nativeFailure = "Witness input failed: "+failure.getMessage(); throw failure; }
     }
     private static boolean sameCut(Source a,Source b) {
@@ -83,7 +95,7 @@ final class ContextWitnessSeedReplay implements AutoCloseable {
                     throw new IllegalStateException("New producer does not match carried X cut");
             }
             ContextWitnessPrimaryStepVerifier.Scope scope = ContextWitnessPrimaryStepVerifier.scope(
-                    Collections.emptyList(),snapshot,work,true,8);
+                    Collections.emptyList(),snapshot,work,true,8,target);
             List<Route> imported = new ArrayList<>();
             for (Item item : seeds) {
                 List<Argument> arguments = new ArrayList<>();

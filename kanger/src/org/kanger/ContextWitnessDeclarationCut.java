@@ -36,9 +36,9 @@ final class ContextWitnessDeclarationCut {
                 if (emptyTarget != null && (cut.localX || !source.localX))
                     throw new IllegalStateException("Declaration contradicts empty target proof");
                 if (!seen.add(source)) throw new IllegalStateException("Duplicate declaration source occurrence");
-                if (!(source.localX ? actual.equals(parent) : !cut.localX && actual.equals(cut)))
+                if (!(source.localX ? actual.equals(parent) : !cut.localX && cut.contains(actual)))
                     throw new IllegalStateException("Declaration producer outside expected cut");
-                target |= actual.equals(cut); capture.replay(mind,source,declaration.statement);
+                target |= cut.contains(actual); capture.replay(mind,source,declaration.statement);
             }
             Snapshot captured = capture.snapshot();
             if (!target || captured.inputs.size() != snapshot.size() || !captured.gaps.isEmpty())

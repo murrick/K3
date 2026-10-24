@@ -108,17 +108,40 @@ final class ContextWitnessResultTransport {
         final long revision;
         final String view;
         final boolean localX;
-        private Cut(Source source) { context = source.context; revision = source.revision; view = source.view; localX = source.localX; }
+        final String trustedGroup;
+        final Map<UUID,Cut> members;
+        private Cut(Source source) {
+            context=source.context;revision=source.revision;view=source.view;localX=source.localX;
+            trustedGroup=null;members=Collections.emptyMap();
+        }
         static Cut of(Source source) { return new Cut(source); }
         private Cut(ContextProductionInventory inventory) {
-            context = inventory.context; revision = inventory.revision; view = "inventory:"+inventory.fingerprint; localX = inventory.localX;
+            context=inventory.context;revision=inventory.revision;view="inventory:"+inventory.fingerprint;localX=inventory.localX;
+            trustedGroup=null;members=Collections.emptyMap();
         }
         static Cut of(ContextProductionInventory inventory) { return new Cut(inventory); }
-        public boolean equals(Object other) {
-            if (!(other instanceof Cut)) return false; Cut cut = (Cut)other;
-            return context.equals(cut.context) && revision == cut.revision && view.equals(cut.view) && localX == cut.localX;
+        private Cut(ContextProductionNativeBinding.Snapshot snapshot) {
+            context=snapshot.inventory.context;revision=snapshot.inventory.revision;view="inventory:"+snapshot.inventory.fingerprint;localX=false;
+            trustedGroup=snapshot.trustedGroup;Map<UUID,Cut> bound=new LinkedHashMap<>();
+            for(ContextProductionNativeBinding.Snapshot member:snapshot.members)bound.put(member.inventory.context,of(member.inventory));
+            members=Collections.unmodifiableMap(bound);
         }
-        public int hashCode() { return Objects.hash(context,revision,view,localX); }
+        static Cut of(ContextProductionNativeBinding.Snapshot snapshot) {
+            return snapshot.trustedGroup==null ? of(snapshot.inventory) : new Cut(snapshot);
+        }
+        boolean contains(Cut actual) {
+            return members.isEmpty() ? equals(actual) : Objects.equals(members.get(actual.context),actual);
+        }
+        Set<UUID> contexts() { return members.isEmpty()?Collections.singleton(context):members.keySet(); }
+        void claimContexts(Set<UUID> seen,Runnable work) {
+            for(UUID id:contexts()){work.run();if(!seen.add(id))throw new IllegalArgumentException("Repeated physical witness family Context");}
+        }
+        public boolean equals(Object other) {
+            if (!(other instanceof Cut)) return false; Cut cut=(Cut)other;
+            return context.equals(cut.context)&&revision==cut.revision&&view.equals(cut.view)&&localX==cut.localX
+                &&Objects.equals(trustedGroup,cut.trustedGroup)&&members.equals(cut.members);
+        }
+        public int hashCode() { return Objects.hash(context,revision,view,localX,trustedGroup,members); }
     }
     enum FamilyStatus { MERGED, CONFLICT, INCOMPLETE }
     static final class Opposition {
@@ -170,7 +193,7 @@ final class ContextWitnessResultTransport {
                             if (!parent.equals(actual)) throw new IllegalStateException("Witness branch changed X producer cut");
                             if (cut.localX) matched = true;
                         } else {
-                            if (cut.localX || !cut.equals(actual)) throw new IllegalStateException("Witness branch does not match expected foreign cut");
+                            if (cut.localX || !cut.contains(actual)) throw new IllegalStateException("Witness branch does not match expected foreign cut");
                             matched = true;
                         }
                     }
@@ -199,9 +222,10 @@ final class ContextWitnessResultTransport {
         Set<UUID> contexts = new HashSet<>();
         for (Cut cut : expected) {
             work.run();
-            if (cut == null || !contexts.add(cut.context) || cut.localX && !parent.equals(cut)
-                    || !cut.localX && parent.context.equals(cut.context))
+            if (cut == null || cut.localX && !parent.equals(cut)
+                    || !cut.localX && cut.contexts().contains(parent.context))
                 throw new IllegalArgumentException("One exact cut per family context required");
+            cut.claimContexts(contexts,work);
         }
         return new Family(input,expected,parent);
     }
@@ -381,6 +405,7 @@ final class ContextWitnessResultTransport {
     }
     private static Result exportVerifiedNext(ContextWitnessSeedReplay round,Cut cut,List<ContextProductionInputs.Declaration> declarations,
             int maximumDepth,int maximumWork,int maximumEvents,boolean roundStep,ContextWitnessEmptyTarget emptyTarget) {
+        try {round.requireTarget(cut);}catch(IllegalStateException failure){return new Result(false,failure.getMessage(),null);}
         Result observed = exportNext(round,maximumDepth,maximumWork);
         if (!observed.exported) return observed;
         Runnable work = budget(maximumWork);

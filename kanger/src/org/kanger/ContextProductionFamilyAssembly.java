@@ -94,7 +94,7 @@ public final class ContextProductionFamilyAssembly {
         Set<UUID> ids=new HashSet<>();claimContexts(left,ids,work);claimContexts(right,ids,work);
     }
     private static Cut cut(Snapshot snapshot) {
-        return Cut.of(snapshot.inventory);
+        return Cut.of(snapshot);
     }
     public static Result assemble(Snapshot x,List<Snapshot> foreign,int maximumWork) {
         if (maximumWork < 1) throw new IllegalArgumentException("Bounded family assembly required");
@@ -102,11 +102,11 @@ public final class ContextProductionFamilyAssembly {
         try {
             List<Snapshot> sources = new ArrayList<>(foreign);
             if (sources.size() > 15) throw new IllegalStateException("Family source limit");
-            if(x.trustedGroup!=null || sources.stream().anyMatch(v->v.trustedGroup!=null))
-                throw new IllegalStateException("Trusted witness cuts require shared replay evidence");
+            for(Snapshot source:sources)if(source.trustedGroup!=null&&source.primary.stream().anyMatch(e->e.bundle!=null))
+                throw new IllegalStateException("Foreign trusted witness bundles require private seed evidence");
             identity(x,true,work); Set<UUID> contexts = new HashSet<>(); contexts.add(x.inventory.context);
             for (Snapshot source : sources) {
-                identity(source,false,work); if (!contexts.add(source.inventory.context)) throw new IllegalStateException("Repeated family Context");
+                identity(source,false,work);claimContexts(source,contexts,work);
             }
             ContextWitnessResultTransport.Result seeds = ContextWitnessResultTransport.primarySeeds(x,maximumWork);
             if (!seeds.exported) throw new IllegalStateException(seeds.reason);

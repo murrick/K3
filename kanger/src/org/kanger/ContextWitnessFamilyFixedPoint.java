@@ -61,7 +61,7 @@ final class ContextWitnessFamilyFixedPoint {
             this.branches = Collections.unmodifiableList(new ArrayList<>(branches));
             List<Cut> cuts = new ArrayList<>(); Set<UUID> contexts = new HashSet<>(); Branch self = null;
             for (Branch branch : this.branches) {
-                if (!contexts.add(branch.cut.context)) throw new IllegalArgumentException("Repeated fixed-point context");
+                branch.cut.claimContexts(contexts,()->{});
                 cuts.add(branch.cut);
                 if (branch.cut.localX) {
                     if (self != null) throw new IllegalArgumentException("Exactly one self-X branch required"); self = branch;
@@ -102,7 +102,7 @@ final class ContextWitnessFamilyFixedPoint {
                                 current,branch.cut,branch.declarations,limits.depth,limits.work,limits.events,branch.emptyTarget);
                         if (result.exported) ++unchanged;
                         else {
-                            try (ContextWitnessSeedReplay nativePass = ContextWitnessSeedReplay.open(current,limits.work,limits.events)) {
+                            try (ContextWitnessSeedReplay nativePass = ContextWitnessSeedReplay.open(current,branch.cut,limits.work,limits.events)) {
                                 for (Declaration declaration : branch.declarations) nativePass.rule(declaration.source,declaration.statement);
                                 result = ContextWitnessResultTransport.exportRoundNext(nativePass,branch.cut,branch.declarations,
                                         limits.depth,limits.work,limits.events,branch.emptyTarget);

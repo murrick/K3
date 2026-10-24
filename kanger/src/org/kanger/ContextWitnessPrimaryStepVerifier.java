@@ -131,6 +131,10 @@ final class ContextWitnessPrimaryStepVerifier {
     }
     /** Explicit SeedReplay bound; legacy primary and two-premise entrypoints stay narrow. */
     static Scope scope(List<PrimaryEvidence> primary,Snapshot snapshot,Runnable work,boolean observedJoins,int maximumLiterals) {
+        return scope(primary,snapshot,work,observedJoins,maximumLiterals,null);
+    }
+    static Scope scope(List<PrimaryEvidence> primary,Snapshot snapshot,Runnable work,boolean observedJoins,int maximumLiterals,
+            ContextWitnessResultTransport.Cut foreignCut) {
         if(maximumLiterals<1 || maximumLiterals>8) throw new IllegalArgumentException("Bounded producer shape required");
         for (String gap : snapshot.gaps) {
             work.run();
@@ -148,7 +152,10 @@ final class ContextWitnessPrimaryStepVerifier {
             work.run();
             if (input.source == null) throw new IllegalStateException("derived-input-outside-primary-step");
             Source label = cutLabels.putIfAbsent(input.source.localX,input.source);
-            if (label != null && (!label.context.equals(input.source.context) || label.revision != input.source.revision
+            boolean sharedForeign=!input.source.localX&&foreignCut!=null&&foreignCut.trustedGroup!=null;
+            if(sharedForeign&&!foreignCut.contains(ContextWitnessResultTransport.Cut.of(input.source)))
+                throw new IllegalStateException("Foreign source outside expected shared replay cut");
+            if (!sharedForeign && label != null && (!label.context.equals(input.source.context) || label.revision != input.source.revision
                 || !label.view.equals(input.source.view))) throw new IllegalStateException("incompatible-source-cut");
             Source opposite = cutLabels.get(!input.source.localX);
             if (opposite != null && opposite.context.equals(input.source.context)) throw new IllegalStateException("ambiguous-source-role");
