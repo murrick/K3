@@ -62,7 +62,7 @@ public final class ContextProductionFamilyAssemblyRunner {
             Snapshot mixed = snapshot(5,true,"!$w p(w,1); !@x (scalar(1)&&(p(x,1)->warm(x,1)));"); Artifact mixedFamily = assemble(mixed);
             require(mixedFamily.rows.stream().anyMatch(r -> r.use == Use.X_SEEDS_AND_PRODUCER && r.seedLiterals == 1),"mixed source row has both explicit seed and whole producer disposition");
             require(mixedFamily.plan.branches.get(0).declarations.get(0).statement.contains("scalar") && item(mixedFamily.input,"scalar").proofs.get(0).sources.contains(source(mixed,"scalar")),"mixed conjunction is never split into synthetic source identities");
-            require(mixedFamily.evaluate(12,16,WORK,100000).status == Status.INCOMPLETE,"uncovered mixed-source unit remains explicit");
+            Evaluation mixedChecked=mixedFamily.evaluate(12,16,WORK,100000); require(mixedChecked.status == Status.FIXED_POINT,"whole mixed X source covers its authenticated ground unit and implication: "+mixedChecked.reason);
             Snapshot signed = snapshot(6,true,"!$w p(w,1); !@w p(w,1)->warm(w,1); !~scalar(1);"); Artifact signedFamily = assemble(signed);
             require(!item(signedFamily.input,"scalar").atom.positive && signedFamily.evaluate(12,16,WORK,100000).status == Status.INCOMPLETE,"negative scalar fact is retained rather than dropped to fit positive inference");
             Snapshot scalarPremise = snapshot(7,false,"!@w p(w,1)&&scalar(1)->q(w,1);");

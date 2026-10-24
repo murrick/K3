@@ -44,6 +44,21 @@ final class ContextGroundApplicationVerifier {
             }
         }
         if (!matched) throw new IllegalStateException("ground-producer-instance-mismatch");
+        binding(scope,observation,work);
+    }
+    /** Native materialization of a ground primary conjunct, not an inference from zero donors. */
+    static void primaryInstance(ContextWitnessPrimaryStepVerifier.Scope scope,Application observation,Runnable work) {
+        if(observation.steps!=0||!observation.premises.isEmpty()||!observation.conclusion.positive)
+            throw new IllegalStateException("outside-ground-primary-instance");
+        boolean matched=false;
+        for(Clause shape:scope.shapes.getOrDefault(observation.nativeRule,Collections.emptyList())){
+            work.run();if(shape.variables.isEmpty()&&shape.literals.size()==1&&shape.literals.get(0).positive
+                    &&instance(shape,Collections.singletonList(observation.conclusion),0,new boolean[1],new HashMap<>(),work))matched=true;
+        }
+        if(!matched)throw new IllegalStateException("ground-primary-instance-shape-mismatch");
+        binding(scope,observation,work);
+    }
+    private static void binding(ContextWitnessPrimaryStepVerifier.Scope scope,Application observation,Runnable work) {
         Set<Source> expected = scope.producers.get(observation.nativeRule),actual = new LinkedHashSet<>();
         for (Support producer : observation.producerSupports) {
             work.run(); if (producer.depth != 0 || producer.sources.size() != 1)

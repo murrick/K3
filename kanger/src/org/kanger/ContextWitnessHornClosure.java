@@ -85,7 +85,7 @@ final class ContextWitnessHornClosure {
                 body.add(literal); for (ContextProductionCapture.Slot slot : literal.arguments) { work.run(); if (slot.variable >= 0) variables.add(slot.variable); }
             }
         }
-        if (head == null || body.isEmpty()) throw new IllegalStateException("Fact-free definite Horn closure required");
+        if (head == null) throw new IllegalStateException("Positive definite Horn head required");
         for (ContextProductionCapture.Slot slot : head.arguments) {
             work.run(); if (slot.variable >= 0 && !variables.contains(slot.variable)) throw new IllegalStateException("Range-restricted Horn head required");
         }
@@ -97,7 +97,17 @@ final class ContextWitnessHornClosure {
             work.run(); if (!item.atom.positive) throw new IllegalStateException("Positive Horn closure pool required");
             for (Support proof : item.proofs) { work.run(); if (proof.depth > maximumDepth) throw new IllegalStateException("Carried Horn proof exceeds depth limit"); }
         }
-        for (Input input : definitions) for (Clause clause : input.shapes) schema(clause,work);
+        for (Input input : definitions) for (Clause clause : input.shapes) {
+            Schema rule=schema(clause,work);
+            if(rule.body.isEmpty()) {
+                // Ground unit clauses are primary knowledge only under their exact original Source.
+                boolean primary=false;
+                for(Item item:pool.items)if(head(rule.head,item,Collections.emptyMap(),work))for(Support proof:item.proofs){
+                    work.run();if(proof.depth==0&&proof.sources.equals(Collections.singleton(input.source)))primary=true;
+                }
+                if(!primary)throw new IllegalStateException("Missing authenticated depth0 primary fact Source");
+            }
+        }
     }
     /** Input-enabled obligations only; later output-enabled bodies belong to a later barrier. */
     static int verifyRound(Packet input,Packet output,List<Input> definitions,int maximumDepth,Runnable work) {

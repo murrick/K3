@@ -180,7 +180,21 @@ final class ContextWitnessUnaryChainVerifier {
         if (!groundOnly && !correspondence.verified) return incomplete(correspondence.reason);
         Map<Application,List<Route>> groundApplications = new IdentityHashMap<>();
         if (allowGround) for (Application observation : snapshot.applications) {
-            work.run(); ContextGroundApplicationVerifier.application(scope,observation,work);
+            work.run();
+            if(observation.steps==0) {
+                ContextGroundApplicationVerifier.primaryInstance(scope,observation,work);
+                Pattern primary=ground(observation.conclusion);
+                for(Support producer:observation.producerSupports) {
+                    boolean known=false;
+                    for(Route seed:seeds){
+                        work.run();if(seed.replay.equals(replay)&&seed.prior==null&&seed.application==null&&seed.crossing==null
+                                &&seed.proof.depth==0&&seed.proof.sources.equals(producer.sources)&&seed.physical.equivalent(primary,work))known=true;
+                    }
+                    if(!known)throw new IllegalStateException("Ground primary instance has no exact authenticated depth0 seed");
+                }
+                continue; // Preserve the primary ledger; never invent a depth1 zero-donor proof.
+            }
+            ContextGroundApplicationVerifier.application(scope,observation,work);
             groundApplications.put(observation,new ArrayList<>());
         }
         Map<ContextWitnessProjection,List<Pattern>> premises = new IdentityHashMap<>();

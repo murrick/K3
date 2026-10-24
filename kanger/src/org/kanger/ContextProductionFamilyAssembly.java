@@ -11,7 +11,7 @@ import org.kanger.ContextWitnessFamilyFixedPoint.Branch;
 
 /** Complete row accounting and diagnostic family assembly from native-bound snapshots; never admission. */
 public final class ContextProductionFamilyAssembly {
-    public enum Use { X_SEEDS, X_PRODUCER, X_SEEDS_AND_PRODUCER, FOREIGN_CUT, PRIVATE_SEEDS }
+    public enum Use { X_SEEDS, X_PRODUCER, X_SEEDS_AND_PRODUCER, FOREIGN_CUT, PRIVATE_SEEDS, PRIVATE_SEEDS_AND_PRODUCER }
     public static final class RowUse {
         public final Source source;
         public final Use use;
@@ -126,8 +126,11 @@ public final class ContextProductionFamilyAssembly {
                 boolean privateSeeds=false;
                 for (Entry entry : source.primary) {
                     work.run();int literals=ContextWitnessResultTransport.privateSeedLiterals(entry,work);
-                    if(literals>0){privateSeeds=true;rows.add(new RowUse(entry.source,Use.PRIVATE_SEEDS,literals));}
-                    else {declarations.add(new Declaration(entry.source,entry.statement));rows.add(new RowUse(entry.source,Use.FOREIGN_CUT,0));}
+                    boolean producer=!ContextWitnessResultTransport.privateSeedOnly(entry,literals);
+                    if(literals>0)privateSeeds=true;
+                    if(producer)declarations.add(new Declaration(entry.source,entry.statement));
+                    rows.add(new RowUse(entry.source,literals==0?Use.FOREIGN_CUT:
+                            producer?Use.PRIVATE_SEEDS_AND_PRODUCER:Use.PRIVATE_SEEDS,literals));
                 }
                 if(privateSeeds)branches.add(ContextWitnessFamilyFixedPoint.privateBranch(
                         ContextWitnessResultTransport.privatePool(seeds.packet,x,source,maximumWork),declarations));

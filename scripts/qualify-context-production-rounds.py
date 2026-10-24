@@ -189,6 +189,8 @@ def main():
                  ('org.kanger.ContextPrivateWitnessContinuationRunner', 'CONTEXT_PRIVATE_WITNESS_CONTINUATION_PASS'),
                  ('org.kanger.ContextPrivateWitnessFamilyRunner', 'CONTEXT_PRIVATE_WITNESS_FAMILY_PASS'),
                  ('org.kanger.ContextPrivateWitnessAssemblyRunner', 'CONTEXT_PRIVATE_WITNESS_ASSEMBLY_PASS'),
+                 ('org.kanger.ContextMixedPrimaryFamilyRunner', 'CONTEXT_MIXED_PRIMARY_FAMILY_PASS'),
+                 ('org.kanger.storage.dumb2.ContextMixedPrimaryWriteRunner', 'CONTEXT_MIXED_PRIMARY_WRITE_PASS'),
                  ('org.kanger.storage.dumb2.ContextPrivateWitnessAdmissionContractRunner', 'CONTEXT_PRIVATE_WITNESS_ADMISSION_CONTRACT_PASS'),
                  ('org.kanger.storage.dumb2.ContextPrivateWitnessWriteRunner', 'CONTEXT_PRIVATE_WITNESS_WRITE_PASS'),
                  ('org.kanger.ContextTrustedWitnessScopeRunner', 'CONTEXT_TRUSTED_WITNESS_SCOPE_PASS'),

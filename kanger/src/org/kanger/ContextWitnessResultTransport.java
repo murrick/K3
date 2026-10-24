@@ -105,15 +105,19 @@ final class ContextWitnessResultTransport {
             this.sources=Collections.unmodifiableSet(new LinkedHashSet<>(sources));
         }
     }
-    /** Entire positive ground-fact rows are seeds; mixed whole rows remain declarations. */
+    /** A ground unit is entailed by its whole native-bound primary row; never mint a clause Source. */
+    static boolean privateSeedClause(Clause clause,Runnable work) {
+        work.run();if(!clause.variables.isEmpty()||clause.literals.size()!=1||!clause.literals.get(0).positive)return false;
+        for(ContextProductionCapture.Slot slot:clause.literals.get(0).arguments){work.run();if(slot.variable>=0||slot.value==null)return false;}
+        return true;
+    }
     static int privateSeedLiterals(ContextProductionNativeBinding.Entry entry,Runnable work) {
         if(entry.bundle!=null)return entry.bundle.atoms.size();
-        if(entry.clauses.isEmpty())return 0;
-        for(Clause clause:entry.clauses){
-            work.run();if(!clause.variables.isEmpty()||clause.literals.size()!=1||!clause.literals.get(0).positive)return 0;
-            for(ContextProductionCapture.Slot slot:clause.literals.get(0).arguments){work.run();if(slot.variable>=0||slot.value==null)return 0;}
-        }
-        return entry.clauses.size();
+        int count=0;for(Clause clause:entry.clauses)if(privateSeedClause(clause,work))++count;
+        return count;
+    }
+    static boolean privateSeedOnly(ContextProductionNativeBinding.Entry entry,int literals) {
+        return entry.bundle!=null||literals>0&&literals==entry.clauses.size();
     }
     static PrivatePool privatePool(Packet common,ContextProductionNativeBinding.Snapshot x,ContextProductionNativeBinding.Snapshot target,int maximumWork) {
         Runnable work=budget(maximumWork);ContextProductionFamilyAssembly.identity(x,true,work);ContextProductionFamilyAssembly.identity(target,false,work);
@@ -128,6 +132,7 @@ final class ContextWitnessResultTransport {
             Support proof=new Support(Collections.singleton(entry.source),0);
             if(entry.bundle==null) {
                 for(Clause clause:entry.clauses){
+                    if(!privateSeedClause(clause,work))continue;
                     ContextProductionCapture.Atom atom=clause.literals.get(0);List<Slot> slots=new ArrayList<>();
                     for(ContextProductionCapture.Slot slot:atom.arguments){work.run();slots.add(new Slot(null,slot.value));}
                     add(local,new Atom(atom.predicate,true,slots),proof,work);
