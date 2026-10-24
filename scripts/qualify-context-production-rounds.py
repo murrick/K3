@@ -10,7 +10,9 @@ import tempfile
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--mode', choices=('contract', 'reference', 'witness-contract', 'independent-reopen-contract'), default='contract')
+    parser.add_argument('--mode', choices=('contract', 'reference', 'witness-contract', 'independent-reopen-contract', 'ordinary-commit-contract'), default='contract')
+    parser.add_argument('--ordinary-integration-candidate', action='store_true',
+                        help='Compile an isolated experimental default hook; never edit production sources')
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
     output = root / 'target/context-production-rounds'
@@ -26,6 +28,9 @@ def main():
         names = [('org.kanger.ContextWitnessForkContractRunner', 'CONTEXT_WITNESS_FORK_CONTRACT_PASS')]
     if args.mode == 'independent-reopen-contract':
         names = [('org.kanger.storage.dumb2.ContextIndependentReopenContractRunner', 'CONTEXT_INDEPENDENT_REOPEN_CONTRACT_PASS')]
+    if args.mode == 'ordinary-commit-contract':
+        names = [('org.kanger.storage.dumb2.ContextOrdinaryProductionCommitRunner', 'CONTEXT_ORDINARY_PRODUCTION_COMMIT_PASS'),
+                 ('org.kanger.storage.dumb2.ContextOrdinaryCommitCompatibilityRunner', 'CONTEXT_ORDINARY_COMMIT_COMPATIBILITY_PASS')]
     if args.mode == 'reference':
         names = [('org.kanger.ContextProductionCaptureRunner', 'CONTEXT_PRODUCTION_CAPTURE_PASS'),
                  ('org.kanger.ContextProductionRoundsReferenceRunner', 'CONTEXT_PRODUCTION_ROUNDS_REFERENCE_PASS'),
@@ -178,6 +183,7 @@ def main():
                  ('org.kanger.storage.dumb2.ContextAuthorityQuantifiedConjunctionDiagonalNegativeReverseRunner', 'CONTEXT_AUTHORITY_QUANTIFIED_CONJUNCTION_DIAGONAL_NEGATIVE_REVERSE_PASS'),
                  ('org.kanger.ContextConjunctiveQuantifierScopeRunner', 'CONTEXT_CONJUNCTIVE_QUANTIFIER_SCOPE_PASS'),
                  ('org.kanger.ContextAntecedentQuantifierScopeRunner', 'CONTEXT_ANTECEDENT_QUANTIFIER_SCOPE_PASS'),
+                 ('org.kanger.storage.dumb2.ContextOrdinaryCommitCompatibilityRunner', 'CONTEXT_ORDINARY_COMMIT_COMPATIBILITY_PASS'),
                  ('org.kanger.ContextDisjunctiveOuterExistentialScopeRunner', 'CONTEXT_DISJUNCTIVE_OUTER_EXISTENTIAL_SCOPE_PASS'),
                  ('org.kanger.storage.dumb2.ContextDisjunctiveOuterExistentialMiddlePositiveRunner', 'CONTEXT_DISJUNCTIVE_OUTER_EXISTENTIAL_MIDDLE_POSITIVE_PASS'),
                  ('org.kanger.storage.dumb2.ContextDisjunctiveOuterExistentialMiddleNegativeRunner', 'CONTEXT_DISJUNCTIVE_OUTER_EXISTENTIAL_MIDDLE_NEGATIVE_PASS'),
@@ -559,6 +565,22 @@ def main():
                  ('org.kanger.DmzReplaySettlementRunner', 'DMZ_REPLAY_SETTLEMENT_PASS'),
                  ('org.kanger.DmzNativeAlternativeProofRunner', 'DMZ_NATIVE_ALTERNATIVE_PROOF_PASS')]
     drivers = [root / 'kanger-qualification/src' / (name.replace('.', '/') + '.java') for name, _ in names]
+    if args.ordinary_integration_candidate:
+        original = root / 'kanger-data-dumb2/src/org/kanger/storage/dumb2/DB.java'
+        before = """            validateEffectiveConnections((Mind) proposed, workingConnections);
+            if(pendingNativeWrite!=null) pendingNativeWrite.validate((Mind)proposed);"""
+        after = """            if(pendingNativeWrite==null) validatePendingProductionCommit((Mind)proposed);
+            else {
+                validateEffectiveConnections((Mind) proposed, workingConnections);
+                pendingNativeWrite.validate((Mind)proposed);
+            }"""
+        source = original.read_text(encoding='utf-8')
+        if source.count(before) != 1:
+            raise RuntimeError('Experimental default hook baseline changed; reconcile the candidate')
+        candidate = run / 'candidate/org/kanger/storage/dumb2/DB.java'
+        candidate.parent.mkdir(parents=True, exist_ok=True)
+        candidate.write_text(source.replace(before, after), encoding='utf-8')
+        production = [candidate if p == original else p for p in production]
     listing = run / 'sources.list'
     listing.write_text(''.join('"' + str(p).replace('\\', '/') + '"\n'
                                for p in production + drivers), encoding='utf-8')
@@ -593,10 +615,11 @@ def main():
         print(log, end='', flush=True)
     head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip()
     passed = all(result['passed'] for result in results)
-    report = dict(head=head, production_sources=len(production), mode=args.mode, passed=passed, results=results,
+    report = dict(ordinary_integration_candidate=args.ordinary_integration_candidate, head=head, production_sources=len(production), mode=args.mode, passed=passed, results=results,
                   scope={'contract': 'Pending runtime authoring contract',
                          'witness-contract': 'Native primary existential witness consistency contract',
                          'independent-reopen-contract': 'Certified independent-coordinate source must reopen after publication',
+                         'ordinary-commit-contract': 'Ordinary admission and observational/publication compatibility; activation gate',
                          'reference': 'Capture, witness identity and scoped Horn reference; round gate unchanged'}[args.mode],
                   source_dirty=bool(subprocess.check_output(
                       ['git', 'status', '--porcelain'], cwd=root, text=True).strip()))
