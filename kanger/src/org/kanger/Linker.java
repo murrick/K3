@@ -586,6 +586,9 @@ public class Linker {
             mind.getDomainSolves().clear();
             mind.getDomainCauses().clear();
 
+            // Restored domain occurrences can retain another execution view.
+            // Select this rule's view before coalescing variables for rotation.
+            ((Rule) r).setMind(mind);
             final SortedSet<TVariable> tvars = new TreeSet<>();
             for (List<Domain> tree : ((Rule) r).getTree()) {
                 for (Domain d : tree) {
