@@ -40,7 +40,7 @@ public final class ContextUniversalFamilyCoverage {
             Set<Snapshot> seen=new HashSet<>(); Set<Source> familySources=new HashSet<>(); Set<UUID> contexts=new HashSet<>();
             for(Snapshot cut:input.cuts) {
                 work.run(); ContextProductionFamilyAssembly.identity(cut,cut==input.x,work);
-                if(!contexts.add(cut.inventory.context)) throw new IllegalStateException("Repeated family context");
+                ContextProductionFamilyAssembly.claimContexts(cut,contexts,work);
                 for(Entry entry:cut.primary) { work.run(); familySources.add(entry.source); }
             }
             for(Receipt receipt:outputs) {

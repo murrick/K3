@@ -25,14 +25,49 @@ public final class ContextProductionNativeBinding {
         public int witnesses() { return bundle == null ? 0 : bundle.witnesses; }
     }
     public static final class Snapshot {
+        /** Ordinary inventory or first member's routing inventory; never group Source attribution. */
         public final ContextProductionInventory inventory;
+        public final String trustedGroup;
+        public final List<Snapshot> members;
         public final List<Entry> primary;
+        /** Unscoped compatibility summary; member-local IDs need the context-keyed map below. */
         public final Set<Long> excludedGenerated;
+        public final Map<UUID,Set<Long>> excludedGeneratedByContext;
         private Snapshot(ContextProductionInventory inventory,List<Entry> primary) {
-            this.inventory = inventory; this.primary = Collections.unmodifiableList(new ArrayList<>(primary));
+            this.inventory = inventory; trustedGroup=null; members=Collections.emptyList(); this.primary = Collections.unmodifiableList(new ArrayList<>(primary));
             Set<Long> generated = new LinkedHashSet<>(); for (ContextProductionInventory.Row row : inventory.generated) generated.add(row.nativeRule);
             excludedGenerated = Collections.unmodifiableSet(generated);
+            excludedGeneratedByContext=Collections.singletonMap(inventory.context,excludedGenerated);
         }
+        List<Snapshot> physicalMembers() {
+            return trustedGroup==null ? Collections.singletonList(this) : members;
+        }
+        private Snapshot(String group,List<Snapshot> members,List<Entry> primary) {
+            this.inventory=members.get(0).inventory;this.trustedGroup=group;
+            this.members=Collections.unmodifiableList(new ArrayList<>(members));
+            this.primary=Collections.unmodifiableList(new ArrayList<>(primary));
+            // Member-local native IDs can collide; consult members for generated cache accounting.
+            Set<Long> generated=new LinkedHashSet<>();for(Snapshot member:members)generated.addAll(member.excludedGenerated);
+            excludedGenerated=Collections.unmodifiableSet(generated);
+            Map<UUID,Set<Long>> byContext=new LinkedHashMap<>();for(Snapshot member:members)byContext.put(member.inventory.context,member.excludedGenerated);
+            excludedGeneratedByContext=Collections.unmodifiableMap(byContext);
+        }
+    }
+    /** One shared foreign logical cut, retaining the exact sealed member entries and inventories. */
+    public static Snapshot trusted(String group,List<Snapshot> members,int maximumWork) {
+        if(group==null || group.isEmpty() || group.length()>256 || group.chars().anyMatch(c->Character.isWhitespace(c)||Character.isISOControl(c)) || members==null || members.isEmpty() || members.size()>15 || maximumWork<1)
+            throw new IllegalArgumentException("Bounded named trusted member cut required");
+        Runnable work=ContextGroundProductionRounds.budget(maximumWork);
+        List<Snapshot> sealedMembers=new ArrayList<>(members);
+        Set<UUID> contexts=new HashSet<>();List<Entry> entries=new ArrayList<>();
+        for(Snapshot member:sealedMembers) {
+            work.run();if(member==null || member.trustedGroup!=null)throw new IllegalStateException("Ordinary sealed foreign members required");
+            ContextProductionFamilyAssembly.identity(member,false,work);
+            if(!contexts.add(member.inventory.context))throw new IllegalStateException("Repeated trusted member Context");
+            for(Entry e:member.primary){work.run();entries.add(e);}
+        }
+        if(entries.size()>64)throw new IllegalStateException("Trusted whole declaration limit");
+        return new Snapshot(group,sealedMembers,entries);
     }
     public static final class Result {
         public final boolean bound;

@@ -60,7 +60,7 @@ public final class ContextGroundCutEvidence {
         List<Entry> declarations = new ArrayList<>(x.primary);
         if (foreign != null) {
             ContextProductionFamilyAssembly.identity(foreign,false,work);
-            if (x.inventory.context.equals(foreign.inventory.context)) throw new IllegalStateException("Ground cut cannot alias X");
+            ContextProductionFamilyAssembly.disjoint(x,foreign,work);
             declarations.addAll(foreign.primary);
         }
         if (declarations.size() > 64) throw new IllegalStateException("Ground cut declaration limit");

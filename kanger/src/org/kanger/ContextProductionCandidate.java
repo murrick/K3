@@ -98,8 +98,8 @@ public final class ContextProductionCandidate {
             int available = maximumRows; Set<UUID> contexts = new HashSet<>(); contexts.add(base.inventory.context);
             for (Snapshot source : sources) {
                 ContextProductionFamilyAssembly.identity(source,false,work);
-                if (!contexts.add(source.inventory.context)) throw new IllegalStateException("Repeated candidate context");
-                available -= source.inventory.rows.size(); work.run();
+                ContextProductionFamilyAssembly.claimContexts(source,contexts,work);
+                for(Snapshot member:source.physicalMembers()){available -= member.inventory.rows.size(); work.run();}
             }
             if (available < 1) throw new IllegalStateException("Candidate total inventory row limit");
             UUID identity = UUID.randomUUID();

@@ -45,12 +45,14 @@ final class ContextPendingProductionSnapshotSession implements AutoCloseable {
         requireOwner();source=new RevisionRef(db.getContextId(),db.getRevision());
         topology=Collections.unmodifiableList(new ArrayList<>(db.dmzTopology()));
         Set<UUID> ids=new HashSet<>();ids.add(source.getContextId());
-        for(ContextConnection c:topology) if(c.getTrustGroup()!=null || !ids.add(c.getTarget().getContextId())) throw new IllegalStateException("Distinct ordinary initialized pending cuts required");
+        for(ContextConnection c:topology) if(!ids.add(c.getTarget().getContextId())) throw new IllegalStateException("Distinct initialized pending member contexts required");
         parentInventory=inventory(parent,rows);childInventory=inventory(child,rows);
         retainedInventory=retained==null?null:inventory(retained,rows);
         int remaining=rows-childInventory.rows.size();List<ContextProductionInventory> views=new ArrayList<>();
         for(ContextConnection c:topology) {ContextProductionInventory i=ContextProductionInventory.inspect(c.layer(),c.getTarget().getContextId(),c.getTarget().getRevision(),false,c.getInitialization(),remaining);remaining-=i.rows.size();views.add(i);}
-        foreign=Collections.unmodifiableList(views);requireCurrent();
+        foreign=Collections.unmodifiableList(views);
+        // Reuse the provider's qualified shared native runtime, not raw independent member cuts.
+        db.productionExecutionTopology();requireCurrent();
     }
     private void requireOwner() throws Exception {
         if(closed || Thread.currentThread()!=owner || provider.isClosed() || provider.isReadOnly() || ((User)child.getUser()).getData()!=provider
@@ -82,17 +84,31 @@ final class ContextPendingProductionSnapshotSession implements AutoCloseable {
                 throw new IllegalStateException("Native write initialized cut changed before native validation");
         }
     }
+    private List<Snapshot> bindForeign(int work,int events) throws Exception {
+        List<Snapshot> members=new ArrayList<>();
+        for(int n=0;n<topology.size();n++) {
+            ContextProductionNativeBinding.Result f=ContextProductionNativeBinding.bind(topology.get(n).layer(),foreign.get(n),work,events);
+            if(!f.bound)throw new IllegalStateException("Pending foreign binding incomplete: "+f.reason);
+            members.add(f.snapshot);
+        }
+        Map<String,List<Snapshot>> groups=new LinkedHashMap<>();
+        for(int n=0;n<topology.size();n++)if(topology.get(n).getTrustGroup()!=null)
+            groups.computeIfAbsent(topology.get(n).getTrustGroup(),k->new ArrayList<>()).add(members.get(n));
+        Set<String> emitted=new HashSet<>();List<Snapshot> cuts=new ArrayList<>();
+        for(int n=0;n<topology.size();n++) {
+            String group=topology.get(n).getTrustGroup();
+            if(group==null)cuts.add(members.get(n));
+            else if(emitted.add(group))cuts.add(ContextProductionNativeBinding.trusted(group,groups.get(group),work));
+        }
+        return cuts;
+    }
     ContextProductionFamilyAssembly.Evaluation inspectWitness(int rounds,int depth,int work,int events) throws Exception {
         synchronized(provider) {
             requireCurrent();
             try {
                 ContextProductionNativeBinding.Result x=ContextProductionNativeBinding.bind(child,childInventory,work,events);
                 if(!x.bound) throw new IllegalStateException("Pending witness X binding incomplete: "+x.reason);
-                List<Snapshot> bound=new ArrayList<>();
-                for(int n=0;n<topology.size();n++) {
-                    ContextProductionNativeBinding.Result f=ContextProductionNativeBinding.bind(topology.get(n).layer(),foreign.get(n),work,events);
-                    if(!f.bound) throw new IllegalStateException("Pending witness foreign binding incomplete: "+f.reason);bound.add(f.snapshot);
-                }
+                List<Snapshot> bound=bindForeign(work,events);
                 ContextProductionFamilyAssembly.Result family=ContextProductionFamilyAssembly.assemble(x.snapshot,bound,work);
                 if(!family.assembled) throw new IllegalStateException("Pending witness family incomplete: "+family.reason);
                 return family.artifact.evaluate(rounds,depth,work,events);
@@ -109,11 +125,7 @@ final class ContextPendingProductionSnapshotSession implements AutoCloseable {
             try {
                 ContextProductionNativeBinding.Result x=ContextProductionNativeBinding.bind(child,childInventory,work,events);
                 if(!x.bound) throw new IllegalStateException("Pending ground X binding incomplete: "+x.reason);
-                List<Snapshot> bound=new ArrayList<>();
-                for(int n=0;n<topology.size();n++) {
-                    ContextProductionNativeBinding.Result f=ContextProductionNativeBinding.bind(topology.get(n).layer(),foreign.get(n),work,events);
-                    if(!f.bound) throw new IllegalStateException("Pending ground foreign binding incomplete: "+f.reason);bound.add(f.snapshot);
-                }
+                List<Snapshot> bound=bindForeign(work,events);
                 return ContextGroundClauseFamily.evaluate(x.snapshot,bound,rounds,local,depth,work,events,probes,models,ledgerLimits);
             } finally {requireCurrent();}
         }
@@ -125,9 +137,7 @@ final class ContextPendingProductionSnapshotSession implements AutoCloseable {
             try {
                 ContextProductionNativeBinding.Result x=ContextProductionNativeBinding.bind(child,childInventory,preparation,events);
                 if(!x.bound) throw new IllegalStateException("Pending X binding incomplete: "+x.reason);
-                List<Snapshot> bound=new ArrayList<>();
-                for(int n=0;n<topology.size();n++) {ContextProductionNativeBinding.Result f=ContextProductionNativeBinding.bind(topology.get(n).layer(),foreign.get(n),preparation,events);
-                    if(!f.bound) throw new IllegalStateException("Pending foreign binding incomplete: "+f.reason);bound.add(f.snapshot);}
+                List<Snapshot> bound=bindForeign(preparation,events);
                 ContextUniversalFamilyInspection.Result result=ContextUniversalFamilyInspection.inspect(x.snapshot,bound,rounds,local,depth,instances,models,work);
                 ContextUniversalFamilyAudit.Audit checked=ContextUniversalFamilyAudit.audit(result,x.snapshot,bound,depth,instances,auditWork);
                 return new Result(result,checked);
@@ -142,11 +152,7 @@ final class ContextPendingProductionSnapshotSession implements AutoCloseable {
             try {
                 ContextProductionNativeBinding.Result x=ContextProductionNativeBinding.bind(child,childInventory,preparation,events);
                 if(!x.bound) throw new IllegalStateException("Pending X binding incomplete: "+x.reason);
-                List<Snapshot> bound=new ArrayList<>();
-                for(int n=0;n<topology.size();n++) {
-                    ContextProductionNativeBinding.Result f=ContextProductionNativeBinding.bind(topology.get(n).layer(),foreign.get(n),preparation,events);
-                    if(!f.bound) throw new IllegalStateException("Pending foreign binding incomplete: "+f.reason);bound.add(f.snapshot);
-                }
+                List<Snapshot> bound=bindForeign(preparation,events);
                 List<Snapshot> complete=new ArrayList<>(bound);complete.add(x.snapshot);
                 boolean witnesses=false,variables=false;int remaining=work;
                 for(Snapshot snapshot:complete) for(ContextProductionNativeBinding.Entry entry:snapshot.primary) {

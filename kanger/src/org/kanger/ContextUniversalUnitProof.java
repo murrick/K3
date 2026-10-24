@@ -58,7 +58,7 @@ public final class ContextUniversalUnitProof {
         List<Entry> result=new ArrayList<>(x.primary);
         if(target!=x) {
             ContextProductionFamilyAssembly.identity(target,false,work);
-            if(x.inventory.context.equals(target.inventory.context)) throw new IllegalStateException("Unit cut cannot alias X");
+            ContextProductionFamilyAssembly.disjoint(x,target,work);
             result.addAll(target.primary);
         }
         if(result.size()>64) throw new IllegalStateException("Unit proof declaration limit");

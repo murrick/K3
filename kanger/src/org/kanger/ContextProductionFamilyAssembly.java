@@ -69,6 +69,13 @@ public final class ContextProductionFamilyAssembly {
         private Result(boolean assembled,String reason,Artifact artifact) { this.assembled = assembled; this.reason = reason; this.artifact = artifact; }
     }
     static void identity(Snapshot snapshot,boolean localX,Runnable work) {
+        if(snapshot.trustedGroup!=null) {
+            if(localX)throw new IllegalStateException("X cannot be a trusted foreign group");
+            List<Entry> expected=new ArrayList<>();Set<UUID> ids=new HashSet<>();
+            for(Snapshot member:snapshot.members){work.run();identity(member,false,work);if(!ids.add(member.inventory.context))throw new IllegalStateException("Repeated trusted member");expected.addAll(member.primary);}
+            if(!expected.equals(snapshot.primary))throw new IllegalStateException("Trusted cut lost exact member entries");
+            return;
+        }
         ContextProductionInventory inventory = snapshot.inventory;
         if (inventory.localX != localX || snapshot.primary.size() != inventory.primary.size()) throw new IllegalStateException("Bound snapshot role/primary inventory mismatch");
         Set<Long> expected = new HashSet<>(); for (ContextProductionInventory.Row row : inventory.primary) { work.run(); expected.add(row.nativeRule); }
@@ -80,6 +87,12 @@ public final class ContextProductionFamilyAssembly {
         }
         if (!expected.isEmpty()) throw new IllegalStateException("Unaccounted primary inventory rows");
     }
+    static void claimContexts(Snapshot snapshot,Set<UUID> contexts,Runnable work) {
+        for(Snapshot member:snapshot.physicalMembers()){work.run();if(!contexts.add(member.inventory.context))throw new IllegalStateException("Repeated physical family Context");}
+    }
+    static void disjoint(Snapshot left,Snapshot right,Runnable work) {
+        Set<UUID> ids=new HashSet<>();claimContexts(left,ids,work);claimContexts(right,ids,work);
+    }
     private static Cut cut(Snapshot snapshot) {
         return Cut.of(snapshot.inventory);
     }
@@ -89,6 +102,8 @@ public final class ContextProductionFamilyAssembly {
         try {
             List<Snapshot> sources = new ArrayList<>(foreign);
             if (sources.size() > 15) throw new IllegalStateException("Family source limit");
+            if(x.trustedGroup!=null || sources.stream().anyMatch(v->v.trustedGroup!=null))
+                throw new IllegalStateException("Trusted witness cuts require shared replay evidence");
             identity(x,true,work); Set<UUID> contexts = new HashSet<>(); contexts.add(x.inventory.context);
             for (Snapshot source : sources) {
                 identity(source,false,work); if (!contexts.add(source.inventory.context)) throw new IllegalStateException("Repeated family Context");

@@ -60,7 +60,8 @@ public final class ContextUniversalCandidateAudit {
             Set<UUID> contexts=new HashSet<>(); contexts.add(a.base.inventory.context);
             for(Snapshot cut:requested) {
                 work.run(); ContextProductionFamilyAssembly.identity(cut,false,work);
-                if(!expected.add(cut) || !contexts.add(cut.inventory.context)) throw new IllegalStateException("Repeated expected family context");
+                if(!expected.add(cut)) throw new IllegalStateException("Repeated expected family cut");
+                ContextProductionFamilyAssembly.claimContexts(cut,contexts,work);
             }
             if(requested.size()!=a.foreign.size()) throw new IllegalStateException("Exact expected candidate family required");
             Set<Snapshot> seen=Collections.newSetFromMap(new IdentityHashMap<Snapshot,Boolean>());

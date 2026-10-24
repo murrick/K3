@@ -15,6 +15,7 @@ final class ContextWitnessEmptyTarget {
         this.snapshot = snapshot; cut = Cut.of(snapshot.inventory);
     }
     static ContextWitnessEmptyTarget of(Snapshot snapshot,Runnable work) {
+        if(snapshot.trustedGroup!=null)throw new IllegalStateException("Trusted empty witness target requires shared replay evidence");
         ContextProductionInventory inventory = snapshot.inventory;
         Set<Long> ids = new HashSet<>();
         for (ContextProductionInventory.Row row : inventory.primary) { work.run(); ids.add(row.nativeRule); }

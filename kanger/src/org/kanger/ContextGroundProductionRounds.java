@@ -49,7 +49,7 @@ public final class ContextGroundProductionRounds {
         List<Snapshot> cuts = new ArrayList<>(); cuts.add(x); Set<UUID> ids = new HashSet<>(); ids.add(x.inventory.context);
         for (Snapshot cut : new ArrayList<>(foreign)) {
             work.run(); ContextProductionFamilyAssembly.identity(cut,false,work);
-            if (!ids.add(cut.inventory.context)) throw new IllegalStateException("Repeated ground family context"); cuts.add(cut);
+            ContextProductionFamilyAssembly.claimContexts(cut,ids,work); cuts.add(cut);
         }
         for (Snapshot cut : cuts) ContextGroundCutEvidence.declarations(x,cut == x ? null : cut,work);
         return new Frontier(x,cuts,Collections.emptyList(),null);

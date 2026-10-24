@@ -47,7 +47,8 @@ public final class ContextUniversalFamilyAudit {
             for(org.kanger.ContextProductionNativeBinding.Entry e:expectedX.primary) {work.run();if(!universe.add(e.source)) throw new IllegalStateException("Aliased whole-family Source");}
             for(Snapshot cut:requested) {
                 work.run();ContextProductionFamilyAssembly.identity(cut,false,work);
-                if(!expected.add(cut) || !contexts.add(cut.inventory.context)) throw new IllegalStateException("Repeated expected whole-family context");
+                if(!expected.add(cut)) throw new IllegalStateException("Repeated expected whole-family cut");
+                ContextProductionFamilyAssembly.claimContexts(cut,contexts,work);
                 for(org.kanger.ContextProductionNativeBinding.Entry e:cut.primary) {work.run();if(!universe.add(e.source)) throw new IllegalStateException("Aliased whole-family Source");}
             }
             Frontier input=verdict.status==Status.CONSISTENT ? verdict.certificate==null?null:verdict.certificate.input

@@ -69,7 +69,7 @@ public final class ContextUniversalUnitRounds {
         Set<UUID> seen=new HashSet<>(); seen.add(x.inventory.context);
         for(Snapshot cut:siblings) {
             work.run(); ContextProductionFamilyAssembly.identity(cut,false,work);
-            if(!seen.add(cut.inventory.context)) throw new IllegalStateException("Repeated unit family context");
+            ContextProductionFamilyAssembly.claimContexts(cut,seen,work);
             cuts.add(cut);
         }
         for(Snapshot cut:cuts) ContextUniversalUnitProof.declarations(x,cut,work);

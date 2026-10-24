@@ -1626,6 +1626,9 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
             return DmzSourceQueryProjection.execute(session,request);
         }
     }
+    synchronized List<ContextConnection> productionExecutionTopology() throws Exception {
+        return workingConnections.executionConnections(communeCache);
+    }
     synchronized List<ContextConnection> dmzTopology() { return new ArrayList<ContextConnection>(workingConnections.getConnections()); }
     /** Internal operation-local owner; never returned by public federation dispatch. */
     synchronized DmzSourceSession openDmzCandidateSession(Mind sourceMind,
