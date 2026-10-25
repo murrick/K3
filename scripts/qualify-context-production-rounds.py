@@ -10,7 +10,7 @@ import tempfile
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--mode', choices=('contract', 'reference', 'witness-contract', 'independent-reopen-contract', 'ordinary-commit-contract', 'private-witness-contract'), default='contract')
+    parser.add_argument('--mode', choices=('contract', 'reference', 'witness-contract', 'independent-reopen-contract', 'ordinary-commit-contract', 'private-witness-contract', 'universal-unit-contract'), default='contract')
     parser.add_argument('--ordinary-integration-candidate', action='store_true',
                         help='Compile an isolated experimental default hook; never edit production sources')
     args = parser.parse_args()
@@ -33,6 +33,8 @@ def main():
                  ('org.kanger.storage.dumb2.ContextOrdinaryCommitCompatibilityRunner', 'CONTEXT_ORDINARY_COMMIT_COMPATIBILITY_PASS')]
     if args.mode == 'private-witness-contract':
         names = [('org.kanger.storage.dumb2.ContextPrivateWitnessAdmissionContractRunner', 'CONTEXT_PRIVATE_WITNESS_ADMISSION_CONTRACT_PASS')]
+    if args.mode == 'universal-unit-contract':
+        names = [('org.kanger.ContextUniversalUnitFamilyContractRunner', 'CONTEXT_UNIVERSAL_UNIT_FAMILY_CONTRACT_PASS')]
     if args.mode == 'reference':
         names = [('org.kanger.ContextProductionCaptureRunner', 'CONTEXT_PRODUCTION_CAPTURE_PASS'),
                  ('org.kanger.ContextProductionRoundsReferenceRunner', 'CONTEXT_PRODUCTION_ROUNDS_REFERENCE_PASS'),
@@ -635,6 +637,7 @@ def main():
                   scope={'contract': 'Pending runtime authoring contract',
                          'witness-contract': 'Native primary existential witness consistency contract',
                          'independent-reopen-contract': 'Certified independent-coordinate source must reopen after publication',
+                         'universal-unit-contract': 'Desired universal-unit family coverage; open required language gate, not expected-refusal PASS',
                          'private-witness-contract': 'Bounded actual private witness admission/local refutation; required integration gate',
                          'ordinary-commit-contract': 'Ordinary admission and observational/publication compatibility; activation gate',
                          'reference': 'Capture, witness identity and scoped Horn reference; round gate unchanged'}[args.mode],
