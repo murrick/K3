@@ -194,6 +194,7 @@ def main():
                  ('org.kanger.ContextMixedPrimaryFamilyRunner', 'CONTEXT_MIXED_PRIMARY_FAMILY_PASS'),
                  ('org.kanger.ContextUniversalWitnessInstanceRunner', 'CONTEXT_UNIVERSAL_WITNESS_INSTANCE_PASS'),
                  ('org.kanger.ContextUniversalWitnessRouteRunner', 'CONTEXT_UNIVERSAL_WITNESS_ROUTE_PASS'),
+                 ('org.kanger.ContextUniversalSchemaInteractionRunner', 'CONTEXT_UNIVERSAL_SCHEMA_INTERACTION_PASS'),
                  ('org.kanger.storage.dumb2.ContextMixedPrimaryWriteRunner', 'CONTEXT_MIXED_PRIMARY_WRITE_PASS'),
                  ('org.kanger.storage.dumb2.ContextPrivateWitnessAdmissionContractRunner', 'CONTEXT_PRIVATE_WITNESS_ADMISSION_CONTRACT_PASS'),
                  ('org.kanger.storage.dumb2.ContextPrivateWitnessWriteRunner', 'CONTEXT_PRIVATE_WITNESS_WRITE_PASS'),

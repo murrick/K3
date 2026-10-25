@@ -31,6 +31,7 @@ public final class ContextUniversalWitnessRouteRunner {
             ContextWitnessSeedReplay.ObservedUniversals observed=pass.inspectObservedUniversals(originals,8,WORK);
             System.out.println("UNIVERSAL_ROUTE_CASE local="+local+" grouped="+grouped+" reverse="+reverse+" duplicate="+duplicate+" reconstructed="+observed.reconstructed+" reason="+observed.reason);
             require(observed.reconstructed,"observed universal route chain: "+observed.reason);
+            require(observed.schemaAudit!=null&&observed.schemaAudit.observedComplete&&!observed.schemaAudit.obligations.isEmpty(),"observed routes retain checked symbolic schema obligations, without waiving coverage gap");
             require(observed.basis.equals(input.identity)&&observed.replay.equals(pass.namespace),"exact immutable input/replay binding");
             require(observed.outstandingGaps.stream().anyMatch(g->g.startsWith("unbound-waiter-composition:")),"schema interaction remains an outstanding obligation");
             Source seed=source(x,SEED),gate=source(local?x:a,GATE),done=source(grouped?b:a,DONE);

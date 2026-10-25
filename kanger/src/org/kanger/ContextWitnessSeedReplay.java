@@ -135,8 +135,9 @@ final class ContextWitnessSeedReplay implements AutoCloseable {
         final String reason;
         final List<Route> routes;
         final List<String> outstandingGaps;
-        private ObservedUniversals(UUID basis,UUID replay,boolean reconstructed,String reason,List<Route> routes,List<String> gaps) {
-            this.basis=basis;this.replay=replay;this.reconstructed=reconstructed;this.reason=reason;
+        final ContextUniversalSchemaInteractionAudit.Result schemaAudit;
+        private ObservedUniversals(UUID basis,UUID replay,boolean reconstructed,String reason,List<Route> routes,List<String> gaps,ContextUniversalSchemaInteractionAudit.Result schemaAudit) {
+            this.schemaAudit=schemaAudit;this.basis=basis;this.replay=replay;this.reconstructed=reconstructed;this.reason=reason;
             this.routes=Collections.unmodifiableList(new ArrayList<>(routes));
             outstandingGaps=Collections.unmodifiableList(new ArrayList<>(gaps));
         }
@@ -146,6 +147,7 @@ final class ContextWitnessSeedReplay implements AutoCloseable {
             throw new IllegalArgumentException("Bounded observed universal replay required");
         Runnable work=ContextGroundProductionRounds.budget(maximumWork);List<String> gaps=Collections.emptyList();
         try {
+            if(!linked)capture.observeSchemaInteractions();
             Snapshot snapshot=settle(work);gaps=snapshot.gaps;
             Map<Source,ContextProductionNativeBinding.Entry> declared=new LinkedHashMap<>();
             for(ContextProductionNativeBinding.Entry original:originals){work.run();if(declared.put(original.source,original)!=null)throw new IllegalStateException("Repeated original replay owner");}
@@ -158,9 +160,10 @@ final class ContextWitnessSeedReplay implements AutoCloseable {
             Map<ContextWitnessProjection,ContextUniversalWitnessInstanceVerifier.Instance> instances=
                 ContextUniversalWitnessInstanceVerifier.observed(replay,capture,originals,work);
             if(instances.isEmpty())throw new IllegalStateException("No observed universal witness instances");
+            ContextUniversalSchemaInteractionAudit.Result schemaAudit=ContextUniversalSchemaInteractionAudit.inspect(replay,capture,originals,work);
             Result proof=ContextWitnessUnaryChainVerifier.close(namespace,snapshot,scope,imported(work),maximumDepth,7,work,true,instances);
-            return new ObservedUniversals(inputIdentity,namespace,proof.reconstructed,proof.reason,proof.routes,gaps);
-        }catch(Exception failure){return new ObservedUniversals(inputIdentity,namespace,false,failure.getMessage(),Collections.emptyList(),gaps);}
+            return new ObservedUniversals(inputIdentity,namespace,proof.reconstructed,proof.reason,proof.routes,gaps,schemaAudit);
+        }catch(Exception failure){return new ObservedUniversals(inputIdentity,namespace,false,failure.getMessage(),Collections.emptyList(),gaps,null);}
     }
     Set<Source> producerSources(Runnable work) {
         Set<Source> sources = new LinkedHashSet<>();

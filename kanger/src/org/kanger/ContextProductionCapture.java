@@ -424,6 +424,41 @@ public final class ContextProductionCapture implements AutoCloseable {
         }
     }
 
+    /** Detached native schema encounter. Structural metadata only, never a resolvent or proof. */
+    public static final class SchemaInteraction {
+        public final long ownerRule,partnerRule;
+        public final Clause owner,partner;
+        public final int ownerPivot,partnerPivot;
+        public final List<Support> ownerSupports,partnerSupports;
+        private SchemaInteraction(long a,long b,SchemaEndpoint left,SchemaEndpoint right,List<Support> x,List<Support> y) {
+            ownerRule=a;partnerRule=b;owner=left.clause;partner=right.clause;ownerPivot=left.pivot;partnerPivot=right.pivot;
+            ownerSupports=Collections.unmodifiableList(new ArrayList<>(x));partnerSupports=Collections.unmodifiableList(new ArrayList<>(y));
+        }
+    }
+    private static final class SchemaEndpoint {
+        final Clause clause;final int pivot;
+        SchemaEndpoint(Clause clause,int pivot){this.clause=clause;this.pivot=pivot;}
+    }
+    private static List<SchemaEndpoint> schemaEndpoints(Mind mind,Domain endpoint)throws Exception {
+        Rule rule=(Rule)endpoint.getRule();List<SchemaEndpoint> result=new ArrayList<>();
+        if(rule==null||rule.isQuery()||rule.getTree().size()>8)return result;
+        for(List<Domain> branch:rule.getTree()) {
+            if(branch.isEmpty()||branch.size()>8)return Collections.emptyList();
+            boolean present=false;for(Domain domain:branch)if(domain.getId()==endpoint.getId())present=true;
+            if(!present)continue;
+            Map<Long,Integer> variables=new HashMap<>();List<Atom> atoms=new ArrayList<>();Atom pivot=null;
+            for(Domain domain:branch) {
+                if(domain.getRange()<0||domain.getRange()>8)return Collections.emptyList();
+                Atom atom=Atom.of(domain,mind,true,variables,true);if(atom==null)return Collections.emptyList();
+                atoms.add(atom);if(domain.getId()==endpoint.getId())pivot=atom;
+            }
+            Clause clause=new Clause(atoms);int selected=-1;
+            for(int i=0;i<clause.literals.size();++i)if(clause.literals.get(i).identical(pivot))selected=i;
+            if(selected<0)return Collections.emptyList();result.add(new SchemaEndpoint(clause,selected));
+        }
+        return result;
+    }
+
     public static final class Input {
         public final Source source;
         public final long nativeRule;
@@ -508,6 +543,9 @@ public final class ContextProductionCapture implements AutoCloseable {
         public final List<Application> applications;
         public final List<Residual> residuals;
         public final List<CompositionCandidate> compositionCandidates;
+        public final boolean schemaInteractionsObserved;
+        public final boolean schemaInteractionsMissed;
+        public final List<SchemaInteraction> schemaInteractions;
         public final List<ContextWitnessProjection> witnessProjections;
         public final List<ContextWitnessProjection.Materialization> witnessMaterializations;
         public final List<String> gaps;
@@ -535,6 +573,9 @@ public final class ContextProductionCapture implements AutoCloseable {
             applications = Collections.unmodifiableList(new ArrayList<>(capture.applications));
             residuals = Collections.unmodifiableList(new ArrayList<>(capture.residuals));
             compositionCandidates = Collections.unmodifiableList(new ArrayList<>(capture.compositionCandidates));
+            schemaInteractionsObserved=capture.observeSchemas;
+            schemaInteractionsMissed=capture.schemaInteractionsMissed;
+            schemaInteractions=Collections.unmodifiableList(new ArrayList<>(capture.schemaInteractions));
             witnessProjections = Collections.unmodifiableList(new ArrayList<>(capture.witnessProjections));
             witnessMaterializations = Collections.unmodifiableList(new ArrayList<>(capture.witnessMaterializations));
             primaryValues = Collections.unmodifiableList(new ArrayList<>(capture.primaryValues));
@@ -573,6 +614,9 @@ public final class ContextProductionCapture implements AutoCloseable {
     private long rotationComparisons;
     private boolean residualSubsets;
     private boolean observeCompositions;
+    private boolean observeSchemas;
+    private boolean schemaInteractionsMissed;
+    private final List<SchemaInteraction> schemaInteractions=new ArrayList<>();
     private final List<CompositionBranch> compositionBranches = new ArrayList<>();
     private static final class CompositionBranch {
         final Mind target;
@@ -607,6 +651,8 @@ public final class ContextProductionCapture implements AutoCloseable {
     }
     /** Opt-in ground branch metadata. Absence does not certify composition coverage. */
     public void observeCompositionCandidates() { check(); observeCompositions = true; }
+    /** Opt-in universal encounter metadata; never clears the existing schema gap. */
+    public void observeSchemaInteractions(){check();observeSchemas=true;}
     public void verifyParametersFresh(List<SemanticTermSnapshot> parameters) {
         check();
         for (SemanticTermSnapshot value : primaryValues) for (SemanticTermSnapshot parameter : parameters)
@@ -623,7 +669,7 @@ public final class ContextProductionCapture implements AutoCloseable {
         return false;
     }
     private int eventCount() {
-        return compositionBranches.size() + compositionCandidates.size() + inputs.size() + applications.size() + residuals.size() + witnessProjections.size() + witnessMaterializations.size() + stored.size() + rotationPlans.size() + rotationVisits;
+        return schemaInteractions.size() + compositionBranches.size() + compositionCandidates.size() + inputs.size() + applications.size() + residuals.size() + witnessProjections.size() + witnessMaterializations.size() + stored.size() + rotationPlans.size() + rotationVisits;
     }
     private void take() {
         if (eventCount() >= maximumEvents) {
@@ -828,8 +874,22 @@ public final class ContextProductionCapture implements AutoCloseable {
         if (rule == null || rule.isQuery() || waiter.getPredicateId() != literal.getPredicateId()
                 || waiter.isAntc() == literal.isAntc()) return;
         if (!waiter.getArguments().getTVariables(mind).isEmpty()
-                && !literal.getArguments().getTVariables(mind).isEmpty())
+                && !literal.getArguments().getTVariables(mind).isEmpty()) {
             capture.gaps.add("unbound-waiter-composition:" + rule.getId());
+            if(!capture.observeSchemas)capture.schemaInteractionsMissed=true;
+            if(capture.observeSchemas) {
+                try {
+                    List<SchemaEndpoint> left=schemaEndpoints(mind,waiter),right=schemaEndpoints(mind,literal);
+                    if(left.isEmpty()||right.isEmpty()) {
+                        capture.schemaInteractionsMissed=true;capture.gaps.add("unobserved-schema-interaction:"+rule.getId());
+                    }
+                    for(SchemaEndpoint a:left)for(SchemaEndpoint b:right) {
+                        capture.take();capture.schemaInteractions.add(new SchemaInteraction(waiter.getRuleId(),literal.getRuleId(),a,b,
+                            capture.sources(mind,waiter.getRuleId()),capture.sources(mind,literal.getRuleId())));
+                    }
+                }catch(Exception failure){capture.schemaInteractionsMissed=true;throw failure;}
+            }
+        }
     }
     /** Compare whole ground branches actually visited by native traversal. Records obligations, never resolvents. */
     static void compositionBranch(Mind mind,List<Domain> branch) throws Exception {
