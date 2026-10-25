@@ -611,3 +611,4 @@ org.kanger.storage.dumb2.ContextPrivateWitnessWriteRunner | CONTEXT_PRIVATE_WITN
 org.kanger.ContextUniversalWitnessInstanceRunner | CONTEXT_UNIVERSAL_WITNESS_INSTANCE_PASS
 org.kanger.ContextUniversalWitnessRouteRunner | CONTEXT_UNIVERSAL_WITNESS_ROUTE_PASS
 org.kanger.ContextUniversalSchemaInteractionRunner | CONTEXT_UNIVERSAL_SCHEMA_INTERACTION_PASS
+org.kanger.ContextUniversalUnitClosureRunner | CONTEXT_UNIVERSAL_UNIT_CLOSURE_PASS
