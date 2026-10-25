@@ -615,3 +615,4 @@ org.kanger.ContextUniversalUnitClosureRunner | CONTEXT_UNIVERSAL_UNIT_CLOSURE_PA
 org.kanger.ContextUniversalDerivedReplayRunner | CONTEXT_UNIVERSAL_DERIVED_REPLAY_PASS
 org.kanger.ContextUniversalDerivedRoutesRunner | CONTEXT_UNIVERSAL_DERIVED_ROUTES_PASS
 org.kanger.ContextUniversalDerivedBarrierRunner | CONTEXT_UNIVERSAL_DERIVED_BARRIER_PASS
+org.kanger.ContextUniversalInputResidualsRunner | CONTEXT_UNIVERSAL_INPUT_RESIDUALS_PASS
