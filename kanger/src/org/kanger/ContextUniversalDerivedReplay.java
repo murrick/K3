@@ -31,15 +31,17 @@ final class ContextUniversalDerivedReplay {
         final List<String> outstandingGaps;
         final Snapshot observation;
         final List<ContextWitnessUnaryChainVerifier.Route> seeds;
+        final Map<Root,Origin> carried;
         private Result(boolean bound,String reason,Packet common,Packet local,UUID replay,ContextUniversalUnitClosure.Result theory,
                 boolean privateInput,Map<Long,List<Proof>> bindings,List<ProducerEvent> events,List<String> gaps,
-                Snapshot observation,List<ContextWitnessUnaryChainVerifier.Route> seeds) {
+                Snapshot observation,List<ContextWitnessUnaryChainVerifier.Route> seeds,Map<Root,Origin> carried) {
             this.bound=bound;this.reason=reason;basis=common==null?null:common.identity;localBasis=local==null?null:local.identity;
             this.replay=replay;parent=theory==null?null:theory.parent;target=theory==null?null:theory.target;this.privateInput=privateInput;
             Map<Long,List<Proof>> copy=new LinkedHashMap<>();for(Map.Entry<Long,List<Proof>> e:bindings.entrySet())copy.put(e.getKey(),Collections.unmodifiableList(new ArrayList<>(e.getValue())));
             this.bindings=Collections.unmodifiableMap(copy);this.events=Collections.unmodifiableList(new ArrayList<>(events));
             outstandingGaps=Collections.unmodifiableList(new ArrayList<>(gaps));
             this.observation=observation;this.seeds=Collections.unmodifiableList(new ArrayList<>(seeds));
+            this.carried=Collections.unmodifiableMap(new LinkedHashMap<>(carried));
         }
     }
     private static List<ContextWitnessUnaryChainVerifier.Route> seeds(Replay replay,Map<Root,Origin> carried,Runnable work) {
@@ -129,8 +131,8 @@ final class ContextUniversalDerivedReplay {
                     for(Proof proof:proofs){work.run();if(!ContextGroundApplicationVerifier.producerInstance(proof.clause,event,work))throw new IllegalStateException("Derived ground producer instance mismatch");}
                     events.add(new ProducerEvent(null,event,proofs,Collections.emptyMap()));
                 }
-                return new Result(true,"All replayed schemas and observed native producer instances bound to exact proof DAG alternatives; donor proofs and family coverage still required",common,local,namespace,theory,pool!=null,bindings,events,gaps,observed,seeds(restored,carried,work));
+                return new Result(true,"All replayed schemas and observed native producer instances bound to exact proof DAG alternatives; donor proofs and family coverage still required",common,local,namespace,theory,pool!=null,bindings,events,gaps,observed,seeds(restored,carried,work),carried);
             }
-        }catch(Exception failure){return new Result(false,failure.getMessage(),common,local,namespace,theory,pool!=null,Collections.emptyMap(),Collections.emptyList(),gaps,null,Collections.emptyList());}
+        }catch(Exception failure){return new Result(false,failure.getMessage(),common,local,namespace,theory,pool!=null,Collections.emptyMap(),Collections.emptyList(),gaps,null,Collections.emptyList(),Collections.emptyMap());}
     }
 }

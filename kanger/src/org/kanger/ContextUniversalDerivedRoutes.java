@@ -31,11 +31,13 @@ final class ContextUniversalDerivedRoutes {
         final boolean reconstructed;
         final String reason;
         final UUID basis,localBasis,replay;
+        final ContextUniversalDerivedReplay.Result input;
         final List<Route> routes,conclusions,stored,theorems;
         final List<Relation> materializations;
         final List<String> outstandingGaps;
         private Result(ContextUniversalDerivedReplay.Result input,boolean reconstructed,String reason,List<Route> routes,List<Route> conclusions,List<Route> stored,List<Route> theorems,List<Relation> relations) {
             this.reconstructed=reconstructed;this.reason=reason;basis=input==null?null:input.basis;localBasis=input==null?null:input.localBasis;
+            this.input=input;
             replay=input==null?null:input.replay;this.routes=Collections.unmodifiableList(new ArrayList<>(routes));
             this.conclusions=Collections.unmodifiableList(new ArrayList<>(conclusions));
             this.stored=Collections.unmodifiableList(new ArrayList<>(stored));

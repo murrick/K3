@@ -245,6 +245,109 @@ final class ContextWitnessResultTransport {
         return new Packet(step.output.items,step.before.common.identity,step.producers,step.localChanged,
                 step.localChanged?null:step.before.cut,null,step.before.cut,null,step.before);
     }
+    /** Sound observed facts only. This is deliberately not PrivateAdvance or a covered round STEP. */
+    static final class DerivedTransfer {
+        final boolean transferred,commonChanged,localChanged;
+        final String reason;
+        final Packet before,output,local;
+        final PrivatePool privateBefore,privateAfter;
+        final Cut parent,target;
+        final ContextUniversalDerivedRoutes.Result proof;
+        private DerivedTransfer(boolean transferred,String reason,Packet before,Packet output,Packet local,
+                PrivatePool privateBefore,PrivatePool privateAfter,ContextUniversalDerivedRoutes.Result proof,Runnable work) {
+            this.transferred=transferred;this.reason=reason;this.before=before;this.output=output;this.local=local;
+            this.privateBefore=privateBefore;this.privateAfter=privateAfter;this.proof=proof;
+            parent=proof==null||proof.input==null?null:proof.input.parent;target=proof==null||proof.input==null?null:proof.input.target;
+            commonChanged=transferred&&!sameItems(before.items,output.items,work);
+            localChanged=transferred&&!sameItems(privateBefore==null?before.items:privateBefore.local.items,local.items,work);
+        }
+    }
+    private static Atom derivedAtom(ContextUniversalDerivedRoutes.Route route,Map<Root,Origin> origins,Runnable work) {
+        if(!Objects.equals(route.physical.root,route.origin))throw new IllegalStateException("Noncanonical derived conclusion cannot be transported");
+        Origin origin=origins.get(route.origin);
+        if(route.origin!=null&&origin==null)throw new IllegalStateException("Missing carried derived transport origin");
+        List<Slot> arguments=new ArrayList<>();
+        for(Argument argument:route.physical.arguments) {
+            work.run();if(argument.root!=null&&!argument.root.equals(route.origin))throw new IllegalStateException("Different derived argument origin");
+            arguments.add(new Slot(argument.root==null?null:origin,argument.value));
+        }
+        return new Atom(route.physical.predicate,route.physical.positive,arguments);
+    }
+    static DerivedTransfer transferDerived(ContextUniversalDerivedRoutes.Result proof,Packet input,int maximumDepth,int maximumWork) {
+        return transferDerived(proof,input,null,maximumDepth,maximumWork);
+    }
+    static DerivedTransfer transferDerivedPrivate(ContextUniversalDerivedRoutes.Result proof,PrivatePool pool,int maximumDepth,int maximumWork) {
+        return transferDerived(proof,pool==null?null:pool.common,pool,maximumDepth,maximumWork);
+    }
+    private static DerivedTransfer transferDerived(ContextUniversalDerivedRoutes.Result proof,Packet input,PrivatePool pool,int maximumDepth,int maximumWork) {
+        if(maximumDepth<0||maximumDepth>64||maximumWork<1)throw new IllegalArgumentException("Bounded derived transfer required");
+        Runnable work=budget(maximumWork);
+        try {
+            if(proof==null||!proof.reconstructed||proof.input==null||!proof.input.bound||input==null)
+                throw new IllegalStateException("Sealed reconstructed derived input required");
+            ContextUniversalDerivedReplay.Result replay=proof.input;Packet local=pool==null?input:pool.local;
+            if(replay.privateInput!=(pool!=null)||!input.identity.equals(proof.basis)||!local.identity.equals(proof.localBasis))
+                throw new IllegalStateException("Derived transport has a different common/local input barrier");
+            if(!replay.parent.equals(parentX(input.items,work)))throw new IllegalStateException("Derived transport changed parent X");
+            if(pool!=null&&(!pool.cut.equals(replay.target)||!Cut.of(pool.x).equals(replay.parent)))
+                throw new IllegalStateException("Derived transport changed owning private frame");
+            for(Item item:local.items)for(Support support:item.proofs){work.run();if(support.depth>maximumDepth)throw new IllegalStateException("Derived input depth limit");}
+            List<Item> after=new ArrayList<>(local.items);
+            List<ContextUniversalDerivedRoutes.Route> routes=new ArrayList<>(proof.conclusions);routes.addAll(proof.theorems);
+            for(ContextUniversalDerivedRoutes.Route route:routes) {
+                work.run();if(route.support.depth>maximumDepth)throw new IllegalStateException("Derived transport depth limit");
+                // Only canonical event conclusions and checked ground theorems cross.
+                // Stored native occurrences never establish global root aliases.
+                if(pool==null&&!usesX(route.support))continue;
+                add(after,derivedAtom(route,replay.carried,work),route.support,work);
+            }
+            privateRank(after,work);Packet retained=new Packet(after);
+            Packet output=pool==null?retained:privateShared(input,retained,work);
+            parentX(output.items,work);
+            PrivatePool next=pool==null?null:new PrivatePool(input,pool.x,pool.snapshot,retained,pool.sources,pool.declarations);
+            return new DerivedTransfer(true,"Observed derived facts transported; schema gaps and round coverage remain open",input,output,retained,pool,next,proof,work);
+        }catch(Exception failure){return new DerivedTransfer(false,failure.getMessage(),input,null,null,pool,null,proof,work);}
+    }
+    /** One synchronous proof-product barrier, without any claim of complete branch traversal or admission. */
+    static final class DerivedBarrier {
+        final boolean merged,changed,localChanged;
+        final String reason;
+        final Packet packet;
+        final Map<Cut,DerivedTransfer> branches;
+        final Map<Cut,PrivatePool> privatePools;
+        private DerivedBarrier(boolean merged,String reason,Packet packet,boolean changed,boolean localChanged,
+                Map<Cut,DerivedTransfer> branches,Map<Cut,PrivatePool> privatePools) {
+            this.merged=merged;this.reason=reason;this.packet=packet;this.changed=changed;this.localChanged=localChanged;
+            this.branches=Collections.unmodifiableMap(new LinkedHashMap<>(branches));
+            this.privatePools=Collections.unmodifiableMap(new LinkedHashMap<>(privatePools));
+        }
+    }
+    static DerivedBarrier mergeDerived(Family family,Map<Cut,DerivedTransfer> outputs,int maximumWork) {
+        if(maximumWork<1)throw new IllegalArgumentException("Bounded derived barrier required");
+        Runnable work=budget(maximumWork);
+        try {
+            if(family==null||outputs==null||!outputs.keySet().equals(new HashSet<>(family.expected)))
+                throw new IllegalStateException("Incomplete or unexpected derived family");
+            Map<Cut,DerivedTransfer> branches=new LinkedHashMap<>();List<Item> merged=new ArrayList<>(family.input.items);boolean localChanged=false;
+            for(Cut cut:family.expected) {
+                work.run();DerivedTransfer branch=outputs.get(cut);
+                if(branch==null||!branch.transferred||branch.before!=family.input||!cut.equals(branch.target)||!family.parent.equals(branch.parent))
+                    throw new IllegalStateException("Derived branch has a different owning cut/common barrier");
+                if(!retains(family.input,branch.output,work))throw new IllegalStateException("Derived branch lost a common input proof");
+                for(Item item:branch.output.items)for(Support proof:item.proofs){work.run();add(merged,item.atom,proof,work);}
+                branches.put(cut,branch);localChanged|=branch.localChanged;
+            }
+            // No branch sees another branch's same-round products. Private rebasing
+            // happens only after every output has passed the common-input check.
+            Packet packet=new Packet(merged);parentX(packet.items,work);privateRank(packet.items,work);
+            Map<Cut,PrivatePool> pools=new LinkedHashMap<>();
+            for(Map.Entry<Cut,DerivedTransfer> entry:branches.entrySet())if(entry.getValue().privateAfter!=null) {
+                work.run();pools.put(entry.getKey(),rebasePrivate(entry.getValue().privateAfter,packet,maximumWork));
+            }
+            return new DerivedBarrier(true,"Synchronous observed derived products merged; closure, all-cut qualification and admission remain open",packet,
+                !sameItems(family.input.items,packet.items,work),localChanged,branches,pools);
+        }catch(Exception failure){return new DerivedBarrier(false,failure.getMessage(),null,false,false,Collections.emptyMap(),Collections.emptyMap());}
+    }
     private static void privateRank(List<Item> items,Runnable work) {
         Set<Origin> rank=new HashSet<>();
         for(Item item:items)for(Slot slot:item.atom.arguments){work.run();if(slot.origin!=null)rank.add(slot.origin);}
