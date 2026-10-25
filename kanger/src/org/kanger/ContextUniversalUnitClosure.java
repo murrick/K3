@@ -86,6 +86,18 @@ final class ContextUniversalUnitClosure {
         }
         verified.add(proof);
     }
+    /** Recheck the sealed proof DAG and its exact owning cuts at a native replay boundary. */
+    static void check(Result result,int maximumDepth,Runnable work) {
+        if(result==null||!result.unitClosed||result.parent==null||result.target==null)throw new IllegalStateException("Closed symbolic frame required");
+        Set<Source> roots=new LinkedHashSet<>();
+        for(Proof proof:result.proofs) {
+            work.run();if(proof.original==null)continue;Source source=proof.original.source;Cut actual=Cut.of(source);
+            if(source.localX?!actual.equals(result.parent):result.target.localX||!result.target.contains(actual))throw new IllegalStateException("Symbolic root outside exact replay cuts");
+            roots.add(source);
+        }
+        Set<Proof> verified=Collections.newSetFromMap(new IdentityHashMap<Proof,Boolean>());
+        for(Proof proof:result.proofs)verify(proof,roots,maximumDepth,verified,work);
+    }
     static Result close(Snapshot x,Snapshot foreign,int maximumRounds,int maximumDepth,int maximumClauses,int maximumAlternatives,int maximumWork) {
         if(x==null||maximumRounds<1||maximumRounds>64||maximumDepth<0||maximumDepth>64||maximumClauses<1||maximumClauses>512
                 ||maximumAlternatives<1||maximumAlternatives>256||maximumWork<1)throw new IllegalArgumentException("Bounded symbolic unit frame required");

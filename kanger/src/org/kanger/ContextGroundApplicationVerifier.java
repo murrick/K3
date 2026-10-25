@@ -31,6 +31,12 @@ final class ContextGroundApplicationVerifier {
         }
         return false;
     }
+    /** Shape-only match for a separately authenticated derived producer; grants no primary authority. */
+    static boolean producerInstance(Clause shape,Application observation,Runnable work) {
+        List<Fact> literals=new ArrayList<>();literals.add(observation.conclusion);
+        for(Fact premise:observation.premises){work.run();literals.add(premise.opposite());}
+        return shape.literals.size()==literals.size()&&instance(shape,literals,0,new boolean[literals.size()],new HashMap<Integer,SemanticTermSnapshot>(),work);
+    }
     static void application(ContextWitnessPrimaryStepVerifier.Scope scope,Application observation,Runnable work) {
         if (observation.steps != 1 || observation.premises.isEmpty() || observation.premises.size() > 2)
             throw new IllegalStateException("outside-ground-donor-step");

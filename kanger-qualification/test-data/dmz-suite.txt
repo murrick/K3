@@ -612,3 +612,4 @@ org.kanger.ContextUniversalWitnessInstanceRunner | CONTEXT_UNIVERSAL_WITNESS_INS
 org.kanger.ContextUniversalWitnessRouteRunner | CONTEXT_UNIVERSAL_WITNESS_ROUTE_PASS
 org.kanger.ContextUniversalSchemaInteractionRunner | CONTEXT_UNIVERSAL_SCHEMA_INTERACTION_PASS
 org.kanger.ContextUniversalUnitClosureRunner | CONTEXT_UNIVERSAL_UNIT_CLOSURE_PASS
+org.kanger.ContextUniversalDerivedReplayRunner | CONTEXT_UNIVERSAL_DERIVED_REPLAY_PASS

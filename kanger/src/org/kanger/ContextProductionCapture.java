@@ -786,6 +786,12 @@ public final class ContextProductionCapture implements AutoCloseable {
             if (inputs.size() == before) gaps.add("unbound-derived-input");
         } finally { inputTarget = null; inputSupports = null; inputClause = null; }
     }
+    /** Exact detached input receipt without repeatedly copying the entire growing journal. */
+    Input replayDerivedInput(Mind target,Clause clause,List<Support> supports)throws Exception {
+        check();int before=inputs.size();replayDerived(target,clause,supports);
+        if(inputs.size()!=before+1)throw new IllegalStateException("Exactly one derived native input required");
+        return inputs.get(before);
+    }
     static void compiled(Mind mind, Rule rule, boolean duplicate) throws Exception {
         ContextProductionCapture capture = ACTIVE.get();
         if (capture == null || capture.inputTarget != mind || (capture.inputSource == null && capture.inputSupports == null) || rule.isQuery()) return;
