@@ -941,6 +941,12 @@ public final class ContextProductionCapture implements AutoCloseable {
         else capture.stored.add(new Materialization(producer.getRuleId(), fact));
     }
     public Snapshot snapshot() { check(); return new Snapshot(this); }
+    /** Local instance authentication must not confuse equal native IDs in fresh replays. */
+    Snapshot snapshot(Mind expectedBoundary) {
+        check();
+        if (boundary != expectedBoundary) throw new IllegalStateException("Different native capture boundary");
+        return new Snapshot(this);
+    }
     @Override public void close() {
         if (closed) return;
         check(); closed = true; inputTarget = null; inputSource = null; inputSupports = null; inputClause = null; labels.clear();
