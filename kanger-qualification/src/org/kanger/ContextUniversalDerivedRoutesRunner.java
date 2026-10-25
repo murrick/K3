@@ -39,7 +39,7 @@ public final class ContextUniversalDerivedRoutesRunner {
             if(route.producer!=null&&route.physical.predicate.equals("gate")) {
                 gate=true;require(route.anchor!=null&&route.support.depth==1&&route.support.sources.equals(set(source(x,SEED),source(local?x:a,GATE))),"universal unit uses actual carried binding proof");
             }
-            
+
         }
         for(ContextUniversalDerivedRoutes.Route route:result.stored)if(route.crossing!=null){stored=true;require(route.prior!=null&&route.support==route.prior.support,"materialization preserves exact proof and depth");}
         require(mid&&gate&&stored,"actual derived, unit and stored proof routes");
