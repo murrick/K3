@@ -609,3 +609,4 @@ org.kanger.storage.dumb2.ContextPrivateWitnessAdmissionContractRunner | CONTEXT_
 org.kanger.storage.dumb2.ContextPrivateWitnessWriteRunner | CONTEXT_PRIVATE_WITNESS_WRITE_PASS
 
 org.kanger.ContextUniversalWitnessInstanceRunner | CONTEXT_UNIVERSAL_WITNESS_INSTANCE_PASS
+org.kanger.ContextUniversalWitnessRouteRunner | CONTEXT_UNIVERSAL_WITNESS_ROUTE_PASS

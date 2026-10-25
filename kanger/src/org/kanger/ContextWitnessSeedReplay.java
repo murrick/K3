@@ -85,40 +85,82 @@ final class ContextWitnessSeedReplay implements AutoCloseable {
         if (maximumDepth < 0 || maximumWork < 1) throw new IllegalArgumentException("Bounded seed replay verification required");
         int[] remaining = {maximumWork}; Runnable work = () -> { if (--remaining[0] < 0) throw new IllegalStateException("Witness seed replay work limit"); };
         try {
-            if (closed) throw new IllegalStateException("Witness seed replay closed");
-            if (nativeFailure != null) throw new IllegalStateException(nativeFailure);
-            if (!linked) {
-                linked = true;
-                try { replay.mind.link(null,false); }
-                catch (Exception failure) {
-                    nativeFailure = "Native witness pass failed: "+failure.getMessage();
-                    throw new IllegalStateException(nativeFailure);
-                }
-            }
-            Snapshot snapshot = capture.snapshot(); Source parent = parentX(work);
-            for (Input input : snapshot.inputs) {
-                work.run(); Source source = input.source;
-                if (source == null || source.localX && !sameCut(parent,source)
-                        || !source.localX && parent.context.equals(source.context))
-                    throw new IllegalStateException("New producer does not match carried X cut");
-            }
+            Snapshot snapshot=settle(work);
             ContextWitnessPrimaryStepVerifier.Scope scope = ContextWitnessPrimaryStepVerifier.scope(
                     Collections.emptyList(),snapshot,work,true,8,target);
-            List<Route> imported = new ArrayList<>();
-            for (Item item : localSeeds) {
-                List<Argument> arguments = new ArrayList<>();
-                for (Slot slot : item.atom.arguments) {
-                    work.run(); Root root = slot.origin == null ? null : bindings.get(slot.origin);
-                    if (slot.origin != null && root == null) throw new IllegalStateException("Missing carried witness binding");
-                    arguments.add(new Argument(root,slot.value));
-                }
-                Pattern pattern = new Pattern(item.atom.predicate,item.atom.positive,arguments,true);
-                for (Support proof : item.proofs) {
-                    work.run(); imported.add(new Route(namespace,pattern,pattern.root,proof,null,null,null,null));
-                }
-            }
+            List<Route> imported=imported(work);
             return ContextWitnessUnaryChainVerifier.close(namespace,snapshot,scope,imported,maximumDepth,7,work,true);
         } catch (IllegalStateException failure) { return new Result(false,failure.getMessage(),Collections.emptyList()); }
+    }
+    private Snapshot settle(Runnable work) {
+        if (closed) throw new IllegalStateException("Witness seed replay closed");
+        if (nativeFailure != null) throw new IllegalStateException(nativeFailure);
+        if (!linked) {
+            linked = true;
+            try { replay.mind.link(null,false); }
+            catch (Exception failure) {
+                nativeFailure = "Native witness pass failed: "+failure.getMessage();
+                throw new IllegalStateException(nativeFailure);
+            }
+        }
+        Snapshot snapshot = capture.snapshot(); Source parent = parentX(work);
+        for (Input input : snapshot.inputs) {
+            work.run(); Source source = input.source;
+            if (source == null || source.localX && !sameCut(parent,source)
+                || !source.localX && parent.context.equals(source.context))
+                throw new IllegalStateException("New producer does not match carried X cut");
+        }
+        return snapshot;
+    }
+    private List<Route> imported(Runnable work) {
+        List<Route> imported = new ArrayList<>();
+        for (Item item : localSeeds) {
+            List<Argument> arguments = new ArrayList<>();
+            for (Slot slot : item.atom.arguments) {
+                work.run(); Root root = slot.origin == null ? null : bindings.get(slot.origin);
+                if (slot.origin != null && root == null) throw new IllegalStateException("Missing carried witness binding");
+                arguments.add(new Argument(root,slot.value));
+            }
+            Pattern pattern = new Pattern(item.atom.predicate,item.atom.positive,arguments,true);
+            for (Support proof : item.proofs) {
+                work.run(); imported.add(new Route(namespace,pattern,pattern.root,proof,null,null,null,null));
+            }
+        }
+        return imported;
+    }
+    /** Observed proof routes only, deliberately incompatible with family export/coverage entrypoints. */
+    static final class ObservedUniversals {
+        final UUID basis,replay;
+        final boolean reconstructed;
+        final String reason;
+        final List<Route> routes;
+        final List<String> outstandingGaps;
+        private ObservedUniversals(UUID basis,UUID replay,boolean reconstructed,String reason,List<Route> routes,List<String> gaps) {
+            this.basis=basis;this.replay=replay;this.reconstructed=reconstructed;this.reason=reason;
+            this.routes=Collections.unmodifiableList(new ArrayList<>(routes));
+            outstandingGaps=Collections.unmodifiableList(new ArrayList<>(gaps));
+        }
+    }
+    ObservedUniversals inspectObservedUniversals(List<ContextProductionNativeBinding.Entry> originals,int maximumDepth,int maximumWork) {
+        if(maximumDepth<0||maximumWork<1||originals==null||originals.isEmpty()||originals.size()>64)
+            throw new IllegalArgumentException("Bounded observed universal replay required");
+        Runnable work=ContextGroundProductionRounds.budget(maximumWork);List<String> gaps=Collections.emptyList();
+        try {
+            Snapshot snapshot=settle(work);gaps=snapshot.gaps;
+            Map<Source,ContextProductionNativeBinding.Entry> declared=new LinkedHashMap<>();
+            for(ContextProductionNativeBinding.Entry original:originals){work.run();if(declared.put(original.source,original)!=null)throw new IllegalStateException("Repeated original replay owner");}
+            for(Input input:snapshot.inputs) {
+                work.run();ContextProductionNativeBinding.Entry owner=declared.get(input.source);
+                if(owner==null)throw new IllegalStateException("Missing whole native replay owner");
+                ContextUniversalWitnessInstanceVerifier.whole(owner,input,work);
+            }
+            ContextWitnessPrimaryStepVerifier.Scope scope=ContextWitnessPrimaryStepVerifier.observedUniversalScope(snapshot,work,target);
+            Map<ContextWitnessProjection,ContextUniversalWitnessInstanceVerifier.Instance> instances=
+                ContextUniversalWitnessInstanceVerifier.observed(replay,capture,originals,work);
+            if(instances.isEmpty())throw new IllegalStateException("No observed universal witness instances");
+            Result proof=ContextWitnessUnaryChainVerifier.close(namespace,snapshot,scope,imported(work),maximumDepth,7,work,true,instances);
+            return new ObservedUniversals(inputIdentity,namespace,proof.reconstructed,proof.reason,proof.routes,gaps);
+        }catch(Exception failure){return new ObservedUniversals(inputIdentity,namespace,false,failure.getMessage(),Collections.emptyList(),gaps);}
     }
     Set<Source> producerSources(Runnable work) {
         Set<Source> sources = new LinkedHashSet<>();

@@ -22,7 +22,7 @@ final class ContextUniversalWitnessInstanceVerifier {
             this.origins=Collections.unmodifiableMap(new LinkedHashMap<>(origins));
         }
     }
-    private static void whole(Entry owner,Input input,Runnable work) {
+    static void whole(Entry owner,Input input,Runnable work) {
         if(owner.kind!=ContextProductionNativeBinding.Kind.CLAUSES||input.shapes.size()!=input.branches
                 ||input.variableCount>2||input.shapes.isEmpty()||input.shapes.size()>8
                 ||owner.clauses.size()!=input.shapes.size())
@@ -45,8 +45,18 @@ final class ContextUniversalWitnessInstanceVerifier {
             List<Entry> originals,int maximumWork) throws Exception {
         if(replay==null||capture==null||observation==null||originals==null||originals.isEmpty()||originals.size()>64||maximumWork<1)
             throw new IllegalArgumentException("Bounded native universal instance required");
-        Runnable work=ContextGroundProductionRounds.budget(maximumWork);
+        return authenticate(replay,capture.snapshot(replay.mind),observation,originals,ContextGroundProductionRounds.budget(maximumWork));
+    }
+    static Map<ContextWitnessProjection,Instance> observed(Replay replay,ContextProductionCapture capture,List<Entry> originals,Runnable work)throws Exception {
         Snapshot snapshot=capture.snapshot(replay.mind);
+        Map<ContextWitnessProjection,Instance> instances=new IdentityHashMap<>();
+        for(ContextWitnessProjection observation:snapshot.witnessProjections) {
+            work.run();if(observation.premises.isEmpty())instances.put(observation,authenticate(replay,snapshot,observation,originals,work));
+        }
+        return Collections.unmodifiableMap(instances);
+    }
+    private static Instance authenticate(Replay replay,Snapshot snapshot,ContextWitnessProjection observation,List<Entry> originals,Runnable work)throws Exception {
+        if(originals==null||originals.isEmpty()||originals.size()>64)throw new IllegalArgumentException("Bounded universal originals required");
         work.run();
         if(!snapshot.witnessProjections.contains(observation))throw new IllegalStateException("Universal instance outside capture");
         if(!observation.premises.isEmpty()||!observation.conclusion.positive)

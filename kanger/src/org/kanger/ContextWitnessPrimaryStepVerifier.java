@@ -135,13 +135,22 @@ final class ContextWitnessPrimaryStepVerifier {
     }
     static Scope scope(List<PrimaryEvidence> primary,Snapshot snapshot,Runnable work,boolean observedJoins,int maximumLiterals,
             ContextWitnessResultTransport.Cut foreignCut) {
+        return scope(primary,snapshot,work,observedJoins,maximumLiterals,foreignCut,false);
+    }
+    /** Local observed proofs only: preserves unbound schema gaps as outstanding coverage obligations. */
+    static Scope observedUniversalScope(Snapshot snapshot,Runnable work,ContextWitnessResultTransport.Cut cut) {
+        return scope(Collections.emptyList(),snapshot,work,true,8,cut,true);
+    }
+    private static Scope scope(List<PrimaryEvidence> primary,Snapshot snapshot,Runnable work,boolean observedJoins,int maximumLiterals,
+            ContextWitnessResultTransport.Cut foreignCut,boolean observedUniversals) {
         if(maximumLiterals<1 || maximumLiterals>8) throw new IllegalArgumentException("Bounded producer shape required");
         for (String gap : snapshot.gaps) {
             work.run();
             if (!(gap.startsWith("cvariable-input:") || gap.startsWith("nonordinary-primary-fact:")
                 || gap.startsWith("nonordinary-conclusion:") || gap.startsWith("nonordinary-premise:")
                 || gap.startsWith("nonordinary-materialization:")
-                || observedJoins && gap.startsWith("compound-residual:"))) throw new IllegalStateException("unsupported-capture-gap:"+gap);
+                || observedJoins && gap.startsWith("compound-residual:")
+                || observedUniversals && gap.startsWith("unbound-waiter-composition:"))) throw new IllegalStateException("unsupported-capture-gap:"+gap);
         }
         Map<Source,Long> sources = new HashMap<>(); Map<Long,Set<Source>> producers = new HashMap<>();
         Map<Long,List<Clause>> producerShapes = new HashMap<>();

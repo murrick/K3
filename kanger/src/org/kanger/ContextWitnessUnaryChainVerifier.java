@@ -175,6 +175,12 @@ final class ContextWitnessUnaryChainVerifier {
     }
     static Result close(UUID replay,Snapshot snapshot,ContextWitnessPrimaryStepVerifier.Scope scope,List<Route> seeds,
             int maximumDepth,int maximumPremises,Runnable work,boolean allowGround) {
+        return close(replay,snapshot,scope,seeds,maximumDepth,maximumPremises,work,allowGround,Collections.emptyMap());
+    }
+    /** Receipts permit local observed elimination only; this overload issues no family coverage. */
+    static Result close(UUID replay,Snapshot snapshot,ContextWitnessPrimaryStepVerifier.Scope scope,List<Route> seeds,
+            int maximumDepth,int maximumPremises,Runnable work,boolean allowGround,
+            Map<ContextWitnessProjection,ContextUniversalWitnessInstanceVerifier.Instance> instances) {
         ContextWitnessMaterializationVerifier.Result correspondence = ContextWitnessMaterializationVerifier.verify(replay,snapshot,work);
         boolean groundOnly = allowGround && snapshot.witnessProjections.isEmpty() && snapshot.witnessMaterializations.isEmpty();
         if (!groundOnly && !correspondence.verified) return incomplete(correspondence.reason);
@@ -201,7 +207,34 @@ final class ContextWitnessUnaryChainVerifier {
         Map<ContextWitnessProjection,Pattern> conclusions = new IdentityHashMap<>();
         Map<ContextWitnessProjection,List<Route>> applications = new IdentityHashMap<>();
         for (ContextWitnessProjection observation : snapshot.witnessProjections) {
-            work.run(); if (observation.premises.isEmpty() || observation.premises.size() > maximumPremises)
+            work.run(); if (observation.premises.isEmpty() && instances.containsKey(observation)) {
+                ContextUniversalWitnessInstanceVerifier.Instance instance=instances.get(observation);
+                if(!replay.equals(instance.replay)||instance.observation!=observation||instance.origins.size()!=1)
+                    return incomplete("different-universal-instance-replay");
+                ContextWitnessPrimaryStepVerifier.application(scope,observation,work);
+                Pattern conclusion=pattern(observation.conclusion,work,false);
+                ContextWitnessResultTransport.Origin origin=instance.origins.get(conclusion.root);
+                if(origin==null)return incomplete("different-universal-instance-origin");
+                List<Route> anchors=new ArrayList<>();
+                for(Route candidate:seeds) {
+                    work.run();if(!conclusion.root.equals(candidate.physical.root))continue;
+                    boolean dominated=false;
+                    for(Route old:anchors){work.run();if(candidate.proof.sources.containsAll(old.proof.sources)&&old.proof.depth<=candidate.proof.depth){dominated=true;break;}}
+                    if(dominated)continue;
+                    for(Iterator<Route> it=anchors.iterator();it.hasNext();){Route old=it.next();work.run();if(old.proof.sources.containsAll(candidate.proof.sources)&&candidate.proof.depth<=old.proof.depth)it.remove();}
+                    anchors.add(candidate);
+                }
+                if(anchors.isEmpty())return incomplete("universal-instance-has-no-carried-proof");
+                List<Route> routes=new ArrayList<>();
+                for(Support producer:observation.producerSupports)for(Route anchor:anchors) {
+                    work.run();if(!instance.owners.keySet().containsAll(producer.sources))return incomplete("different-universal-instance-producer");
+                    if(anchor.proof.depth==Integer.MAX_VALUE)throw new IllegalStateException("Universal instance depth overflow");
+                    Set<Source> sources=new LinkedHashSet<>(producer.sources);sources.addAll(anchor.proof.sources);
+                    add(routes,new Route(replay,conclusion,conclusion.root,new Support(sources,anchor.proof.depth+1),anchor,observation,producer,null),maximumDepth,work);
+                }
+                applications.put(observation,routes);continue;
+            }
+            if (observation.premises.isEmpty() || observation.premises.size() > maximumPremises)
                 return incomplete(maximumPremises == 1 ? "outside-single-premise-witness-chain" : "outside-shared-origin-witness-join");
             ContextWitnessPrimaryStepVerifier.application(scope,observation,work);
             Pattern conclusion = pattern(observation.conclusion,work,allowGround); List<Pattern> required = new ArrayList<>();
@@ -220,10 +253,16 @@ final class ContextWitnessUnaryChainVerifier {
                 return incomplete("invalid-witness-seed-recipe");
             add(pool,seed,maximumDepth,work);
         }
+        for(Map.Entry<ContextWitnessProjection,ContextUniversalWitnessInstanceVerifier.Instance> entry:instances.entrySet()) {
+            work.run();if(!snapshot.witnessProjections.contains(entry.getKey())||!entry.getKey().premises.isEmpty())
+                return incomplete("universal-instance-outside-chain-snapshot");
+            for(Route route:applications.get(entry.getKey()))add(pool,route,maximumDepth,work);
+        }
         boolean changed;
         do {
             work.run(); changed = false;
             for (ContextWitnessProjection observation : snapshot.witnessProjections) {
+                if(instances.containsKey(observation))continue;
                 List<List<Route>> candidates = new ArrayList<>();
                 for (Pattern premise : premises.get(observation)) {
                     List<Route> matching = new ArrayList<>();
