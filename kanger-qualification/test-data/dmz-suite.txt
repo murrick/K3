@@ -620,3 +620,4 @@ org.kanger.ContextUniversalFrozenClosureRunner | CONTEXT_UNIVERSAL_FROZEN_CLOSUR
 org.kanger.ContextUniversalFrozenReplayRunner | CONTEXT_UNIVERSAL_FROZEN_REPLAY_PASS
 org.kanger.ContextUniversalFrozenUnitsRunner | CONTEXT_UNIVERSAL_FROZEN_UNITS_PASS
 org.kanger.ContextUniversalFrozenEventsRunner | CONTEXT_UNIVERSAL_FROZEN_EVENTS_PASS
+org.kanger.ContextUniversalTypedBarrierRunner | CONTEXT_UNIVERSAL_TYPED_BARRIER_PASS

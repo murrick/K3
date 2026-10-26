@@ -348,6 +348,109 @@ final class ContextWitnessResultTransport {
                 !sameItems(family.input.items,packet.items,work),localChanged,branches,pools);
         }catch(Exception failure){return new DerivedBarrier(false,failure.getMessage(),null,false,false,Collections.emptyMap(),Collections.emptyMap());}
     }
+    /** Combined checked typed facts only; no round/discovery/admission authority. */
+    static final class TypedTransfer {
+        final boolean transferred,commonChanged,localChanged;
+        final String reason;
+        final Packet before,output,local;
+        final PrivatePool privateBefore,privateAfter;
+        final Cut parent,target;
+        final ContextUniversalFrozenEvents.Result proof;
+        private TypedTransfer(boolean transferred,String reason,Packet before,Packet output,Packet local,PrivatePool privateBefore,
+                PrivatePool privateAfter,ContextUniversalFrozenEvents.Result proof,Runnable work) {
+            this.transferred=transferred;this.reason=reason;this.before=before;this.output=output;this.local=local;
+            this.privateBefore=privateBefore;this.privateAfter=privateAfter;this.proof=proof;
+            ContextUniversalFrozenClosure.Result theory=proof==null||proof.input==null||proof.input.input==null?null:proof.input.input.theory;
+            parent=theory==null?null:theory.parent;target=theory==null?null:theory.target;
+            commonChanged=transferred&&!sameItems(before.items,output.items,work);
+            localChanged=transferred&&!sameItems(privateBefore==null?before.items:privateBefore.local.items,local.items,work);
+        }
+    }
+    private static Atom typedAtom(ContextUniversalInputResiduals.Residual fact,Set<Origin> known,Runnable work) {
+        if(fact.literals.size()!=1||!fact.variables.isEmpty()||!fact.literals.get(0).positive)
+            throw new IllegalStateException("Fixed positive typed transport fact required");
+        ContextUniversalInputResiduals.Literal literal=fact.literals.get(0);List<Slot> arguments=new ArrayList<>();
+        for(ContextUniversalInputResiduals.Term term:literal.arguments) {
+            work.run();if(term.variable>=0||(term.origin==null)==(term.value==null)||term.origin!=null&&!known.contains(term.origin))
+                throw new IllegalStateException("Unbound or nonfixed typed transport argument");
+            arguments.add(new Slot(term.origin,term.value));
+        }
+        return new Atom(literal.predicate,true,arguments);
+    }
+    static TypedTransfer transferTyped(ContextUniversalFrozenEvents.Result proof,Packet input,int maximumDepth,int maximumWork) {
+        return transferTyped(proof,input,null,maximumDepth,maximumWork);
+    }
+    static TypedTransfer transferTypedPrivate(ContextUniversalFrozenEvents.Result proof,PrivatePool pool,int maximumDepth,int maximumWork) {
+        return transferTyped(proof,pool==null?null:pool.common,pool,maximumDepth,maximumWork);
+    }
+    private static TypedTransfer transferTyped(ContextUniversalFrozenEvents.Result proof,Packet input,PrivatePool pool,int maximumDepth,int maximumWork) {
+        if(maximumDepth<0||maximumDepth>64||maximumWork<1)throw new IllegalArgumentException("Bounded typed transfer required");
+        Runnable work=budget(maximumWork);
+        try {
+            if(proof==null||!proof.reconstructed||proof.input==null||!proof.input.projected||input==null)
+                throw new IllegalStateException("Sealed typed unit/event proof required");
+            ContextUniversalFrozenReplay.Result replay=proof.input.input;
+            ContextUniversalInputResiduals.Frame frame=replay.theory.frame;Packet local=pool==null?input:pool.local;
+            if(frame.common!=input||frame.local!=local||frame.pool!=pool||replay.theory.privateInput!=(pool!=null))
+                throw new IllegalStateException("Typed transfer changed exact common/local input frame");
+            if(!replay.theory.parent.equals(parentX(input.items,work)))throw new IllegalStateException("Typed transfer changed X cut");
+            if(pool!=null&&(!pool.cut.equals(replay.theory.target)||!Cut.of(pool.x).equals(replay.theory.parent)))
+                throw new IllegalStateException("Typed transfer changed owning private cut");
+            Set<Origin> known=new HashSet<>();for(Origin origin:replay.carried.values()){work.run();known.add(origin);}
+            List<Item> after=new ArrayList<>(local.items);
+            for(ContextUniversalFrozenUnits.Unit unit:proof.input.units) {
+                work.run();if(pool==null&&!usesX(unit.support))continue;
+                add(after,typedAtom(unit.conclusion,known,work),unit.support,work);
+            }
+            for(ContextUniversalFrozenEvents.Conclusion conclusion:proof.conclusions) {
+                work.run();if(pool==null&&!usesX(conclusion.support))continue;
+                add(after,typedAtom(conclusion.fact,known,work),conclusion.support,work);
+            }
+            // Compare minimum fact/exact-Source grades only after input, fixed
+            // theorems and event proofs have all participated. Recipe limits
+            // are not fact lower bounds. Stored occurrences never add aliases.
+            for(Item item:after)for(Support support:item.proofs){work.run();if(support.depth>maximumDepth)throw new IllegalStateException("Uncovered typed fact depth limit");}
+            privateRank(after,work);Packet retained=new Packet(after);
+            if(!retains(local,retained,work))throw new IllegalStateException("Typed transfer lost a local input proof");
+            Packet output=pool==null?retained:privateShared(input,retained,work);parentX(output.items,work);
+            PrivatePool next=pool==null?null:new PrivatePool(input,pool.x,pool.snapshot,retained,pool.sources,pool.declarations);
+            return new TypedTransfer(true,"Minimum typed fixed/event products transported; full round qualification remains open",input,output,retained,pool,next,proof,work);
+        }catch(Exception failure){return new TypedTransfer(false,failure.getMessage(),input,null,null,pool,null,proof,work);}
+    }
+    static final class TypedBarrier {
+        final boolean merged,changed,localChanged;
+        final String reason;
+        final Packet packet;
+        final Map<Cut,TypedTransfer> branches;
+        final Map<Cut,PrivatePool> privatePools;
+        private TypedBarrier(boolean merged,String reason,Packet packet,boolean changed,boolean localChanged,
+                Map<Cut,TypedTransfer> branches,Map<Cut,PrivatePool> privatePools) {
+            this.merged=merged;this.reason=reason;this.packet=packet;this.changed=changed;this.localChanged=localChanged;
+            this.branches=Collections.unmodifiableMap(new LinkedHashMap<>(branches));this.privatePools=Collections.unmodifiableMap(new LinkedHashMap<>(privatePools));
+        }
+    }
+    static TypedBarrier mergeTyped(Family family,Map<Cut,TypedTransfer> outputs,int maximumWork) {
+        if(maximumWork<1)throw new IllegalArgumentException("Bounded typed barrier required");Runnable work=budget(maximumWork);
+        try {
+            if(family==null||outputs==null||!outputs.keySet().equals(new HashSet<>(family.expected)))throw new IllegalStateException("Incomplete or unexpected typed family");
+            List<Item> merged=new ArrayList<>(family.input.items);Map<Cut,TypedTransfer> branches=new LinkedHashMap<>();boolean localChanged=false;
+            for(Cut cut:family.expected) {
+                work.run();TypedTransfer branch=outputs.get(cut);
+                if(branch==null||!branch.transferred||branch.before!=family.input||!cut.equals(branch.target)||!family.parent.equals(branch.parent))
+                    throw new IllegalStateException("Typed branch changed owning cut/common barrier");
+                if(!retains(family.input,branch.output,work))throw new IllegalStateException("Typed branch lost a common input proof");
+                for(Item item:branch.output.items)for(Support support:item.proofs){work.run();add(merged,item.atom,support,work);}
+                branches.put(cut,branch);localChanged|=branch.localChanged;
+            }
+            Packet packet=new Packet(merged);parentX(packet.items,work);privateRank(packet.items,work);
+            Map<Cut,PrivatePool> pools=new LinkedHashMap<>();
+            for(Map.Entry<Cut,TypedTransfer> entry:branches.entrySet())if(entry.getValue().privateAfter!=null) {
+                work.run();pools.put(entry.getKey(),rebasePrivate(entry.getValue().privateAfter,packet,maximumWork));
+            }
+            return new TypedBarrier(true,"Synchronous typed products merged; discovery/all-cut qualification remain open",packet,
+                !sameItems(family.input.items,packet.items,work),localChanged,branches,pools);
+        }catch(Exception failure){return new TypedBarrier(false,failure.getMessage(),null,false,false,Collections.emptyMap(),Collections.emptyMap());}
+    }
     private static void privateRank(List<Item> items,Runnable work) {
         Set<Origin> rank=new HashSet<>();
         for(Item item:items)for(Slot slot:item.atom.arguments){work.run();if(slot.origin!=null)rank.add(slot.origin);}
