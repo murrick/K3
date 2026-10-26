@@ -472,7 +472,8 @@ public final class ContextProductionCapture implements AutoCloseable {
         public final boolean quantified;
         public final int variableCount;
         public final boolean duplicate;
-        private Input(Source source, Rule rule, Mind mind, boolean duplicate) throws Exception {
+        final ContextUniversalInputResiduals.Residual typedClause;
+        private Input(Source source, Rule rule, Mind mind, boolean duplicate,Map<ContextWitnessUnaryChainVerifier.Root,ContextWitnessResultTransport.Origin> carried,Runnable typedWork) throws Exception {
             this.source = source; nativeRule = rule.getId(); origin = rule.getOrigin();
             fact = rule.isStored() && !rule.isQuery() ? Fact.of(rule.getDomain(), mind, false) : null;
             List<Clause> captured = new ArrayList<>();
@@ -495,6 +496,7 @@ public final class ContextProductionCapture implements AutoCloseable {
             clauses = Collections.unmodifiableList(captured);
             clause = rule.getTree().size() == 1 && captured.size() == 1 ? captured.get(0) : null;
             this.duplicate = duplicate;
+            typedClause=carried==null?null:ContextUniversalInputResiduals.nativeClause(rule,mind,carried,typedWork);
         }
     }
 
@@ -775,6 +777,21 @@ public final class ContextProductionCapture implements AutoCloseable {
         }
         finally { inputTarget = previousTarget; inputSource = previousSource; }
     }
+    private Map<ContextWitnessUnaryChainVerifier.Root,ContextWitnessResultTransport.Origin> inputTypedOrigins;
+    private ContextUniversalInputResiduals.Residual inputTypedClause;
+    private Runnable inputTypedWork;
+    Input replayTypedInput(Mind target,ContextUniversalInputResiduals.Residual clause,List<Support> supports,
+            Map<ContextWitnessUnaryChainVerifier.Root,ContextWitnessResultTransport.Origin> carried,Runnable work)throws Exception {
+        check();if(!visible(target)||supports.isEmpty()||inputTarget!=null)throw new IllegalStateException("Supported nonnested typed replay required");
+        inputTarget=target;inputSupports=new ArrayList<>(supports);inputTypedOrigins=carried;inputTypedClause=clause;inputTypedWork=work;
+        int before=inputs.size();
+        try {
+            Queue<ITerm> values=ContextUniversalInputResiduals.project(clause,target,carried,work);
+            target.compileLine(ContextUniversalInputResiduals.assertion(clause,work),false,values);
+            if(!values.isEmpty()||inputs.size()!=before+1)throw new IllegalStateException("Exactly one complete typed native input required");
+            return inputs.get(before);
+        }finally{inputTarget=null;inputSupports=null;inputTypedOrigins=null;inputTypedClause=null;inputTypedWork=null;}
+    }
     public void replayDerived(Mind target, Clause clause, List<Support> supports) throws Exception {
         check();
         if (!visible(target) || supports.isEmpty()) throw new IllegalArgumentException("Supported derived clause required");
@@ -801,8 +818,10 @@ public final class ContextProductionCapture implements AutoCloseable {
         List<Support> incoming = capture.inputSource != null
                 ? Collections.singletonList(new Support(Collections.singleton(capture.inputSource), 0)) : capture.inputSupports;
         for (Support support : incoming) if (!sources.contains(support)) sources.add(support);
-        Input input = new Input(capture.inputSource, rule, mind, duplicate);
+        Input input = new Input(capture.inputSource, rule, mind, duplicate,capture.inputTypedOrigins,capture.inputTypedWork);
         capture.inputs.add(input);
+        if(capture.inputTypedClause!=null&&(input.typedClause==null||!capture.inputTypedClause.equivalent(input.typedClause,capture.inputTypedWork)))
+            capture.gaps.add("typed-derived-clause-transport-mismatch:"+rule.getId());
         if (capture.inputClause != null && !capture.inputClause.equivalent(input.clause))
             capture.gaps.add("derived-clause-transport-mismatch:" + rule.getId());
         for (List<Domain> branch : rule.getTree()) if (branch.size() == 1
@@ -1015,7 +1034,7 @@ public final class ContextProductionCapture implements AutoCloseable {
     }
     @Override public void close() {
         if (closed) return;
-        check(); closed = true; inputTarget = null; inputSource = null; inputSupports = null; inputClause = null; labels.clear();
+        check(); closed = true; inputTarget = null; inputSource = null; inputSupports = null; inputClause = null; inputTypedOrigins=null; inputTypedClause=null; inputTypedWork=null; labels.clear();
         if (previous == null) ACTIVE.remove(); else ACTIVE.set(previous);
     }
 }

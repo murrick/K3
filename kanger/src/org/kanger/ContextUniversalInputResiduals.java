@@ -230,4 +230,107 @@ final class ContextUniversalInputResiduals {
         return apart(new Residual(literals,work),new int[]{0},work);
     }
 
+    static String assertion(Residual clause,Runnable work) {
+        StringBuilder text=new StringBuilder("!");for(int variable:clause.variables){work.run();text.append("@ctxfrozenv").append(variable).append(' ');}
+        text.append('(');boolean first=true;
+        for(Literal literal:clause.literals) {
+            work.run();if(!first)text.append(" || ");first=false;if(!literal.positive)text.append('~');text.append(literal.predicate).append('(');
+            for(int i=0;i<literal.arguments.size();++i){work.run();if(i>0)text.append(',');Term term=literal.arguments.get(i);if(term.variable>=0)text.append("ctxfrozenv").append(term.variable);else text.append('?');}
+            text.append(')');
+        }
+        return text.append(");").toString();
+    }
+    static Queue<org.kanger.interfaces.ITerm> project(Residual clause,Mind target,Map<ContextWitnessUnaryChainVerifier.Root,Origin> carried,Runnable work)throws Exception {
+        Queue<org.kanger.interfaces.ITerm> values=new LinkedList<>();
+        for(Literal literal:clause.literals)for(Term term:literal.arguments) {
+            work.run();if(term.variable>=0)continue;
+            if(term.origin==null)values.add(target.getTerms().projectSemantic(term.value.materialize()));
+            else {
+                org.kanger.units.Term actual=null;
+                for(Map.Entry<ContextWitnessUnaryChainVerifier.Root,Origin> entry:carried.entrySet()) {
+                    work.run();if(!entry.getValue().equals(term.origin))continue;
+                    if(actual!=null)throw new IllegalStateException("Ambiguous frozen native parameter");
+                    actual=(org.kanger.units.Term)target.getTerms().get(entry.getKey().term);
+                    if(actual==null||!actual.isCVariable()||actual.isDomini()||actual.getParent(target)!=null||actual.getRuleId()!=entry.getKey().owner)
+                        throw new IllegalStateException("Different canonical frozen native parameter");
+                }
+                if(actual==null)throw new IllegalStateException("Missing original frozen native parameter");values.add(actual);
+            }
+        }
+        return values;
+    }
+    static Residual nativeClause(org.kanger.units.Rule rule,Mind mind,Map<ContextWitnessUnaryChainVerifier.Root,Origin> carried,Runnable work)throws Exception {
+        if(rule.isQuery()||rule.getTree().size()!=1)throw new IllegalStateException("One native typed assertion branch required");
+        List<Literal> literals=new ArrayList<>();Map<Long,Integer> variables=new LinkedHashMap<>();
+        for(org.kanger.units.Domain domain:rule.getTree().get(0)) {
+            work.run();if(domain.isSystem(mind)||domain.isCalculated(mind)||domain.getRange()>8||"rule(1)".equals(domain.getPredicate(mind).toString(mind)))
+                throw new IllegalStateException("Outside native typed literal scope");
+            List<Term> arguments=new ArrayList<>();
+            for(org.kanger.interfaces.IArgument argument:domain.getArguments()) {
+                work.run();if(argument.getType()==org.kanger.enums.ArgumentType.TVARIABLE) {
+                    org.kanger.units.TVariable variable=mind.getTVars().get(argument.getId());
+                    if(variable==null||variable.getRuleId()!=rule.getId())throw new IllegalStateException("Foreign native universal declaration");
+                    Integer id=variables.get(argument.getId());if(id==null){id=variables.size();variables.put(argument.getId(),id);}arguments.add(new Term(id,null,null));
+                }else {
+                    if(argument.getType()!=org.kanger.enums.ArgumentType.TERM)throw new IllegalStateException("Calculated or implicit typed native argument");
+                    org.kanger.interfaces.ITerm value=argument.getValue(mind);
+                    if(value!=null&&value.isCVariable()) {
+                        org.kanger.units.Term root=(org.kanger.units.Term)value;
+                        Origin origin=carried.get(new ContextWitnessUnaryChainVerifier.Root(root.getId(),root.getRuleId()));
+                        if(origin==null||root.isDomini()||root.getParent(mind)!=null)throw new IllegalStateException("Noncanonical native frozen input root");
+                        arguments.add(new Term(-1,origin,null));
+                    }else {
+                        if(!SemanticTermSnapshot.isOrdinaryValue(value))throw new IllegalStateException("Nonordinary typed native value");
+                        arguments.add(new Term(-1,null,SemanticTermSnapshot.capture(value)));
+                    }
+                }
+            }
+            literals.add(new Literal(domain.getPredicate(mind).getName(mind),domain.isAntc(),arguments));
+        }
+        return new Residual(literals,work);
+    }
+    private static Literal eventLiteral(ContextWitnessProjection.Literal literal,boolean opposite,Map<ContextWitnessUnaryChainVerifier.Root,Origin> carried,Runnable work) {
+        List<Term> arguments=new ArrayList<>();
+        for(ContextWitnessProjection.Slot slot:literal.arguments) {
+            work.run();if(slot.lineage.isEmpty())arguments.add(new Term(-1,null,slot.value));
+            else {
+                for(ContextWitnessProjection.Node node:slot.lineage){work.run();if(node.domini)throw new IllegalStateException("Dominating frozen producer event root");}
+                ContextWitnessProjection.Node node=slot.lineage.get(slot.lineage.size()-1);
+                Origin origin=carried.get(new ContextWitnessUnaryChainVerifier.Root(node.term,node.ownerRule));
+                if(origin==null)throw new IllegalStateException("Unbound frozen producer event origin");arguments.add(new Term(-1,origin,null));
+            }
+        }
+        return new Literal(literal.predicate,opposite?!literal.positive:literal.positive,arguments);
+    }
+    static Residual event(ContextWitnessProjection event,Map<ContextWitnessUnaryChainVerifier.Root,Origin> carried,Runnable work) {
+        List<Literal> literals=new ArrayList<>();literals.add(eventLiteral(event.conclusion,false,carried,work));
+        for(ContextWitnessProjection.Literal premise:event.premises){work.run();literals.add(eventLiteral(premise,true,carried,work));}return new Residual(literals,work);
+    }
+    static Residual event(Application event,Runnable work) {
+        List<Literal> literals=new ArrayList<>();List<Fact> facts=new ArrayList<>();facts.add(event.conclusion);for(Fact premise:event.premises){work.run();facts.add(premise.opposite());}
+        for(Fact fact:facts){work.run();List<Term> arguments=new ArrayList<>();for(SemanticTermSnapshot value:fact.arguments){work.run();arguments.add(new Term(-1,null,value));}literals.add(new Literal(fact.predicate,fact.positive,arguments));}
+        return new Residual(literals,work);
+    }
+    private static boolean instanceLiteral(Literal formal,Literal actual,Map<Integer,Term> assignment,Runnable work) {
+        if(formal.positive!=actual.positive||!formal.predicate.equals(actual.predicate)||formal.arguments.size()!=actual.arguments.size())return false;
+        for(int i=0;i<formal.arguments.size();++i) {
+            work.run();Term a=formal.arguments.get(i),b=actual.arguments.get(i);
+            if(a.variable>=0){Term prior=assignment.putIfAbsent(a.variable,b);if(prior!=null&&!rigid(prior,b))return false;}
+            else if(!rigid(a,b))return false;
+        }
+        return true;
+    }
+    private static boolean instance(List<Literal> formal,List<Literal> actual,int index,boolean[] used,Map<Integer,Term> assignment,Runnable work) {
+        work.run();if(index==formal.size()){for(boolean covered:used)if(!covered)return false;return true;}
+        for(int i=0;i<actual.size();++i) {
+            work.run();Map<Integer,Term> next=new HashMap<>(assignment);if(!instanceLiteral(formal.get(index),actual.get(i),next,work))continue;
+            boolean prior=used[i];used[i]=true;if(instance(formal,actual,index+1,used,next,work))return true;used[i]=prior;
+        }
+        return false;
+    }
+    static boolean instance(Residual formal,Residual actual,Runnable work) {
+        if(!actual.variables.isEmpty())throw new IllegalStateException("Concrete native producer event required");
+        return formal.literals.size()>=actual.literals.size()&&instance(formal.literals,actual.literals,0,new boolean[actual.literals.size()],new HashMap<>(),work);
+    }
+
 }
