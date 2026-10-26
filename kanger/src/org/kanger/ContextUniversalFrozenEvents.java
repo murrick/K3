@@ -102,6 +102,12 @@ final class ContextUniversalFrozenEvents {
         }
         if(out.isEmpty())throw new IllegalStateException("Observed premise has no checked positive unit proof");return out;
     }
+    /** Shared concrete unit kernel; requested facts supply no knowledge or Source labels. */
+    static List<Donor> instances(Residual fact,ContextUniversalFrozenUnits.Result input,int[] capacity,Runnable work) {
+        List<Binding> seeds=new ArrayList<>();
+        for(Item item:input.input.theory.frame.local.items)for(Support support:item.proofs){work.run();seeds.add(new Binding(item,support,work));}
+        return Collections.unmodifiableList(donors(fact,input,seeds,capacity,work));
+    }
     private static void retainConclusion(List<Conclusion> output,Conclusion next,int[] capacity,Runnable work) {
         for(int i=0;i<output.size();++i){work.run();Conclusion prior=output.get(i);if(prior.support.sources.equals(next.support.sources)){
             if(next.support.depth<prior.support.depth)output.set(i,next);return;}}
