@@ -213,6 +213,13 @@ final class ContextUniversalInputResiduals {
     }
     /** Principal flat unifier. Different origins do not become equal by a variable renaming. */
     static Residual resolve(Residual unit,Residual horn,int pivot,Runnable work) {
+        return resolve(unit,horn,pivot,false,work);
+    }
+    /** Empty is permitted only for the constraint proof kernel; old positive callers retain their guard. */
+    static Residual resolveConstraint(Residual unit,Residual horn,int pivot,Runnable work) {
+        return resolve(unit,horn,pivot,true,work);
+    }
+    private static Residual resolve(Residual unit,Residual horn,int pivot,boolean allowEmpty,Runnable work) {
         work.run();if(unit.literals.size()!=1||!unit.literals.get(0).positive||pivot<0||pivot>=horn.literals.size()||horn.literals.get(pivot).positive)
             throw new IllegalArgumentException("Typed positive unit/negative body pivot required");
         int[] next={0};Residual left=apart(unit,next,work),right=apart(horn,next,work);
@@ -231,7 +238,7 @@ final class ContextUniversalInputResiduals {
             for(Term term:literal.arguments){work.run();arguments.add(dereference(term,substitution,work));}
             literals.add(new Literal(literal.predicate,literal.positive,arguments));
         }
-        if(literals.isEmpty())throw new IllegalStateException("Unexpected empty positive typed resolvent");
+        if(literals.isEmpty()){if(allowEmpty)return null;throw new IllegalStateException("Unexpected empty positive typed resolvent");}
         return apart(new Residual(literals,work),new int[]{0},work);
     }
 

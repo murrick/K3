@@ -38,7 +38,7 @@ final class ContextUniversalFrozenCoverage {
         for(Proof proof:input.proofs){work.run();if(proof.support.sources.equals(support.sources)&&proof.support.depth<=support.depth&&proof.clause.equivalent(expected,work))return proof;}
         throw new IllegalStateException("Uncovered typed clause or exact whole Source/depth alternative");
     }
-    private static boolean bundleAtom(ContextWitnessBundle.Atom expected,Item actual,Source source,Runnable work) {
+    static boolean bundleAtom(ContextWitnessBundle.Atom expected,Item actual,Source source,Runnable work) {
         work.run();if(!expected.positive||!actual.atom.positive||!expected.predicate.equals(actual.atom.predicate)||expected.arguments.size()!=actual.atom.arguments.size())return false;
         for(int i=0;i<expected.arguments.size();++i) {
             work.run();ContextWitnessBundle.Slot a=expected.arguments.get(i);ContextWitnessResultTransport.Slot b=actual.atom.arguments.get(i);
