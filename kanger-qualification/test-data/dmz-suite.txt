@@ -616,3 +616,4 @@ org.kanger.ContextUniversalDerivedReplayRunner | CONTEXT_UNIVERSAL_DERIVED_REPLA
 org.kanger.ContextUniversalDerivedRoutesRunner | CONTEXT_UNIVERSAL_DERIVED_ROUTES_PASS
 org.kanger.ContextUniversalDerivedBarrierRunner | CONTEXT_UNIVERSAL_DERIVED_BARRIER_PASS
 org.kanger.ContextUniversalInputResidualsRunner | CONTEXT_UNIVERSAL_INPUT_RESIDUALS_PASS
+org.kanger.ContextUniversalFrozenClosureRunner | CONTEXT_UNIVERSAL_FROZEN_CLOSURE_PASS

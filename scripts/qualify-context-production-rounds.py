@@ -200,6 +200,7 @@ def main():
                  ('org.kanger.ContextUniversalDerivedRoutesRunner', 'CONTEXT_UNIVERSAL_DERIVED_ROUTES_PASS'),
                  ('org.kanger.ContextUniversalDerivedBarrierRunner', 'CONTEXT_UNIVERSAL_DERIVED_BARRIER_PASS'),
                  ('org.kanger.ContextUniversalInputResidualsRunner', 'CONTEXT_UNIVERSAL_INPUT_RESIDUALS_PASS'),
+                 ('org.kanger.ContextUniversalFrozenClosureRunner', 'CONTEXT_UNIVERSAL_FROZEN_CLOSURE_PASS'),
                  ('org.kanger.storage.dumb2.ContextMixedPrimaryWriteRunner', 'CONTEXT_MIXED_PRIMARY_WRITE_PASS'),
                  ('org.kanger.storage.dumb2.ContextPrivateWitnessAdmissionContractRunner', 'CONTEXT_PRIVATE_WITNESS_ADMISSION_CONTRACT_PASS'),
                  ('org.kanger.storage.dumb2.ContextPrivateWitnessWriteRunner', 'CONTEXT_PRIVATE_WITNESS_WRITE_PASS'),

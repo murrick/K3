@@ -142,14 +142,7 @@ final class ContextUniversalInputResiduals {
         if(maximumDepth<0||maximumDepth>64||maximumSteps<1||maximumSteps>65536||maximumWork<1)throw new IllegalArgumentException("Bounded input residual scan required");
         Runnable work=ContextGroundProductionRounds.budget(maximumWork);
         try {
-            if(common==null||local==null)throw new IllegalStateException("Actual sealed input required");
-            ContextUniversalUnitClosure.check(theory,maximumDepth,work);
-            ContextWitnessResultTransport.family(common,theory.parent.equals(theory.target)?Collections.singletonList(theory.parent):Arrays.asList(theory.parent,theory.target),maximumWork);
-            if(pool!=null&&(!pool.cut.equals(theory.target)||!Cut.of(pool.x).equals(theory.parent)))throw new IllegalStateException("Input residual scan changed private frame");
-            for(Item item:local.items) {
-                work.run();if(!item.atom.positive)throw new IllegalStateException("Positive input residual facts required");
-                for(Support support:item.proofs){work.run();if(support.depth>maximumDepth)throw new IllegalStateException("Input residual carried depth limit");}
-            }
+            frame(theory,common,local,pool,maximumDepth,maximumWork,work);
             List<Step> steps=new ArrayList<>();int attempts=0;
             for(ContextUniversalUnitClosure.Proof schema:theory.proofs)for(int pivot=0;pivot<schema.clause.literals.size();++pivot) {
                 work.run();Atom literal=schema.clause.literals.get(pivot);if(literal.positive)continue;
@@ -167,4 +160,74 @@ final class ContextUniversalInputResiduals {
             return new Result(true,"Every input fact/schema body pivot and donor alternative enumerated; residual closure, native replay and family qualification remain open",theory,common,local,pool!=null,attempts,steps);
         }catch(Exception failure){return new Result(false,failure.getMessage(),theory,common,local,pool!=null,0,Collections.emptyList());}
     }
+    /** Exact validated historical input frame, not live connection or publication authority. */
+    static final class Frame {
+        final ContextUniversalUnitClosure.Result theory;
+        final Packet common,local;
+        final PrivatePool pool;
+        private Frame(ContextUniversalUnitClosure.Result theory,Packet common,Packet local,PrivatePool pool) {
+            this.theory=theory;this.common=common;this.local=local;this.pool=pool;
+        }
+    }
+    static Frame frame(ContextUniversalUnitClosure.Result theory,Packet common,Packet local,PrivatePool pool,int maximumDepth,int maximumWork,Runnable work) {
+        if(common==null||local==null)throw new IllegalStateException("Actual sealed input required");
+        if(pool==null?common!=local:pool.common!=common||pool.local!=local)throw new IllegalStateException("Different owning input frame");
+        ContextUniversalUnitClosure.check(theory,maximumDepth,work);
+        ContextWitnessResultTransport.family(common,theory.parent.equals(theory.target)?Collections.singletonList(theory.parent):Arrays.asList(theory.parent,theory.target),maximumWork);
+        if(pool!=null&&(!pool.cut.equals(theory.target)||!Cut.of(pool.x).equals(theory.parent)))throw new IllegalStateException("Input residual scan changed private frame");
+        for(Item item:local.items) {
+            work.run();if(!item.atom.positive)throw new IllegalStateException("Positive input residual facts required");
+            for(Support support:item.proofs){work.run();if(support.depth>maximumDepth)throw new IllegalStateException("Input residual carried depth limit");}
+        }
+        return new Frame(theory,common,local,pool);
+    }
+    static Residual schema(Clause clause,Runnable work) {return residual(clause,-1,Collections.emptyMap(),work);}
+    static Residual fact(Item item,Runnable work) {
+        List<Term> arguments=new ArrayList<>();
+        for(ContextWitnessResultTransport.Slot slot:item.atom.arguments){work.run();arguments.add(new Term(-1,slot.origin,slot.value));}
+        return new Residual(Collections.singletonList(new Literal(item.atom.predicate,item.atom.positive,arguments)),work);
+    }
+    static final class UnificationFailure extends IllegalStateException {
+        private UnificationFailure(){super("Incompatible typed unit/body pivot");}
+    }
+    private static Residual apart(Residual clause,int[] next,Runnable work) {
+        Map<Integer,Integer> variables=new HashMap<>();List<Literal> literals=new ArrayList<>();
+        for(Literal literal:clause.literals) {
+            work.run();List<Term> arguments=new ArrayList<>();
+            for(Term term:literal.arguments) {
+                work.run();if(term.variable<0)arguments.add(term);
+                else {Integer id=variables.get(term.variable);if(id==null){id=next[0]++;variables.put(term.variable,id);}arguments.add(new Term(id,null,null));}
+            }
+            literals.add(new Literal(literal.predicate,literal.positive,arguments));
+        }
+        return new Residual(literals,work);
+    }
+    private static Term dereference(Term term,Map<Integer,Term> substitution,Runnable work) {
+        while(term.variable>=0) {work.run();Term next=substitution.get(term.variable);if(next==null)break;term=next;}
+        return term;
+    }
+    /** Principal flat unifier. Different origins do not become equal by a variable renaming. */
+    static Residual resolve(Residual unit,Residual horn,int pivot,Runnable work) {
+        work.run();if(unit.literals.size()!=1||!unit.literals.get(0).positive||pivot<0||pivot>=horn.literals.size()||horn.literals.get(pivot).positive)
+            throw new IllegalArgumentException("Typed positive unit/negative body pivot required");
+        int[] next={0};Residual left=apart(unit,next,work),right=apart(horn,next,work);
+        Literal a=left.literals.get(0),b=right.literals.get(pivot);
+        if(!a.predicate.equals(b.predicate)||a.arguments.size()!=b.arguments.size())throw new UnificationFailure();
+        Map<Integer,Term> substitution=new HashMap<>();
+        for(int i=0;i<a.arguments.size();++i) {
+            work.run();Term x=dereference(a.arguments.get(i),substitution,work),y=dereference(b.arguments.get(i),substitution,work);
+            if(x.variable>=0) {if(y.variable!=x.variable)substitution.put(x.variable,y);}
+            else if(y.variable>=0)substitution.put(y.variable,x);
+            else if(!rigid(x,y))throw new UnificationFailure();
+        }
+        List<Literal> literals=new ArrayList<>();
+        for(int i=0;i<right.literals.size();++i)if(i!=pivot) {
+            work.run();Literal literal=right.literals.get(i);List<Term> arguments=new ArrayList<>();
+            for(Term term:literal.arguments){work.run();arguments.add(dereference(term,substitution,work));}
+            literals.add(new Literal(literal.predicate,literal.positive,arguments));
+        }
+        if(literals.isEmpty())throw new IllegalStateException("Unexpected empty positive typed resolvent");
+        return apart(new Residual(literals,work),new int[]{0},work);
+    }
+
 }
