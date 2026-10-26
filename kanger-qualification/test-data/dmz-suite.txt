@@ -622,3 +622,4 @@ org.kanger.ContextUniversalFrozenUnitsRunner | CONTEXT_UNIVERSAL_FROZEN_UNITS_PA
 org.kanger.ContextUniversalFrozenEventsRunner | CONTEXT_UNIVERSAL_FROZEN_EVENTS_PASS
 org.kanger.ContextUniversalTypedBarrierRunner | CONTEXT_UNIVERSAL_TYPED_BARRIER_PASS
 org.kanger.ContextUniversalFrozenCoverageRunner | CONTEXT_UNIVERSAL_FROZEN_COVERAGE_PASS
+org.kanger.ContextUniversalFrozenProductsRunner | CONTEXT_UNIVERSAL_FROZEN_PRODUCTS_PASS
