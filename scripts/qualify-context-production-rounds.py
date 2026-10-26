@@ -207,6 +207,7 @@ def main():
                  ('org.kanger.ContextUniversalTypedBarrierRunner', 'CONTEXT_UNIVERSAL_TYPED_BARRIER_PASS'),
                  ('org.kanger.ContextUniversalFrozenCoverageRunner', 'CONTEXT_UNIVERSAL_FROZEN_COVERAGE_PASS'),
                  ('org.kanger.ContextUniversalFrozenProductsRunner', 'CONTEXT_UNIVERSAL_FROZEN_PRODUCTS_PASS'),
+                 ('org.kanger.ContextUniversalFrozenBranchRunner', 'CONTEXT_UNIVERSAL_FROZEN_BRANCH_PASS'),
                  ('org.kanger.storage.dumb2.ContextMixedPrimaryWriteRunner', 'CONTEXT_MIXED_PRIMARY_WRITE_PASS'),
                  ('org.kanger.storage.dumb2.ContextPrivateWitnessAdmissionContractRunner', 'CONTEXT_PRIVATE_WITNESS_ADMISSION_CONTRACT_PASS'),
                  ('org.kanger.storage.dumb2.ContextPrivateWitnessWriteRunner', 'CONTEXT_PRIVATE_WITNESS_WRITE_PASS'),
