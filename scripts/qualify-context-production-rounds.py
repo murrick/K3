@@ -203,6 +203,7 @@ def main():
                  ('org.kanger.ContextUniversalFrozenClosureRunner', 'CONTEXT_UNIVERSAL_FROZEN_CLOSURE_PASS'),
                  ('org.kanger.ContextUniversalFrozenReplayRunner', 'CONTEXT_UNIVERSAL_FROZEN_REPLAY_PASS'),
                  ('org.kanger.ContextUniversalFrozenUnitsRunner', 'CONTEXT_UNIVERSAL_FROZEN_UNITS_PASS'),
+                 ('org.kanger.ContextUniversalFrozenEventsRunner', 'CONTEXT_UNIVERSAL_FROZEN_EVENTS_PASS'),
                  ('org.kanger.storage.dumb2.ContextMixedPrimaryWriteRunner', 'CONTEXT_MIXED_PRIMARY_WRITE_PASS'),
                  ('org.kanger.storage.dumb2.ContextPrivateWitnessAdmissionContractRunner', 'CONTEXT_PRIVATE_WITNESS_ADMISSION_CONTRACT_PASS'),
                  ('org.kanger.storage.dumb2.ContextPrivateWitnessWriteRunner', 'CONTEXT_PRIVATE_WITNESS_WRITE_PASS'),

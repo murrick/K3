@@ -333,4 +333,31 @@ final class ContextUniversalInputResiduals {
         return formal.literals.size()>=actual.literals.size()&&instance(formal.literals,actual.literals,0,new boolean[actual.literals.size()],new HashMap<>(),work);
     }
 
+    static Residual fact(ContextWitnessProjection.Literal literal,Map<ContextWitnessUnaryChainVerifier.Root,Origin> carried,Runnable work) {
+        return new Residual(Collections.singletonList(eventLiteral(literal,false,carried,work)),work);
+    }
+    static Residual fact(Fact fact,Runnable work) {
+        List<Term> terms=new ArrayList<>();for(SemanticTermSnapshot value:fact.arguments){work.run();terms.add(new Term(-1,null,value));}
+        return new Residual(Collections.singletonList(new Literal(fact.predicate,fact.positive,terms)),work);
+    }
+    private static void assignments(List<Literal> formal,List<Literal> actual,int index,boolean[] used,Map<Integer,Term> assignment,
+            List<Map<Integer,Term>> output,Runnable work) {
+        work.run();if(index==formal.size()) {
+            for(boolean covered:used)if(!covered)return;
+            output.add(Collections.unmodifiableMap(new LinkedHashMap<>(assignment)));return;
+        }
+        for(int i=0;i<actual.size();++i) {
+            work.run();Map<Integer,Term> next=new LinkedHashMap<>(assignment);
+            if(!instanceLiteral(formal.get(index),actual.get(i),next,work))continue;
+            boolean prior=used[i];used[i]=true;assignments(formal,actual,index+1,used,next,output,work);used[i]=prior;
+        }
+    }
+    /** All consistent surjective instance bindings, including coincident formal premises. */
+    static List<Map<Integer,Term>> assignments(Residual formal,Residual actual,Runnable work) {
+        if(!actual.variables.isEmpty())throw new IllegalStateException("Concrete typed instance required");
+        List<Map<Integer,Term>> out=new ArrayList<>();
+        if(formal.literals.size()>=actual.literals.size())assignments(formal.literals,actual.literals,0,new boolean[actual.literals.size()],new LinkedHashMap<>(),out,work);
+        return Collections.unmodifiableList(out);
+    }
+
 }
