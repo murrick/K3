@@ -211,6 +211,7 @@ def main():
                  ('org.kanger.ContextUniversalFrozenInstancesRunner', 'CONTEXT_UNIVERSAL_FROZEN_INSTANCES_PASS'),
                  ('org.kanger.ContextUniversalInstanceProductsRunner', 'CONTEXT_UNIVERSAL_INSTANCE_PRODUCTS_PASS'),
                  ('org.kanger.ContextUniversalFrozenRoundsRunner', 'CONTEXT_UNIVERSAL_FROZEN_ROUNDS_PASS'),
+                 ('org.kanger.ContextUniversalNativeRowsRunner', 'CONTEXT_UNIVERSAL_NATIVE_ROWS_PASS'),
                  ('org.kanger.storage.dumb2.ContextMixedPrimaryWriteRunner', 'CONTEXT_MIXED_PRIMARY_WRITE_PASS'),
                  ('org.kanger.storage.dumb2.ContextPrivateWitnessAdmissionContractRunner', 'CONTEXT_PRIVATE_WITNESS_ADMISSION_CONTRACT_PASS'),
                  ('org.kanger.storage.dumb2.ContextPrivateWitnessWriteRunner', 'CONTEXT_PRIVATE_WITNESS_WRITE_PASS'),
