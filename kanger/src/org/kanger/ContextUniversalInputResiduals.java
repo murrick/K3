@@ -181,6 +181,11 @@ final class ContextUniversalInputResiduals {
         }
         return new Frame(theory,common,local,pool);
     }
+    static Residual concretePremise(Residual clause,int pivot,Runnable work) {
+        Literal literal=clause.literals.get(pivot);if(literal.positive)throw new IllegalStateException("Negative premise required");
+        for(Term term:literal.arguments){work.run();if(term.variable>=0)throw new IllegalStateException("Concrete premise required");}
+        return new Residual(Collections.singletonList(new Literal(literal.predicate,true,literal.arguments)),work);
+    }
     static Residual schema(Clause clause,Runnable work) {return residual(clause,-1,Collections.emptyMap(),work);}
     static Residual fact(Item item,Runnable work) {
         List<Term> arguments=new ArrayList<>();

@@ -26,15 +26,22 @@ final class ContextUniversalFrozenBranch {
         final Limits limits;
         /** Available only after every phase succeeded, including bidirectional product audit. */
         final ContextUniversalFrozenProducts.Result products;
-        private Result(boolean produced,String phase,String reason,Snapshot x,Snapshot foreign,Packet common,PrivatePool pool,Limits limits,ContextUniversalFrozenProducts.Result products) {
+        final ContextUniversalFrozenPremises.Result premises;
+        private Result(boolean produced,String phase,String reason,Snapshot x,Snapshot foreign,Packet common,PrivatePool pool,Limits limits,ContextUniversalFrozenProducts.Result products,ContextUniversalFrozenPremises.Result premises) {
             this.produced=produced;this.phase=phase;this.reason=reason;this.x=x;this.foreign=foreign;
-            this.common=common;this.pool=pool;this.limits=limits;this.products=products;
+            this.common=common;this.pool=pool;this.limits=limits;this.products=products;this.premises=premises;
         }
     }
     private static void require(boolean valid,String reason){if(!valid)throw new IllegalStateException(reason);}
     static Result run(Snapshot x,Snapshot foreign,Packet common,Limits limits){return run(x,foreign,common,null,limits);}
     static Result runPrivate(PrivatePool pool,Limits limits){return run(pool==null?null:pool.x,pool==null?null:pool.snapshot,pool==null?null:pool.common,pool,limits);}
     static Result run(Snapshot x,Snapshot foreign,Packet common,PrivatePool pool,Limits limits) {
+        return run(x,foreign,common,pool,limits,false);
+    }
+    static Result runWithPremises(Snapshot x,Snapshot foreign,Packet common,PrivatePool pool,Limits limits) {
+        return run(x,foreign,common,pool,limits,true);
+    }
+    private static Result run(Snapshot x,Snapshot foreign,Packet common,PrivatePool pool,Limits limits,boolean withPremises) {
         String phase="preflight";
         try {
             require(limits!=null&&x!=null&&common!=null,"Actual native/common inputs and phase limits required");
@@ -62,15 +69,22 @@ final class ContextUniversalFrozenBranch {
             phase="events";
             ContextUniversalFrozenEvents.Result events=ContextUniversalFrozenEvents.reconstruct(units,limits.proofDepth,limits.receipts,limits.work);
             require(events.reconstructed,events.reason);
+            ContextUniversalFrozenPremises.Result premises=null;
+            if(withPremises) {
+                phase="premises";premises=ContextUniversalFrozenPremises.prepare(units,limits.proofDepth,limits.receipts,limits.work);
+                require(premises.prepared,premises.reason);
+            }
             phase="transfer";
-            TypedTransfer transfer=pool==null?ContextWitnessResultTransport.transferTyped(events,common,limits.factDepth,limits.work)
-                    :ContextWitnessResultTransport.transferTypedPrivate(events,pool,limits.factDepth,limits.work);
+            TypedTransfer transfer=premises==null?(pool==null?ContextWitnessResultTransport.transferTyped(events,common,limits.factDepth,limits.work)
+                    :ContextWitnessResultTransport.transferTypedPrivate(events,pool,limits.factDepth,limits.work))
+                    :(pool==null?ContextWitnessResultTransport.transferTypedInstances(events,premises.instances,common,limits.factDepth,limits.work)
+                    :ContextWitnessResultTransport.transferTypedInstancesPrivate(events,premises.instances,pool,limits.factDepth,limits.work));
             require(transfer.transferred,transfer.reason);
             phase="products";
             ContextUniversalFrozenProducts.Result products=ContextUniversalFrozenProducts.bind(coverage,transfer,limits.receipts,limits.work);
             require(products.bound,products.reason);
-            return new Result(true,phase,"Owning positive projection and observed products verified; complete instantiation and family qualification remain open",x,foreign,common,pool,limits,products);
-        }catch(Exception failure){return new Result(false,phase,failure.toString(),x,foreign,common,pool,limits,null);}
+            return new Result(true,phase,"Owning positive projection and observed products verified; complete instantiation and family qualification remain open",x,foreign,common,pool,limits,products,premises);
+        }catch(Exception failure){return new Result(false,phase,failure.toString(),x,foreign,common,pool,limits,null,null);}
     }
     static final class Barrier {
         final boolean merged;

@@ -16,8 +16,9 @@ final class ContextUniversalFrozenProducts {
         final Item input,local,shared;
         final Proof theorem;
         final Conclusion event;
+        final ContextUniversalFrozenEvents.Donor instance;
         private Product(Demand demand,Match local,Match shared) {
-            fact=demand.fact;expected=demand.support;input=demand.input;theorem=demand.theorem;event=demand.event;
+            fact=demand.fact;expected=demand.support;input=demand.input;theorem=demand.theorem;event=demand.event;instance=demand.instance;
             this.local=local.item;localProof=local.support;this.shared=shared==null?null:shared.item;sharedProof=shared==null?null:shared.support;
         }
     }
@@ -34,8 +35,9 @@ final class ContextUniversalFrozenProducts {
         }
     }
     private static final class Demand {
-        final Residual fact;final Support support;final Item input;final Proof theorem;final Conclusion event;
-        Demand(Residual fact,Support support,Item input,Proof theorem,Conclusion event){this.fact=fact;this.support=support;this.input=input;this.theorem=theorem;this.event=event;}
+        final Residual fact;final Support support;final Item input;final Proof theorem;final Conclusion event;final ContextUniversalFrozenEvents.Donor instance;
+        Demand(Residual fact,Support support,Item input,Proof theorem,Conclusion event){this(fact,support,input,theorem,event,null);}
+        Demand(Residual fact,Support support,Item input,Proof theorem,Conclusion event,ContextUniversalFrozenEvents.Donor instance){this.fact=fact;this.support=support;this.input=input;this.theorem=theorem;this.event=event;this.instance=instance;}
     }
     private static final class Match {
         final Item item;final Support support;
@@ -97,6 +99,13 @@ final class ContextUniversalFrozenProducts {
             for(Conclusion event:transfer.proof.conclusions) {
                 work.run();if(!privateInput&&!usesX(event.support)){++foreignOnly;continue;}
                 add(demands,new Demand(event.fact,event.support,null,null,event),maximumProducts,work);
+            }
+            if(transfer.instances!=null) {
+                if(!transfer.instances.proved||transfer.instances.input!=transfer.proof.input)throw new IllegalStateException("Different exact instance product frame");
+                for(ContextUniversalFrozenInstances.Instance instance:transfer.instances.instances)for(ContextUniversalFrozenEvents.Donor donor:instance.proofs) {
+                    work.run();if(!privateInput&&!usesX(donor.support)){++foreignOnly;continue;}
+                    add(demands,new Demand(instance.fact,donor.support,null,null,null,donor),maximumProducts,work);
+                }
             }
             List<Product> products=new ArrayList<>();
             for(Demand demand:demands) {

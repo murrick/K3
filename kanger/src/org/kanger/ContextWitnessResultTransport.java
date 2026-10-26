@@ -356,10 +356,11 @@ final class ContextWitnessResultTransport {
         final PrivatePool privateBefore,privateAfter;
         final Cut parent,target;
         final ContextUniversalFrozenEvents.Result proof;
+        final ContextUniversalFrozenInstances.Result instances;
         private TypedTransfer(boolean transferred,String reason,Packet before,Packet output,Packet local,PrivatePool privateBefore,
-                PrivatePool privateAfter,ContextUniversalFrozenEvents.Result proof,Runnable work) {
+                PrivatePool privateAfter,ContextUniversalFrozenEvents.Result proof,ContextUniversalFrozenInstances.Result instances,Runnable work) {
             this.transferred=transferred;this.reason=reason;this.before=before;this.output=output;this.local=local;
-            this.privateBefore=privateBefore;this.privateAfter=privateAfter;this.proof=proof;
+            this.privateBefore=privateBefore;this.privateAfter=privateAfter;this.proof=proof;this.instances=instances;
             ContextUniversalFrozenClosure.Result theory=proof==null||proof.input==null||proof.input.input==null?null:proof.input.input.theory;
             parent=theory==null?null:theory.parent;target=theory==null?null:theory.target;
             commonChanged=transferred&&!sameItems(before.items,output.items,work);
@@ -378,17 +379,26 @@ final class ContextWitnessResultTransport {
         return new Atom(literal.predicate,true,arguments);
     }
     static TypedTransfer transferTyped(ContextUniversalFrozenEvents.Result proof,Packet input,int maximumDepth,int maximumWork) {
-        return transferTyped(proof,input,null,maximumDepth,maximumWork);
+        return transferTyped(proof,null,input,null,maximumDepth,maximumWork);
     }
     static TypedTransfer transferTypedPrivate(ContextUniversalFrozenEvents.Result proof,PrivatePool pool,int maximumDepth,int maximumWork) {
-        return transferTyped(proof,pool==null?null:pool.common,pool,maximumDepth,maximumWork);
+        return transferTyped(proof,null,pool==null?null:pool.common,pool,maximumDepth,maximumWork);
     }
-    private static TypedTransfer transferTyped(ContextUniversalFrozenEvents.Result proof,Packet input,PrivatePool pool,int maximumDepth,int maximumWork) {
+    static TypedTransfer transferTypedInstances(ContextUniversalFrozenEvents.Result proof,ContextUniversalFrozenInstances.Result instances,Packet input,int maximumDepth,int maximumWork) {
+        if(instances==null)throw new IllegalArgumentException("Actual instance receipt required");
+        return transferTyped(proof,instances,input,null,maximumDepth,maximumWork);
+    }
+    static TypedTransfer transferTypedInstancesPrivate(ContextUniversalFrozenEvents.Result proof,ContextUniversalFrozenInstances.Result instances,PrivatePool pool,int maximumDepth,int maximumWork) {
+        if(instances==null)throw new IllegalArgumentException("Actual instance receipt required");
+        return transferTyped(proof,instances,pool==null?null:pool.common,pool,maximumDepth,maximumWork);
+    }
+    private static TypedTransfer transferTyped(ContextUniversalFrozenEvents.Result proof,ContextUniversalFrozenInstances.Result instances,Packet input,PrivatePool pool,int maximumDepth,int maximumWork) {
         if(maximumDepth<0||maximumDepth>64||maximumWork<1)throw new IllegalArgumentException("Bounded typed transfer required");
         Runnable work=budget(maximumWork);
         try {
             if(proof==null||!proof.reconstructed||proof.input==null||!proof.input.projected||input==null)
                 throw new IllegalStateException("Sealed typed unit/event proof required");
+            if(instances!=null&&(!instances.proved||instances.input!=proof.input))throw new IllegalStateException("Instances changed exact sealed unit frame");
             ContextUniversalFrozenReplay.Result replay=proof.input.input;
             ContextUniversalInputResiduals.Frame frame=replay.theory.frame;Packet local=pool==null?input:pool.local;
             if(frame.common!=input||frame.local!=local||frame.pool!=pool||replay.theory.privateInput!=(pool!=null))
@@ -406,16 +416,20 @@ final class ContextWitnessResultTransport {
                 work.run();if(pool==null&&!usesX(conclusion.support))continue;
                 add(after,typedAtom(conclusion.fact,known,work),conclusion.support,work);
             }
+            if(instances!=null)for(ContextUniversalFrozenInstances.Instance instance:instances.instances)for(ContextUniversalFrozenEvents.Donor donor:instance.proofs) {
+                work.run();if(pool==null&&!usesX(donor.support))continue;
+                add(after,typedAtom(instance.fact,known,work),donor.support,work);
+            }
             // Compare minimum fact/exact-Source grades only after input, fixed
-            // theorems and event proofs have all participated. Recipe limits
+            // theorems, event and instance proofs have all participated. Recipe limits
             // are not fact lower bounds. Stored occurrences never add aliases.
             for(Item item:after)for(Support support:item.proofs){work.run();if(support.depth>maximumDepth)throw new IllegalStateException("Uncovered typed fact depth limit");}
             privateRank(after,work);Packet retained=new Packet(after);
             if(!retains(local,retained,work))throw new IllegalStateException("Typed transfer lost a local input proof");
             Packet output=pool==null?retained:privateShared(input,retained,work);parentX(output.items,work);
             PrivatePool next=pool==null?null:new PrivatePool(input,pool.x,pool.snapshot,retained,pool.sources,pool.declarations);
-            return new TypedTransfer(true,"Minimum typed fixed/event products transported; full round qualification remains open",input,output,retained,pool,next,proof,work);
-        }catch(Exception failure){return new TypedTransfer(false,failure.getMessage(),input,null,null,pool,null,proof,work);}
+            return new TypedTransfer(true,"Minimum typed fixed/event/instance products transported; full round qualification remains open",input,output,retained,pool,next,proof,instances,work);
+        }catch(Exception failure){return new TypedTransfer(false,failure.getMessage(),input,null,null,pool,null,proof,instances,work);}
     }
     static final class TypedBarrier {
         final boolean merged,changed,localChanged;
