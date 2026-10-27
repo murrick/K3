@@ -120,10 +120,16 @@ final class ContextWitnessResultTransport {
         return entry.bundle!=null||literals>0&&literals==entry.clauses.size();
     }
     static PrivatePool privatePool(Packet common,ContextProductionNativeBinding.Snapshot x,ContextProductionNativeBinding.Snapshot target,int maximumWork) {
+        return privatePool(common,x,target,maximumWork,false);
+    }
+    static PrivatePool privatePoolSigned(Packet common,ContextProductionNativeBinding.Snapshot x,ContextProductionNativeBinding.Snapshot target,int maximumWork) {
+        return privatePool(common,x,target,maximumWork,true);
+    }
+    private static PrivatePool privatePool(Packet common,ContextProductionNativeBinding.Snapshot x,ContextProductionNativeBinding.Snapshot target,int maximumWork,boolean signedCommon) {
         Runnable work=budget(maximumWork);ContextProductionFamilyAssembly.identity(x,true,work);ContextProductionFamilyAssembly.identity(target,false,work);
         if(!Cut.of(x).equals(parentX(common.items,work)))throw new IllegalStateException("Private pool has another X view");
         if(x.primary.size()+target.primary.size()>64)throw new IllegalStateException("Private whole declaration limit");
-        for(Item item:common.items){work.run();if(!item.atom.positive)throw new IllegalStateException("Positive common witness pool required");}
+        for(Item item:common.items){work.run();if(!signedCommon&&!item.atom.positive)throw new IllegalStateException("Positive common witness pool required");}
         family(common,Collections.singletonList(Cut.of(target)),maximumWork);
         List<Item> local=new ArrayList<>(common.items);Set<Source> sources=new LinkedHashSet<>();
         for(ContextProductionNativeBinding.Entry entry:target.primary) {
@@ -173,9 +179,15 @@ final class ContextWitnessResultTransport {
     }
     /** Rebase only a sealed local continuation, keeping private proofs at their original cut. */
     static PrivatePool rebasePrivate(PrivatePool previous,Packet common,int maximumWork) {
+        return rebasePrivate(previous,common,maximumWork,false);
+    }
+    static PrivatePool rebasePrivateSigned(PrivatePool previous,Packet common,int maximumWork) {
+        return rebasePrivate(previous,common,maximumWork,true);
+    }
+    private static PrivatePool rebasePrivate(PrivatePool previous,Packet common,int maximumWork,boolean signedCommon) {
         Runnable work=budget(maximumWork);
         if(!retains(previous.common,common,work))throw new IllegalStateException("Private rebase lost a common input proof");
-        PrivatePool fresh=privatePool(common,previous.x,previous.snapshot,maximumWork);
+        PrivatePool fresh=privatePool(common,previous.x,previous.snapshot,maximumWork,signedCommon);
         List<Item> local=new ArrayList<>(fresh.local.items);
         for(Item item:previous.local.items)for(Support proof:item.proofs){work.run();add(local,item.atom,proof,work);}
         privateRank(local,work);
@@ -475,6 +487,38 @@ final class ContextWitnessResultTransport {
             PrivatePool next=pool==null?null:new PrivatePool(input,pool.x,pool.snapshot,retained,pool.sources,pool.declarations);
             return new ConstraintTransfer(true,"Checked fixed signed units transported; symbolic/all-cut qualification remains open",proof,input,output,retained,pool,next,work);
         }catch(Exception failure){return new ConstraintTransfer(false,failure.toString(),proof,input,null,null,pool,null,work);}
+    }
+    /** Supplied signed products only; qualification of the next common barrier remains separate. */
+    static final class ConstraintBarrier {
+        final boolean merged,changed,localChanged;
+        final String reason;
+        final Packet packet;
+        final Map<Cut,ConstraintTransfer> branches;
+        final Map<Cut,PrivatePool> privatePools;
+        private ConstraintBarrier(boolean merged,String reason,Packet packet,boolean changed,boolean localChanged,Map<Cut,ConstraintTransfer> branches,Map<Cut,PrivatePool> privatePools) {
+            this.merged=merged;this.reason=reason;this.packet=packet;this.changed=changed;this.localChanged=localChanged;
+            this.branches=Collections.unmodifiableMap(new LinkedHashMap<>(branches));this.privatePools=Collections.unmodifiableMap(new LinkedHashMap<>(privatePools));
+        }
+    }
+    static ConstraintBarrier mergeConstraints(Family family,Map<Cut,ConstraintTransfer> outputs,int maximumWork) {
+        if(maximumWork<1)throw new IllegalArgumentException("Bounded signed barrier required");Runnable work=budget(maximumWork);
+        try {
+            if(family==null||outputs==null||!outputs.keySet().equals(new HashSet<>(family.expected))||!family.expected.contains(family.parent))throw new IllegalStateException("Exact supplied cuts including self-X required");
+            Map<Cut,ConstraintTransfer> branches=new LinkedHashMap<>();ContextProductionNativeBinding.Snapshot x=null;boolean localChanged=false;
+            for(Cut cut:family.expected) {
+                work.run();ConstraintTransfer b=outputs.get(cut);
+                if(b==null||!b.transferred||b.before!=family.input||!cut.equals(b.target)||!family.parent.equals(b.parent)||b.proof==null||!b.proof.closed||!b.proof.signedUnits||b.proof.xRefuted||b.proof.foreignRefuted)throw new IllegalStateException("Incomplete/refuted or mixed-frame signed branch");
+                if(x==null)x=b.proof.input.x;else if(x!=b.proof.input.x)throw new IllegalStateException("Different actual shared X snapshot");
+                if(cut.localX?b.proof.input.foreign!=null||b.privateBefore!=null:b.proof.input.foreign==null||!Cut.of(b.proof.input.foreign).equals(cut))throw new IllegalStateException("Different actual native signed cut");
+                if(b.privateBefore==null?b.privateAfter!=null||b.local!=b.output:b.privateAfter==null||b.privateAfter.common!=family.input||b.privateAfter.local!=b.local||b.privateAfter.x!=x||b.privateAfter.snapshot!=b.proof.input.foreign)throw new IllegalStateException("Different signed private continuation");
+                if(!retains(family.input,b.output,work))throw new IllegalStateException("Signed branch lost common proof");branches.put(cut,b);localChanged|=b.localChanged;
+            }
+            // No merge or private rebase before all supplied outputs have passed validation.
+            List<Item> merged=new ArrayList<>(family.input.items);for(ConstraintTransfer b:branches.values())for(Item item:b.output.items)for(Support support:item.proofs){work.run();add(merged,item.atom,support,work);}
+            Packet packet=new Packet(merged);parentX(packet.items,work);privateRank(packet.items,work);Map<Cut,PrivatePool> pools=new LinkedHashMap<>();
+            for(Map.Entry<Cut,ConstraintTransfer> e:branches.entrySet())if(e.getValue().privateAfter!=null){work.run();pools.put(e.getKey(),rebasePrivateSigned(e.getValue().privateAfter,packet,maximumWork));}
+            return new ConstraintBarrier(true,"All supplied signed products merged; next-barrier qualification remains required",packet,!sameItems(family.input.items,packet.items,work),localChanged,branches,pools);
+        }catch(Exception failure){return new ConstraintBarrier(false,failure.toString(),null,false,false,Collections.emptyMap(),Collections.emptyMap());}
     }
     static final class TypedBarrier {
         final boolean merged,changed,localChanged;
