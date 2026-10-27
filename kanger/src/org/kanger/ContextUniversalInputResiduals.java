@@ -289,6 +289,13 @@ final class ContextUniversalInputResiduals {
         private GroundedApplication(Residual conclusion,List<Residual> instances){this.conclusion=conclusion;this.instances=Collections.unmodifiableList(new ArrayList<>(instances));}
     }
     static GroundedApplication applyGroundedMixedUnits(Residual producer,int conclusion,List<Residual> donors,Runnable work) {
+        return instantiateUnits(producer,conclusion,donors,true,work);
+    }
+    /** All donor arguments must be fixed; the conclusion may retain declared universal variables. */
+    static GroundedApplication applyInstantiatedUnits(Residual producer,int conclusion,List<Residual> donors,Runnable work) {
+        return instantiateUnits(producer,conclusion,donors,false,work);
+    }
+    private static GroundedApplication instantiateUnits(Residual producer,int conclusion,List<Residual> donors,boolean mixedOnly,Runnable work) {
         work.run();if(conclusion<0||conclusion>=producer.literals.size()||producer.literals.size()<3||donors.size()!=producer.literals.size()-1)throw new IllegalArgumentException("Complete grounded mixed application required");
         int[] next={0};Residual rule=apart(producer,next,work);Map<Integer,Term> substitution=new HashMap<>();List<Literal> actuals=new ArrayList<>();boolean fixed=false,symbolic=false;int slot=0;
         for(int pivot=0;pivot<rule.literals.size();++pivot)if(pivot!=conclusion) {
@@ -298,10 +305,10 @@ final class ContextUniversalInputResiduals {
             if(!formal.predicate.equals(actual.predicate)||formal.arguments.size()!=actual.arguments.size())throw new UnificationFailure();
             for(int j=0;j<formal.arguments.size();++j){work.run();Term a=dereference(formal.arguments.get(j),substitution,work),b=dereference(actual.arguments.get(j),substitution,work);if(a.variable>=0){if(b.variable!=a.variable)substitution.put(a.variable,b);}else if(b.variable>=0)substitution.put(b.variable,a);else if(!rigid(a,b))throw new UnificationFailure();}
         }
-        if(!fixed||!symbolic)return null;
+        if(!symbolic||mixedOnly&&!fixed)return null;
         List<Residual> instances=new ArrayList<>();for(Literal actual:actuals){work.run();List<Term> args=new ArrayList<>();for(Term term:actual.arguments){work.run();Term value=dereference(term,substitution,work);if(value.variable>=0)return null;args.add(value);}instances.add(new Residual(Collections.singletonList(new Literal(actual.predicate,actual.positive,args)),work));}
-        Literal head=rule.literals.get(conclusion);List<Term> args=new ArrayList<>();for(Term term:head.arguments){work.run();Term value=dereference(term,substitution,work);if(value.variable>=0)return null;args.add(value);}
-        return new GroundedApplication(new Residual(Collections.singletonList(new Literal(head.predicate,head.positive,args)),work),instances);
+        Literal head=rule.literals.get(conclusion);List<Term> args=new ArrayList<>();for(Term term:head.arguments){work.run();Term value=dereference(term,substitution,work);if(mixedOnly&&value.variable>=0)return null;args.add(value);}
+        return new GroundedApplication(apart(new Residual(Collections.singletonList(new Literal(head.predicate,head.positive,args)),work),new int[]{0},work),instances);
     }
 
     static String assertion(Residual clause,Runnable work) {
