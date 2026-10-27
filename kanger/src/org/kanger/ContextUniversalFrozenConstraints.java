@@ -24,15 +24,15 @@ final class ContextUniversalFrozenConstraints {
         private Proof(Residual clause,Proof unit,Proof horn,int pivot,Runnable work){this.clause=clause;this.unit=unit;this.horn=horn;this.pivot=pivot;original=null;part=null;input=null;inputProof=null;Set<Source> sources=new LinkedHashSet<>();for(Source source:unit.support.sources){work.run();sources.add(source);}for(Source source:horn.support.sources){work.run();sources.add(source);}int depth=Math.max(unit.support.depth,horn.support.depth);if(depth==Integer.MAX_VALUE)throw new IllegalStateException("Constraint proof depth overflow");support=new Support(sources,depth+1);}
     }
     static final class Result {
-        final boolean closed,xRefuted,foreignRefuted;
+        final boolean closed,xRefuted,foreignRefuted,signedUnits;
         final String reason;
         final ContextUniversalNativeRows.Result input;
         final Packet common,local;
         final PrivatePool pool;
         final int rounds,obligations;
         final List<Proof> proofs,emptyProofs;
-        private Result(boolean closed,String reason,ContextUniversalNativeRows.Result input,Packet common,PrivatePool pool,int rounds,int obligations,List<Proof> proofs) {
-            this.closed=closed;this.reason=reason;this.input=input;this.common=common;this.pool=pool;local=pool==null?common:pool.local;this.rounds=rounds;this.obligations=obligations;
+        private Result(boolean closed,String reason,ContextUniversalNativeRows.Result input,Packet common,PrivatePool pool,boolean signedUnits,int rounds,int obligations,List<Proof> proofs) {
+            this.closed=closed;this.signedUnits=signedUnits;this.reason=reason;this.input=input;this.common=common;this.pool=pool;local=pool==null?common:pool.local;this.rounds=rounds;this.obligations=obligations;
             this.proofs=Collections.unmodifiableList(new ArrayList<>(proofs));List<Proof> empty=new ArrayList<>();boolean x=false,foreign=false;
             for(Proof proof:proofs)if(proof.clause==null){empty.add(proof);if(proof.support.sources.stream().anyMatch(s->s.localX))x=true;else foreign=true;}
             emptyProofs=Collections.unmodifiableList(empty);xRefuted=x;foreignRefuted=foreign;
@@ -45,7 +45,7 @@ final class ContextUniversalFrozenConstraints {
         int heads=0;for(Literal literal:clause.literals){work.run();if(literal.positive)++heads;if(literal.arguments.size()>8)throw new IllegalStateException("Rigid-Origin Horn arity limit");}
         if(heads>1)throw new IllegalStateException("Horn producer or headless constraint required");
     }
-    private static boolean unit(Proof p){return p.clause!=null&&p.clause.literals.size()==1&&p.clause.literals.get(0).positive;}
+    private static boolean unit(Proof p,boolean signed){return p.clause!=null&&p.clause.literals.size()==1&&(signed||p.clause.literals.get(0).positive);}
     private static final class Bucket {
         final Residual clause;final Map<Set<Source>,Proof> proofs=new LinkedHashMap<>();Bucket(Residual clause){this.clause=clause;}
     }
@@ -64,7 +64,7 @@ final class ContextUniversalFrozenConstraints {
         List<Proof> all(Runnable work){List<Proof> out=new ArrayList<>();for(Bucket b:buckets)for(Proof p:b.proofs.values()){work.run();out.add(p);}return out;}
         Ledger copy(Runnable work){Ledger next=new Ledger(clauses,alternatives);for(Bucket b:buckets){work.run();Bucket copy=new Bucket(b.clause);copy.proofs.putAll(b.proofs);next.buckets.add(copy);}return next;}
     }
-    private static void verify(Proof p,ContextUniversalNativeRows.Result input,Packet local,Set<Proof> checked,int depth,Runnable work) {
+    private static void verify(Proof p,ContextUniversalNativeRows.Result input,Packet local,boolean signed,Set<Proof> checked,int depth,Runnable work) {
         work.run();if(checked.contains(p))return;shape(p.clause,work);if(p.support.depth>depth)throw new IllegalStateException("Constraint proof exceeds depth bound");
         if(p.original!=null) {
             boolean found=false;for(Row row:input.rows){work.run();if(row==p.original)found=true;}
@@ -73,8 +73,8 @@ final class ContextUniversalFrozenConstraints {
             boolean found=false;for(Item item:local.items){work.run();if(item==p.input)found=true;}
             if(!found||!p.input.proofs.contains(p.inputProof)||!p.support.equals(p.inputProof)||!p.clause.equivalent(ContextUniversalInputResiduals.fact(p.input,work),work))throw new IllegalStateException("Different actual carried input proof");
         }else {
-            if(p.unit==null||p.horn==null||!unit(p.unit))throw new IllegalStateException("Missing constraint resolution parents");verify(p.unit,input,local,checked,depth,work);verify(p.horn,input,local,checked,depth,work);
-            Residual expected=ContextUniversalInputResiduals.resolveConstraint(p.unit.clause,p.horn.clause,p.pivot,work);Proof label=new Proof(expected,p.unit,p.horn,p.pivot,work);
+            if(p.unit==null||p.horn==null||!unit(p.unit,signed))throw new IllegalStateException("Missing constraint resolution parents");verify(p.unit,input,local,signed,checked,depth,work);verify(p.horn,input,local,signed,checked,depth,work);
+            Residual expected=resolve(p.unit,p.horn,p.pivot,signed,work);Proof label=new Proof(expected,p.unit,p.horn,p.pivot,work);
             if(!same(expected,p.clause,work)||!label.support.equals(p.support))throw new IllegalStateException("Different constraint resolvent/Source proof");
         }
         checked.add(p);
@@ -82,17 +82,21 @@ final class ContextUniversalFrozenConstraints {
     static void check(Result result,int maximumDepth,Runnable work) {
         if(result==null||!result.closed||result.input==null||!result.input.classified||!result.input.withinShape)throw new IllegalStateException("Closed whole rigid-Origin constraint frame required");
         frame(result.input,result.common,result.pool,maximumDepth,Integer.MAX_VALUE,work);
-        Set<Proof> checked=Collections.newSetFromMap(new IdentityHashMap<Proof,Boolean>());for(Proof proof:result.proofs)verify(proof,result.input,result.local,checked,maximumDepth,work);
+        Set<Proof> checked=Collections.newSetFromMap(new IdentityHashMap<Proof,Boolean>());for(Proof proof:result.proofs)verify(proof,result.input,result.local,result.signedUnits,checked,maximumDepth,work);
+    }
+    private static Residual resolve(Proof unit,Proof horn,int pivot,boolean signed,Runnable work) {
+        return signed?ContextUniversalInputResiduals.resolveSignedUnit(unit.clause,horn.clause,pivot,work)
+            :ContextUniversalInputResiduals.resolveConstraint(unit.clause,horn.clause,pivot,work);
     }
     private interface Step { void accept(Proof proof); }
-    private static void steps(List<Proof> input,Step output,Runnable work) {
+    private static void steps(List<Proof> input,boolean signed,Step output,Runnable work) {
         for(Proof unit:input) {
-            work.run();if(!unit(unit))continue;
+            work.run();if(!unit(unit,signed))continue;
             for(Proof horn:input) {
             work.run();if(horn.clause==null)continue;Literal head=unit.clause.literals.get(0);
             for(int pivot=0;pivot<horn.clause.literals.size();++pivot) {
-                work.run();Literal body=horn.clause.literals.get(pivot);if(body.positive||!head.predicate.equals(body.predicate)||head.arguments.size()!=body.arguments.size())continue;
-                Residual residual;try{residual=ContextUniversalInputResiduals.resolveConstraint(unit.clause,horn.clause,pivot,work);}catch(ContextUniversalInputResiduals.UnificationFailure incompatible){continue;}
+                work.run();Literal body=horn.clause.literals.get(pivot);if(body.positive==head.positive||!head.predicate.equals(body.predicate)||head.arguments.size()!=body.arguments.size())continue;
+                Residual residual;try{residual=resolve(unit,horn,pivot,signed,work);}catch(ContextUniversalInputResiduals.UnificationFailure incompatible){continue;}
                 output.accept(new Proof(residual,unit,horn,pivot,work));
             }
             }
@@ -116,6 +120,12 @@ final class ContextUniversalFrozenConstraints {
         return local;
     }
     static Result close(ContextUniversalNativeRows.Result input,Packet common,PrivatePool pool,int maximumRounds,int maximumDepth,int maximumClauses,int maximumAlternatives,int maximumWork) {
+        return close(input,common,pool,maximumRounds,maximumDepth,maximumClauses,maximumAlternatives,maximumWork,false);
+    }
+    static Result closeSigned(ContextUniversalNativeRows.Result input,Packet common,PrivatePool pool,int maximumRounds,int maximumDepth,int maximumClauses,int maximumAlternatives,int maximumWork) {
+        return close(input,common,pool,maximumRounds,maximumDepth,maximumClauses,maximumAlternatives,maximumWork,true);
+    }
+    private static Result close(ContextUniversalNativeRows.Result input,Packet common,PrivatePool pool,int maximumRounds,int maximumDepth,int maximumClauses,int maximumAlternatives,int maximumWork,boolean signed) {
         if(maximumRounds<1||maximumRounds>64||maximumDepth<0||maximumDepth>64||maximumClauses<1||maximumClauses>512||maximumAlternatives<1||maximumAlternatives>256||maximumWork<1)throw new IllegalArgumentException("Bounded ordinary constraint closure required");
         Runnable work=ContextGroundProductionRounds.budget(maximumWork);
         try {
@@ -126,16 +136,16 @@ final class ContextUniversalFrozenConstraints {
             for(Item item:local.items)for(Support support:item.proofs){work.run();current.add(new Proof(item,support,work),maximumDepth,work);}
             for(int round=1;round<=maximumRounds;++round) {
                 List<Proof> before=current.all(work);Ledger next=current.copy(work);boolean[] changed={false};
-                steps(before,proof->{changed[0]|=next.add(proof,maximumDepth,work);},work);
+                steps(before,signed,proof->{changed[0]|=next.add(proof,maximumDepth,work);},work);
                 if(!changed[0]) {
                     List<Proof> proofs=next.all(work);int[] obligations={0};
-                    steps(proofs,expected->{work.run();++obligations[0];boolean found=false;for(Proof proof:proofs){work.run();if(same(proof.clause,expected.clause,work)&&proof.support.sources.equals(expected.support.sources)&&proof.support.depth<=expected.support.depth){found=true;break;}}if(!found)throw new IllegalStateException("Uncovered exact Source/depth constraint obligation");},work);
-                    Set<Proof> checked=Collections.newSetFromMap(new IdentityHashMap<Proof,Boolean>());for(Proof proof:proofs)verify(proof,input,local,checked,maximumDepth,work);
-                    return new Result(true,"Whole rigid-Origin producer/constraint pairs covered; native discovery, all-cut qualification and admission remain open",input,common,pool,round,obligations[0],proofs);
+                    steps(proofs,signed,expected->{work.run();++obligations[0];boolean found=false;for(Proof proof:proofs){work.run();if(same(proof.clause,expected.clause,work)&&proof.support.sources.equals(expected.support.sources)&&proof.support.depth<=expected.support.depth){found=true;break;}}if(!found)throw new IllegalStateException("Uncovered exact Source/depth constraint obligation");},work);
+                    Set<Proof> checked=Collections.newSetFromMap(new IdentityHashMap<Proof,Boolean>());for(Proof proof:proofs)verify(proof,input,local,signed,checked,maximumDepth,work);
+                    return new Result(true,"Whole rigid-Origin producer/constraint pairs covered; native discovery, all-cut qualification and admission remain open",input,common,pool,signed,round,obligations[0],proofs);
                 }
                 current=next;
             }
             throw new IllegalStateException("Constraint closure round limit");
-        }catch(Exception failure){return new Result(false,failure.toString(),input,common,pool,0,0,Collections.emptyList());}
+        }catch(Exception failure){return new Result(false,failure.toString(),input,common,pool,signed,0,0,Collections.emptyList());}
     }
 }

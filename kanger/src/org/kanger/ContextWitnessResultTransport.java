@@ -368,7 +368,10 @@ final class ContextWitnessResultTransport {
         }
     }
     private static Atom typedAtom(ContextUniversalInputResiduals.Residual fact,Set<Origin> known,Runnable work) {
-        if(fact.literals.size()!=1||!fact.variables.isEmpty()||!fact.literals.get(0).positive)
+        return typedAtom(fact,known,false,work);
+    }
+    private static Atom typedAtom(ContextUniversalInputResiduals.Residual fact,Set<Origin> known,boolean signed,Runnable work) {
+        if(fact.literals.size()!=1||!fact.variables.isEmpty()||!signed&&!fact.literals.get(0).positive)
             throw new IllegalStateException("Fixed positive typed transport fact required");
         ContextUniversalInputResiduals.Literal literal=fact.literals.get(0);List<Slot> arguments=new ArrayList<>();
         for(ContextUniversalInputResiduals.Term term:literal.arguments) {
@@ -376,7 +379,7 @@ final class ContextWitnessResultTransport {
                 throw new IllegalStateException("Unbound or nonfixed typed transport argument");
             arguments.add(new Slot(term.origin,term.value));
         }
-        return new Atom(literal.predicate,true,arguments);
+        return new Atom(literal.predicate,literal.positive,arguments);
     }
     static TypedTransfer transferTyped(ContextUniversalFrozenEvents.Result proof,Packet input,int maximumDepth,int maximumWork) {
         return transferTyped(proof,null,input,null,maximumDepth,maximumWork);
@@ -430,6 +433,48 @@ final class ContextWitnessResultTransport {
             PrivatePool next=pool==null?null:new PrivatePool(input,pool.x,pool.snapshot,retained,pool.sources,pool.declarations);
             return new TypedTransfer(true,"Minimum typed fixed/event/instance products transported; full round qualification remains open",input,output,retained,pool,next,proof,instances,work);
         }catch(Exception failure){return new TypedTransfer(false,failure.getMessage(),input,null,null,pool,null,proof,instances,work);}
+    }
+    /** Fixed signed unit products only; no all-cut collection or family admission authority. */
+    static final class ConstraintTransfer {
+        final boolean transferred,commonChanged,localChanged;
+        final String reason;
+        final ContextUniversalFrozenConstraints.Result proof;
+        final Packet before,output,local;
+        final PrivatePool privateBefore,privateAfter;
+        final Cut parent,target;
+        private ConstraintTransfer(boolean transferred,String reason,ContextUniversalFrozenConstraints.Result proof,Packet before,Packet output,Packet local,PrivatePool privateBefore,PrivatePool privateAfter,Runnable work) {
+            this.transferred=transferred;this.reason=reason;this.proof=proof;this.before=before;this.output=output;this.local=local;this.privateBefore=privateBefore;this.privateAfter=privateAfter;
+            parent=proof==null||proof.input==null?null:proof.input.parent;target=proof==null||proof.input==null?null:proof.input.target;
+            commonChanged=transferred&&!sameItems(before.items,output.items,work);
+            localChanged=transferred&&!sameItems(privateBefore==null?before.items:privateBefore.local.items,local.items,work);
+        }
+    }
+    static ConstraintTransfer transferConstraints(ContextUniversalFrozenConstraints.Result proof,Packet input,int maximumDepth,int maximumWork) {
+        return transferConstraints(proof,input,null,maximumDepth,maximumWork);
+    }
+    static ConstraintTransfer transferConstraintsPrivate(ContextUniversalFrozenConstraints.Result proof,PrivatePool pool,int maximumDepth,int maximumWork) {
+        return transferConstraints(proof,pool==null?null:pool.common,pool,maximumDepth,maximumWork);
+    }
+    private static ConstraintTransfer transferConstraints(ContextUniversalFrozenConstraints.Result proof,Packet input,PrivatePool pool,int maximumDepth,int maximumWork) {
+        if(maximumDepth<0||maximumDepth>64||maximumWork<1)throw new IllegalArgumentException("Bounded signed constraint transfer required");
+        Runnable work=budget(maximumWork);
+        try {
+            if(proof==null||!proof.closed||!proof.signedUnits||proof.xRefuted||proof.foreignRefuted)throw new IllegalStateException("Unrefuted sealed signed-unit closure required");
+            Packet local=pool==null?input:pool.local;
+            if(input==null||proof.common!=input||proof.pool!=pool||proof.local!=local)throw new IllegalStateException("Different exact signed transfer frame");
+            ContextUniversalFrozenConstraints.check(proof,64,work);
+            Set<Origin> known=new HashSet<>();for(Item item:local.items)for(Slot slot:item.atom.arguments){work.run();if(slot.origin!=null)known.add(slot.origin);}
+            List<Item> after=new ArrayList<>(local.items);
+            for(ContextUniversalFrozenConstraints.Proof unit:proof.proofs) {
+                work.run();if(unit.clause==null||unit.clause.literals.size()!=1||!unit.clause.variables.isEmpty()||pool==null&&!usesX(unit.support))continue;
+                add(after,typedAtom(unit.clause,known,true,work),unit.support,work);
+            }
+            for(Item item:after)for(Support support:item.proofs){work.run();if(support.depth>maximumDepth)throw new IllegalStateException("Uncovered signed fact depth limit");}
+            privateRank(after,work);Packet retained=new Packet(after);if(!retains(local,retained,work))throw new IllegalStateException("Signed transfer lost an input proof");
+            Packet output=pool==null?retained:privateShared(input,retained,work);parentX(output.items,work);
+            PrivatePool next=pool==null?null:new PrivatePool(input,pool.x,pool.snapshot,retained,pool.sources,pool.declarations);
+            return new ConstraintTransfer(true,"Checked fixed signed units transported; symbolic/all-cut qualification remains open",proof,input,output,retained,pool,next,work);
+        }catch(Exception failure){return new ConstraintTransfer(false,failure.toString(),proof,input,null,null,pool,null,work);}
     }
     static final class TypedBarrier {
         final boolean merged,changed,localChanged;

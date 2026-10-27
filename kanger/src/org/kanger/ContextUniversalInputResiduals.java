@@ -213,14 +213,18 @@ final class ContextUniversalInputResiduals {
     }
     /** Principal flat unifier. Different origins do not become equal by a variable renaming. */
     static Residual resolve(Residual unit,Residual horn,int pivot,Runnable work) {
-        return resolve(unit,horn,pivot,false,work);
+        return resolve(unit,horn,pivot,false,false,work);
     }
     /** Empty is permitted only for the constraint proof kernel; old positive callers retain their guard. */
     static Residual resolveConstraint(Residual unit,Residual horn,int pivot,Runnable work) {
-        return resolve(unit,horn,pivot,true,work);
+        return resolve(unit,horn,pivot,true,false,work);
     }
-    private static Residual resolve(Residual unit,Residual horn,int pivot,boolean allowEmpty,Runnable work) {
-        work.run();if(unit.literals.size()!=1||!unit.literals.get(0).positive||pivot<0||pivot>=horn.literals.size()||horn.literals.get(pivot).positive)
+    /** Signed unit resolution includes negative units against a positive Horn head. */
+    static Residual resolveSignedUnit(Residual unit,Residual horn,int pivot,Runnable work) {
+        return resolve(unit,horn,pivot,true,true,work);
+    }
+    private static Residual resolve(Residual unit,Residual horn,int pivot,boolean allowEmpty,boolean signedUnit,Runnable work) {
+        work.run();if(unit.literals.size()!=1||!signedUnit&&!unit.literals.get(0).positive||pivot<0||pivot>=horn.literals.size()||unit.literals.get(0).positive==horn.literals.get(pivot).positive)
             throw new IllegalArgumentException("Typed positive unit/negative body pivot required");
         int[] next={0};Residual left=apart(unit,next,work),right=apart(horn,next,work);
         Literal a=left.literals.get(0),b=right.literals.get(pivot);
