@@ -246,6 +246,22 @@ final class ContextUniversalInputResiduals {
         return apart(new Residual(literals,work),new int[]{0},work);
     }
 
+    /** Principal positive hyperapplication to fixed units; null means a still-symbolic head, not empty. */
+    static Residual applyFixedPositiveUnits(Residual producer,List<Residual> donors,Runnable work) {
+        work.run();int[] next={0};Residual rule=apart(producer,next,work);Literal head=null;List<Literal> body=new ArrayList<>();
+        for(Literal literal:rule.literals){work.run();if(literal.positive){if(head!=null)throw new IllegalArgumentException("One positive application head required");head=literal;}else body.add(literal);}
+        if(head==null||body.size()<2||body.size()!=donors.size())throw new IllegalArgumentException("Complete multi-premise positive application required");
+        Map<Integer,Term> substitution=new HashMap<>();
+        for(int slot=0;slot<body.size();++slot) {
+            work.run();Residual donor=donors.get(slot);if(donor==null||donor.literals.size()!=1||!donor.variables.isEmpty()||!donor.literals.get(0).positive)throw new IllegalArgumentException("Fixed positive application donor required");
+            Literal actual=apart(donor,next,work).literals.get(0),formal=body.get(slot);
+            if(!formal.predicate.equals(actual.predicate)||formal.arguments.size()!=actual.arguments.size())throw new UnificationFailure();
+            for(int i=0;i<formal.arguments.size();++i){work.run();Term a=dereference(formal.arguments.get(i),substitution,work),b=dereference(actual.arguments.get(i),substitution,work);if(a.variable>=0){if(b.variable!=a.variable)substitution.put(a.variable,b);}else if(b.variable>=0)substitution.put(b.variable,a);else if(!rigid(a,b))throw new UnificationFailure();}
+        }
+        List<Term> arguments=new ArrayList<>();for(Term term:head.arguments){work.run();Term actual=dereference(term,substitution,work);if(actual.variable>=0)return null;arguments.add(actual);}
+        return new Residual(Collections.singletonList(new Literal(head.predicate,true,arguments)),work);
+    }
+
     static String assertion(Residual clause,Runnable work) {
         StringBuilder text=new StringBuilder("!");for(int variable:clause.variables){work.run();text.append("@ctxfrozenv").append(variable).append(' ');}
         text.append('(');boolean first=true;

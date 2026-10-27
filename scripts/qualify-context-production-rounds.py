@@ -219,6 +219,7 @@ def main():
                  ('org.kanger.ContextUniversalSignedProductAuditRunner', 'CONTEXT_UNIVERSAL_SIGNED_PRODUCT_AUDIT_PASS'),
                  ('org.kanger.ContextUniversalSignedUnitExchangeRunner', 'CONTEXT_UNIVERSAL_SIGNED_UNIT_EXCHANGE_PASS'),
                  ('org.kanger.ContextUniversalSignedUnitRoundsRunner', 'CONTEXT_UNIVERSAL_SIGNED_UNIT_ROUNDS_PASS'),
+                 ('org.kanger.ContextUniversalSignedApplicationsRunner', 'CONTEXT_UNIVERSAL_SIGNED_APPLICATIONS_PASS'),
                  ('org.kanger.storage.dumb2.ContextMixedPrimaryWriteRunner', 'CONTEXT_MIXED_PRIMARY_WRITE_PASS'),
                  ('org.kanger.storage.dumb2.ContextPrivateWitnessAdmissionContractRunner', 'CONTEXT_PRIVATE_WITNESS_ADMISSION_CONTRACT_PASS'),
                  ('org.kanger.storage.dumb2.ContextPrivateWitnessWriteRunner', 'CONTEXT_PRIVATE_WITNESS_WRITE_PASS'),
