@@ -7,7 +7,7 @@ import org.kanger.ContextWitnessResultTransport.*;
 
 /** All supplied cuts on immutable signed barriers; stable fixed/symbolic-unit projection, not family admission. */
 final class ContextUniversalSignedUnitRounds {
-    private enum Mode { BINARY, POSITIVE, FIXED_SIGNED }
+    private enum Mode { BINARY, POSITIVE, FIXED_SIGNED, SYMBOLIC_HEADS }
     enum Status { STABLE_UNIT_POOLS, REFUTED, INCOMPLETE }
     static final class Refutation {
         final Cut cut;final int round;final boolean xRefuted,foreignRefuted;
@@ -49,6 +49,10 @@ final class ContextUniversalSignedUnitRounds {
     static Result runFixedApplications(Snapshot x,List<Snapshot> foreign,Packet initial,Map<Cut,PrivatePool> initialPools,ContextUniversalSignedUnitExchange.Exchange initialExchange,ContextUniversalFrozenBranch.Limits limits,int maximumRounds,int maximumWork) {
         return run(x,foreign,initial,initialPools,initialExchange,limits,maximumRounds,maximumWork,Mode.FIXED_SIGNED);
     }
+    /** Explicit universal heads from fixed signed donors; symbolic donors retain binary scope. */
+    static Result runSymbolicHeads(Snapshot x,List<Snapshot> foreign,Packet initial,Map<Cut,PrivatePool> initialPools,ContextUniversalSignedUnitExchange.Exchange initialExchange,ContextUniversalFrozenBranch.Limits limits,int maximumRounds,int maximumWork) {
+        return run(x,foreign,initial,initialPools,initialExchange,limits,maximumRounds,maximumWork,Mode.SYMBOLIC_HEADS);
+    }
     private static Result run(Snapshot x,List<Snapshot> foreign,Packet initial,Map<Cut,PrivatePool> initialPools,ContextUniversalSignedUnitExchange.Exchange initialExchange,ContextUniversalFrozenBranch.Limits limits,int maximumRounds,int maximumWork,Mode mode) {
         if(maximumRounds<1||maximumRounds>64||maximumWork<1)throw new IllegalArgumentException("Bounded signed rounds required");
         String phase="preflight";int completed=0;Runnable work=ContextGroundProductionRounds.budget(maximumWork);
@@ -64,7 +68,7 @@ final class ContextUniversalSignedUnitRounds {
                 phase="checks";Map<Cut,ContextUniversalFrozenConstraints.Result> checks=new LinkedHashMap<>();
                 for(Map.Entry<Cut,Snapshot> target:targets.entrySet()) {
                     work.run();ContextUniversalNativeRows.Result rows=ContextUniversalNativeRows.inspect(x,target.getValue(),64,limits.work);require(rows.classified,rows.reason);require(rows.withinShape,"Unsupported whole original signed row plan");
-                    ContextUniversalFrozenConstraints.Result checked=mode==Mode.FIXED_SIGNED?ContextUniversalFrozenConstraints.closeSignedFixedApplications(rows,input,pools.get(target.getKey()),symbolic,limits.rounds,limits.proofDepth,limits.clauses,limits.alternatives,limits.work):mode==Mode.POSITIVE?ContextUniversalFrozenConstraints.closeSignedApplications(rows,input,pools.get(target.getKey()),symbolic,limits.rounds,limits.proofDepth,limits.clauses,limits.alternatives,limits.work):symbolic==null?ContextUniversalFrozenConstraints.closeSigned(rows,input,pools.get(target.getKey()),limits.rounds,limits.proofDepth,limits.clauses,limits.alternatives,limits.work):ContextUniversalFrozenConstraints.closeSignedUnits(rows,input,pools.get(target.getKey()),symbolic,limits.rounds,limits.proofDepth,limits.clauses,limits.alternatives,limits.work);
+                    ContextUniversalFrozenConstraints.Result checked=mode==Mode.SYMBOLIC_HEADS?ContextUniversalFrozenConstraints.closeSignedSymbolicHeads(rows,input,pools.get(target.getKey()),symbolic,limits.rounds,limits.proofDepth,limits.clauses,limits.alternatives,limits.work):mode==Mode.FIXED_SIGNED?ContextUniversalFrozenConstraints.closeSignedFixedApplications(rows,input,pools.get(target.getKey()),symbolic,limits.rounds,limits.proofDepth,limits.clauses,limits.alternatives,limits.work):mode==Mode.POSITIVE?ContextUniversalFrozenConstraints.closeSignedApplications(rows,input,pools.get(target.getKey()),symbolic,limits.rounds,limits.proofDepth,limits.clauses,limits.alternatives,limits.work):symbolic==null?ContextUniversalFrozenConstraints.closeSigned(rows,input,pools.get(target.getKey()),limits.rounds,limits.proofDepth,limits.clauses,limits.alternatives,limits.work):ContextUniversalFrozenConstraints.closeSignedUnits(rows,input,pools.get(target.getKey()),symbolic,limits.rounds,limits.proofDepth,limits.clauses,limits.alternatives,limits.work);
                     require(checked.closed,"Round "+number+" signed cut: "+checked.reason);checks.put(target.getKey(),checked);
                 }
                 // Finish checking every supplied cut before reporting a refutation or creating a product.
