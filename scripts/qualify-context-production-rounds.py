@@ -625,6 +625,8 @@ def main():
         names.append(('org.kanger.ContextUniversalGroundedSymbolicEvidenceRunner', 'CONTEXT_UNIVERSAL_GROUNDED_SYMBOLIC_EVIDENCE_PASS'))
     if args.mode == 'reference':
         names.append(('org.kanger.ContextUniversalInstantiatedUnitApplicationsRunner', 'CONTEXT_UNIVERSAL_INSTANTIATED_UNIT_APPLICATIONS_PASS'))
+    if args.mode == 'reference':
+        names.append(('org.kanger.ContextUniversalInstantiatedUnitRoundsRunner', 'CONTEXT_UNIVERSAL_INSTANTIATED_UNIT_ROUNDS_PASS'))
     drivers = [root / 'kanger-qualification/src' / (name.replace('.', '/') + '.java') for name, _ in names]
     if args.ordinary_integration_candidate:
         original = root / 'kanger-data-dumb2/src/org/kanger/storage/dumb2/DB.java'
