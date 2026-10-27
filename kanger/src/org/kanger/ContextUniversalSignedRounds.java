@@ -20,10 +20,11 @@ final class ContextUniversalSignedRounds {
     static final class Round {
         final int number;final Packet input;final Map<Cut,PrivatePool> privateInput;
         final Map<Cut,ContextUniversalFrozenConstraints.Result> checks;
+        final Map<Cut,ContextUniversalSignedProductAudit.Result> products;
         final ConstraintBarrier barrier;final boolean commonChanged,privateChanged;
-        private Round(int number,Packet input,Map<Cut,PrivatePool> pools,Map<Cut,ContextUniversalFrozenConstraints.Result> checks,ConstraintBarrier barrier,boolean commonChanged,boolean privateChanged) {
+        private Round(int number,Packet input,Map<Cut,PrivatePool> pools,Map<Cut,ContextUniversalFrozenConstraints.Result> checks,Map<Cut,ContextUniversalSignedProductAudit.Result> products,ConstraintBarrier barrier,boolean commonChanged,boolean privateChanged) {
             this.number=number;this.input=input;privateInput=Collections.unmodifiableMap(new LinkedHashMap<>(pools));this.checks=Collections.unmodifiableMap(new LinkedHashMap<>(checks));
-            this.barrier=barrier;this.commonChanged=commonChanged;this.privateChanged=privateChanged;
+            this.products=Collections.unmodifiableMap(new LinkedHashMap<>(products));this.barrier=barrier;this.commonChanged=commonChanged;this.privateChanged=privateChanged;
         }
     }
     static final class Result {
@@ -57,10 +58,12 @@ final class ContextUniversalSignedRounds {
                 if(!refutations.isEmpty())return new Result(Status.REFUTED,"checks","All supplied cuts checked; sourced refutation at common barrier "+number,completed,initial,null,Collections.emptyList(),refutations);
                 phase="transfers";Map<Cut,ConstraintTransfer> transfers=new LinkedHashMap<>();
                 for(Map.Entry<Cut,ContextUniversalFrozenConstraints.Result> e:checks.entrySet()){work.run();PrivatePool pool=pools.get(e.getKey());ConstraintTransfer t=pool==null?ContextWitnessResultTransport.transferConstraints(e.getValue(),input,limits.factDepth,limits.work):ContextWitnessResultTransport.transferConstraintsPrivate(e.getValue(),pool,limits.factDepth,limits.work);require(t.transferred,t.reason);transfers.put(e.getKey(),t);}
+                phase="product-correspondence";Map<Cut,ContextUniversalSignedProductAudit.Result> products=new LinkedHashMap<>();
+                for(Map.Entry<Cut,ConstraintTransfer> e:transfers.entrySet()){work.run();ContextUniversalSignedProductAudit.Result audit=ContextUniversalSignedProductAudit.bind(checks.get(e.getKey()),e.getValue(),65536,limits.work);require(audit.bound,audit.reason);products.put(e.getKey(),audit);}
                 phase="barrier";ConstraintBarrier barrier=ContextWitnessResultTransport.mergeConstraints(ContextWitnessResultTransport.family(input,cuts,maximumWork),transfers,maximumWork);require(barrier.merged,barrier.reason);
                 phase="pool-comparison";boolean changed=!ContextWitnessResultTransport.sameContents(input,barrier.packet,maximumWork),privateChanged=false;require(changed==barrier.changed&&pools.keySet().equals(barrier.privatePools.keySet()),"Different signed pool change/inventory receipt");
                 for(Map.Entry<Cut,PrivatePool> e:pools.entrySet()){work.run();PrivatePool next=barrier.privatePools.get(e.getKey());require(next.common==barrier.packet&&next.x==x&&next.snapshot==e.getValue().snapshot,"Different rebased signed private frame");privateChanged|=!ContextWitnessResultTransport.sameContents(e.getValue().local,next.local,maximumWork);}
-                history.add(new Round(number,input,pools,checks,barrier,changed,privateChanged));completed=number;
+                history.add(new Round(number,input,pools,checks,products,barrier,changed,privateChanged));completed=number;
                 if(!changed&&!privateChanged&&!barrier.localChanged)return new Result(Status.STABLE_SIGNED_POOLS,"stable-signed-pools","Complete supplied signed fixed-unit pools unchanged; symbolic/native/family qualification remains open",completed,initial,barrier,history,Collections.emptyMap());
                 input=barrier.packet;pools=new LinkedHashMap<>(barrier.privatePools);
             }
