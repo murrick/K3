@@ -7,6 +7,7 @@ import org.kanger.ContextWitnessResultTransport.*;
 
 /** All supplied cuts on immutable signed barriers; stable fixed/symbolic-unit projection, not family admission. */
 final class ContextUniversalSignedUnitRounds {
+    private enum Mode { BINARY, POSITIVE, FIXED_SIGNED }
     enum Status { STABLE_UNIT_POOLS, REFUTED, INCOMPLETE }
     static final class Refutation {
         final Cut cut;final int round;final boolean xRefuted,foreignRefuted;
@@ -38,13 +39,17 @@ final class ContextUniversalSignedUnitRounds {
     }
     private static void require(boolean valid,String reason){if(!valid)throw new IllegalStateException(reason);}
     static Result run(Snapshot x,List<Snapshot> foreign,Packet initial,Map<Cut,PrivatePool> initialPools,ContextUniversalSignedUnitExchange.Exchange initialExchange,ContextUniversalFrozenBranch.Limits limits,int maximumRounds,int maximumWork) {
-        return run(x,foreign,initial,initialPools,initialExchange,limits,maximumRounds,maximumWork,false);
+        return run(x,foreign,initial,initialPools,initialExchange,limits,maximumRounds,maximumWork,Mode.BINARY);
     }
     /** Explicit checked fixed-positive application recipes; existing run retains its binary scope. */
     static Result runApplications(Snapshot x,List<Snapshot> foreign,Packet initial,Map<Cut,PrivatePool> initialPools,ContextUniversalSignedUnitExchange.Exchange initialExchange,ContextUniversalFrozenBranch.Limits limits,int maximumRounds,int maximumWork) {
-        return run(x,foreign,initial,initialPools,initialExchange,limits,maximumRounds,maximumWork,true);
+        return run(x,foreign,initial,initialPools,initialExchange,limits,maximumRounds,maximumWork,Mode.POSITIVE);
     }
-    private static Result run(Snapshot x,List<Snapshot> foreign,Packet initial,Map<Cut,PrivatePool> initialPools,ContextUniversalSignedUnitExchange.Exchange initialExchange,ContextUniversalFrozenBranch.Limits limits,int maximumRounds,int maximumWork,boolean applications) {
+    /** Explicit fixed signed applications, including negative donors and negative conclusions. */
+    static Result runFixedApplications(Snapshot x,List<Snapshot> foreign,Packet initial,Map<Cut,PrivatePool> initialPools,ContextUniversalSignedUnitExchange.Exchange initialExchange,ContextUniversalFrozenBranch.Limits limits,int maximumRounds,int maximumWork) {
+        return run(x,foreign,initial,initialPools,initialExchange,limits,maximumRounds,maximumWork,Mode.FIXED_SIGNED);
+    }
+    private static Result run(Snapshot x,List<Snapshot> foreign,Packet initial,Map<Cut,PrivatePool> initialPools,ContextUniversalSignedUnitExchange.Exchange initialExchange,ContextUniversalFrozenBranch.Limits limits,int maximumRounds,int maximumWork,Mode mode) {
         if(maximumRounds<1||maximumRounds>64||maximumWork<1)throw new IllegalArgumentException("Bounded signed rounds required");
         String phase="preflight";int completed=0;Runnable work=ContextGroundProductionRounds.budget(maximumWork);
         try {
@@ -59,7 +64,7 @@ final class ContextUniversalSignedUnitRounds {
                 phase="checks";Map<Cut,ContextUniversalFrozenConstraints.Result> checks=new LinkedHashMap<>();
                 for(Map.Entry<Cut,Snapshot> target:targets.entrySet()) {
                     work.run();ContextUniversalNativeRows.Result rows=ContextUniversalNativeRows.inspect(x,target.getValue(),64,limits.work);require(rows.classified,rows.reason);require(rows.withinShape,"Unsupported whole original signed row plan");
-                    ContextUniversalFrozenConstraints.Result checked=applications?ContextUniversalFrozenConstraints.closeSignedApplications(rows,input,pools.get(target.getKey()),symbolic,limits.rounds,limits.proofDepth,limits.clauses,limits.alternatives,limits.work):symbolic==null?ContextUniversalFrozenConstraints.closeSigned(rows,input,pools.get(target.getKey()),limits.rounds,limits.proofDepth,limits.clauses,limits.alternatives,limits.work):ContextUniversalFrozenConstraints.closeSignedUnits(rows,input,pools.get(target.getKey()),symbolic,limits.rounds,limits.proofDepth,limits.clauses,limits.alternatives,limits.work);
+                    ContextUniversalFrozenConstraints.Result checked=mode==Mode.FIXED_SIGNED?ContextUniversalFrozenConstraints.closeSignedFixedApplications(rows,input,pools.get(target.getKey()),symbolic,limits.rounds,limits.proofDepth,limits.clauses,limits.alternatives,limits.work):mode==Mode.POSITIVE?ContextUniversalFrozenConstraints.closeSignedApplications(rows,input,pools.get(target.getKey()),symbolic,limits.rounds,limits.proofDepth,limits.clauses,limits.alternatives,limits.work):symbolic==null?ContextUniversalFrozenConstraints.closeSigned(rows,input,pools.get(target.getKey()),limits.rounds,limits.proofDepth,limits.clauses,limits.alternatives,limits.work):ContextUniversalFrozenConstraints.closeSignedUnits(rows,input,pools.get(target.getKey()),symbolic,limits.rounds,limits.proofDepth,limits.clauses,limits.alternatives,limits.work);
                     require(checked.closed,"Round "+number+" signed cut: "+checked.reason);checks.put(target.getKey(),checked);
                 }
                 // Finish checking every supplied cut before reporting a refutation or creating a product.
