@@ -223,6 +223,7 @@ def main():
                  ('org.kanger.ContextUniversalSignedApplicationRoundsRunner', 'CONTEXT_UNIVERSAL_SIGNED_APPLICATION_ROUNDS_PASS'),
                  ('org.kanger.ContextUniversalSignedFixedApplicationsRunner', 'CONTEXT_UNIVERSAL_SIGNED_FIXED_APPLICATIONS_PASS'),
                  ('org.kanger.ContextUniversalSignedFixedApplicationRoundsRunner', 'CONTEXT_UNIVERSAL_SIGNED_FIXED_APPLICATION_ROUNDS_PASS'),
+                 ('org.kanger.ContextUniversalSymbolicHeadApplicationsRunner', 'CONTEXT_UNIVERSAL_SYMBOLIC_HEAD_APPLICATIONS_PASS'),
                  ('org.kanger.storage.dumb2.ContextMixedPrimaryWriteRunner', 'CONTEXT_MIXED_PRIMARY_WRITE_PASS'),
                  ('org.kanger.storage.dumb2.ContextPrivateWitnessAdmissionContractRunner', 'CONTEXT_PRIVATE_WITNESS_ADMISSION_CONTRACT_PASS'),
                  ('org.kanger.storage.dumb2.ContextPrivateWitnessWriteRunner', 'CONTEXT_PRIVATE_WITNESS_WRITE_PASS'),

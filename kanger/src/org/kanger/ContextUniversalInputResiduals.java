@@ -264,6 +264,13 @@ final class ContextUniversalInputResiduals {
 
     /** Fixed signed donors discharge every literal except the explicitly selected conclusion. */
     static Residual applyFixedSignedUnits(Residual producer,int conclusion,List<Residual> donors,Runnable work) {
+        return applySignedFixedDonors(producer,conclusion,donors,false,work);
+    }
+    /** Declared universal variables may remain in the head; every actual donor is still fixed. */
+    static Residual applySymbolicHeadFixedUnits(Residual producer,int conclusion,List<Residual> donors,Runnable work) {
+        return applySignedFixedDonors(producer,conclusion,donors,true,work);
+    }
+    private static Residual applySignedFixedDonors(Residual producer,int conclusion,List<Residual> donors,boolean symbolicHead,Runnable work) {
         work.run();if(conclusion<0||conclusion>=producer.literals.size()||producer.literals.size()<3||donors.size()!=producer.literals.size()-1)throw new IllegalArgumentException("Complete signed multi-premise application required");
         int[] next={0};Residual rule=apart(producer,next,work);Map<Integer,Term> substitution=new HashMap<>();int slot=0;
         for(int pivot=0;pivot<rule.literals.size();++pivot)if(pivot!=conclusion) {
@@ -272,8 +279,8 @@ final class ContextUniversalInputResiduals {
             Literal actual=apart(donor,next,work).literals.get(0);if(!formal.predicate.equals(actual.predicate)||formal.arguments.size()!=actual.arguments.size())throw new UnificationFailure();
             for(int i=0;i<formal.arguments.size();++i){work.run();Term a=dereference(formal.arguments.get(i),substitution,work),b=dereference(actual.arguments.get(i),substitution,work);if(a.variable>=0){if(b.variable!=a.variable)substitution.put(a.variable,b);}else if(b.variable>=0)substitution.put(b.variable,a);else if(!rigid(a,b))throw new UnificationFailure();}
         }
-        Literal head=rule.literals.get(conclusion);List<Term> arguments=new ArrayList<>();for(Term term:head.arguments){work.run();Term actual=dereference(term,substitution,work);if(actual.variable>=0)return null;arguments.add(actual);}
-        return new Residual(Collections.singletonList(new Literal(head.predicate,head.positive,arguments)),work);
+        Literal head=rule.literals.get(conclusion);List<Term> arguments=new ArrayList<>();for(Term term:head.arguments){work.run();Term actual=dereference(term,substitution,work);if(!symbolicHead&&actual.variable>=0)return null;arguments.add(actual);}
+        return apart(new Residual(Collections.singletonList(new Literal(head.predicate,head.positive,arguments)),work),new int[]{0},work);
     }
 
     static String assertion(Residual clause,Runnable work) {
