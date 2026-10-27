@@ -283,6 +283,27 @@ final class ContextUniversalInputResiduals {
         return apart(new Residual(Collections.singletonList(new Literal(head.predicate,head.positive,arguments)),work),new int[]{0},work);
     }
 
+    /** One checked substitution for actual mixed unit parents; instances add no inference step. */
+    static final class GroundedApplication {
+        final Residual conclusion;final List<Residual> instances;
+        private GroundedApplication(Residual conclusion,List<Residual> instances){this.conclusion=conclusion;this.instances=Collections.unmodifiableList(new ArrayList<>(instances));}
+    }
+    static GroundedApplication applyGroundedMixedUnits(Residual producer,int conclusion,List<Residual> donors,Runnable work) {
+        work.run();if(conclusion<0||conclusion>=producer.literals.size()||producer.literals.size()<3||donors.size()!=producer.literals.size()-1)throw new IllegalArgumentException("Complete grounded mixed application required");
+        int[] next={0};Residual rule=apart(producer,next,work);Map<Integer,Term> substitution=new HashMap<>();List<Literal> actuals=new ArrayList<>();boolean fixed=false,symbolic=false;int slot=0;
+        for(int pivot=0;pivot<rule.literals.size();++pivot)if(pivot!=conclusion) {
+            work.run();Residual donor=donors.get(slot++);Literal formal=rule.literals.get(pivot);
+            if(donor==null||donor.literals.size()!=1||donor.literals.get(0).positive==formal.positive)throw new IllegalArgumentException("Opposite-sign unit donor required");
+            fixed|=donor.variables.isEmpty();symbolic|=!donor.variables.isEmpty();Literal actual=apart(donor,next,work).literals.get(0);actuals.add(actual);
+            if(!formal.predicate.equals(actual.predicate)||formal.arguments.size()!=actual.arguments.size())throw new UnificationFailure();
+            for(int j=0;j<formal.arguments.size();++j){work.run();Term a=dereference(formal.arguments.get(j),substitution,work),b=dereference(actual.arguments.get(j),substitution,work);if(a.variable>=0){if(b.variable!=a.variable)substitution.put(a.variable,b);}else if(b.variable>=0)substitution.put(b.variable,a);else if(!rigid(a,b))throw new UnificationFailure();}
+        }
+        if(!fixed||!symbolic)return null;
+        List<Residual> instances=new ArrayList<>();for(Literal actual:actuals){work.run();List<Term> args=new ArrayList<>();for(Term term:actual.arguments){work.run();Term value=dereference(term,substitution,work);if(value.variable>=0)return null;args.add(value);}instances.add(new Residual(Collections.singletonList(new Literal(actual.predicate,actual.positive,args)),work));}
+        Literal head=rule.literals.get(conclusion);List<Term> args=new ArrayList<>();for(Term term:head.arguments){work.run();Term value=dereference(term,substitution,work);if(value.variable>=0)return null;args.add(value);}
+        return new GroundedApplication(new Residual(Collections.singletonList(new Literal(head.predicate,head.positive,args)),work),instances);
+    }
+
     static String assertion(Residual clause,Runnable work) {
         StringBuilder text=new StringBuilder("!");for(int variable:clause.variables){work.run();text.append("@ctxfrozenv").append(variable).append(' ');}
         text.append('(');boolean first=true;

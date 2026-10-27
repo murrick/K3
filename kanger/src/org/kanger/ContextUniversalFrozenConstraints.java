@@ -20,17 +20,18 @@ final class ContextUniversalFrozenConstraints {
         final Proof unit,horn;
         final int pivot;
         final ContextUniversalSignedUnitExchange.Unit exchanged;
-        final Proof producer;final List<Proof> donors;final int conclusion;final boolean symbolicHeadRecipe;
-        private Proof(Row row,Part part,Runnable work){symbolicHeadRecipe=false;conclusion=-1;producer=null;donors=Collections.emptyList();exchanged=null;original=row;this.part=part;clause=ContextUniversalInputResiduals.schema(part.clause,work);support=new Support(Collections.singleton(row.original.source),0);input=null;inputProof=null;unit=null;horn=null;pivot=-1;}
-        private Proof(Item input,Support support,Runnable work){symbolicHeadRecipe=false;conclusion=-1;producer=null;donors=Collections.emptyList();exchanged=null;this.input=input;inputProof=support;clause=ContextUniversalInputResiduals.fact(input,work);this.support=support;original=null;part=null;unit=null;horn=null;pivot=-1;}
-        private Proof(Residual clause,Proof unit,Proof horn,int pivot,Runnable work){symbolicHeadRecipe=false;conclusion=-1;producer=null;donors=Collections.emptyList();exchanged=null;this.clause=clause;this.unit=unit;this.horn=horn;this.pivot=pivot;original=null;part=null;input=null;inputProof=null;Set<Source> sources=new LinkedHashSet<>();for(Source source:unit.support.sources){work.run();sources.add(source);}for(Source source:horn.support.sources){work.run();sources.add(source);}int depth=Math.max(unit.support.depth,horn.support.depth);if(depth==Integer.MAX_VALUE)throw new IllegalStateException("Constraint proof depth overflow");support=new Support(sources,depth+1);}
-        private Proof(ContextUniversalSignedUnitExchange.Unit unit){symbolicHeadRecipe=false;conclusion=-1;producer=null;donors=Collections.emptyList();exchanged=unit;clause=unit.clause;support=unit.support;original=null;part=null;input=null;inputProof=null;this.unit=null;horn=null;pivot=-1;}
+        final Proof producer;final List<Proof> donors;final int conclusion;final boolean symbolicHeadRecipe,groundedMixedRecipe;final List<Residual> instantiatedDonors;
+        private Proof(Row row,Part part,Runnable work){groundedMixedRecipe=false;instantiatedDonors=Collections.emptyList();symbolicHeadRecipe=false;conclusion=-1;producer=null;donors=Collections.emptyList();exchanged=null;original=row;this.part=part;clause=ContextUniversalInputResiduals.schema(part.clause,work);support=new Support(Collections.singleton(row.original.source),0);input=null;inputProof=null;unit=null;horn=null;pivot=-1;}
+        private Proof(Item input,Support support,Runnable work){groundedMixedRecipe=false;instantiatedDonors=Collections.emptyList();symbolicHeadRecipe=false;conclusion=-1;producer=null;donors=Collections.emptyList();exchanged=null;this.input=input;inputProof=support;clause=ContextUniversalInputResiduals.fact(input,work);this.support=support;original=null;part=null;unit=null;horn=null;pivot=-1;}
+        private Proof(Residual clause,Proof unit,Proof horn,int pivot,Runnable work){groundedMixedRecipe=false;instantiatedDonors=Collections.emptyList();symbolicHeadRecipe=false;conclusion=-1;producer=null;donors=Collections.emptyList();exchanged=null;this.clause=clause;this.unit=unit;this.horn=horn;this.pivot=pivot;original=null;part=null;input=null;inputProof=null;Set<Source> sources=new LinkedHashSet<>();for(Source source:unit.support.sources){work.run();sources.add(source);}for(Source source:horn.support.sources){work.run();sources.add(source);}int depth=Math.max(unit.support.depth,horn.support.depth);if(depth==Integer.MAX_VALUE)throw new IllegalStateException("Constraint proof depth overflow");support=new Support(sources,depth+1);}
+        private Proof(ContextUniversalSignedUnitExchange.Unit unit){groundedMixedRecipe=false;instantiatedDonors=Collections.emptyList();symbolicHeadRecipe=false;conclusion=-1;producer=null;donors=Collections.emptyList();exchanged=unit;clause=unit.clause;support=unit.support;original=null;part=null;input=null;inputProof=null;this.unit=null;horn=null;pivot=-1;}
         private Proof(Residual clause,Proof producer,List<Proof> donors,Runnable work){this(clause,producer,donors,-1,work);}
         private Proof(Residual clause,Proof producer,List<Proof> donors,int conclusion,Runnable work){this(clause,producer,donors,conclusion,false,work);}
-        private Proof(Residual clause,Proof producer,List<Proof> donors,int conclusion,boolean symbolicHeadRecipe,Runnable work){this.symbolicHeadRecipe=symbolicHeadRecipe;this.conclusion=conclusion;this.clause=clause;this.producer=producer;this.donors=Collections.unmodifiableList(new ArrayList<>(donors));exchanged=null;original=null;part=null;input=null;inputProof=null;unit=null;horn=null;pivot=-1;Set<Source> sources=new LinkedHashSet<>(producer.support.sources);int depth=producer.support.depth;for(Proof donor:donors){work.run();depth=Math.max(depth,donor.support.depth);for(Source source:donor.support.sources){work.run();sources.add(source);}}if(depth==Integer.MAX_VALUE)throw new IllegalStateException("Application depth overflow");support=new Support(sources,depth+1);}
+        private Proof(Residual clause,Proof producer,List<Proof> donors,int conclusion,boolean symbolicHeadRecipe,Runnable work){this(clause,producer,donors,conclusion,symbolicHeadRecipe,false,Collections.emptyList(),work);}
+        private Proof(Residual clause,Proof producer,List<Proof> donors,int conclusion,boolean symbolicHeadRecipe,boolean groundedMixedRecipe,List<Residual> instances,Runnable work){this.groundedMixedRecipe=groundedMixedRecipe;instantiatedDonors=Collections.unmodifiableList(new ArrayList<>(instances));this.symbolicHeadRecipe=symbolicHeadRecipe;this.conclusion=conclusion;this.clause=clause;this.producer=producer;this.donors=Collections.unmodifiableList(new ArrayList<>(donors));exchanged=null;original=null;part=null;input=null;inputProof=null;unit=null;horn=null;pivot=-1;Set<Source> sources=new LinkedHashSet<>(producer.support.sources);int depth=producer.support.depth;for(Proof donor:donors){work.run();depth=Math.max(depth,donor.support.depth);for(Source source:donor.support.sources){work.run();sources.add(source);}}if(depth==Integer.MAX_VALUE)throw new IllegalStateException("Application depth overflow");support=new Support(sources,depth+1);}
     }
     static final class Result {
-        final boolean closed,xRefuted,foreignRefuted,signedUnits,applications,signedApplications,symbolicHeads;
+        final boolean closed,xRefuted,foreignRefuted,signedUnits,applications,signedApplications,symbolicHeads,groundedMixed;
         final String reason;
         final ContextUniversalNativeRows.Result input;
         final Packet common,local;
@@ -38,8 +39,8 @@ final class ContextUniversalFrozenConstraints {
         final ContextUniversalSignedUnitExchange.Exchange exchange;
         final int rounds,obligations;
         final List<Proof> proofs,emptyProofs;
-        private Result(boolean closed,String reason,ContextUniversalNativeRows.Result input,Packet common,PrivatePool pool,ContextUniversalSignedUnitExchange.Exchange exchange,boolean signedUnits,boolean applications,boolean signedApplications,boolean symbolicHeads,int rounds,int obligations,List<Proof> proofs) {
-            this.symbolicHeads=symbolicHeads;this.signedApplications=signedApplications;this.applications=applications;this.exchange=exchange;this.closed=closed;this.signedUnits=signedUnits;this.reason=reason;this.input=input;this.common=common;this.pool=pool;local=pool==null?common:pool.local;this.rounds=rounds;this.obligations=obligations;
+        private Result(boolean closed,String reason,ContextUniversalNativeRows.Result input,Packet common,PrivatePool pool,ContextUniversalSignedUnitExchange.Exchange exchange,boolean signedUnits,boolean applications,boolean signedApplications,boolean symbolicHeads,boolean groundedMixed,int rounds,int obligations,List<Proof> proofs) {
+            this.groundedMixed=groundedMixed;this.symbolicHeads=symbolicHeads;this.signedApplications=signedApplications;this.applications=applications;this.exchange=exchange;this.closed=closed;this.signedUnits=signedUnits;this.reason=reason;this.input=input;this.common=common;this.pool=pool;local=pool==null?common:pool.local;this.rounds=rounds;this.obligations=obligations;
             this.proofs=Collections.unmodifiableList(new ArrayList<>(proofs));List<Proof> empty=new ArrayList<>();boolean x=false,foreign=false;
             for(Proof proof:proofs)if(proof.clause==null){empty.add(proof);if(proof.support.sources.stream().anyMatch(s->s.localX))x=true;else foreign=true;}
             emptyProofs=Collections.unmodifiableList(empty);xRefuted=x;foreignRefuted=foreign;
@@ -71,7 +72,7 @@ final class ContextUniversalFrozenConstraints {
         List<Proof> all(Runnable work){List<Proof> out=new ArrayList<>();for(Bucket b:buckets)for(Proof p:b.proofs.values()){work.run();out.add(p);}return out;}
         Ledger copy(Runnable work){Ledger next=new Ledger(clauses,alternatives);for(Bucket b:buckets){work.run();Bucket copy=new Bucket(b.clause);copy.proofs.putAll(b.proofs);next.buckets.add(copy);}return next;}
     }
-    private static void verify(Proof p,ContextUniversalNativeRows.Result input,Packet local,ContextUniversalSignedUnitExchange.Exchange exchange,boolean signed,boolean applications,boolean signedApplications,boolean symbolicHeads,Set<Proof> checked,int depth,Runnable work) {
+    private static void verify(Proof p,ContextUniversalNativeRows.Result input,Packet local,ContextUniversalSignedUnitExchange.Exchange exchange,boolean signed,boolean applications,boolean signedApplications,boolean symbolicHeads,boolean groundedMixed,Set<Proof> checked,int depth,Runnable work) {
         work.run();if(checked.contains(p))return;shape(p.clause,work);if(p.support.depth>depth)throw new IllegalStateException("Constraint proof exceeds depth bound");
         if(p.exchanged!=null) {
             if(!signed||exchange==null||!exchange.units.contains(p.exchanged)||p.clause!=p.exchanged.clause||p.support!=p.exchanged.support)throw new IllegalStateException("Different actual symbolic unit input");
@@ -83,13 +84,17 @@ final class ContextUniversalFrozenConstraints {
             if(!found||!p.input.proofs.contains(p.inputProof)||!p.support.equals(p.inputProof)||!p.clause.equivalent(ContextUniversalInputResiduals.fact(p.input,work),work))throw new IllegalStateException("Different actual carried input proof");
         }else if(p.producer!=null) {
             if(!applications||!signed)throw new IllegalStateException("Explicit positive application mode required");
-            verify(p.producer,input,local,exchange,signed,applications,signedApplications,symbolicHeads,checked,depth,work);List<Residual> clauses=new ArrayList<>();for(Proof donor:p.donors){work.run();verify(donor,input,local,exchange,signed,applications,signedApplications,symbolicHeads,checked,depth,work);clauses.add(donor.clause);}
+            verify(p.producer,input,local,exchange,signed,applications,signedApplications,symbolicHeads,groundedMixed,checked,depth,work);List<Residual> clauses=new ArrayList<>();for(Proof donor:p.donors){work.run();verify(donor,input,local,exchange,signed,applications,signedApplications,symbolicHeads,groundedMixed,checked,depth,work);clauses.add(donor.clause);}
             if(p.conclusion>=0&&!signedApplications)throw new IllegalStateException("Explicit signed application mode required");
             if(p.symbolicHeadRecipe&&(!symbolicHeads||p.conclusion<0))throw new IllegalStateException("Explicit symbolic-head application mode required");
-            Residual expected=p.symbolicHeadRecipe?ContextUniversalInputResiduals.applySymbolicHeadFixedUnits(p.producer.clause,p.conclusion,clauses,work):p.conclusion<0?ContextUniversalInputResiduals.applyFixedPositiveUnits(p.producer.clause,clauses,work):ContextUniversalInputResiduals.applyFixedSignedUnits(p.producer.clause,p.conclusion,clauses,work);Proof label=new Proof(expected,p.producer,p.donors,p.conclusion,p.symbolicHeadRecipe,work);
+            if(p.groundedMixedRecipe&&(!groundedMixed||p.symbolicHeadRecipe||p.conclusion<0))throw new IllegalStateException("Explicit grounded mixed application mode required");
+            ContextUniversalInputResiduals.GroundedApplication mixed=p.groundedMixedRecipe?ContextUniversalInputResiduals.applyGroundedMixedUnits(p.producer.clause,p.conclusion,clauses,work):null;
+            if(p.groundedMixedRecipe){if(mixed==null||mixed.instances.size()!=p.instantiatedDonors.size())throw new IllegalStateException("Missing actual grounded donor instances");for(int i=0;i<mixed.instances.size();++i){work.run();if(!same(mixed.instances.get(i),p.instantiatedDonors.get(i),work))throw new IllegalStateException("Different grounded donor instance");}}
+            else if(!p.instantiatedDonors.isEmpty())throw new IllegalStateException("Unexpected donor instances");
+            Residual expected=p.groundedMixedRecipe?(mixed==null?null:mixed.conclusion):p.symbolicHeadRecipe?ContextUniversalInputResiduals.applySymbolicHeadFixedUnits(p.producer.clause,p.conclusion,clauses,work):p.conclusion<0?ContextUniversalInputResiduals.applyFixedPositiveUnits(p.producer.clause,clauses,work):ContextUniversalInputResiduals.applyFixedSignedUnits(p.producer.clause,p.conclusion,clauses,work);Proof label=new Proof(expected,p.producer,p.donors,p.conclusion,p.symbolicHeadRecipe,p.groundedMixedRecipe,p.instantiatedDonors,work);
             if(expected==null||!same(expected,p.clause,work)||!label.support.equals(p.support))throw new IllegalStateException("Different positive hyperapplication/Source proof");
         }else {
-            if(p.unit==null||p.horn==null||!unit(p.unit,signed))throw new IllegalStateException("Missing constraint resolution parents");verify(p.unit,input,local,exchange,signed,applications,signedApplications,symbolicHeads,checked,depth,work);verify(p.horn,input,local,exchange,signed,applications,signedApplications,symbolicHeads,checked,depth,work);
+            if(p.unit==null||p.horn==null||!unit(p.unit,signed))throw new IllegalStateException("Missing constraint resolution parents");verify(p.unit,input,local,exchange,signed,applications,signedApplications,symbolicHeads,groundedMixed,checked,depth,work);verify(p.horn,input,local,exchange,signed,applications,signedApplications,symbolicHeads,groundedMixed,checked,depth,work);
             Residual expected=resolve(p.unit,p.horn,p.pivot,signed,work);Proof label=new Proof(expected,p.unit,p.horn,p.pivot,work);
             if(!same(expected,p.clause,work)||!label.support.equals(p.support))throw new IllegalStateException("Different constraint resolvent/Source proof");
         }
@@ -99,13 +104,13 @@ final class ContextUniversalFrozenConstraints {
         if(result==null||!result.closed||result.input==null||!result.input.classified||!result.input.withinShape)throw new IllegalStateException("Closed whole rigid-Origin constraint frame required");
         frame(result.input,result.common,result.pool,maximumDepth,Integer.MAX_VALUE,work);
         if(result.exchange!=null){if(!result.signedUnits)throw new IllegalStateException("Signed symbolic input required");ContextUniversalSignedUnitExchange.check(result.exchange,result.input.x,result.common,maximumDepth,work);}
-        Set<Proof> checked=Collections.newSetFromMap(new IdentityHashMap<Proof,Boolean>());for(Proof proof:result.proofs)verify(proof,result.input,result.local,result.exchange,result.signedUnits,result.applications,result.signedApplications,result.symbolicHeads,checked,maximumDepth,work);
+        Set<Proof> checked=Collections.newSetFromMap(new IdentityHashMap<Proof,Boolean>());for(Proof proof:result.proofs)verify(proof,result.input,result.local,result.exchange,result.signedUnits,result.applications,result.signedApplications,result.symbolicHeads,result.groundedMixed,checked,maximumDepth,work);
     }
     /** Flatten checked import receipts into rejection DAGs; no owning intermediate Result/Packet escapes. */
     private static Proof rejection(Proof proof,Map<Proof,Proof> copied,Runnable work) {
         work.run();Proof prior=copied.get(proof);if(prior!=null)return prior;Proof out=proof;
         if(proof.exchanged!=null)out=rejection(proof.exchanged.proof,copied,work);
-        else if(proof.producer!=null){List<Proof> donors=new ArrayList<>();for(Proof donor:proof.donors){work.run();donors.add(rejection(donor,copied,work));}out=new Proof(proof.clause,rejection(proof.producer,copied,work),donors,proof.conclusion,proof.symbolicHeadRecipe,work);}
+        else if(proof.producer!=null){List<Proof> donors=new ArrayList<>();for(Proof donor:proof.donors){work.run();donors.add(rejection(donor,copied,work));}out=new Proof(proof.clause,rejection(proof.producer,copied,work),donors,proof.conclusion,proof.symbolicHeadRecipe,proof.groundedMixedRecipe,proof.instantiatedDonors,work);}
         else if(proof.unit!=null)out=new Proof(proof.clause,rejection(proof.unit,copied,work),rejection(proof.horn,copied,work),proof.pivot,work);
         if(!out.support.equals(proof.support)||!same(out.clause,proof.clause,work))throw new IllegalStateException("Different flattened rejection proof");
         copied.put(proof,out);return out;
@@ -121,7 +126,7 @@ final class ContextUniversalFrozenConstraints {
             :ContextUniversalInputResiduals.resolveConstraint(unit.clause,horn.clause,pivot,work);
     }
     private interface Step { void accept(Proof proof); }
-    private static void steps(List<Proof> input,boolean signed,boolean applications,boolean signedApplications,boolean symbolicHeads,Step output,Runnable work) {
+    private static void steps(List<Proof> input,boolean signed,boolean applications,boolean signedApplications,boolean symbolicHeads,boolean groundedMixed,Step output,Runnable work) {
         for(Proof unit:input) {
             work.run();if(!unit(unit,signed))continue;
             for(Proof horn:input) {
@@ -133,22 +138,23 @@ final class ContextUniversalFrozenConstraints {
             }
             }
         }
-        if(applications)applications(input,signedApplications,symbolicHeads,output,work);
+        if(applications)applications(input,signedApplications,symbolicHeads,groundedMixed,output,work);
     }
-    private static void applications(List<Proof> input,boolean signedApplications,boolean symbolicHeads,Step output,Runnable work) {
+    private static void applications(List<Proof> input,boolean signedApplications,boolean symbolicHeads,boolean groundedMixed,Step output,Runnable work) {
         for(Proof producer:input) {
-            work.run();if(producer.clause==null||producer.clause.literals.size()<3)continue;if(signedApplications){for(int conclusion=0;conclusion<producer.clause.literals.size();++conclusion){work.run();List<Literal> body=new ArrayList<>();for(int i=0;i<producer.clause.literals.size();++i)if(i!=conclusion)body.add(producer.clause.literals.get(i));join(producer,body,input,0,new ArrayList<>(),conclusion,symbolicHeads,output,work);}continue;}int heads=0;List<Literal> body=new ArrayList<>();
+            work.run();if(producer.clause==null||producer.clause.literals.size()<3)continue;if(signedApplications){for(int conclusion=0;conclusion<producer.clause.literals.size();++conclusion){work.run();List<Literal> body=new ArrayList<>();for(int i=0;i<producer.clause.literals.size();++i)if(i!=conclusion)body.add(producer.clause.literals.get(i));join(producer,body,input,0,new ArrayList<>(),conclusion,symbolicHeads,false,output,work);if(groundedMixed)join(producer,body,input,0,new ArrayList<>(),conclusion,false,true,output,work);}continue;}int heads=0;List<Literal> body=new ArrayList<>();
             for(Literal literal:producer.clause.literals){work.run();if(literal.positive)++heads;else body.add(literal);}if(heads!=1||body.size()<2)continue;
-            join(producer,body,input,0,new ArrayList<>(),-1,false,output,work);
+            join(producer,body,input,0,new ArrayList<>(),-1,false,false,output,work);
         }
     }
-    private static void join(Proof producer,List<Literal> body,List<Proof> input,int slot,List<Proof> chosen,int conclusion,boolean symbolicHeads,Step output,Runnable work) {
+    private static void join(Proof producer,List<Literal> body,List<Proof> input,int slot,List<Proof> chosen,int conclusion,boolean symbolicHeads,boolean groundedMixed,Step output,Runnable work) {
         work.run();if(slot==body.size()) {
             List<Residual> clauses=new ArrayList<>();for(Proof donor:chosen){work.run();clauses.add(donor.clause);}Residual result;
+            if(groundedMixed){try{ContextUniversalInputResiduals.GroundedApplication binding=ContextUniversalInputResiduals.applyGroundedMixedUnits(producer.clause,conclusion,clauses,work);if(binding!=null)output.accept(new Proof(binding.conclusion,producer,chosen,conclusion,false,true,binding.instances,work));}catch(ContextUniversalInputResiduals.UnificationFailure incompatible){return;}return;}
             try{result=symbolicHeads?ContextUniversalInputResiduals.applySymbolicHeadFixedUnits(producer.clause,conclusion,clauses,work):conclusion<0?ContextUniversalInputResiduals.applyFixedPositiveUnits(producer.clause,clauses,work):ContextUniversalInputResiduals.applyFixedSignedUnits(producer.clause,conclusion,clauses,work);}catch(ContextUniversalInputResiduals.UnificationFailure incompatible){return;}
             if(result!=null)output.accept(new Proof(result,producer,chosen,conclusion,symbolicHeads,work));return;
         }
-        Literal formal=body.get(slot);for(Proof donor:input){work.run();if(!unit(donor,conclusion>=0)||!donor.clause.variables.isEmpty())continue;Literal actual=donor.clause.literals.get(0);if(actual.positive==formal.positive||!actual.predicate.equals(formal.predicate)||actual.arguments.size()!=formal.arguments.size())continue;chosen.add(donor);join(producer,body,input,slot+1,chosen,conclusion,symbolicHeads,output,work);chosen.remove(chosen.size()-1);}
+        Literal formal=body.get(slot);for(Proof donor:input){work.run();if(!unit(donor,conclusion>=0)||(!groundedMixed&&!donor.clause.variables.isEmpty()))continue;Literal actual=donor.clause.literals.get(0);if(actual.positive==formal.positive||!actual.predicate.equals(formal.predicate)||actual.arguments.size()!=formal.arguments.size())continue;chosen.add(donor);join(producer,body,input,slot+1,chosen,conclusion,symbolicHeads,groundedMixed,output,work);chosen.remove(chosen.size()-1);}
     }
     private static Packet frame(ContextUniversalNativeRows.Result input,Packet common,PrivatePool pool,int depth,int maximumWork,Runnable work) {
         if(common==null)throw new IllegalStateException("Actual common input required");
@@ -168,29 +174,33 @@ final class ContextUniversalFrozenConstraints {
         return local;
     }
     static Result close(ContextUniversalNativeRows.Result input,Packet common,PrivatePool pool,int maximumRounds,int maximumDepth,int maximumClauses,int maximumAlternatives,int maximumWork) {
-        return close(input,common,pool,maximumRounds,maximumDepth,maximumClauses,maximumAlternatives,maximumWork,false,null,false,false,false);
+        return close(input,common,pool,maximumRounds,maximumDepth,maximumClauses,maximumAlternatives,maximumWork,false,null,false,false,false,false);
     }
     static Result closeSigned(ContextUniversalNativeRows.Result input,Packet common,PrivatePool pool,int maximumRounds,int maximumDepth,int maximumClauses,int maximumAlternatives,int maximumWork) {
-        return close(input,common,pool,maximumRounds,maximumDepth,maximumClauses,maximumAlternatives,maximumWork,true,null,false,false,false);
+        return close(input,common,pool,maximumRounds,maximumDepth,maximumClauses,maximumAlternatives,maximumWork,true,null,false,false,false,false);
     }
     /** Explicit symbolic input; existing positive/fixed-only entry points retain their scope. */
     static Result closeSignedUnits(ContextUniversalNativeRows.Result input,Packet common,PrivatePool pool,ContextUniversalSignedUnitExchange.Exchange exchange,int maximumRounds,int maximumDepth,int maximumClauses,int maximumAlternatives,int maximumWork) {
         if(exchange==null)throw new IllegalArgumentException("Actual symbolic exchange required");
-        return close(input,common,pool,maximumRounds,maximumDepth,maximumClauses,maximumAlternatives,maximumWork,true,exchange,false,false,false);
+        return close(input,common,pool,maximumRounds,maximumDepth,maximumClauses,maximumAlternatives,maximumWork,true,exchange,false,false,false,false);
     }
     /** Explicit binary signed closure plus fixed positive hyperapplications; no native completeness claim. */
     static Result closeSignedApplications(ContextUniversalNativeRows.Result input,Packet common,PrivatePool pool,ContextUniversalSignedUnitExchange.Exchange exchange,int maximumRounds,int maximumDepth,int maximumClauses,int maximumAlternatives,int maximumWork) {
-        return close(input,common,pool,maximumRounds,maximumDepth,maximumClauses,maximumAlternatives,maximumWork,true,exchange,true,false,false);
+        return close(input,common,pool,maximumRounds,maximumDepth,maximumClauses,maximumAlternatives,maximumWork,true,exchange,true,false,false,false);
     }
     /** Explicit fixed signed applications, including negative conclusions and negative donors. */
     static Result closeSignedFixedApplications(ContextUniversalNativeRows.Result input,Packet common,PrivatePool pool,ContextUniversalSignedUnitExchange.Exchange exchange,int maximumRounds,int maximumDepth,int maximumClauses,int maximumAlternatives,int maximumWork) {
-        return close(input,common,pool,maximumRounds,maximumDepth,maximumClauses,maximumAlternatives,maximumWork,true,exchange,true,true,false);
+        return close(input,common,pool,maximumRounds,maximumDepth,maximumClauses,maximumAlternatives,maximumWork,true,exchange,true,true,false,false);
     }
     /** Fixed signed donors with a possibly universal conclusion; no symbolic donor instantiation. */
     static Result closeSignedSymbolicHeads(ContextUniversalNativeRows.Result input,Packet common,PrivatePool pool,ContextUniversalSignedUnitExchange.Exchange exchange,int maximumRounds,int maximumDepth,int maximumClauses,int maximumAlternatives,int maximumWork) {
-        return close(input,common,pool,maximumRounds,maximumDepth,maximumClauses,maximumAlternatives,maximumWork,true,exchange,true,true,true);
+        return close(input,common,pool,maximumRounds,maximumDepth,maximumClauses,maximumAlternatives,maximumWork,true,exchange,true,true,true,false);
     }
-    private static Result close(ContextUniversalNativeRows.Result input,Packet common,PrivatePool pool,int maximumRounds,int maximumDepth,int maximumClauses,int maximumAlternatives,int maximumWork,boolean signed,ContextUniversalSignedUnitExchange.Exchange exchange,boolean applications,boolean signedApplications,boolean symbolicHeads) {
+    /** Explicit grounded mixed signed donors; fixed/symbolic-head recipes retain their own scope. */
+    static Result closeSignedGroundedMixed(ContextUniversalNativeRows.Result input,Packet common,PrivatePool pool,ContextUniversalSignedUnitExchange.Exchange exchange,int maximumRounds,int maximumDepth,int maximumClauses,int maximumAlternatives,int maximumWork) {
+        return close(input,common,pool,maximumRounds,maximumDepth,maximumClauses,maximumAlternatives,maximumWork,true,exchange,true,true,true,true);
+    }
+    private static Result close(ContextUniversalNativeRows.Result input,Packet common,PrivatePool pool,int maximumRounds,int maximumDepth,int maximumClauses,int maximumAlternatives,int maximumWork,boolean signed,ContextUniversalSignedUnitExchange.Exchange exchange,boolean applications,boolean signedApplications,boolean symbolicHeads,boolean groundedMixed) {
         if(maximumRounds<1||maximumRounds>64||maximumDepth<0||maximumDepth>64||maximumClauses<1||maximumClauses>512||maximumAlternatives<1||maximumAlternatives>256||maximumWork<1)throw new IllegalArgumentException("Bounded ordinary constraint closure required");
         Runnable work=ContextGroundProductionRounds.budget(maximumWork);
         try {
@@ -203,16 +213,16 @@ final class ContextUniversalFrozenConstraints {
             if(exchange!=null)for(ContextUniversalSignedUnitExchange.Unit unit:exchange.units){work.run();current.add(new Proof(unit),maximumDepth,work);}
             for(int round=1;round<=maximumRounds;++round) {
                 List<Proof> before=current.all(work);Ledger next=current.copy(work);boolean[] changed={false};
-                steps(before,signed,applications,signedApplications,symbolicHeads,proof->{changed[0]|=next.add(proof,maximumDepth,work);},work);
+                steps(before,signed,applications,signedApplications,symbolicHeads,groundedMixed,proof->{changed[0]|=next.add(proof,maximumDepth,work);},work);
                 if(!changed[0]) {
                     List<Proof> proofs=next.all(work);int[] obligations={0};
-                    steps(proofs,signed,applications,signedApplications,symbolicHeads,expected->{work.run();++obligations[0];boolean found=false;for(Proof proof:proofs){work.run();if(same(proof.clause,expected.clause,work)&&proof.support.sources.equals(expected.support.sources)&&proof.support.depth<=expected.support.depth){found=true;break;}}if(!found)throw new IllegalStateException("Uncovered exact Source/depth constraint obligation");},work);
-                    Set<Proof> checked=Collections.newSetFromMap(new IdentityHashMap<Proof,Boolean>());for(Proof proof:proofs)verify(proof,input,local,exchange,signed,applications,signedApplications,symbolicHeads,checked,maximumDepth,work);
-                    return new Result(true,"Whole rigid-Origin producer/constraint pairs covered; native discovery, all-cut qualification and admission remain open",input,common,pool,exchange,signed,applications,signedApplications,symbolicHeads,round,obligations[0],proofs);
+                    steps(proofs,signed,applications,signedApplications,symbolicHeads,groundedMixed,expected->{work.run();++obligations[0];boolean found=false;for(Proof proof:proofs){work.run();if(same(proof.clause,expected.clause,work)&&proof.support.sources.equals(expected.support.sources)&&proof.support.depth<=expected.support.depth){found=true;break;}}if(!found)throw new IllegalStateException("Uncovered exact Source/depth constraint obligation");},work);
+                    Set<Proof> checked=Collections.newSetFromMap(new IdentityHashMap<Proof,Boolean>());for(Proof proof:proofs)verify(proof,input,local,exchange,signed,applications,signedApplications,symbolicHeads,groundedMixed,checked,maximumDepth,work);
+                    return new Result(true,"Whole rigid-Origin producer/constraint pairs covered; native discovery, all-cut qualification and admission remain open",input,common,pool,exchange,signed,applications,signedApplications,symbolicHeads,groundedMixed,round,obligations[0],proofs);
                 }
                 current=next;
             }
             throw new IllegalStateException("Constraint closure round limit");
-        }catch(Exception failure){return new Result(false,failure.toString(),input,common,pool,exchange,signed,applications,signedApplications,symbolicHeads,0,0,Collections.emptyList());}
+        }catch(Exception failure){return new Result(false,failure.toString(),input,common,pool,exchange,signed,applications,signedApplications,symbolicHeads,groundedMixed,0,0,Collections.emptyList());}
     }
 }
