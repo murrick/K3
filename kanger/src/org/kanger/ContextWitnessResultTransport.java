@@ -476,6 +476,9 @@ final class ContextWitnessResultTransport {
             if(input==null||proof.common!=input||proof.pool!=pool||proof.local!=local)throw new IllegalStateException("Different exact signed transfer frame");
             ContextUniversalFrozenConstraints.check(proof,64,work);
             Set<Origin> known=new HashSet<>();for(Item item:local.items)for(Slot slot:item.atom.arguments){work.run();if(slot.origin!=null)known.add(slot.origin);}
+            // The sealed symbolic input was rechecked above, including actual historical binding Items.
+            // It carries rigid Origins even when their raw private seed is absent from this branch.
+            if(proof.exchange!=null)for(ContextUniversalSignedUnitExchange.Unit unit:proof.exchange.units)for(Origin origin:unit.clause.origins){work.run();known.add(origin);}
             List<Item> after=new ArrayList<>(local.items);
             for(ContextUniversalFrozenConstraints.Proof unit:proof.proofs) {
                 work.run();if(unit.clause==null||unit.clause.literals.size()!=1||!unit.clause.variables.isEmpty()||pool==null&&!usesX(unit.support))continue;

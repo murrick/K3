@@ -90,6 +90,20 @@ final class ContextUniversalFrozenConstraints {
         if(result.exchange!=null){if(!result.signedUnits)throw new IllegalStateException("Signed symbolic input required");ContextUniversalSignedUnitExchange.check(result.exchange,result.input.x,result.common,maximumDepth,work);}
         Set<Proof> checked=Collections.newSetFromMap(new IdentityHashMap<Proof,Boolean>());for(Proof proof:result.proofs)verify(proof,result.input,result.local,result.exchange,result.signedUnits,checked,maximumDepth,work);
     }
+    /** Flatten checked import receipts into rejection DAGs; no owning intermediate Result/Packet escapes. */
+    private static Proof rejection(Proof proof,Map<Proof,Proof> copied,Runnable work) {
+        work.run();Proof prior=copied.get(proof);if(prior!=null)return prior;Proof out=proof;
+        if(proof.exchanged!=null)out=rejection(proof.exchanged.proof,copied,work);
+        else if(proof.unit!=null)out=new Proof(proof.clause,rejection(proof.unit,copied,work),rejection(proof.horn,copied,work),proof.pivot,work);
+        if(!out.support.equals(proof.support)||!same(out.clause,proof.clause,work))throw new IllegalStateException("Different flattened rejection proof");
+        copied.put(proof,out);return out;
+    }
+    static List<Proof> rejectionEvidence(Result result,int maximumWork) {
+        if(maximumWork<1)throw new IllegalArgumentException("Bounded rejection evidence required");Runnable work=ContextGroundProductionRounds.budget(maximumWork);
+        if(result==null||!result.xRefuted&&!result.foreignRefuted)throw new IllegalStateException("Checked refutation required");check(result,64,work);
+        Map<Proof,Proof> copied=new IdentityHashMap<>();List<Proof> out=new ArrayList<>();for(Proof proof:result.emptyProofs){work.run();out.add(rejection(proof,copied,work));}
+        return Collections.unmodifiableList(out);
+    }
     private static Residual resolve(Proof unit,Proof horn,int pivot,boolean signed,Runnable work) {
         return signed?ContextUniversalInputResiduals.resolveSignedUnit(unit.clause,horn.clause,pivot,work)
             :ContextUniversalInputResiduals.resolveConstraint(unit.clause,horn.clause,pivot,work);

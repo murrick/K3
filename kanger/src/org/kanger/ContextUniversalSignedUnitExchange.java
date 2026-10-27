@@ -15,9 +15,25 @@ final class ContextUniversalSignedUnitExchange {
         private Unit(Result owner,Proof proof){this.owner=owner;this.proof=proof;clause=proof.clause;support=proof.support;}
     }
     static final class Exchange {
+        final UUID identity=UUID.randomUUID();
         final Snapshot x;final Packet common;
+        final Exchange prior;final ConstraintBarrier barrier;
         final Map<Cut,Result> checks;final List<Unit> units;
-        private Exchange(Snapshot x,Packet common,Map<Cut,Result> checks,List<Unit> units){this.x=x;this.common=common;this.checks=Collections.unmodifiableMap(new LinkedHashMap<>(checks));this.units=Collections.unmodifiableList(new ArrayList<>(units));}
+        private Exchange(Snapshot x,Packet common,Map<Cut,Result> checks,List<Unit> units){prior=null;barrier=null;this.x=x;this.common=common;this.checks=Collections.unmodifiableMap(new LinkedHashMap<>(checks));this.units=Collections.unmodifiableList(new ArrayList<>(units));}
+        private Exchange(Exchange prior,ConstraintBarrier barrier){this.prior=prior;this.barrier=barrier;x=prior.x;common=barrier.packet;checks=prior.checks;units=prior.units;}
+    }
+    static Exchange rebase(Exchange prior,ConstraintBarrier barrier,int maximumWork) {
+        if(maximumWork<1)throw new IllegalArgumentException("Bounded symbolic rebase required");
+        Runnable work=ContextGroundProductionRounds.budget(maximumWork);
+        require(prior!=null,"Actual prior symbolic exchange required");check(prior,prior.x,prior.common,64,work);require(barrier!=null&&barrier.merged&&barrier.packet!=null&&barrier.branches.keySet().equals(prior.checks.keySet()),"Actual matching fixed barrier required");
+        for(Map.Entry<Cut,Result> e:prior.checks.entrySet()){work.run();ConstraintTransfer t=barrier.branches.get(e.getKey());require(t!=null&&t.proof==e.getValue()&&t.before==prior.common,"Different actual symbolic/fixed branch ledger");}
+        return new Exchange(prior,barrier);
+    }
+    static boolean sameContents(Exchange a,Exchange b,int maximumWork) {
+        if(maximumWork<1)throw new IllegalArgumentException("Bounded symbolic comparison required");Runnable work=ContextGroundProductionRounds.budget(maximumWork);
+        List<Unit> left=a==null?Collections.emptyList():a.units,right=b==null?Collections.emptyList():b.units;
+        if(left.size()!=right.size())return false;
+        for(Unit u:left){work.run();boolean found=false;for(Unit v:right){work.run();if(u.support.equals(v.support)&&u.clause.equivalent(v.clause,work)){found=true;break;}}if(!found)return false;}return true;
     }
     static final class Collection {
         final boolean collected;final String reason;final Exchange output;
@@ -61,7 +77,12 @@ final class ContextUniversalSignedUnitExchange {
     }
     static void check(Exchange exchange,Snapshot x,Packet common,int maximumDepth,Runnable work) {
         require(exchange!=null&&exchange.x==x&&exchange.common==common,"Different exact symbolic exchange input");
-        frame(x,common,new ArrayList<>(exchange.checks.keySet()),exchange.checks,Integer.MAX_VALUE,work);
+        if(exchange.prior==null)frame(x,common,new ArrayList<>(exchange.checks.keySet()),exchange.checks,Integer.MAX_VALUE,work);
+        else {
+            check(exchange.prior,x,exchange.prior.common,maximumDepth,work);
+            require(exchange.barrier!=null&&exchange.barrier.merged&&exchange.barrier.packet==common&&exchange.checks==exchange.prior.checks&&exchange.units==exchange.prior.units&&exchange.barrier.branches.keySet().equals(exchange.checks.keySet()),"Different symbolic rebase receipt");
+            for(Map.Entry<Cut,Result> e:exchange.checks.entrySet()){work.run();ConstraintTransfer t=exchange.barrier.branches.get(e.getKey());require(t.proof==e.getValue()&&t.before==exchange.prior.common,"Different symbolic rebase branch");}
+        }
         for(Unit unit:exchange.units) {
             work.run();require(eligible(unit.proof)&&exchange.checks.containsValue(unit.owner)&&unit.owner.proofs.contains(unit.proof)&&unit.clause==unit.proof.clause&&unit.support==unit.proof.support&&unit.support.depth<=maximumDepth,"Different actual symbolic proof/grade");
         }
