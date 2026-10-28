@@ -16,12 +16,14 @@ final class ContextUniversalValidationSession {
     }
     static final class Scope implements AutoCloseable {
         final Runnable work;private final Work owner;
-        private Scope(int maximumWork,int capacity){owner=new Work(maximumWork,capacity);work=owner;}
+        private Scope(int maximumWork,int capacity,boolean witness){owner=new Work(maximumWork,capacity,witness);work=owner;}
         Metrics metrics(){owner.thread();return new Metrics(owner);}
         public void close(){owner.thread();owner.closed=true;owner.memo.clear();owner.entries=0;}
     }
     /** Internal trusted code only: graph inputs must remain immutable for this lexical lifetime. */
-    static Scope open(int maximumWork,int capacity){if(maximumWork<1||capacity<1||capacity>4096)throw new IllegalArgumentException("Bounded validation session required");return new Scope(maximumWork,capacity);}
+    static Scope open(int maximumWork,int capacity){if(maximumWork<1||capacity<1||capacity>4096)throw new IllegalArgumentException("Bounded validation session required");return new Scope(maximumWork,capacity,false);}
+    /** Fixed transport counter factory, not a caller-provided delegate. */
+    static Scope openWitness(int maximumWork,int capacity){if(maximumWork<1||capacity<1||capacity>4096)throw new IllegalArgumentException("Bounded validation session required");return new Scope(maximumWork,capacity,true);}
     private static final class Frame {
         final Object[] refs;final int flags,rounds,obligations;
         Frame(Result r){refs=refs(r);flags=flags(r);rounds=r==null?0:r.rounds;obligations=r==null?0:r.obligations;}
@@ -37,7 +39,7 @@ final class ContextUniversalValidationSession {
         final Thread owner=Thread.currentThread();final Runnable budget;final int capacity;
         final IdentityHashMap<Result,Map<Integer,Entry>> memo=new IdentityHashMap<>();
         boolean closed,failed;int entries,peak;long attempts,lookups,hits,verified,capacityBypass;
-        Work(int maximumWork,int capacity){budget=ContextGroundProductionRounds.budget(maximumWork);this.capacity=capacity;}
+        Work(int maximumWork,int capacity,boolean witness){budget=witness?ContextWitnessResultTransport.validationBudget(maximumWork):ContextGroundProductionRounds.budget(maximumWork);this.capacity=capacity;}
         void thread(){if(Thread.currentThread()!=owner)throw new IllegalStateException("Validation session belongs to its invoking thread");}
         void active(){thread();if(closed||failed)throw new IllegalStateException("Validation session closed or failed");}
         void poison(){failed=true;memo.clear();entries=0;}

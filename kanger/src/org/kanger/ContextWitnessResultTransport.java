@@ -474,10 +474,23 @@ final class ContextWitnessResultTransport {
         ContextUniversalFrozenConstraints.Result proof=certificate==null?null:certificate.output;
         return transferConstraints(proof,proof==null?null:proof.common,proof==null?null:proof.pool,maximumDepth,maximumWork,certificate);
     }
+    static final class SessionTransfer {
+        final ConstraintTransfer transfer;final ContextUniversalValidationSession.Metrics metrics;
+        private SessionTransfer(ConstraintTransfer transfer,ContextUniversalValidationSession.Metrics metrics){this.transfer=transfer;this.metrics=metrics;}
+    }
+    /** One original transport budget, closed before the transfer/diagnostics are returned. */
+    static SessionTransfer transferConstraintsCertifiedWithValidationReuse(ContextUniversalGroupedLocalRounds.Certificate certificate,int maximumDepth,int maximumWork,int capacity) {
+        if(maximumDepth<0||maximumDepth>64||maximumWork<1)throw new IllegalArgumentException("Bounded signed constraint transfer required");
+        ContextUniversalFrozenConstraints.Result proof=certificate==null?null:certificate.output;ContextUniversalValidationSession.Scope scope=ContextUniversalValidationSession.openWitness(maximumWork,capacity);ConstraintTransfer transfer;
+        try{transfer=transferConstraints(proof,proof==null?null:proof.common,proof==null?null:proof.pool,maximumDepth,maximumWork,certificate,scope.work);}finally{scope.close();}
+        return new SessionTransfer(transfer,scope.metrics());
+    }
     private static ConstraintTransfer transferConstraints(ContextUniversalFrozenConstraints.Result proof,Packet input,PrivatePool pool,int maximumDepth,int maximumWork) {return transferConstraints(proof,input,pool,maximumDepth,maximumWork,null);}
     private static ConstraintTransfer transferConstraints(ContextUniversalFrozenConstraints.Result proof,Packet input,PrivatePool pool,int maximumDepth,int maximumWork,ContextUniversalGroupedLocalRounds.Certificate certificate) {
         if(maximumDepth<0||maximumDepth>64||maximumWork<1)throw new IllegalArgumentException("Bounded signed constraint transfer required");
-        Runnable work=budget(maximumWork);
+        return transferConstraints(proof,input,pool,maximumDepth,maximumWork,certificate,budget(maximumWork));
+    }
+    private static ConstraintTransfer transferConstraints(ContextUniversalFrozenConstraints.Result proof,Packet input,PrivatePool pool,int maximumDepth,int maximumWork,ContextUniversalGroupedLocalRounds.Certificate certificate,Runnable work) {
         try {
             if(proof==null||!proof.closed||!proof.signedUnits||proof.xRefuted||proof.foreignRefuted)throw new IllegalStateException("Unrefuted sealed signed-unit closure required");
             Packet local=pool==null?input:pool.local;
@@ -776,6 +789,8 @@ final class ContextWitnessResultTransport {
         }
         return true;
     }
+    /** Only the fixed counter factory is exposed to the bounded validation owner. */
+    static Runnable validationBudget(int maximumWork){return budget(maximumWork);}
     private static Runnable budget(int maximumWork) {
         if (maximumWork < 1) throw new IllegalArgumentException("Bounded transport required");
         int[] remaining = {maximumWork};
