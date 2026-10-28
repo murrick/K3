@@ -454,8 +454,10 @@ final class ContextWitnessResultTransport {
         final Packet before,output,local;
         final PrivatePool privateBefore,privateAfter;
         final Cut parent,target;
-        private ConstraintTransfer(boolean transferred,String reason,ContextUniversalFrozenConstraints.Result proof,Packet before,Packet output,Packet local,PrivatePool privateBefore,PrivatePool privateAfter,Runnable work) {
-            this.transferred=transferred;this.reason=reason;this.proof=proof;this.before=before;this.output=output;this.local=local;this.privateBefore=privateBefore;this.privateAfter=privateAfter;
+        final ContextUniversalOriginBindings.Receipt bindings;final ContextUniversalGroupedLocalRounds.Certificate certificate;
+        private ConstraintTransfer(boolean transferred,String reason,ContextUniversalFrozenConstraints.Result proof,Packet before,Packet output,Packet local,PrivatePool privateBefore,PrivatePool privateAfter,Runnable work) {this(transferred,reason,proof,before,output,local,privateBefore,privateAfter,work,null,null);}
+        private ConstraintTransfer(boolean transferred,String reason,ContextUniversalFrozenConstraints.Result proof,Packet before,Packet output,Packet local,PrivatePool privateBefore,PrivatePool privateAfter,Runnable work,ContextUniversalOriginBindings.Receipt bindings,ContextUniversalGroupedLocalRounds.Certificate certificate) {
+            this.bindings=transferred?bindings:null;this.certificate=transferred?certificate:null;this.transferred=transferred;this.reason=reason;this.proof=proof;this.before=before;this.output=output;this.local=local;this.privateBefore=privateBefore;this.privateAfter=privateAfter;
             parent=proof==null||proof.input==null?null:proof.input.parent;target=proof==null||proof.input==null?null:proof.input.target;
             commonChanged=transferred&&!sameItems(before.items,output.items,work);
             localChanged=transferred&&!sameItems(privateBefore==null?before.items:privateBefore.local.items,local.items,work);
@@ -467,7 +469,13 @@ final class ContextWitnessResultTransport {
     static ConstraintTransfer transferConstraintsPrivate(ContextUniversalFrozenConstraints.Result proof,PrivatePool pool,int maximumDepth,int maximumWork) {
         return transferConstraints(proof,pool==null?null:pool.common,pool,maximumDepth,maximumWork);
     }
-    private static ConstraintTransfer transferConstraints(ContextUniversalFrozenConstraints.Result proof,Packet input,PrivatePool pool,int maximumDepth,int maximumWork) {
+    /** Explicit local-stability-bound transport; previous APIs retain their original Origin scope. */
+    static ConstraintTransfer transferConstraintsCertified(ContextUniversalGroupedLocalRounds.Certificate certificate,int maximumDepth,int maximumWork) {
+        ContextUniversalFrozenConstraints.Result proof=certificate==null?null:certificate.output;
+        return transferConstraints(proof,proof==null?null:proof.common,proof==null?null:proof.pool,maximumDepth,maximumWork,certificate);
+    }
+    private static ConstraintTransfer transferConstraints(ContextUniversalFrozenConstraints.Result proof,Packet input,PrivatePool pool,int maximumDepth,int maximumWork) {return transferConstraints(proof,input,pool,maximumDepth,maximumWork,null);}
+    private static ConstraintTransfer transferConstraints(ContextUniversalFrozenConstraints.Result proof,Packet input,PrivatePool pool,int maximumDepth,int maximumWork,ContextUniversalGroupedLocalRounds.Certificate certificate) {
         if(maximumDepth<0||maximumDepth>64||maximumWork<1)throw new IllegalArgumentException("Bounded signed constraint transfer required");
         Runnable work=budget(maximumWork);
         try {
@@ -479,6 +487,8 @@ final class ContextWitnessResultTransport {
             // The sealed symbolic input was rechecked above, including actual historical binding Items.
             // It carries rigid Origins even when their raw private seed is absent from this branch.
             if(proof.exchange!=null)for(ContextUniversalSignedUnitExchange.Unit unit:proof.exchange.units)for(Origin origin:unit.clause.origins){work.run();known.add(origin);}
+            ContextUniversalOriginBindings.Receipt bindings=null;
+            if(certificate!=null){if(certificate.output!=proof)throw new IllegalStateException("Different actual local stability output");ContextUniversalGroupedLocalRounds.check(certificate,work);bindings=ContextUniversalOriginBindings.checked(proof,work);for(ContextUniversalOriginBindings.Route route:bindings.routes){work.run();known.add(route.origin);}}
             List<Item> after=new ArrayList<>(local.items);
             for(ContextUniversalFrozenConstraints.Proof unit:proof.proofs) {
                 work.run();if(unit.clause==null||unit.clause.literals.size()!=1||!unit.clause.variables.isEmpty()||pool==null&&!usesX(unit.support))continue;
@@ -488,7 +498,7 @@ final class ContextWitnessResultTransport {
             privateRank(after,work);Packet retained=new Packet(after);if(!retains(local,retained,work))throw new IllegalStateException("Signed transfer lost an input proof");
             Packet output=pool==null?retained:privateShared(input,retained,work);parentX(output.items,work);
             PrivatePool next=pool==null?null:new PrivatePool(input,pool.x,pool.snapshot,retained,pool.sources,pool.declarations);
-            return new ConstraintTransfer(true,"Checked fixed signed units transported; symbolic/all-cut qualification remains open",proof,input,output,retained,pool,next,work);
+            return new ConstraintTransfer(true,"Checked fixed signed units transported; symbolic/all-cut qualification remains open",proof,input,output,retained,pool,next,work,bindings,certificate);
         }catch(Exception failure){return new ConstraintTransfer(false,failure.toString(),proof,input,null,null,pool,null,work);}
     }
     /** Supplied signed products only; qualification of the next common barrier remains separate. */
