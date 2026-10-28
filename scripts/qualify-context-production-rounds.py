@@ -639,6 +639,11 @@ def main():
         names.append(('org.kanger.ContextUniversalGroupedCandidatesRunner', 'CONTEXT_UNIVERSAL_GROUPED_CANDIDATES_PASS'))
         names.append(('org.kanger.ContextUniversalGroupedLocalRoundsRunner', 'CONTEXT_UNIVERSAL_GROUPED_LOCAL_ROUNDS_PASS'))
         names.append(('org.kanger.ContextUniversalOriginBindingsRunner', 'CONTEXT_UNIVERSAL_ORIGIN_BINDINGS_PASS'))
+        names.append(('org.kanger.ContextUniversalGroupedRoundsRunner', 'CONTEXT_UNIVERSAL_GROUPED_ROUNDS_PASS'))
+        names.append(('org.kanger.ContextUniversalGroupedRoundsBudgetRunner', 'CONTEXT_UNIVERSAL_GROUPED_ROUNDS_BUDGET_PASS'))
+        names.append(('org.kanger.ContextUniversalGroupedRoundsGradeRunner', 'CONTEXT_UNIVERSAL_GROUPED_ROUNDS_GRADE_PASS'))
+        names.append(('org.kanger.ContextUniversalGroupedRoundsPrivateRunner', 'CONTEXT_UNIVERSAL_GROUPED_ROUNDS_PRIVATE_PASS'))
+        names.append(('org.kanger.ContextUniversalGroupedRoundsRefutationRunner', 'CONTEXT_UNIVERSAL_GROUPED_ROUNDS_REFUTATION_PASS'))
     drivers = [root / 'kanger-qualification/src' / (name.replace('.', '/') + '.java') for name, _ in names]
     if args.ordinary_integration_candidate:
         original = root / 'kanger-data-dumb2/src/org/kanger/storage/dumb2/DB.java'
