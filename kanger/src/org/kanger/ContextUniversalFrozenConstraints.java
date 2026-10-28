@@ -122,13 +122,17 @@ final class ContextUniversalFrozenConstraints {
         checked.add(p);
     }
     static void check(Result result,int maximumDepth,Runnable work) {
-        if(result==null||!result.closed||result.input==null||!result.input.classified||!result.input.withinShape)throw new IllegalStateException("Closed whole rigid-Origin constraint frame required");
-        frame(result.input,result.common,result.pool,maximumDepth,Integer.MAX_VALUE,work);
-        if(result.exchange!=null){if(!result.signedUnits)throw new IllegalStateException("Signed symbolic input required");ContextUniversalSignedUnitExchange.check(result.exchange,result.input.x,result.common,maximumDepth,work);}
-        if(result.compounds!=null){if(!result.signedUnits)throw new IllegalStateException("Signed compound input required");compoundFrame(result.compounds,result.input,result.common,maximumDepth,work);}
-        groupedFrame(result.groupedBase,result.groupedInputs,result.input,result.common,result.pool,result.exchange,result.compounds,work);
-        Set<Proof> checked=Collections.newSetFromMap(new IdentityHashMap<Proof,Boolean>());for(Proof proof:result.proofs)verify(proof,result.input,result.local,result.exchange,result.compounds,result.groupedBase,result.groupedInputs,result.signedUnits,result.applications,result.signedApplications,result.symbolicHeads,result.groundedMixed,result.instantiatedUnits,checked,maximumDepth,work);
-        groupedCoverage(result.groupedInputs,result.proofs,work);
+        ContextUniversalValidationSession.Token session=ContextUniversalValidationSession.begin(result,maximumDepth,work);if(session!=null&&session.reused)return;boolean valid=false;
+        try {
+            if(result==null||!result.closed||result.input==null||!result.input.classified||!result.input.withinShape)throw new IllegalStateException("Closed whole rigid-Origin constraint frame required");
+            frame(result.input,result.common,result.pool,maximumDepth,Integer.MAX_VALUE,work);
+            if(result.exchange!=null){if(!result.signedUnits)throw new IllegalStateException("Signed symbolic input required");ContextUniversalSignedUnitExchange.check(result.exchange,result.input.x,result.common,maximumDepth,work);}
+            if(result.compounds!=null){if(!result.signedUnits)throw new IllegalStateException("Signed compound input required");compoundFrame(result.compounds,result.input,result.common,maximumDepth,work);}
+            groupedFrame(result.groupedBase,result.groupedInputs,result.input,result.common,result.pool,result.exchange,result.compounds,work);
+            Set<Proof> checked=Collections.newSetFromMap(new IdentityHashMap<Proof,Boolean>());for(Proof proof:result.proofs)verify(proof,result.input,result.local,result.exchange,result.compounds,result.groupedBase,result.groupedInputs,result.signedUnits,result.applications,result.signedApplications,result.symbolicHeads,result.groundedMixed,result.instantiatedUnits,checked,maximumDepth,work);
+            groupedCoverage(result.groupedInputs,result.proofs,work);
+            valid=true;
+        }finally{ContextUniversalValidationSession.finish(session,valid);}
     }
     private static void covered(Proof expected,List<Proof> proofs,Runnable work) {
         for(Proof proof:proofs){work.run();if(same(expected.clause,proof.clause,work)&&expected.support.sources.equals(proof.support.sources)&&proof.support.depth<=expected.support.depth)return;}
