@@ -130,6 +130,19 @@ final class ContextUniversalFrozenConstraints {
         Set<Proof> checked=Collections.newSetFromMap(new IdentityHashMap<Proof,Boolean>());for(Proof proof:result.proofs)verify(proof,result.input,result.local,result.exchange,result.compounds,result.groupedBase,result.groupedInputs,result.signedUnits,result.applications,result.signedApplications,result.symbolicHeads,result.groundedMixed,result.instantiatedUnits,checked,maximumDepth,work);
         groupedCoverage(result.groupedInputs,result.proofs,work);
     }
+    private static void covered(Proof expected,List<Proof> proofs,Runnable work) {
+        for(Proof proof:proofs){work.run();if(same(expected.clause,proof.clause,work)&&expected.support.sources.equals(proof.support.sources)&&proof.support.depth<=expected.support.depth)return;}
+        throw new IllegalStateException("Uncovered authenticated input/ordinary closure obligation");
+    }
+    /** Replay root inventory and ordinary closure obligations, not just parent authentication. */
+    static void checkSaturation(Result result,int maximumDepth,Runnable work) {
+        check(result,maximumDepth,work);
+        for(Row row:result.input.rows)for(Part part:row.parts){work.run();if(part.role!=Role.WITNESS)covered(new Proof(row,part,work),result.proofs,work);}
+        for(Item item:result.local.items)for(Support support:item.proofs){work.run();covered(new Proof(item,support,work),result.proofs,work);}
+        if(result.exchange!=null)for(ContextUniversalSignedUnitExchange.Unit unit:result.exchange.units){work.run();covered(new Proof(unit),result.proofs,work);}
+        if(result.compounds!=null)for(ContextUniversalCompoundExchange.ResidualProof compound:result.compounds.clauses){work.run();covered(new Proof(compound),result.proofs,work);}
+        steps(result.proofs,result.signedUnits,result.applications,result.signedApplications,result.symbolicHeads,result.groundedMixed,result.instantiatedUnits,expected->covered(expected,result.proofs,work),work);
+    }
     /** Flatten checked import receipts into rejection DAGs; no owning intermediate Result/Packet escapes. */
     private static Proof rejection(Proof proof,Map<Proof,Proof> copied,Runnable work) {
         work.run();Proof prior=copied.get(proof);if(prior!=null)return prior;Proof out=proof;
@@ -254,11 +267,15 @@ final class ContextUniversalFrozenConstraints {
         if(base==null||seeds==null)throw new IllegalArgumentException("Actual grouped base and explicit seeds required");
         return close(base.input,base.common,base.pool,maximumRounds,maximumDepth,maximumClauses,maximumAlternatives,maximumWork,true,base.exchange,base.compounds,base,new ArrayList<>(seeds),true,true,true,true,true);
     }
+    static Result closeSignedGroupedShared(Result base,List<ContextUniversalGroupedCompletion.Receipt> seeds,int maximumRounds,int maximumDepth,int maximumClauses,int maximumAlternatives,int maximumWork,Runnable work) {
+        if(base==null||seeds==null||work==null)throw new IllegalArgumentException("Actual shared-work grouped base/seeds required");
+        return close(base.input,base.common,base.pool,maximumRounds,maximumDepth,maximumClauses,maximumAlternatives,maximumWork,true,base.exchange,base.compounds,base,new ArrayList<>(seeds),true,true,true,true,true,work);
+    }
     private static Result close(ContextUniversalNativeRows.Result input,Packet common,PrivatePool pool,int maximumRounds,int maximumDepth,int maximumClauses,int maximumAlternatives,int maximumWork,boolean signed,ContextUniversalSignedUnitExchange.Exchange exchange,boolean applications,boolean signedApplications,boolean symbolicHeads,boolean groundedMixed,boolean instantiatedUnits) {return close(input,common,pool,maximumRounds,maximumDepth,maximumClauses,maximumAlternatives,maximumWork,signed,exchange,null,applications,signedApplications,symbolicHeads,groundedMixed,instantiatedUnits);}
     private static Result close(ContextUniversalNativeRows.Result input,Packet common,PrivatePool pool,int maximumRounds,int maximumDepth,int maximumClauses,int maximumAlternatives,int maximumWork,boolean signed,ContextUniversalSignedUnitExchange.Exchange exchange,ContextUniversalCompoundExchange.Exchange compounds,boolean applications,boolean signedApplications,boolean symbolicHeads,boolean groundedMixed,boolean instantiatedUnits) {return close(input,common,pool,maximumRounds,maximumDepth,maximumClauses,maximumAlternatives,maximumWork,signed,exchange,compounds,null,Collections.emptyList(),applications,signedApplications,symbolicHeads,groundedMixed,instantiatedUnits);}
-    private static Result close(ContextUniversalNativeRows.Result input,Packet common,PrivatePool pool,int maximumRounds,int maximumDepth,int maximumClauses,int maximumAlternatives,int maximumWork,boolean signed,ContextUniversalSignedUnitExchange.Exchange exchange,ContextUniversalCompoundExchange.Exchange compounds,Result groupedBase,List<ContextUniversalGroupedCompletion.Receipt> groupedInputs,boolean applications,boolean signedApplications,boolean symbolicHeads,boolean groundedMixed,boolean instantiatedUnits) {
+    private static Result close(ContextUniversalNativeRows.Result input,Packet common,PrivatePool pool,int maximumRounds,int maximumDepth,int maximumClauses,int maximumAlternatives,int maximumWork,boolean signed,ContextUniversalSignedUnitExchange.Exchange exchange,ContextUniversalCompoundExchange.Exchange compounds,Result groupedBase,List<ContextUniversalGroupedCompletion.Receipt> groupedInputs,boolean applications,boolean signedApplications,boolean symbolicHeads,boolean groundedMixed,boolean instantiatedUnits) {return close(input,common,pool,maximumRounds,maximumDepth,maximumClauses,maximumAlternatives,maximumWork,signed,exchange,compounds,groupedBase,groupedInputs,applications,signedApplications,symbolicHeads,groundedMixed,instantiatedUnits,ContextGroundProductionRounds.budget(maximumWork));}
+    private static Result close(ContextUniversalNativeRows.Result input,Packet common,PrivatePool pool,int maximumRounds,int maximumDepth,int maximumClauses,int maximumAlternatives,int maximumWork,boolean signed,ContextUniversalSignedUnitExchange.Exchange exchange,ContextUniversalCompoundExchange.Exchange compounds,Result groupedBase,List<ContextUniversalGroupedCompletion.Receipt> groupedInputs,boolean applications,boolean signedApplications,boolean symbolicHeads,boolean groundedMixed,boolean instantiatedUnits,Runnable work) {
         if(maximumRounds<1||maximumRounds>64||maximumDepth<0||maximumDepth>64||maximumClauses<1||maximumClauses>512||maximumAlternatives<1||maximumAlternatives>256||maximumWork<1)throw new IllegalArgumentException("Bounded ordinary constraint closure required");
-        Runnable work=ContextGroundProductionRounds.budget(maximumWork);
         try {
             if(input==null||!input.classified||!input.withinShape)throw new IllegalStateException("Whole supported native row inventory required");
             Packet local=frame(input,common,pool,maximumDepth,maximumWork,work);
