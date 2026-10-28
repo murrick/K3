@@ -1,0 +1,34 @@
+/* MIT License. Copyright (c) 2026 Dmitry G. Quznetsov. */
+package org.kanger;
+import java.util.*;
+
+/** Qualification-only counters. Referenced ONLY by temporary instrumented source copies. */
+public final class ContextUniversalWorkProfile {
+    private static final ThreadLocal<State> ACTIVE=new ThreadLocal<>();
+    private static final class Stat {
+        long calls,leaf,inclusive,repeatedCompleted,aborted;final IdentityHashMap<Object,Long> visits=new IdentityHashMap<>();final Set<Object> completed=Collections.newSetFromMap(new IdentityHashMap<Object,Boolean>());
+    }
+    private static final class State {
+        final Thread owner=Thread.currentThread();final Deque<Scope> stack=new ArrayDeque<>();final Map<String,Stat> stats=new LinkedHashMap<>();final Map<String,long[]> phases=new LinkedHashMap<>();long[] phaseCounter={0};final List<Map<String,Object>> rounds=new ArrayList<>();
+        State(){phases.put(phase,phaseCounter);}
+        Runnable root;long attempts,accepted;boolean failed;String failure,phase="0/preflight";List<String> failureStack=Collections.emptyList();int round;
+    }
+    public static void reset(){if(ACTIVE.get()!=null)throw new IllegalStateException("Profile already active");ACTIVE.set(new State());}
+    public static Runnable root(Runnable delegate){State s=ACTIVE.get();if(s==null)return delegate;if(s.root!=null)throw new IllegalStateException("Only one owning controller budget per profile");Runnable wrapped=()->{
+        if(Thread.currentThread()!=s.owner)throw new IllegalStateException("Single-thread controller measurement required");++s.attempts;++s.phaseCounter[0];Scope scope=s.stack.peek();if(scope!=null)++scope.stat.leaf;else ++stat(s,"controller-direct").leaf;
+        try{delegate.run();++s.accepted;}catch(RuntimeException|Error failure){s.failed=true;s.failure=failure.toString();List<String> path=new ArrayList<>();for(Scope frame:s.stack)path.add(frame.label);s.failureStack=path;throw failure;}
+    };s.root=wrapped;return wrapped;}
+    private static Stat stat(State s,String label){Stat out=s.stats.get(label);if(out==null){out=new Stat();s.stats.put(label,out);}return out;}
+    public static final class Scope implements AutoCloseable {
+        final State state;final Stat stat;final String label;final Object target;final long start;boolean aborted;
+        Scope(State s,String label,Object target){state=s;this.label=label;this.target=target;stat=stat(s,label);start=s.attempts;++stat.calls;stat.visits.put(target,stat.visits.getOrDefault(target,0L)+1);if(stat.completed.contains(target))++stat.repeatedCompleted;s.stack.push(this);}
+        public void fail(){aborted=true;}
+        public void close(){if(state.stack.peek()!=this)throw new IllegalStateException("Unbalanced diagnostic scope");state.stack.pop();stat.inclusive+=state.attempts-start;if(aborted||state.failed)++stat.aborted;else stat.completed.add(target);}
+    }
+    public static Scope enter(String label,Object target,Runnable work){State s=ACTIVE.get();return s==null||s.root==null||work!=s.root?null:new Scope(s,label,target);}
+    public static void phase(String phase){State s=ACTIVE.get();if(s!=null&&s.root!=null){s.phase=s.round+"/"+phase;s.phaseCounter=s.phases.get(s.phase);if(s.phaseCounter==null){s.phaseCounter=new long[1];s.phases.put(s.phase,s.phaseCounter);}}}
+    public static void round(int round,ContextWitnessResultTransport.Packet input,Map<ContextWitnessResultTransport.Cut,ContextWitnessResultTransport.PrivatePool> pools,ContextUniversalSignedUnitExchange.Exchange units,ContextUniversalCompoundExchange.Exchange compounds){State s=ACTIVE.get();if(s==null||s.root==null)return;s.round=round;Map<String,Object> row=new LinkedHashMap<>();row.put("round",round);row.put("startTick",s.attempts);row.put("fixedItems",input.items.size());row.put("privateCuts",pools.size());row.put("unitInputs",units==null?0:units.units.size());row.put("compoundInputs",compounds.clauses.size());s.rounds.add(row);}
+    public static void certificates(Map<ContextWitnessResultTransport.Cut,ContextUniversalFrozenConstraints.Result> checks,Map<ContextWitnessResultTransport.Cut,ContextUniversalGroupedLocalRounds.Certificate> certificates){State s=ACTIVE.get();if(s==null||s.root==null)return;Map<String,Object> row=s.rounds.get(s.rounds.size()-1);List<Object> cuts=new ArrayList<>();for(ContextWitnessResultTransport.Cut cut:checks.keySet()){Map<String,Object> c=new LinkedHashMap<>();ContextUniversalFrozenConstraints.Result check=checks.get(cut);c.put("self",cut.localX);c.put("proofs",check.proofs.size());c.put("localPasses",certificates.get(cut).history.size());c.put("candidateAttempts",certificates.get(cut).terminal.attempts);cuts.add(c);}row.put("cuts",cuts);row.put("beforeCertificateTick",s.attempts);}
+    public static Map<String,Object> finish(){State s=ACTIVE.get();if(s==null)throw new IllegalStateException("No active profile");if(!s.stack.isEmpty())throw new IllegalStateException("Leaked diagnostic scope");ACTIVE.remove();Map<String,Object> out=new LinkedHashMap<>();out.put("instrumented",s.root!=null);out.put("attemptedTicks",s.attempts);out.put("acceptedTicks",s.accepted);out.put("failed",s.failed);out.put("failure",s.failure);out.put("failureStack",s.failureStack);Map<String,Object> phases=new LinkedHashMap<>();for(Map.Entry<String,long[]> e:s.phases.entrySet())phases.put(e.getKey(),e.getValue()[0]);out.put("phaseTicks",phases);out.put("rounds",s.rounds);List<Object> stats=new ArrayList<>();long leaf=0;for(Map.Entry<String,Stat> e:s.stats.entrySet()){Stat v=e.getValue();Map<String,Object> row=new LinkedHashMap<>();row.put("label",e.getKey());row.put("calls",v.calls);row.put("uniqueTargets",v.visits.size());row.put("repeatAfterCompletedCalls",v.repeatedCompleted);row.put("completedTargets",v.completed.size());row.put("abortedCalls",v.aborted);row.put("maximumVisits",v.visits.values().stream().mapToLong(Long::longValue).max().orElse(0));row.put("leafTicks",v.leaf);row.put("inclusiveTicks",v.inclusive);stats.add(row);leaf+=v.leaf;}if(leaf!=s.attempts)throw new IllegalStateException("Nonpartitioned work counters");out.put("scopes",stats);return out;}
+    public static String json(Object value){if(value==null)return "null";if(value instanceof Number||value instanceof Boolean)return value.toString();if(value instanceof Map){List<String> p=new ArrayList<>();for(Map.Entry<?,?> e:((Map<?,?>)value).entrySet())p.add(json(e.getKey().toString())+":"+json(e.getValue()));return "{"+String.join(",",p)+"}";}if(value instanceof Collection){List<String> p=new ArrayList<>();for(Object x:(Collection<?>)value)p.add(json(x));return "["+String.join(",",p)+"]";}String s=value.toString();StringBuilder out=new StringBuilder("\"");for(int i=0;i<s.length();++i){char c=s.charAt(i);if(c=='"'||c=='\\')out.append('\\').append(c);else if(c<32)out.append(String.format("\\u%04x",(int)c));else out.append(c);}return out.append('"').toString();}
+}
