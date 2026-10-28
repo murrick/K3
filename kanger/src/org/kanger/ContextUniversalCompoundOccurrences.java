@@ -37,7 +37,7 @@ final class ContextUniversalCompoundOccurrences {
     private static void require(boolean b,String why){if(!b)throw new IllegalStateException(why);}
     private static Plan trace(Proof p,Result owner,Runnable work) {
         work.run();require(p!=null&&p.clause!=null,"Actual nonempty compound history required");
-        if(p.original!=null){require(p.clause.literals.size()>=3,"Original multi-premise typed part required");return new Plan(p);}
+        if(p.original!=null){require(p.clause.literals.size()>=2,"Original compound typed part required");return new Plan(p);}
         if(p.compound!=null){require(owner.compounds!=null&&owner.compounds.clauses.contains(p.compound)&&p.clause==p.compound.clause&&p.support==p.compound.support,"Actual owning compound import required");Plan out=trace(p.compound.proof,p.compound.owner,work);out.imports.add(new Hop(owner,p));return out;}
         require(p.unit!=null&&p.horn!=null&&p.producer==null&&p.exchanged==null,"Original binary/import history required; application roots remain open");
         Plan out=trace(p.horn,owner,work);require(out.remaining.size()==p.horn.clause.literals.size()&&p.pivot>=0&&p.pivot<out.remaining.size(),"Actual ordered pivot occurrences required");
@@ -53,9 +53,10 @@ final class ContextUniversalCompoundOccurrences {
         require(plan.remaining.size()==residual.clause.literals.size(),"Every ordered residual literal requires original occurrences");Set<Integer> slots=new LinkedHashSet<>(plan.consumed.keySet());for(List<Integer> group:plan.remaining){require(!group.isEmpty(),"Empty occurrence group");for(int slot:group){work.run();require(slots.add(slot),"Original occurrence duplicated in history");}}require(slots.size()==plan.root.clause.literals.size(),"Original occurrence omitted from history");
         Set<Source> sources=new LinkedHashSet<>(plan.root.support.sources);for(Proof donor:plan.consumed.values())for(Source source:donor.support.sources){work.run();sources.add(source);}require(sources.equals(residual.support.sources),"Every actual historical Source must survive occurrence tracing");return plan;
     }
+    static Receipt checked(Exchange exchange,ResidualProof residual,Result receiver,Runnable work){return new Receipt(exchange,residual,receiver,frame(exchange,residual,receiver,work));}
     static Capture capture(Exchange exchange,ResidualProof residual,Result receiver,int maximumWork) {
         if(maximumWork<1)throw new IllegalArgumentException("Bounded occurrence capture required");Runnable work=ContextGroundProductionRounds.budget(maximumWork);
-        try{Plan plan=frame(exchange,residual,receiver,work);return new Capture(true,"Actual original occurrence partition checked; completion and closure integration remain separate",new Receipt(exchange,residual,receiver,plan));}catch(Exception failure){return new Capture(false,failure.toString(),null);}
+        try{return new Capture(true,"Actual original occurrence partition checked; completion and closure integration remain separate",checked(exchange,residual,receiver,work));}catch(Exception failure){return new Capture(false,failure.toString(),null);}
     }
     static void check(Receipt receipt,Runnable work) {
         require(receipt!=null,"Actual occurrence receipt required");Plan p=frame(receipt.exchange,receipt.residual,receipt.receiver,work);
