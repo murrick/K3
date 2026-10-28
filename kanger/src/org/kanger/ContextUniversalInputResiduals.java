@@ -331,6 +331,23 @@ final class ContextUniversalInputResiduals {
         return new GroundedApplication(apart(new Residual(Collections.singletonList(new Literal(head.predicate,head.positive,args)),work),new int[]{0},work),instances);
     }
 
+    /** One original application with an actually contracted conclusion group. */
+    static final class GroupedApplication {
+        final Residual conclusion;final Map<Integer,Residual> instances;
+        private GroupedApplication(Residual conclusion,Map<Integer,Residual> instances){this.conclusion=conclusion;this.instances=Collections.unmodifiableMap(new LinkedHashMap<>(instances));}
+    }
+    static GroupedApplication applyGroupedUnits(Residual producer,Set<Integer> conclusions,Map<Integer,Residual> donors,Runnable work) {
+        work.run();if(producer==null||producer.literals.size()<3||producer.literals.size()>8||conclusions==null||conclusions.isEmpty()||donors==null)throw new IllegalArgumentException("Complete bounded original grouped application required");
+        Set<Integer> expected=new LinkedHashSet<>();for(int i=0;i<producer.literals.size();++i){work.run();if(!conclusions.contains(i))expected.add(i);}for(int i:conclusions){work.run();if(i<0||i>=producer.literals.size())throw new IllegalArgumentException("Actual original conclusion slot required");}if(!expected.equals(donors.keySet()))throw new IllegalArgumentException("Every nonconclusion original donor required");
+        int[] next={0};Residual rule=apart(producer,next,work);Map<Integer,Term> substitution=new HashMap<>();Map<Integer,Literal> actuals=new LinkedHashMap<>();
+        for(int slot:expected){work.run();Residual donor=donors.get(slot);Literal formal=rule.literals.get(slot);if(donor==null||donor.literals.size()!=1||donor.literals.get(0).positive==formal.positive)throw new IllegalArgumentException("Actual opposite-sign unit donor required");Literal actual=apart(donor,next,work).literals.get(0);actuals.put(slot,actual);if(!formal.predicate.equals(actual.predicate)||formal.arguments.size()!=actual.arguments.size())throw new UnificationFailure();
+            for(int i=0;i<formal.arguments.size();++i){work.run();Term a=dereference(formal.arguments.get(i),substitution,work),b=dereference(actual.arguments.get(i),substitution,work);if(a.variable>=0){if(b.variable!=a.variable)substitution.put(a.variable,b);}else if(b.variable>=0)substitution.put(b.variable,a);else if(!rigid(a,b))throw new UnificationFailure();}
+        }
+        Map<Integer,Residual> instances=new LinkedHashMap<>();for(Map.Entry<Integer,Literal> entry:actuals.entrySet()){work.run();Literal actual=entry.getValue();List<Term> args=new ArrayList<>();for(Term term:actual.arguments){work.run();Term value=dereference(term,substitution,work);if(value.variable>=0)return null;args.add(value);}instances.put(entry.getKey(),new Residual(Collections.singletonList(new Literal(actual.predicate,actual.positive,args)),work));}
+        Literal head=null;for(int slot=0;slot<rule.literals.size();++slot)if(conclusions.contains(slot)){work.run();Literal formal=rule.literals.get(slot);List<Term> args=new ArrayList<>();for(Term term:formal.arguments){work.run();args.add(dereference(term,substitution,work));}Literal candidate=new Literal(formal.predicate,formal.positive,args);if(head==null)head=candidate;else if(!exact(head,candidate,work))throw new UnificationFailure();}
+        return new GroupedApplication(apart(new Residual(Collections.singletonList(head),work),new int[]{0},work),instances);
+    }
+
     static String assertion(Residual clause,Runnable work) {
         StringBuilder text=new StringBuilder("!");for(int variable:clause.variables){work.run();text.append("@ctxfrozenv").append(variable).append(' ');}
         text.append('(');boolean first=true;
