@@ -631,6 +631,7 @@ def main():
         names.append(('org.kanger.ContextUniversalCompoundResidualEvidenceRunner', 'CONTEXT_UNIVERSAL_COMPOUND_RESIDUAL_EVIDENCE_PASS'))
     if args.mode == 'reference':
         names.append(('org.kanger.ContextUniversalCompoundExchangeRunner', 'CONTEXT_UNIVERSAL_COMPOUND_EXCHANGE_PASS'))
+        names.append(('org.kanger.ContextUniversalCompoundConsumerRunner', 'CONTEXT_UNIVERSAL_COMPOUND_CONSUMER_PASS'))
     drivers = [root / 'kanger-qualification/src' / (name.replace('.', '/') + '.java') for name, _ in names]
     if args.ordinary_integration_candidate:
         original = root / 'kanger-data-dumb2/src/org/kanger/storage/dumb2/DB.java'

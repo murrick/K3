@@ -46,11 +46,11 @@ final class ContextUniversalSignedUnitExchange {
         require(x!=null&&common!=null&&expected!=null&&checks!=null,"Actual symbolic exchange frame required");
         Set<Cut> cuts=new LinkedHashSet<>(expected);require(cuts.size()==expected.size()&&cuts.contains(Cut.of(x))&&cuts.equals(checks.keySet()),"Exact supplied symbolic cuts including self-X required");
         ContextWitnessResultTransport.family(common,expected,maximumWork);
-        ContextUniversalSignedUnitExchange.Exchange input=null;boolean first=true;
+        ContextUniversalSignedUnitExchange.Exchange input=null;ContextUniversalCompoundExchange.Exchange compoundInput=null;boolean first=true;
         for(Map.Entry<Cut,Result> e:checks.entrySet()) {
             work.run();Result r=e.getValue();require(r!=null&&r.closed&&r.signedUnits&&!r.xRefuted&&!r.foreignRefuted,"All symbolic donor cuts must be complete and unrefuted");
             require(r.input.x==x&&r.common==common&&r.input.target.equals(e.getKey()),"Different actual symbolic donor native/common/cut frame");
-            if(first){input=r.exchange;first=false;}else require(r.exchange==input,"Different actual symbolic donor barrier");
+            if(first){input=r.exchange;compoundInput=r.compounds;first=false;}else {require(r.exchange==input,"Different actual symbolic donor barrier");require(r.compounds==compoundInput,"Different actual compound donor barrier");}
             ContextUniversalFrozenConstraints.check(r,64,work);
         }
     }
