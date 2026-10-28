@@ -14,6 +14,8 @@ public final class ContextUniversalGroupedRoundsBudgetRunner {
         ContextUniversalGroupedRounds.Result r=ContextUniversalGroupedRoundsRunner.run(x,cuts,p,Collections.emptyMap(),input,16,8);
         ContextUniversalGroupedRoundsRunner.incomplete(r,"certificate-binding",2);
         ContextUniversalGroupedRoundsRunner.require(r.reason.contains("Ground transport work limit"),"actual declared work exhaustion, not semantic refutation");
+        ContextUniversalGroupedChainAudit.Inspection audit=ContextUniversalGroupedChainAudit.inspect(x,cuts,p,Collections.emptyMap(),ContextUniversalGroupedRoundsRunner.units(input),input,ContextUniversalGroupedRoundsRunner.limits(16),ContextUniversalGroupedRoundsRunner.local(),8,r,ContextUniversalGroupedRoundsRunner.WORK);
+        ContextUniversalGroupedRoundsRunner.require(!audit.audited&&audit.output==null,"actual budget refusal cannot become a stable-chain certificate");
         System.out.println("CONTEXT_UNIVERSAL_GROUPED_ROUNDS_BUDGET_PASS checks="+ContextUniversalGroupedRoundsRunner.checks);System.exit(0);
     }catch(Throwable e){e.printStackTrace();System.exit(1);}}
 }
