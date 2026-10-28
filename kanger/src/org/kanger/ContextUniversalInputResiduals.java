@@ -223,7 +223,23 @@ final class ContextUniversalInputResiduals {
     static Residual resolveSignedUnit(Residual unit,Residual horn,int pivot,Runnable work) {
         return resolve(unit,horn,pivot,true,true,work);
     }
+    /** Ordered original horn occurrences surviving a single actual signed resolution. */
+    static final class SignedResolution {
+        final Residual clause;final List<List<Integer>> occurrences;
+        private SignedResolution(Residual clause,List<List<Integer>> occurrences){this.clause=clause;List<List<Integer>> copy=new ArrayList<>();for(List<Integer> group:occurrences)copy.add(Collections.unmodifiableList(new ArrayList<>(group)));this.occurrences=Collections.unmodifiableList(copy);}
+    }
+    static SignedResolution resolveSignedUnitOccurrences(Residual unit,Residual horn,int pivot,Runnable work) {
+        List<List<Integer>> occurrences=new ArrayList<>();Residual clause=resolve(unit,horn,pivot,true,true,work,occurrences);return new SignedResolution(clause,occurrences);
+    }
+    /** Exact ordered normalized literals; alpha/permutation equality cannot index occurrences. */
+    static boolean sameOrdered(Residual a,Residual b,Runnable work) {
+        work.run();if(a==null||b==null)return a==b;if(a.literals.size()!=b.literals.size())return false;
+        for(int i=0;i<a.literals.size();++i){work.run();if(!exact(a.literals.get(i),b.literals.get(i),work))return false;}return true;
+    }
     private static Residual resolve(Residual unit,Residual horn,int pivot,boolean allowEmpty,boolean signedUnit,Runnable work) {
+        return resolve(unit,horn,pivot,allowEmpty,signedUnit,work,null);
+    }
+    private static Residual resolve(Residual unit,Residual horn,int pivot,boolean allowEmpty,boolean signedUnit,Runnable work,List<List<Integer>> occurrences) {
         work.run();if(unit.literals.size()!=1||!signedUnit&&!unit.literals.get(0).positive||pivot<0||pivot>=horn.literals.size()||unit.literals.get(0).positive==horn.literals.get(pivot).positive)
             throw new IllegalArgumentException("Typed positive unit/negative body pivot required");
         int[] next={0};Residual left=apart(unit,next,work),right=apart(horn,next,work);
@@ -241,6 +257,10 @@ final class ContextUniversalInputResiduals {
             work.run();Literal literal=right.literals.get(i);List<Term> arguments=new ArrayList<>();
             for(Term term:literal.arguments){work.run();arguments.add(dereference(term,substitution,work));}
             literals.add(new Literal(literal.predicate,literal.positive,arguments));
+        }
+        if(occurrences!=null) {
+            List<Literal> unique=new ArrayList<>();
+            for(int i=0;i<literals.size();++i){work.run();int found=-1;for(int j=0;j<unique.size();++j){work.run();if(exact(unique.get(j),literals.get(i),work)){found=j;break;}}if(found<0){found=unique.size();unique.add(literals.get(i));occurrences.add(new ArrayList<>());}occurrences.get(found).add(i<pivot?i:i+1);}
         }
         if(literals.isEmpty()){if(allowEmpty)return null;throw new IllegalStateException("Unexpected empty positive typed resolvent");}
         return apart(new Residual(literals,work),new int[]{0},work);

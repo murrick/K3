@@ -633,6 +633,7 @@ def main():
         names.append(('org.kanger.ContextUniversalCompoundExchangeRunner', 'CONTEXT_UNIVERSAL_COMPOUND_EXCHANGE_PASS'))
         names.append(('org.kanger.ContextUniversalCompoundConsumerRunner', 'CONTEXT_UNIVERSAL_COMPOUND_CONSUMER_PASS'))
         names.append(('org.kanger.ContextUniversalCompoundCompletionRunner', 'CONTEXT_UNIVERSAL_COMPOUND_COMPLETION_PASS'))
+        names.append(('org.kanger.ContextUniversalCompoundOccurrencesRunner', 'CONTEXT_UNIVERSAL_COMPOUND_OCCURRENCES_PASS'))
     drivers = [root / 'kanger-qualification/src' / (name.replace('.', '/') + '.java') for name, _ in names]
     if args.ordinary_integration_candidate:
         original = root / 'kanger-data-dumb2/src/org/kanger/storage/dumb2/DB.java'
