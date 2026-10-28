@@ -41,7 +41,8 @@ final class ContextUniversalSignedUnitExchange {
     }
     private static boolean eligible(Proof proof){return proof.clause!=null&&proof.clause.literals.size()==1&&!proof.clause.variables.isEmpty()&&proof.support.sources.stream().anyMatch(s->s.localX);}
     private static void require(boolean valid,String reason){if(!valid)throw new IllegalStateException(reason);}
-    private static void frame(Snapshot x,Packet common,List<Cut> expected,Map<Cut,Result> checks,int maximumWork,Runnable work) {
+    /** Shared actual signed donor-frame validation; collection scope is checked separately. */
+    static void frame(Snapshot x,Packet common,List<Cut> expected,Map<Cut,Result> checks,int maximumWork,Runnable work) {
         require(x!=null&&common!=null&&expected!=null&&checks!=null,"Actual symbolic exchange frame required");
         Set<Cut> cuts=new LinkedHashSet<>(expected);require(cuts.size()==expected.size()&&cuts.contains(Cut.of(x))&&cuts.equals(checks.keySet()),"Exact supplied symbolic cuts including self-X required");
         ContextWitnessResultTransport.family(common,expected,maximumWork);
