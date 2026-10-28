@@ -24,7 +24,7 @@ public final class ContextUniversalGroupedChainAuditRunner {
             if(privateParameter){PrivatePool p=ContextWitnessResultTransport.privatePool(input,x,a,WORK);pools=Collections.singletonMap(p.cut,p);}else pools=Collections.emptyMap();
             compounds=ContextUniversalGroupedRoundsRunner.exchange(x,foreign,input,pools);units=ContextUniversalGroupedRoundsRunner.units(compounds);trace=ContextUniversalGroupedRounds.run(x,foreign,input,pools,units,compounds,limits,local,8,WORK);require(trace.status==Status.STABLE_GROUPED_POOLS,trace.phase+": "+trace.reason);
         }
-        Inspection audit(Result r,int work){return ContextUniversalGroupedChainAudit.inspect(x,foreign,input,pools,units,compounds,limits,local,8,r,work);}
+        Inspection audit(Result r,int work){if(Boolean.getBoolean("kanger.qualification.sessionAudit"))return ContextUniversalGroupedChainAudit.inspectWithValidationReuse(x,foreign,input,pools,units,compounds,limits,local,8,r,work,4096).inspection;return ContextUniversalGroupedChainAudit.inspect(x,foreign,input,pools,units,compounds,limits,local,8,r,work);}
     }
     static Receipt yes(Inspection i){require(i.audited&&i.output!=null,i.phase+": "+i.reason);return i.output;}
     static void no(Inspection i,String why){require(!i.audited&&i.output==null,why+": "+i.phase+" "+i.reason);}

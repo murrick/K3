@@ -32,7 +32,20 @@ final class ContextUniversalGroupedChainAudit {
     private static boolean declarations(List<ContextProductionInputs.Declaration> a,List<ContextProductionInputs.Declaration> b,Runnable work){if(a.size()!=b.size())return false;for(int i=0;i<a.size();++i){work.run();ContextProductionInputs.Declaration p=a.get(i),q=b.get(i);if(p==null||q==null||!p.source.equals(q.source)||!p.statement.equals(q.statement))return false;}return true;}
     static Inspection inspect(Snapshot x,List<Snapshot> foreign,Packet input,Map<Cut,PrivatePool> pools,ContextUniversalSignedUnitExchange.Exchange units,ContextUniversalCompoundExchange.Exchange compounds,ContextUniversalFrozenBranch.Limits limits,ContextUniversalGroupedLocalRounds.Limits local,int maximumRounds,Result trace,int maximumWork){
         if(maximumWork<1)throw new IllegalArgumentException("Bounded chain verification required");
-        String phase="topology";Runnable work=ContextGroundProductionRounds.budget(maximumWork);
+        return inspect(x,foreign,input,pools,units,compounds,limits,local,maximumRounds,trace,maximumWork,ContextGroundProductionRounds.budget(maximumWork));
+    }
+    static final class SessionInspection {
+        final Inspection inspection;final ContextUniversalValidationSession.Metrics metrics;
+        private SessionInspection(Inspection inspection,ContextUniversalValidationSession.Metrics metrics){this.inspection=inspection;this.metrics=metrics;}
+    }
+    /** A NEW owned session per independent audit; never consumes the controller's memo. */
+    static SessionInspection inspectWithValidationReuse(Snapshot x,List<Snapshot> foreign,Packet input,Map<Cut,PrivatePool> pools,ContextUniversalSignedUnitExchange.Exchange units,ContextUniversalCompoundExchange.Exchange compounds,ContextUniversalFrozenBranch.Limits limits,ContextUniversalGroupedLocalRounds.Limits local,int maximumRounds,Result trace,int maximumWork,int capacity){
+        ContextUniversalValidationSession.Scope scope=ContextUniversalValidationSession.open(maximumWork,capacity);Inspection inspected;
+        try{inspected=inspect(x,foreign,input,pools,units,compounds,limits,local,maximumRounds,trace,maximumWork,scope.work);}finally{scope.close();}
+        return new SessionInspection(inspected,scope.metrics());
+    }
+    private static Inspection inspect(Snapshot x,List<Snapshot> foreign,Packet input,Map<Cut,PrivatePool> pools,ContextUniversalSignedUnitExchange.Exchange units,ContextUniversalCompoundExchange.Exchange compounds,ContextUniversalFrozenBranch.Limits limits,ContextUniversalGroupedLocalRounds.Limits local,int maximumRounds,Result trace,int maximumWork,Runnable work){
+        String phase="topology";
         try {
             require(x!=null&&foreign!=null&&foreign.size()<=15&&input!=null&&pools!=null&&compounds!=null&&limits!=null&&local!=null&&maximumRounds>=1&&maximumRounds<=64,"Actual bounded initial chain frame required");
             foreign=new ArrayList<>(foreign);pools=new LinkedHashMap<>(pools);
@@ -69,4 +82,6 @@ final class ContextUniversalGroupedChainAudit {
         }catch(Exception failure){return new Inspection(false,phase,failure.toString(),null);}
     }
     static void check(Receipt receipt,int maximumWork){require(receipt!=null,"Actual chain receipt required");Inspection checked=inspect(receipt.x,receipt.foreign,receipt.input,receipt.pools,receipt.units,receipt.compounds,receipt.limits,receipt.local,receipt.maximumRounds,receipt.trace,maximumWork);require(checked.audited,checked.phase+": "+checked.reason);}
+    static ContextUniversalValidationSession.Metrics checkWithValidationReuse(Receipt receipt,int maximumWork,int capacity){require(receipt!=null,"Actual chain receipt required");SessionInspection checked=inspectWithValidationReuse(receipt.x,receipt.foreign,receipt.input,receipt.pools,receipt.units,receipt.compounds,receipt.limits,receipt.local,receipt.maximumRounds,receipt.trace,maximumWork,capacity);require(checked.inspection.audited,checked.inspection.phase+": "+checked.inspection.reason);return checked.metrics;}
+
 }

@@ -44,7 +44,22 @@ final class ContextUniversalGroupedRounds {
     /** Explicit continuation from an actual all-supplied-cut compound exchange; no default activation. */
     static Result run(Snapshot x,List<Snapshot> foreign,Packet initial,Map<Cut,PrivatePool> initialPools,ContextUniversalSignedUnitExchange.Exchange initialExchange,ContextUniversalCompoundExchange.Exchange initialCompounds,ContextUniversalFrozenBranch.Limits limits,ContextUniversalGroupedLocalRounds.Limits localLimits,int maximumRounds,int maximumWork) {
         if(maximumRounds<1||maximumRounds>64||maximumWork<1)throw new IllegalArgumentException("Bounded grouped rounds required");
-        String phase="preflight";int completed=0;Runnable work=ContextGroundProductionRounds.budget(maximumWork);
+        Runnable work=ContextGroundProductionRounds.budget(maximumWork);
+        return run(x,foreign,initial,initialPools,initialExchange,initialCompounds,limits,localLimits,maximumRounds,maximumWork,work,0);
+    }
+    static final class SessionRun {
+        final Result result;final ContextUniversalValidationSession.Metrics metrics;
+        private SessionRun(Result result,ContextUniversalValidationSession.Metrics metrics){this.result=result;this.metrics=metrics;}
+    }
+    /** Explicit whole-invocation session, with ONE cumulative owning budget across all rounds. */
+    static SessionRun runWithValidationReuse(Snapshot x,List<Snapshot> foreign,Packet initial,Map<Cut,PrivatePool> initialPools,ContextUniversalSignedUnitExchange.Exchange initialExchange,ContextUniversalCompoundExchange.Exchange initialCompounds,ContextUniversalFrozenBranch.Limits limits,ContextUniversalGroupedLocalRounds.Limits localLimits,int maximumRounds,int maximumWork,int capacity) {
+        if(maximumRounds<1||maximumRounds>64||maximumWork<1)throw new IllegalArgumentException("Bounded grouped rounds required");
+        ContextUniversalValidationSession.Scope scope=ContextUniversalValidationSession.open(maximumWork,capacity);Result result;
+        try{result=run(x,foreign,initial,initialPools,initialExchange,initialCompounds,limits,localLimits,maximumRounds,maximumWork,scope.work,capacity);}finally{scope.close();}
+        return new SessionRun(result,scope.metrics());
+    }
+    private static Result run(Snapshot x,List<Snapshot> foreign,Packet initial,Map<Cut,PrivatePool> initialPools,ContextUniversalSignedUnitExchange.Exchange initialExchange,ContextUniversalCompoundExchange.Exchange initialCompounds,ContextUniversalFrozenBranch.Limits limits,ContextUniversalGroupedLocalRounds.Limits localLimits,int maximumRounds,int maximumWork,Runnable work,int validationCapacity) {
+        String phase="preflight";int completed=0;
         try {
             require(x!=null&&foreign!=null&&foreign.size()<=15&&initial!=null&&initialPools!=null&&limits!=null&&localLimits!=null&&initialCompounds!=null,"Actual supplied signed native/common/private inputs required");
             Map<Cut,Snapshot> targets=new LinkedHashMap<>();ContextProductionFamilyAssembly.identity(x,true,work);Cut self=Cut.of(x);targets.put(self,null);
@@ -63,7 +78,7 @@ final class ContextUniversalGroupedRounds {
                     work.run();ContextUniversalNativeRows.Result rows=ContextUniversalNativeRows.inspect(x,target.getValue(),64,limits.work);require(rows.classified,rows.reason);require(rows.withinShape,"Unsupported whole original signed row plan");
                     ContextUniversalFrozenConstraints.Result base=ContextUniversalFrozenConstraints.closeSignedCompounds(rows,input,pools.get(target.getKey()),symbolic,compounds,limits.rounds,limits.proofDepth,limits.clauses,limits.alternatives,limits.work);
                     require(base.closed,"Round "+number+" signed cut: "+base.reason);
-                    ContextUniversalGroupedLocalRounds.Closure local=ContextUniversalGroupedLocalRounds.run(base,localLimits);require(local.stable,"Round "+number+" local cut: "+local.reason);
+                    ContextUniversalGroupedLocalRounds.Closure local=validationCapacity==0?ContextUniversalGroupedLocalRounds.run(base,localLimits):ContextUniversalGroupedLocalRounds.runWithValidationReuse(base,localLimits,validationCapacity);require(local.stable,"Round "+number+" local cut: "+local.reason);
                     certificates.put(target.getKey(),local.output);checks.put(target.getKey(),local.output.output);
                 }
                 // Complete and independently bind EVERY local certificate before ANY refutation/product.
