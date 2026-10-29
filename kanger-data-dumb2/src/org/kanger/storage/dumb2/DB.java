@@ -349,6 +349,22 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
                 new org.kanger.interfaces.IContextResults.Revision(written.after.getContextId(),written.after.getRevision()));
     }
 
+    /** Explicit one-assertion native/full-family writer. No historical verdict or default hook switch.
+     * Returns the ordinary native acceptance boolean; typed qualification failures propagate. */
+    public synchronized boolean writeNativeProductionCandidate(Mind source,String statement,org.kanger.ContextNativeCandidateInspection.Limits limits,int familyWork,int familyAudit,int models,boolean logging) throws Exception {
+        requireInitialized();requireWritable();
+        if(statement==null||!statement.startsWith("!")||limits==null||familyWork<1||familyAudit<1||models<1)throw new IllegalArgumentException("One assertion and explicit native/full-family bounds required");
+        org.kanger.compiler.Token token=org.kanger.enums.Tools.extractLine(statement,null);
+        if(token==null||org.kanger.enums.Tools.extractLine(statement,token)!=null)throw new IllegalArgumentException("Exactly one assertion required");
+        ContextPendingNativeWrite attempt=beginNativeProductionWrite(source,limits,familyWork,familyAudit,models);
+        try{return Boolean.TRUE.equals(source.query(statement,null,logging));}finally{endNativeWrite(attempt);}
+    }
+    synchronized ContextPendingNativeWrite beginNativeProductionWrite(Mind source,org.kanger.ContextNativeCandidateInspection.Limits limits,int familyWork,int familyAudit,int models) throws Exception {
+        if(pendingNativeWrite!=null)throw new IllegalStateException("Nested native write attempt");
+        if(limits==null||familyWork<1||familyAudit<1||models<1)throw new IllegalArgumentException("Explicit native/full-family bounds required");
+        return pendingNativeWrite=new ContextPendingBranchWrite(this,source,limits,familyWork,familyAudit,models);
+    }
+
     private ContextPendingNativeWrite pendingNativeWrite;
     synchronized ContextPendingWitnessWrite beginWitnessWrite(Mind source,int rows,int rounds,int depth,int work,int events) throws Exception {
         if(pendingNativeWrite!=null) throw new IllegalStateException("Nested native write attempt");
@@ -472,8 +488,19 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
      * No historical result input; default validateCommit and existing writer selection stay unchanged. */
     synchronized void validatePendingNativeProductionCommit(Mind proposed,org.kanger.ContextNativeCandidateInspection.Limits limits,int familyWork,int familyAudit,int models) throws Exception {
         if(limits==null||familyWork<1||familyAudit<1||models<1)throw new IllegalArgumentException("Explicit bounded native/full-family gates required");
-        String phase="pending-capture";ContextPendingProductionSnapshotSession.Decision decision;
+        String phase="pending-capture";
         try(ContextPendingProductionSnapshotSession lease=ContextPendingProductionSnapshotSession.open(this,proposed,limits.rows)) {
+            requireNativePendingFamily(lease,limits,familyWork,familyAudit,models);
+
+        } catch(IllegalStateException unsupported) {
+            org.kanger.exception.ContextNativeCommitException failure=org.kanger.exception.ContextNativeCommitException.incomplete(phase,unsupported.getMessage());failure.initCause(unsupported);throw failure;
+        }
+    }
+
+    /** Shared same-lease decision for explicit writer and pending diagnostic adapter. */
+    static void requireNativePendingFamily(ContextPendingProductionSnapshotSession lease,org.kanger.ContextNativeCandidateInspection.Limits limits,int familyWork,int familyAudit,int models) throws Exception {
+        String phase="native-qualification";ContextPendingProductionSnapshotSession.Decision decision;
+        try {
             phase="native-qualification";org.kanger.ContextNativePendingGuard.Result nativeResult=lease.qualifyNative(limits);lease.requireCurrent();
             if(nativeResult.status==org.kanger.ContextNativePendingGuard.Status.INCOMPLETE)throw org.kanger.exception.ContextNativeCommitException.incomplete(nativeResult.phase,nativeResult.reason);
             if(nativeResult.status==org.kanger.ContextNativePendingGuard.Status.REFUTED)throw org.kanger.exception.ContextNativeCommitException.conflict(nativeResult.evidence);
