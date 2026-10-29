@@ -68,7 +68,20 @@ final class ContextUniversalSignedUnitExchange {
     }
     static Collection collect(Snapshot x,Packet common,List<Cut> expected,Map<Cut,Result> checks,int maximumUnits,int maximumAlternatives,int maximumDepth,int maximumWork) {
         if(maximumUnits<1||maximumUnits>512||maximumAlternatives<1||maximumAlternatives>256||maximumDepth<0||maximumDepth>64||maximumWork<1)throw new IllegalArgumentException("Bounded symbolic unit exchange required");
-        Runnable work=ContextGroundProductionRounds.budget(maximumWork);
+        return collect(x,common,expected,checks,maximumUnits,maximumAlternatives,maximumDepth,maximumWork,ContextGroundProductionRounds.budget(maximumWork));
+    }
+    static final class SessionCollection {
+        final Collection collection;final ContextUniversalValidationSession.Metrics metrics;
+        private SessionCollection(Collection collection,ContextUniversalValidationSession.Metrics metrics){this.collection=collection;this.metrics=metrics;}
+    }
+    /** One original collection budget; only completed immutable donor authentication is reused. */
+    static SessionCollection collectWithValidationReuse(Snapshot x,Packet common,List<Cut> expected,Map<Cut,Result> checks,int maximumUnits,int maximumAlternatives,int maximumDepth,int maximumWork,int capacity) {
+        if(maximumUnits<1||maximumUnits>512||maximumAlternatives<1||maximumAlternatives>256||maximumDepth<0||maximumDepth>64||maximumWork<1)throw new IllegalArgumentException("Bounded symbolic unit exchange required");
+        ContextUniversalValidationSession.Scope scope=ContextUniversalValidationSession.open(maximumWork,capacity);Collection collection;
+        try{collection=collect(x,common,expected,checks,maximumUnits,maximumAlternatives,maximumDepth,maximumWork,scope.work);}finally{scope.close();}
+        return new SessionCollection(collection,scope.metrics());
+    }
+    private static Collection collect(Snapshot x,Packet common,List<Cut> expected,Map<Cut,Result> checks,int maximumUnits,int maximumAlternatives,int maximumDepth,int maximumWork,Runnable work) {
         try {
             frame(x,common,expected,checks,maximumWork,work);List<Unit> units=select(checks,maximumUnits,maximumAlternatives,work);
             // Apply the fact bound AFTER combining exact-Source minima across all supplied donors.
