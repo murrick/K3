@@ -697,6 +697,8 @@ def main():
         names.append(('org.kanger.ContextUniversalNativeBranchPositiveRunner', 'CONTEXT_UNIVERSAL_NATIVE_BRANCH_POSITIVE_PASS'))
         names.append(('org.kanger.ContextUniversalNativeCandidateRefusalRunner', 'CONTEXT_UNIVERSAL_NATIVE_CANDIDATE_REFUSAL_PASS'))
         names.append(('org.kanger.ContextUniversalNativeCandidatePositiveRunner', 'CONTEXT_UNIVERSAL_NATIVE_CANDIDATE_POSITIVE_PASS'))
+        names.append(('org.kanger.storage.dumb2.ContextNativeCandidateLeaseFreshnessRunner', 'CONTEXT_NATIVE_CANDIDATE_LEASE_FRESHNESS_PASS'))
+        names.append(('org.kanger.storage.dumb2.ContextNativeCandidateLeasePositiveRunner', 'CONTEXT_NATIVE_CANDIDATE_LEASE_POSITIVE_PASS'))
     drivers = [root / 'kanger-qualification/src' / (name.replace('.', '/') + '.java') for name, _ in names]
     if args.ordinary_integration_candidate:
         original = root / 'kanger-data-dumb2/src/org/kanger/storage/dumb2/DB.java'

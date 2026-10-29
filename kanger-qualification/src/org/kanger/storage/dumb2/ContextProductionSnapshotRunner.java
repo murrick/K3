@@ -71,8 +71,10 @@ public final class ContextProductionSnapshotRunner {
                     require(configured.revision == target.getRevision() && configured.context.equals(target.getContextId()),"initialized layer retains the exact old physical pin");
                     require(configured.primary.stream().anyMatch(row -> row.origin.contains("private(4)")) && configured.initialization.size() == 1,"full effective primary inventory includes private initialization");
                     require(!configured.fingerprint.equals(initial.foreign.get(0).fingerprint),"revision identity alone cannot identify an effective view");
-                    require(lease.bind(4000000,10000).foreign.get(0).primary.stream().anyMatch(e -> e.statement.contains("private(4)") && e.kind == ContextProductionNativeBinding.Kind.CLAUSES),"initialized scalar fact is bound from its actual native layer rather than silently omitted");
-                    require(lease.qualify(12,16,4000000,100000).status == ContextProductionFamilyAssembly.Status.INCOMPLETE,"private foreign scalar knowledge remains an explicit coverage refusal in the assembled family");
+                    ContextProductionSnapshotSession.Binding privateBinding=lease.bind(4000000,10000);
+                    require(privateBinding.foreign.get(0).primary.stream().anyMatch(e -> e.statement.contains("private(4)") && e.kind == ContextProductionNativeBinding.Kind.CLAUSES),"initialized scalar fact is bound from its actual native layer rather than silently omitted");
+                    org.kanger.ContextProductionCapture.Source privateSource=privateBinding.foreign.get(0).primary.stream().filter(e->e.statement.contains("private(4)")).findFirst().get().source;
+                    require(ContextProductionSnapshotPrivateScalarCheck.keptLocal(lease.qualify(12,16,4000000,100000),privateSource),"supported whole private scalar reaches full closure without raw common export");
                 }
                 db.applyConnectionCommand(x,"A","!private(4);");
                 try (ContextProductionSnapshotSession lease = ContextProductionSnapshotSession.open(db,x,1000)) {
@@ -119,7 +121,9 @@ public final class ContextProductionSnapshotRunner {
                 } finally { absent.close(); }
                 try (ContextProductionSnapshotSession changed = ContextProductionSnapshotSession.open(emptyDb,seedX,1000)) {
                     require(!changed.inventory().foreign.get(0).primary.isEmpty(),"new effective view exposes the added primary fact");
-                    require(changed.qualify(12,16,4000000,100000).status == ContextProductionFamilyAssembly.Status.INCOMPLETE,"formerly empty target cannot retain vacuous coverage after initialization");
+                    ContextProductionSnapshotSession.Binding bound=changed.bind(4000000,10000);
+                    org.kanger.ContextProductionCapture.Source initializedSource=bound.foreign.get(0).primary.stream().filter(e->e.statement.contains("private(4)")).findFirst().get().source;
+                    require(ContextProductionSnapshotPrivateScalarCheck.keptLocal(changed.qualify(12,16,4000000,100000),initializedSource),"formerly empty cut gets actual private-seed closure, never vacuous empty coverage or raw export");
                 }
             } finally { emptyUser.setCurrentMind(seedX.closeStorage()); }
             System.out.println("CONTEXT_PRODUCTION_SNAPSHOT_PASS checks="+checks); System.exit(0);

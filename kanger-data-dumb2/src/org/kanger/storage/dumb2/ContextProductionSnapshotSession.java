@@ -156,6 +156,17 @@ final class ContextProductionSnapshotSession implements AutoCloseable {
             } finally { requireCurrent(); }
         }
     }
+    /** Fresh read-only native diagnostic over this exact initialized owning lease; no receipt input. */
+    org.kanger.ContextNativeCandidateInspection.Result inspectNativeCandidate(String statement,org.kanger.ContextNativeCandidateInspection.Limits limits) throws Exception {
+        synchronized(provider) {
+            requireCurrent();
+            if(limits==null||limits.rows!=maximumRows)throw new IllegalArgumentException("Native diagnostic rows must match owning lease");
+            try {
+                Binding bound=bind(limits.preparation,limits.events);
+                return org.kanger.ContextNativeCandidateInspection.inspect(bound.x,bound.foreign,statement,limits);
+            } finally {requireCurrent();}
+        }
+    }
     enum WriteStatus { PUBLISHED, COLLISION, INCOMPLETE, NATIVE_REJECTED }
     static final class WriteResult {
         final WriteStatus status;

@@ -452,6 +452,14 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         }
     }
 
+    /** Fresh owner/currentness-guarded native diagnostic, never a writer/commit decision. */
+    public synchronized org.kanger.ContextNativeCandidateInspection.Result inspectNativeProductionCandidate(Mind source,String statement,org.kanger.ContextNativeCandidateInspection.Limits limits) throws Exception {
+        if(limits==null)throw new IllegalArgumentException("Explicit native diagnostic limits required");
+        try(ContextProductionSnapshotSession lease=ContextProductionSnapshotSession.open(this,source,limits.rows)) {
+            return lease.inspectNativeCandidate(statement,limits);
+        }
+    }
+
     private boolean validatingCommit;
 
     @Override
