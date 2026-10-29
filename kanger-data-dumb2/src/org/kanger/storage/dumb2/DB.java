@@ -468,6 +468,30 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         }
     }
 
+    /** Explicit conservative opt-in guard: native refusal FIRST, existing complete family gate SECOND.
+     * No historical result input; default validateCommit and existing writer selection stay unchanged. */
+    synchronized void validatePendingNativeProductionCommit(Mind proposed,org.kanger.ContextNativeCandidateInspection.Limits limits,int familyWork,int familyAudit,int models) throws Exception {
+        if(limits==null||familyWork<1||familyAudit<1||models<1)throw new IllegalArgumentException("Explicit bounded native/full-family gates required");
+        String phase="pending-capture";ContextPendingProductionSnapshotSession.Decision decision;
+        try(ContextPendingProductionSnapshotSession lease=ContextPendingProductionSnapshotSession.open(this,proposed,limits.rows)) {
+            phase="native-qualification";org.kanger.ContextNativePendingGuard.Result nativeResult=lease.qualifyNative(limits);lease.requireCurrent();
+            if(nativeResult.status==org.kanger.ContextNativePendingGuard.Status.INCOMPLETE)throw org.kanger.exception.ContextNativeCommitException.incomplete(nativeResult.phase,nativeResult.reason);
+            if(nativeResult.status==org.kanger.ContextNativePendingGuard.Status.REFUTED)throw org.kanger.exception.ContextNativeCommitException.conflict(nativeResult.evidence);
+            if(nativeResult.status!=org.kanger.ContextNativePendingGuard.Status.SCOPED_READY)throw org.kanger.exception.ContextNativeCommitException.incomplete(phase,"No complete native scoped verdict");
+            phase="full-family-qualification";java.util.Map<String,Integer> d=org.kanger.ContextUniversalCandidateRequest.DEFAULTS;
+            decision=lease.inspectAutomatic(d.get("rounds"),d.get("local"),limits.depth,d.get("instances"),models,limits.preparation,limits.events,familyWork,familyAudit,100000);lease.requireCurrent();
+        } catch(IllegalStateException unsupported) {
+            org.kanger.exception.ContextNativeCommitException failure=org.kanger.exception.ContextNativeCommitException.incomplete(phase,unsupported.getMessage());failure.initCause(unsupported);throw failure;
+        }
+        // Existing full-family verdict contracts remain authoritative for the positive path.
+        switch(decision.engine) {
+            case UNIVERSAL: requirePendingUniversalResult(decision.universal);return;
+            case GROUND: if(decision.ground.status!=org.kanger.ContextGroundClauseFamily.Status.GROUND_FIXED_POINT)throw new org.kanger.exception.ContextGroundProductionCommitException("Pending ground family: "+decision.ground.reason,decision.ground);return;
+            case WITNESS: if(decision.witness.status!=org.kanger.ContextProductionFamilyAssembly.Status.FIXED_POINT)throw new org.kanger.exception.ContextWitnessProductionCommitException("Pending witness family: "+decision.witness.reason,decision.witness);return;
+            default: throw new IllegalStateException("No complete full-family engine decision");
+        }
+    }
+
     private boolean validatingCommit;
 
     @Override

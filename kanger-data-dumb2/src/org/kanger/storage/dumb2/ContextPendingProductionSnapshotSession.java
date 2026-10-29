@@ -135,6 +135,19 @@ final class ContextPendingProductionSnapshotSession implements AutoCloseable {
             } finally {requireCurrent();if(cuts!=null)requireNativeCuts(cuts);}
         }
     }
+    /** Sealed fresh native refusal gate; SCOPED_READY still requires full-family eligibility. */
+    ContextNativePendingGuard.Result qualifyNative(ContextNativeCandidateInspection.Limits limits) throws Exception {
+        synchronized(provider) {
+            requireCurrent();if(limits==null||limits.rows!=rows)throw new IllegalArgumentException("Native pending row bound must match owning lease");
+            List<Snapshot> cuts=null;
+            try {
+                ContextProductionNativeBinding.Result x=ContextProductionNativeBinding.bind(child,childInventory,limits.preparation,limits.events);
+                if(!x.bound)throw new IllegalStateException("Pending native binding incomplete: "+x.reason);
+                cuts=bindForeign(limits.preparation,limits.events);requireNativeCuts(cuts);
+                return ContextNativePendingGuard.inspect(x.snapshot,cuts,limits);
+            } finally {requireCurrent();if(cuts!=null)requireNativeCuts(cuts);}
+        }
+    }
     ContextProductionFamilyAssembly.Evaluation inspectWitness(int rounds,int depth,int work,int events) throws Exception {
         synchronized(provider) {
             requireCurrent();
