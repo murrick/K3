@@ -677,6 +677,13 @@ def main():
         names.append(('org.kanger.ContextUniversalSourceAlternativesFirstCRunner', 'CONTEXT_UNIVERSAL_SOURCE_ALTERNATIVES_FIRST_C_PASS'))
         names.append(('org.kanger.ContextUniversalSourceAlternativesFirstDRunner', 'CONTEXT_UNIVERSAL_SOURCE_ALTERNATIVES_FIRST_D_PASS'))
         names.append(('org.kanger.ContextUniversalSourceAlternativesGradeRunner', 'CONTEXT_UNIVERSAL_SOURCE_ALTERNATIVES_GRADE_PASS'))
+        names.append(('org.kanger.ContextUniversalSignedAlternativesStableRunner', 'CONTEXT_UNIVERSAL_SIGNED_ALTERNATIVES_STABLE_PASS'))
+        names.append(('org.kanger.ContextUniversalSignedAlternativesTrustedRunner', 'CONTEXT_UNIVERSAL_SIGNED_ALTERNATIVES_TRUSTED_PASS'))
+        names.append(('org.kanger.ContextUniversalSignedAlternativesTrustedRefutationRunner', 'CONTEXT_UNIVERSAL_SIGNED_ALTERNATIVES_TRUSTED_REFUTATION_PASS'))
+        names.append(('org.kanger.ContextUniversalSignedAlternativesDelayedARunner', 'CONTEXT_UNIVERSAL_SIGNED_ALTERNATIVES_DELAYED_A_PASS'))
+        names.append(('org.kanger.ContextUniversalSignedAlternativesDelayedBRunner', 'CONTEXT_UNIVERSAL_SIGNED_ALTERNATIVES_DELAYED_B_PASS'))
+        names.append(('org.kanger.ContextUniversalSignedAlternativesDelayedDRunner', 'CONTEXT_UNIVERSAL_SIGNED_ALTERNATIVES_DELAYED_D_PASS'))
+        names.append(('org.kanger.ContextUniversalSignedAlternativesDelayedERunner', 'CONTEXT_UNIVERSAL_SIGNED_ALTERNATIVES_DELAYED_E_PASS'))
     drivers = [root / 'kanger-qualification/src' / (name.replace('.', '/') + '.java') for name, _ in names]
     if args.ordinary_integration_candidate:
         original = root / 'kanger-data-dumb2/src/org/kanger/storage/dumb2/DB.java'
