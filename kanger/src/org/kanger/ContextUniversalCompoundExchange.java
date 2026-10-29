@@ -74,7 +74,21 @@ final class ContextUniversalCompoundExchange {
         for(Map.Entry<Cut,Result> e:prior.checks.entrySet()){work.run();ConstraintTransfer t=barrier.branches.get(e.getKey());require(t!=null&&t.proof==e.getValue()&&t.before==prior.common,"Different actual compound/fixed branch ledger");}
     }
     static Exchange rebase(Exchange prior,ConstraintBarrier barrier,int maximumWork){
-        if(maximumWork<1)throw new IllegalArgumentException("Bounded compound rebase required");Runnable work=ContextGroundProductionRounds.budget(maximumWork);require(prior!=null,"Actual prior compound exchange required");check(prior,prior.x,prior.common,64,work);barrier(prior,barrier,work);return new Exchange(prior,barrier);
+        if(maximumWork<1)throw new IllegalArgumentException("Bounded compound rebase required");return rebase(prior,barrier,ContextGroundProductionRounds.budget(maximumWork));
+    }
+    static final class SessionRebase {
+        final Exchange exchange;final ContextUniversalValidationSession.Metrics metrics;
+        private SessionRebase(Exchange exchange,ContextUniversalValidationSession.Metrics metrics){this.exchange=exchange;this.metrics=metrics;}
+    }
+    /** One original rebase budget, complete prior inventory replay, and unchanged throwing failures. */
+    static SessionRebase rebaseWithValidationReuse(Exchange prior,ConstraintBarrier barrier,int maximumWork,int capacity){
+        if(maximumWork<1)throw new IllegalArgumentException("Bounded compound rebase required");
+        ContextUniversalValidationSession.Scope scope=ContextUniversalValidationSession.open(maximumWork,capacity);Exchange exchange;
+        try{exchange=rebase(prior,barrier,scope.work);}finally{scope.close();}
+        return new SessionRebase(exchange,scope.metrics());
+    }
+    private static Exchange rebase(Exchange prior,ConstraintBarrier barrier,Runnable work){
+        require(prior!=null,"Actual prior compound exchange required");check(prior,prior.x,prior.common,64,work);barrier(prior,barrier,work);return new Exchange(prior,barrier);
     }
     static void check(Exchange exchange,Snapshot x,Packet common,int maximumDepth,Runnable work){
         require(exchange!=null&&exchange.x==x&&exchange.common==common,"Different exact compound exchange input");limits(exchange.maximumClauses,exchange.maximumAlternatives,exchange.maximumDepth);require(maximumDepth>=0&&maximumDepth<=64,"Bounded compound verification depth required");
