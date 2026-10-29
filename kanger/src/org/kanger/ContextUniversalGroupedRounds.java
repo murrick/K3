@@ -58,6 +58,23 @@ final class ContextUniversalGroupedRounds {
         try{result=run(x,foreign,initial,initialPools,initialExchange,initialCompounds,limits,localLimits,maximumRounds,maximumWork,scope.work,capacity);}finally{scope.close();}
         return new SessionRun(result,scope.metrics());
     }
+    /** Explicit initial-only handoff. Fresh independent initial audit has its own budget/session;
+     * the controller retains ONE original cumulative owning budget, reported by SessionRun.metrics. */
+    static SessionRun runInitialWithValidationReuse(ContextUniversalInitialEntryAudit.Receipt receipt,ContextUniversalFrozenBranch.Limits limits,ContextUniversalGroupedLocalRounds.Limits localLimits,int maximumRounds,int maximumWork,int capacity) {
+        if(maximumRounds<1||maximumRounds>64||maximumWork<1)throw new IllegalArgumentException("Bounded initial grouped rounds required");
+        ContextUniversalValidationSession.Scope scope=ContextUniversalValidationSession.open(maximumWork,capacity);Result result;
+        try {
+            try {
+                require(receipt!=null&&receipt.limits==limits,"Actual initial-entry receipt and exact expected policy required");
+                ContextUniversalInitialEntryAudit.checkWithValidationReuse(receipt,maximumWork,capacity);
+                ContextUniversalInitialEntry.Entry e=receipt.entry;
+                result=run(e.x,e.foreign,e.common,e.pools,e.units,e.compounds,limits,localLimits,maximumRounds,maximumWork,scope.work,capacity);
+            } catch(Exception failure) {
+                result=new Result(Status.INCOMPLETE,"initial-entry",failure.toString(),0,receipt==null||receipt.entry==null?null:receipt.entry.common,null,Collections.emptyList(),Collections.emptyMap());
+            }
+        } finally {scope.close();}
+        return new SessionRun(result,scope.metrics());
+    }
     private static Result run(Snapshot x,List<Snapshot> foreign,Packet initial,Map<Cut,PrivatePool> initialPools,ContextUniversalSignedUnitExchange.Exchange initialExchange,ContextUniversalCompoundExchange.Exchange initialCompounds,ContextUniversalFrozenBranch.Limits limits,ContextUniversalGroupedLocalRounds.Limits localLimits,int maximumRounds,int maximumWork,Runnable work,int validationCapacity) {
         String phase="preflight";int completed=0;
         try {

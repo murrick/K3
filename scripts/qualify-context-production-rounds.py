@@ -689,6 +689,8 @@ def main():
         names.append(('org.kanger.ContextUniversalInitialCarrierOriginRunner', 'CONTEXT_UNIVERSAL_INITIAL_CARRIER_ORIGIN_PASS'))
         names.append(('org.kanger.ContextUniversalInitialEntryRefusalRunner', 'CONTEXT_UNIVERSAL_INITIAL_ENTRY_REFUSAL_PASS'))
         names.append(('org.kanger.ContextUniversalInitialEntryPositiveRunner', 'CONTEXT_UNIVERSAL_INITIAL_ENTRY_POSITIVE_PASS'))
+        names.append(('org.kanger.ContextUniversalInitialEntryAuditRefusalRunner', 'CONTEXT_UNIVERSAL_INITIAL_ENTRY_AUDIT_REFUSAL_PASS'))
+        names.append(('org.kanger.ContextUniversalInitialEntryAuditPositiveRunner', 'CONTEXT_UNIVERSAL_INITIAL_ENTRY_AUDIT_POSITIVE_PASS'))
     drivers = [root / 'kanger-qualification/src' / (name.replace('.', '/') + '.java') for name, _ in names]
     if args.ordinary_integration_candidate:
         original = root / 'kanger-data-dumb2/src/org/kanger/storage/dumb2/DB.java'
