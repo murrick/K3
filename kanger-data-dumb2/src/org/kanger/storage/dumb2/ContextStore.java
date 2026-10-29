@@ -570,6 +570,18 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
      * publication-layer concern and must gate callers before this method becomes
      * a user-visible operation.</p>
      */
+    private static boolean sameConnectionConfiguration(ConnectionVector current,ConnectionVector desired) {
+        if(current.size()!=desired.size())return false;
+        for(ContextConnection a:current.getConnections()) {
+            ContextConnection b=desired.find(a.getTarget().getContextId());
+            if(b==null || !a.getTargetLocation().equals(b.getTargetLocation())
+                    || !a.getTarget().equals(b.getTarget())
+                    || !java.util.Objects.equals(a.getTrustGroup(),b.getTrustGroup())
+                    || !a.getInitialization().equals(b.getInitialization()))return false;
+        }
+        return true;
+    }
+
     synchronized long publishTopology(ConnectionVector desiredConnections, String description) throws Exception {
         return publishGeneration(null, desiredConnections, description, false);
     }
@@ -610,7 +622,9 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
 
         ConnectionVector currentConnections =
                 publishedConnections();
-        if (!forceRevision && preparedGeneration == null && java.util.Arrays.equals(
+        // The legacy manifest digest covers target pins only. Session initialization and
+        // TRUST membership are persisted configuration too, even when every pin is unchanged.
+        if (!forceRevision && preparedGeneration == null && sameConnectionConfiguration(currentConnections,desiredConnections) && java.util.Arrays.equals(
                 RevisionManifestStore.dependencyDigest(
                         currentConnections),
                 RevisionManifestStore.dependencyDigest(
