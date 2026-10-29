@@ -258,6 +258,19 @@ final class ContextUniversalFrozenConstraints {
         if(compounds==null)throw new IllegalArgumentException("Actual compound exchange required");
         return close(input,common,pool,maximumRounds,maximumDepth,maximumClauses,maximumAlternatives,maximumWork,true,exchange,compounds,true,true,true,true,true);
     }
+    static final class SessionClosure {
+        final Result result;final ContextUniversalValidationSession.Metrics metrics;
+        private SessionClosure(Result result,ContextUniversalValidationSession.Metrics metrics){this.result=result;this.metrics=metrics;}
+    }
+    /** One original kernel budget covers authentication, ledger construction and ALL semantic passes. */
+    static SessionClosure closeSignedCompoundsWithValidationReuse(ContextUniversalNativeRows.Result input,Packet common,PrivatePool pool,ContextUniversalSignedUnitExchange.Exchange exchange,ContextUniversalCompoundExchange.Exchange compounds,int maximumRounds,int maximumDepth,int maximumClauses,int maximumAlternatives,int maximumWork,int capacity) {
+        if(compounds==null)throw new IllegalArgumentException("Actual compound exchange required");
+        if(maximumWork<1)throw new IllegalArgumentException("Bounded ground transport required");
+        if(maximumRounds<1||maximumRounds>64||maximumDepth<0||maximumDepth>64||maximumClauses<1||maximumClauses>512||maximumAlternatives<1||maximumAlternatives>256)throw new IllegalArgumentException("Bounded ordinary constraint closure required");
+        ContextUniversalValidationSession.Scope scope=ContextUniversalValidationSession.open(maximumWork,capacity);Result result;
+        try{result=close(input,common,pool,maximumRounds,maximumDepth,maximumClauses,maximumAlternatives,maximumWork,true,exchange,compounds,null,Collections.emptyList(),true,true,true,true,true,scope.work);}finally{scope.close();}
+        return new SessionClosure(result,scope.metrics());
+    }
     private static void groupedFrame(Result base,List<ContextUniversalGroupedCompletion.Receipt> seeds,ContextUniversalNativeRows.Result input,Packet common,PrivatePool pool,ContextUniversalSignedUnitExchange.Exchange units,ContextUniversalCompoundExchange.Exchange compounds,Runnable work) {
         if(base==null){if(!seeds.isEmpty())throw new IllegalStateException("Actual grouped base required");return;}
         if(!base.closed||base.input!=input||base.common!=common||base.pool!=pool||base.exchange!=units||base.compounds!=compounds||compounds==null||seeds.size()>512)throw new IllegalStateException("Different actual grouped base/frame or seed bound");check(base,64,work);
