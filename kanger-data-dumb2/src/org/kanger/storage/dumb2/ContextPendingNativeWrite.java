@@ -13,13 +13,21 @@ abstract class ContextPendingNativeWrite implements AutoCloseable {
     private final String kind;
     private final ContextProductionSnapshotSession.Inventory baseline;
     private final List<ContextConnection> topology;
+    private final ContextNativeWriteBaseline nativeBaseline;
     private ContextPendingProductionSnapshotSession pending;
     private Mind proposed;
     private boolean closed,qualified,failed;
     ContextPendingNativeWrite(DB db,Mind source,int rows,String kind) throws Exception {
+        this(db,source,rows,kind,false);
+    }
+    /** Only the explicit native branch writer selects complete trusted physical-member capture. */
+    ContextPendingNativeWrite(DB db,Mind source,int rows,String kind,boolean nativeMembers) throws Exception {
         provider=db;this.source=source;this.rows=rows;this.kind=kind;
-        try(ContextProductionSnapshotSession lease=ContextProductionSnapshotSession.open(db,source,rows)) {baseline=lease.inventory();}
-        topology=Collections.unmodifiableList(new ArrayList<>(db.dmzTopology()));
+        if(nativeMembers) {nativeBaseline=ContextNativeWriteBaseline.open(db,source,rows);baseline=null;topology=Collections.emptyList();}
+        else {nativeBaseline=null;
+            try(ContextProductionSnapshotSession lease=ContextProductionSnapshotSession.open(db,source,rows)) {baseline=lease.inventory();}
+            topology=Collections.unmodifiableList(new ArrayList<>(db.dmzTopology()));
+        }
     }
     final void validate(Mind child) throws Exception {
         if(closed || Thread.currentThread()!=owner || source.getUser().getCurrentMind()!=source || child==null || child.getNext()!=source)
@@ -30,12 +38,13 @@ abstract class ContextPendingNativeWrite implements AutoCloseable {
             if(pending!=null) {
                 if(!qualified) throw new IllegalStateException("Native attempt has no complete qualification");
                 if(proposed!=child) throw new IllegalStateException("Native write attempt already bound to another child");
-                pending.requireCurrent();return;
+                if(nativeBaseline!=null)nativeBaseline.requireCurrent();pending.requireCurrent();return;
             }
-            proposed=child;pending=ContextPendingProductionSnapshotSession.open(provider,child,rows);
-            pending.requireBaseline(baseline,topology);
+            proposed=child;
+            if(nativeBaseline!=null)pending=nativeBaseline.bind(child);
+            else {pending=ContextPendingProductionSnapshotSession.open(provider,child,rows);pending.requireBaseline(baseline,topology);}
             qualify(pending);
-            pending.requireCurrent();
+            if(nativeBaseline!=null)nativeBaseline.requireCurrent();pending.requireCurrent();
             qualified=true;
         } catch(IllegalStateException unsupported) {
             failed=true;
@@ -46,5 +55,5 @@ abstract class ContextPendingNativeWrite implements AutoCloseable {
     }
     abstract void qualify(ContextPendingProductionSnapshotSession lease) throws Exception;
     abstract StorageLifecycleException incomplete(String reason);
-    @Override public final void close() {closed=true;if(pending!=null) pending.close();}
+    @Override public final void close() {closed=true;if(nativeBaseline!=null)nativeBaseline.close();else if(pending!=null)pending.close();}
 }

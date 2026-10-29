@@ -8,7 +8,7 @@ final class ContextPendingBranchWrite extends ContextPendingNativeWrite {
     private final ContextNativeCandidateInspection.Limits limits;
     private final int work,audit,models;
     ContextPendingBranchWrite(DB db,Mind source,ContextNativeCandidateInspection.Limits limits,int work,int audit,int models) throws Exception {
-        super(db,source,limits.rows,"native branch");this.limits=limits;this.work=work;this.audit=audit;this.models=models;
+        super(db,source,limits.rows,"native branch",true);this.limits=limits;this.work=work;this.audit=audit;this.models=models;
     }
     @Override void qualify(ContextPendingProductionSnapshotSession lease) throws Exception {
         DB.requireNativePendingFamily(lease,limits,work,audit,models);
