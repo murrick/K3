@@ -72,7 +72,20 @@ final class ContextUniversalSignedProductAudit {
     }
     static Result bind(ContextUniversalFrozenConstraints.Result coverage,ConstraintTransfer transfer,int maximumProducts,int maximumWork) {
         if(maximumProducts<1||maximumProducts>65536||maximumWork<1)throw new IllegalArgumentException("Bounded product correspondence required");
-        Runnable work=ContextGroundProductionRounds.budget(maximumWork);
+        return bind(coverage,transfer,maximumProducts,ContextGroundProductionRounds.budget(maximumWork));
+    }
+    static final class SessionBinding {
+        final Result result;final ContextUniversalValidationSession.Metrics metrics;
+        private SessionBinding(Result result,ContextUniversalValidationSession.Metrics metrics){this.result=result;this.metrics=metrics;}
+    }
+    /** Fresh authentication scope; all forward/reverse product obligations retain one original budget. */
+    static SessionBinding bindWithValidationReuse(ContextUniversalFrozenConstraints.Result coverage,ConstraintTransfer transfer,int maximumProducts,int maximumWork,int capacity) {
+        if(maximumProducts<1||maximumProducts>65536||maximumWork<1)throw new IllegalArgumentException("Bounded product correspondence required");
+        ContextUniversalValidationSession.Scope scope=ContextUniversalValidationSession.open(maximumWork,capacity);Result result;
+        try{result=bind(coverage,transfer,maximumProducts,scope.work);}finally{scope.close();}
+        return new SessionBinding(result,scope.metrics());
+    }
+    private static Result bind(ContextUniversalFrozenConstraints.Result coverage,ConstraintTransfer transfer,int maximumProducts,Runnable work) {
         try {
             work.run();if(coverage==null||!coverage.closed||!coverage.signedUnits||coverage.xRefuted||coverage.foreignRefuted||transfer==null||!transfer.transferred||transfer.proof==null)
                 throw new IllegalStateException("Successful sealed projection audit and transfer required");
