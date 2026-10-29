@@ -46,7 +46,21 @@ final class ContextUniversalCompoundExchange {
         return selected;
     }
     static Collection collect(Snapshot x,Packet common,List<Cut> expected,Map<Cut,Result> checks,int maximumClauses,int maximumAlternatives,int maximumDepth,int maximumWork){
-        limits(maximumClauses,maximumAlternatives,maximumDepth);if(maximumWork<1)throw new IllegalArgumentException("Bounded compound work required");Runnable work=ContextGroundProductionRounds.budget(maximumWork);
+        limits(maximumClauses,maximumAlternatives,maximumDepth);if(maximumWork<1)throw new IllegalArgumentException("Bounded compound work required");
+        return collect(x,common,expected,checks,maximumClauses,maximumAlternatives,maximumDepth,maximumWork,ContextGroundProductionRounds.budget(maximumWork));
+    }
+    static final class SessionCollection {
+        final Collection collection;final ContextUniversalValidationSession.Metrics metrics;
+        private SessionCollection(Collection collection,ContextUniversalValidationSession.Metrics metrics){this.collection=collection;this.metrics=metrics;}
+    }
+    /** One original collection budget; selection and sealed policy are independently checked in full. */
+    static SessionCollection collectWithValidationReuse(Snapshot x,Packet common,List<Cut> expected,Map<Cut,Result> checks,int maximumClauses,int maximumAlternatives,int maximumDepth,int maximumWork,int capacity){
+        limits(maximumClauses,maximumAlternatives,maximumDepth);if(maximumWork<1)throw new IllegalArgumentException("Bounded compound work required");
+        ContextUniversalValidationSession.Scope scope=ContextUniversalValidationSession.open(maximumWork,capacity);Collection collection;
+        try{collection=collect(x,common,expected,checks,maximumClauses,maximumAlternatives,maximumDepth,maximumWork,scope.work);}finally{scope.close();}
+        return new SessionCollection(collection,scope.metrics());
+    }
+    private static Collection collect(Snapshot x,Packet common,List<Cut> expected,Map<Cut,Result> checks,int maximumClauses,int maximumAlternatives,int maximumDepth,int maximumWork,Runnable work){
         try {
             // Validate EVERY complete original/private/symbolic owner frame before selecting anything.
             ContextUniversalSignedUnitExchange.frame(x,common,expected,checks,maximumWork,work);List<ResidualProof> selected=select(checks,maximumClauses,maximumAlternatives,work);

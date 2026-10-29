@@ -655,6 +655,8 @@ def main():
         names.append(('org.kanger.ContextUniversalProductSessionRunner', 'CONTEXT_UNIVERSAL_PRODUCT_SESSION_PASS'))
         names.append(('org.kanger.ContextUniversalSymbolicCollectionSessionRunner', 'CONTEXT_UNIVERSAL_SYMBOLIC_COLLECTION_SESSION_PASS'))
         names.append(('org.kanger.ContextUniversalSymbolicCollectionBudgetRunner', 'CONTEXT_UNIVERSAL_SYMBOLIC_COLLECTION_BUDGET_PASS'))
+        names.append(('org.kanger.ContextUniversalCompoundCollectionSessionRunner', 'CONTEXT_UNIVERSAL_COMPOUND_COLLECTION_SESSION_PASS'))
+        names.append(('org.kanger.ContextUniversalCompoundCollectionBudgetRunner', 'CONTEXT_UNIVERSAL_COMPOUND_COLLECTION_BUDGET_PASS'))
     drivers = [root / 'kanger-qualification/src' / (name.replace('.', '/') + '.java') for name, _ in names]
     if args.ordinary_integration_candidate:
         original = root / 'kanger-data-dumb2/src/org/kanger/storage/dumb2/DB.java'
