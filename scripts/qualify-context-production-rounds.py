@@ -663,6 +663,10 @@ def main():
         names.append(('org.kanger.ContextUniversalCompoundRebaseBudgetRunner', 'CONTEXT_UNIVERSAL_COMPOUND_REBASE_BUDGET_PASS'))
         names.append(('org.kanger.ContextUniversalSignedCloseSessionRunner', 'CONTEXT_UNIVERSAL_SIGNED_CLOSE_SESSION_PASS'))
         names.append(('org.kanger.ContextUniversalSignedCloseBudgetRunner', 'CONTEXT_UNIVERSAL_SIGNED_CLOSE_BUDGET_PASS'))
+        names.append(('org.kanger.ContextUniversalContinuationPermutationRunner', 'CONTEXT_UNIVERSAL_CONTINUATION_PERMUTATION_PASS'))
+        names.append(('org.kanger.ContextUniversalContinuationPrivateRunner', 'CONTEXT_UNIVERSAL_CONTINUATION_PRIVATE_PASS'))
+        names.append(('org.kanger.ContextUniversalContinuationRefutationRunner', 'CONTEXT_UNIVERSAL_CONTINUATION_REFUTATION_PASS'))
+        names.append(('org.kanger.ContextUniversalContinuationGradeRunner', 'CONTEXT_UNIVERSAL_CONTINUATION_GRADE_PASS'))
     drivers = [root / 'kanger-qualification/src' / (name.replace('.', '/') + '.java') for name, _ in names]
     if args.ordinary_integration_candidate:
         original = root / 'kanger-data-dumb2/src/org/kanger/storage/dumb2/DB.java'
