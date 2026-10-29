@@ -460,6 +460,14 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         }
     }
 
+    /** Read-only whole proposed-child diagnostic, guarded by actual pending/rollback ownership. */
+    public synchronized org.kanger.ContextNativeBranchInspection.Result inspectNativePendingProduction(Mind proposed,org.kanger.ContextNativeCandidateInspection.Limits limits) throws Exception {
+        if(limits==null)throw new IllegalArgumentException("Explicit native pending limits required");
+        try(ContextPendingProductionSnapshotSession lease=ContextPendingProductionSnapshotSession.open(this,proposed,limits.rows)) {
+            return lease.inspectNative(limits);
+        }
+    }
+
     private boolean validatingCommit;
 
     @Override

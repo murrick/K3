@@ -19,6 +19,7 @@ public final class ContextNativeCandidateInspection {
             policy=new ContextUniversalNativeCandidate.Policy(new ContextUniversalNativeBranch.Policy(kernel,local,rounds,work,capacity),rows,preparation,events);
             this.rows=rows;this.rounds=rounds;this.depth=depth;this.preparation=preparation;this.events=events;this.work=work;this.audit=audit;this.capacity=capacity;
         }
+        ContextUniversalNativeBranch.Policy branchPolicy(){return policy.branch;}
     }
     public static final class Opposition {
         public final Set<UUID> targetContexts;public final String trustedGroup;

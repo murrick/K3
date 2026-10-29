@@ -102,6 +102,39 @@ final class ContextPendingProductionSnapshotSession implements AutoCloseable {
         }
         return cuts;
     }
+    /** Check original member inventories against the provider's qualified execution cuts, not routing aliases. */
+    private void requireNativeCuts(List<Snapshot> cuts) throws Exception {
+        Map<UUID,ContextProductionInventory> expected=new LinkedHashMap<>();Map<UUID,ContextConnection> connections=new LinkedHashMap<>();
+        for(int i=0;i<topology.size();++i){expected.put(topology.get(i).getTarget().getContextId(),foreign.get(i));connections.put(topology.get(i).getTarget().getContextId(),topology.get(i));}
+        Set<UUID> seen=new HashSet<>();for(Snapshot cut:cuts)for(Snapshot member:(cut.trustedGroup==null?Collections.singletonList(cut):cut.members)) {
+            ContextConnection c=connections.get(member.inventory.context);
+            if(c==null||member.inventory!=expected.get(member.inventory.context)||!seen.add(member.inventory.context)||!Objects.equals(c.getTrustGroup(),cut.trustedGroup))throw new IllegalStateException("Different actual initialized native member/cut manifest");
+        }
+        if(!seen.equals(expected.keySet()))throw new IllegalStateException("Incomplete native member inventory");
+        List<ContextConnection> execution=provider.productionExecutionTopology();Set<UUID> routed=new HashSet<>();
+        for(ContextConnection c:execution) {
+            List<ContextConnection> members=c.commune()==null?Collections.singletonList(c):c.commune().members();
+            for(ContextConnection member:members) {
+                ContextConnection actual=connections.get(member.getTarget().getContextId());
+                // Commune cache intentionally reuses equivalent pinned knowledge across recertified connections.
+                if(actual==null||!routed.add(member.getTarget().getContextId())||!actual.getTargetLocation().equals(member.getTargetLocation())||!actual.getTarget().equals(member.getTarget())||!actual.getInitialization().equals(member.getInitialization())||!actual.getCertificate().getSemanticVersion().equals(member.getCertificate().getSemanticVersion())||!Objects.equals(c.getTrustGroup(),actual.getTrustGroup())||!Objects.equals(c.getTrustGroup(),member.getTrustGroup()))throw new IllegalStateException("Different qualified native runtime member/pin mapping");
+            }
+        }
+        if(!routed.equals(expected.keySet()))throw new IllegalStateException("Incomplete qualified native runtime mapping");
+    }
+    /** Read-only ACTUAL prepared child, including whole batches; never stage/append it again. */
+    ContextNativeBranchInspection.Result inspectNative(ContextNativeCandidateInspection.Limits limits) throws Exception {
+        synchronized(provider) {
+            requireCurrent();if(limits==null||limits.rows!=rows)throw new IllegalArgumentException("Native pending row bound must match owning lease");
+            List<Snapshot> cuts=null;
+            try {
+                ContextProductionNativeBinding.Result x=ContextProductionNativeBinding.bind(child,childInventory,limits.preparation,limits.events);
+                if(!x.bound)throw new IllegalStateException("Pending native whole-X binding incomplete: "+x.reason);
+                cuts=bindForeign(limits.preparation,limits.events);requireNativeCuts(cuts);
+                return ContextNativeBranchInspection.inspect(x.snapshot,cuts,limits);
+            } finally {requireCurrent();if(cuts!=null)requireNativeCuts(cuts);}
+        }
+    }
     ContextProductionFamilyAssembly.Evaluation inspectWitness(int rounds,int depth,int work,int events) throws Exception {
         synchronized(provider) {
             requireCurrent();
