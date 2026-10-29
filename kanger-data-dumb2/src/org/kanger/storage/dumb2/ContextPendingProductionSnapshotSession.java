@@ -76,11 +76,14 @@ final class ContextPendingProductionSnapshotSession implements AutoCloseable {
         }
     }
     void requireBaseline(ContextProductionSnapshotSession.Inventory baseline,List<ContextConnection> connections) throws Exception {
+        requireNativeBaseline(baseline.x,baseline.foreign,connections);
+    }
+    void requireNativeBaseline(ContextProductionInventory parent,List<ContextProductionInventory> members,List<ContextConnection> connections) throws Exception {
         synchronized(provider) {
             requireCurrent();
-            if(!parentInventory.fingerprint.equals(baseline.x.fingerprint) || foreign.size()!=baseline.foreign.size() || topology.size()!=connections.size())
+            if(!parentInventory.fingerprint.equals(parent.fingerprint) || foreign.size()!=members.size() || topology.size()!=connections.size())
                 throw new IllegalStateException("Native write baseline changed before native validation");
-            for(int i=0;i<foreign.size();i++) if(topology.get(i)!=connections.get(i) || !foreign.get(i).fingerprint.equals(baseline.foreign.get(i).fingerprint))
+            for(int i=0;i<foreign.size();i++) if(topology.get(i)!=connections.get(i) || !foreign.get(i).fingerprint.equals(members.get(i).fingerprint))
                 throw new IllegalStateException("Native write initialized cut changed before native validation");
         }
     }

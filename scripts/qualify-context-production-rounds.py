@@ -707,6 +707,8 @@ def main():
         names.append(('org.kanger.storage.dumb2.ContextNativeWriterBoundaryRunner', 'CONTEXT_NATIVE_WRITER_BOUNDARY_PASS'))
         names.append(('org.kanger.storage.dumb2.ContextNativeWriterInitializedRunner', 'CONTEXT_NATIVE_WRITER_INITIALIZED_PASS'))
         names.append(('org.kanger.storage.dumb2.ContextNativeWriterLegacyRunner', 'CONTEXT_NATIVE_WRITER_LEGACY_PASS'))
+        names.append(('org.kanger.storage.dumb2.ContextNativeBaselineTrustedRunner', 'CONTEXT_NATIVE_BASELINE_TRUSTED_PASS'))
+        names.append(('org.kanger.storage.dumb2.ContextNativeBaselineOwnershipRunner', 'CONTEXT_NATIVE_BASELINE_OWNERSHIP_PASS'))
     drivers = [root / 'kanger-qualification/src' / (name.replace('.', '/') + '.java') for name, _ in names]
     if args.ordinary_integration_candidate:
         original = root / 'kanger-data-dumb2/src/org/kanger/storage/dumb2/DB.java'
