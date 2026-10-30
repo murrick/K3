@@ -574,7 +574,9 @@ final class ContextWitnessResultTransport {
         }catch(Exception failure){return new ConstraintBarrier(false,failure.toString(),null,false,false,Collections.emptyMap(),Collections.emptyMap());}
     }
     /** Explicit audited successor products; no permission for later receiver inference. */
-    static ConstraintBarrier mergeSignedWitnessSuccessor(ContextSignedWitnessNextReceiver.Result next,Map<Cut,ConstraintTransfer> outputs,int maximumWork) {
+    static ConstraintBarrier mergeSignedWitnessSuccessor(ContextSignedWitnessNextReceiver.Result next,Map<Cut,ConstraintTransfer> outputs,int maximumWork) {return mergeSignedWitnessSuccessor(next,outputs,maximumWork,0);}
+    static ConstraintBarrier mergeSignedWitnessSuccessor(ContextSignedWitnessNextReceiver.Result next,Map<Cut,ConstraintTransfer> outputs,int maximumWork,int capacity) {
+        if(capacity<0||capacity>4096)throw new IllegalArgumentException("Bounded successor validation reuse required");
         Runnable work=budget(maximumWork);
         try {
             if(next==null||next.status!=ContextSignedWitnessNextReceiver.Status.CHECKED||next.scope==null||outputs==null||!outputs.keySet().equals(next.checks.keySet()))throw new IllegalStateException("Complete checked successor required");
@@ -584,7 +586,7 @@ final class ContextWitnessResultTransport {
             for(Map.Entry<Cut,ContextUniversalFrozenConstraints.Result> e:next.checks.entrySet()){
                 work.run();ConstraintTransfer b=outputs.get(e.getKey());if(b==null||b.proof!=e.getValue()||b.before!=input||b.privateBefore!=prior.privatePools.get(e.getKey()))throw new IllegalStateException("Different actual successor product owner");
                 ContextSignedWitnessNextReceiver.productOwner(next,e.getKey(),b);
-                ContextSignedWitnessContinuationScope.frame(scope,e.getValue().input,input,b.privateBefore);ContextUniversalSignedProductAudit.Result audit=ContextUniversalSignedProductAudit.bind(e.getValue(),b,65536,maximumWork);if(!audit.bound)throw new IllegalStateException(audit.reason);branches.put(e.getKey(),b);localChanged|=!sameItems(e.getValue().local.items,b.local.items,work);
+                ContextSignedWitnessContinuationScope.frame(scope,e.getValue().input,input,b.privateBefore);ContextUniversalSignedProductAudit.Result audit=capacity==0?ContextUniversalSignedProductAudit.bind(e.getValue(),b,65536,maximumWork):ContextUniversalSignedProductAudit.bindWithValidationReuse(e.getValue(),b,65536,maximumWork,capacity).result;if(!audit.bound)throw new IllegalStateException(audit.reason);branches.put(e.getKey(),b);localChanged|=!sameItems(e.getValue().local.items,b.local.items,work);
             }
             List<Item> shared=new ArrayList<>(input.items);for(ConstraintTransfer b:branches.values())for(Item item:b.output.items)for(Support proof:item.proofs){work.run();add(shared,item.atom,proof,work);}parentX(shared,work);privateRank(shared,work);Packet common=new Packet(shared);
             Map<Cut,PrivatePool> pools=new LinkedHashMap<>();for(Map.Entry<Cut,PrivatePool> e:prior.privatePools.entrySet()){work.run();PrivatePool old=e.getValue();if(old.signedSeeds!=scope.seeds||old.common!=input)throw new IllegalStateException("Different original successor private scope");List<Item> local=new ArrayList<>(common.items);for(Item item:branches.get(e.getKey()).local.items)for(Support proof:item.proofs){work.run();add(local,item.atom,proof,work);}privateRank(local,work);pools.put(e.getKey(),new PrivatePool(common,old.x,old.snapshot,new Packet(local),old.sources,old.declarations,scope.seeds));}
