@@ -94,13 +94,17 @@ final class ContextWitnessResultTransport {
     /** Sealed branch-local evidence. Its raw items are never a shared family Packet. */
     static final class PrivatePool {
         final Packet common;
+        final ContextSignedWitnessFrameAudit.Receipt signedSeeds;
         final ContextProductionNativeBinding.Snapshot x,snapshot;
         final List<ContextProductionInputs.Declaration> declarations;
         final Cut cut;
         final Packet local;
         final Set<Source> sources;
         private PrivatePool(Packet common,ContextProductionNativeBinding.Snapshot x,ContextProductionNativeBinding.Snapshot snapshot,Packet local,Set<Source> sources,List<ContextProductionInputs.Declaration> declarations) {
-            this.common=common;this.x=x;this.snapshot=snapshot;this.cut=Cut.of(snapshot);this.local=local;
+            this(common,x,snapshot,local,sources,declarations,null);
+        }
+        private PrivatePool(Packet common,ContextProductionNativeBinding.Snapshot x,ContextProductionNativeBinding.Snapshot snapshot,Packet local,Set<Source> sources,List<ContextProductionInputs.Declaration> declarations,ContextSignedWitnessFrameAudit.Receipt signedSeeds) {
+            this.signedSeeds=signedSeeds;this.common=common;this.x=x;this.snapshot=snapshot;this.cut=Cut.of(snapshot);this.local=local;
             this.declarations=Collections.unmodifiableList(new ArrayList<>(declarations));
             this.sources=Collections.unmodifiableSet(new LinkedHashSet<>(sources));
         }
@@ -1056,6 +1060,15 @@ final class ContextWitnessResultTransport {
             for(ContextProductionNativeBinding.Snapshot target:plan.foreign){work.run();List<Item> local=new ArrayList<>(common.items);Set<Origin> rank=new HashSet<>(commonRank);for(ContextSignedWitnessPlan.Row row:plan.plan.rows)if(row.cut==target){work.run();signedPlanSeeds(row,local,maximumRank,rank,work);}if(locals.put(Cut.of(target),new Packet(local))!=null)throw new IllegalStateException("Repeated signed seed cut");}
             phase="final-plan-audit";ContextSignedWitnessPlanAudit.check(plan,x,foreign,maximumRows,auditWork);return new SignedSeedResult(true,"assembled","Original signed primary seeds; no native inference/coverage/admission",new SignedSeedFrame(plan,maximumRank,common,locals));
         }catch(Exception failure){return new SignedSeedResult(false,phase,failure.toString(),null);}
+    }
+
+    /** Initial-only signed receiver pool. Old factories/rebases remain unchanged. */
+    static PrivatePool scopedSignedPool(ContextSignedWitnessFrameAudit.Receipt receipt,ContextProductionNativeBinding.Snapshot target,int maximumWork) {
+        if(receipt==null||target==null)throw new IllegalArgumentException("Actual audited private receiver required");SignedSeedFrame f=receipt.frame;
+        ContextSignedWitnessFrameAudit.check(receipt,f.plan,f.plan.x,f.plan.foreign,f.plan.maximumRows,f.maximumRank,maximumWork,maximumWork);
+        if(!f.plan.foreign.contains(target)||!f.locals.containsKey(Cut.of(target)))throw new IllegalStateException("Signed pool outside exact original receiver");Runnable work=budget(maximumWork);Set<Source> sources=new LinkedHashSet<>();for(Item item:f.locals.get(Cut.of(target)).items)for(Support proof:item.proofs)for(Source s:proof.sources){work.run();if(!s.localX)sources.add(s);}
+        List<ContextProductionInputs.Declaration> declarations=new ArrayList<>();for(ContextProductionNativeBinding.Snapshot s:Arrays.asList(f.plan.x,target))for(ContextProductionNativeBinding.Entry e:s.primary){work.run();if(e.bundle==null)declarations.add(new ContextProductionInputs.Declaration(e.source,e.statement));}
+        return new PrivatePool(f.common,f.plan.x,target,f.locals.get(Cut.of(target)),sources,declarations,receipt);
     }
 
 }

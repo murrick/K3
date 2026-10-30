@@ -125,6 +125,7 @@ final class ContextUniversalFrozenConstraints {
         ContextUniversalValidationSession.Token session=ContextUniversalValidationSession.begin(result,maximumDepth,work);if(session!=null&&session.reused)return;boolean valid=false;
         try {
             if(result==null||!result.closed||result.input==null||!result.input.classified||!result.input.withinShape)throw new IllegalStateException("Closed whole rigid-Origin constraint frame required");
+            if(result.input.signedSeeds!=null&&!result.signedUnits)throw new IllegalStateException("Explicit signed closure profile required");
             frame(result.input,result.common,result.pool,maximumDepth,Integer.MAX_VALUE,work);
             if(result.exchange!=null){if(!result.signedUnits)throw new IllegalStateException("Signed symbolic input required");ContextUniversalSignedUnitExchange.check(result.exchange,result.input.x,result.common,maximumDepth,work);}
             if(result.compounds!=null){if(!result.signedUnits)throw new IllegalStateException("Signed compound input required");compoundFrame(result.compounds,result.input,result.common,maximumDepth,work);}
@@ -204,13 +205,15 @@ final class ContextUniversalFrozenConstraints {
         if(common==null)throw new IllegalStateException("Actual common input required");
         ContextWitnessResultTransport.family(common,input.parent.equals(input.target)?Collections.singletonList(input.parent):Arrays.asList(input.parent,input.target),maximumWork);
         if(pool!=null&&(pool.common!=common||pool.x!=input.x||pool.snapshot!=input.foreign||!pool.cut.equals(input.target)))throw new IllegalStateException("Different exact private native/common frame");
+        if(input.signedSeeds!=null){SignedSeedFrame f=input.signedSeeds.frame;if(common!=f.common||input.x!=f.plan.x||input.foreign!=null&&(pool==null||pool.signedSeeds!=input.signedSeeds)||input.foreign==null&&pool!=null)throw new IllegalStateException("Different authenticated signed receiver scope");}
+        else if(pool!=null&&pool.signedSeeds!=null)throw new IllegalStateException("Signed pool requires explicit signed row profile");
         Packet local=pool==null?common:pool.local;
         for(Row row:input.rows)for(Part part:row.parts) {
             work.run();if(part.role==Role.UNSUPPORTED)throw new IllegalStateException("Unsupported whole original row");
             if(part.role!=Role.WITNESS)continue;
             for(ContextWitnessBundle.Atom atom:row.original.bundle.atoms) {
                 work.run();boolean found=false;
-                for(Item item:local.items)if(ContextUniversalFrozenCoverage.bundleAtom(atom,item,row.original.source,work))for(Support support:item.proofs){work.run();if(support.depth==0&&support.sources.equals(Collections.singleton(row.original.source)))found=true;}
+                for(Item item:local.items)if(input.signedSeeds==null?ContextUniversalFrozenCoverage.bundleAtom(atom,item,row.original.source,work):ContextUniversalFrozenCoverage.signedBundleAtom(atom,item,row.original.source,work))for(Support support:item.proofs){work.run();if(support.depth==0&&support.sources.equals(Collections.singleton(row.original.source)))found=true;}
                 if(!found)throw new IllegalStateException("Missing actual full original witness row in local frame");
             }
         }
@@ -295,6 +298,7 @@ final class ContextUniversalFrozenConstraints {
         if(maximumRounds<1||maximumRounds>64||maximumDepth<0||maximumDepth>64||maximumClauses<1||maximumClauses>512||maximumAlternatives<1||maximumAlternatives>256||maximumWork<1)throw new IllegalArgumentException("Bounded ordinary constraint closure required");
         try {
             if(input==null||!input.classified||!input.withinShape)throw new IllegalStateException("Whole supported native row inventory required");
+            if(input.signedSeeds!=null&&!signed)throw new IllegalStateException("Explicit signed closure required for signed row profile");
             Packet local=frame(input,common,pool,maximumDepth,maximumWork,work);
             if(exchange!=null)ContextUniversalSignedUnitExchange.check(exchange,input.x,common,maximumDepth,work);
             if(compounds!=null)compoundFrame(compounds,input,common,maximumDepth,work);

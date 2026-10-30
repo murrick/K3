@@ -39,7 +39,11 @@ final class ContextUniversalFrozenCoverage {
         throw new IllegalStateException("Uncovered typed clause or exact whole Source/depth alternative");
     }
     static boolean bundleAtom(ContextWitnessBundle.Atom expected,Item actual,Source source,Runnable work) {
-        work.run();if(!expected.positive||!actual.atom.positive||!expected.predicate.equals(actual.atom.predicate)||expected.arguments.size()!=actual.atom.arguments.size())return false;
+        return bundleAtom(expected,actual,source,work,false);
+    }
+    static boolean signedBundleAtom(ContextWitnessBundle.Atom expected,Item actual,Source source,Runnable work) {return bundleAtom(expected,actual,source,work,true);}
+    private static boolean bundleAtom(ContextWitnessBundle.Atom expected,Item actual,Source source,Runnable work,boolean signed) {
+        work.run();if((!signed&&!expected.positive)||expected.positive!=actual.atom.positive||!expected.predicate.equals(actual.atom.predicate)||expected.arguments.size()!=actual.atom.arguments.size())return false;
         for(int i=0;i<expected.arguments.size();++i) {
             work.run();ContextWitnessBundle.Slot a=expected.arguments.get(i);ContextWitnessResultTransport.Slot b=actual.atom.arguments.get(i);
             if(a.witness>=0) {if(b.origin==null||!source.equals(b.origin.source)||a.witness!=b.origin.binder)return false;}

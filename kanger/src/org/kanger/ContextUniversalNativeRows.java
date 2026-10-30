@@ -24,13 +24,17 @@ final class ContextUniversalNativeRows {
     }
     static final class Result {
         final boolean classified,withinShape;
+        final ContextSignedWitnessFrameAudit.Receipt signedSeeds;
         final String reason;
         final Snapshot x,foreign;
         final Cut parent,target;
         final List<Row> rows;
         final Set<Source> sources;
         private Result(boolean classified,String reason,Snapshot x,Snapshot foreign,List<Row> rows) {
-            this.classified=classified;this.reason=reason;this.x=x;this.foreign=foreign;
+            this(classified,reason,x,foreign,rows,null);
+        }
+        private Result(boolean classified,String reason,Snapshot x,Snapshot foreign,List<Row> rows,ContextSignedWitnessFrameAudit.Receipt signedSeeds) {
+            this.signedSeeds=signedSeeds;this.classified=classified;this.reason=reason;this.x=x;this.foreign=foreign;
             parent=classified?Cut.of(x):null;target=classified?(foreign==null?parent:Cut.of(foreign)):null;
             this.rows=Collections.unmodifiableList(new ArrayList<>(rows));Set<Source> sources=new LinkedHashSet<>();for(Row row:rows)sources.add(row.original.source);
             this.sources=Collections.unmodifiableSet(sources);withinShape=classified&&rows.stream().allMatch(r->r.withinShape);
@@ -50,14 +54,17 @@ final class ContextUniversalNativeRows {
             reason!=null?reason:heads==0?"Headless original constraint":"Definite original producer");
     }
     private static Part witness(Entry entry,Runnable work) {
+        return witness(entry,work,false);
+    }
+    private static Part witness(Entry entry,Runnable work,boolean signed) {
         String reason=null;ContextWitnessBundle.Bundle bundle=entry.bundle;
         if(bundle.witnesses<1||bundle.witnesses>8||bundle.atoms.isEmpty()||bundle.atoms.size()>8)reason="Outside bounded witness inventory";
         for(ContextWitnessBundle.Atom atom:bundle.atoms) {
-            work.run();if(!atom.positive)reason="Signed existential row is not a universal constraint";
+            work.run();if(!signed&&!atom.positive)reason="Signed existential row is not a universal constraint";
             if(atom.arguments.size()>8)reason="Witness inventory arity limit";
             for(ContextWitnessBundle.Slot slot:atom.arguments){work.run();if(slot.witness>=bundle.witnesses)reason="Witness binder outside original row";}
         }
-        return new Part(-1,null,reason==null?Role.WITNESS:Role.UNSUPPORTED,reason==null?"Whole positive existential row, separate materialization obligations":reason);
+        return new Part(-1,null,reason==null?Role.WITNESS:Role.UNSUPPORTED,reason==null?(signed?"Whole signed witness row backed by audited native seed frame":"Whole positive existential row, separate materialization obligations"):reason);
     }
     static Result inspect(Snapshot x,Snapshot foreign,int maximumRows,int maximumWork) {
         if(maximumRows<1||maximumRows>64||maximumWork<1)throw new IllegalArgumentException("Bounded original row accounting required");
@@ -81,4 +88,18 @@ final class ContextUniversalNativeRows {
             return new Result(true,"All original rows classified without splitting Sources; inference, constraints and family qualification remain separate",x,foreign,rows);
         }catch(Exception failure){return new Result(false,failure.toString(),x,foreign,Collections.emptyList());}
     }
+    /** Separate authenticated signed profile; old inspect remains positive-witness only. */
+    static Result inspectSigned(ContextSignedWitnessFrameAudit.Receipt receipt,Snapshot target,int maximumRows,int maximumWork,int auditWork) {
+        if(maximumRows<1||maximumRows>64||maximumWork<1||auditWork<1)throw new IllegalArgumentException("Bounded signed receiver rows required");
+        Snapshot x=receipt==null?null:receipt.frame.plan.x;Runnable work=ContextGroundProductionRounds.budget(maximumWork);
+        try {
+            if(receipt==null)throw new IllegalStateException("Audited signed frame required");ContextWitnessResultTransport.SignedSeedFrame f=receipt.frame;
+            ContextSignedWitnessFrameAudit.check(receipt,f.plan,x,f.plan.foreign,f.plan.maximumRows,f.maximumRank,auditWork,auditWork);
+            if(target!=null&&!f.plan.foreign.contains(target))throw new IllegalStateException("Different actual signed receiver cut");
+            List<Entry> originals=new ArrayList<>(x.primary);if(target!=null)originals.addAll(target.primary);if(originals.size()>maximumRows)throw new IllegalStateException("Signed whole receiver row limit");Set<Source> sources=new HashSet<>();List<Row> rows=new ArrayList<>();
+            for(Entry entry:originals){work.run();if(!sources.add(entry.source))throw new IllegalStateException("Repeated signed receiver Source");List<Part> parts=new ArrayList<>();if(entry.bundle!=null)parts.add(witness(entry,work,true));else{if(entry.clauses.isEmpty()||entry.clauses.size()>8)throw new IllegalStateException("Whole original signed receiver clauses required");for(int n=0;n<entry.clauses.size();n++){work.run();parts.add(clause(entry.clauses.get(n),n,work));}}rows.add(new Row(entry,parts));}
+            return new Result(true,"Explicit signed witness frame profile; no continuation/admission authority",x,target,rows,receipt);
+        }catch(Exception failure){return new Result(false,failure.toString(),x,target,Collections.emptyList(),null);}
+    }
+
 }
