@@ -573,12 +573,12 @@ final class ContextWitnessResultTransport {
             return new ConstraintBarrier(true,"First signed-witness all-cut barrier; next receiver qualification still required",common,!sameItems(entry.common.items,common.items,work),localChanged,branches,pools);
         }catch(Exception failure){return new ConstraintBarrier(false,failure.toString(),null,false,false,Collections.emptyMap(),Collections.emptyMap());}
     }
-    /** Explicit first-successor products; no permission for second-successor inference. */
+    /** Explicit audited successor products; no permission for later receiver inference. */
     static ConstraintBarrier mergeSignedWitnessSuccessor(ContextSignedWitnessNextReceiver.Result next,Map<Cut,ConstraintTransfer> outputs,int maximumWork) {
         Runnable work=budget(maximumWork);
         try {
-            if(next==null||next.status!=ContextSignedWitnessNextReceiver.Status.CHECKED||next.scope==null||outputs==null||!outputs.keySet().equals(next.checks.keySet()))throw new IllegalStateException("Complete checked first successor required");
-            ContextSignedWitnessContinuationScope.Receipt scope=next.scope;ConstraintBarrier prior=scope.barrier.result.barrier;Packet input=prior.packet;
+            if(next==null||next.status!=ContextSignedWitnessNextReceiver.Status.CHECKED||next.scope==null||outputs==null||!outputs.keySet().equals(next.checks.keySet()))throw new IllegalStateException("Complete checked successor required");
+            ContextSignedWitnessContinuationScope.Receipt scope=next.scope;ConstraintBarrier prior=scope.current();Packet input=prior.packet;
             if(!next.checks.keySet().equals(scope.barrier.result.initial.entry.receiver.checks.keySet()))throw new IllegalStateException("Different complete successor cut ledger");
             Map<Cut,ConstraintTransfer> branches=new LinkedHashMap<>();boolean localChanged=false;
             for(Map.Entry<Cut,ContextUniversalFrozenConstraints.Result> e:next.checks.entrySet()){
@@ -587,7 +587,7 @@ final class ContextWitnessResultTransport {
             }
             List<Item> shared=new ArrayList<>(input.items);for(ConstraintTransfer b:branches.values())for(Item item:b.output.items)for(Support proof:item.proofs){work.run();add(shared,item.atom,proof,work);}parentX(shared,work);privateRank(shared,work);Packet common=new Packet(shared);
             Map<Cut,PrivatePool> pools=new LinkedHashMap<>();for(Map.Entry<Cut,PrivatePool> e:prior.privatePools.entrySet()){work.run();PrivatePool old=e.getValue();if(old.signedSeeds!=scope.seeds||old.common!=input)throw new IllegalStateException("Different original successor private scope");List<Item> local=new ArrayList<>(common.items);for(Item item:branches.get(e.getKey()).local.items)for(Support proof:item.proofs){work.run();add(local,item.atom,proof,work);}privateRank(local,work);pools.put(e.getKey(),new PrivatePool(common,old.x,old.snapshot,new Packet(local),old.sources,old.declarations,scope.seeds));}
-            return new ConstraintBarrier(true,"Second signed-witness barrier; later receiver qualification required",common,!sameItems(input.items,common.items,work),localChanged,branches,pools);
+            return new ConstraintBarrier(true,"Audited successor signed-witness barrier; later receiver qualification required",common,!sameItems(input.items,common.items,work),localChanged,branches,pools);
         }catch(Exception failure){return new ConstraintBarrier(false,failure.toString(),null,false,false,Collections.emptyMap(),Collections.emptyMap());}
     }
     static final class TypedBarrier {

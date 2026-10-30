@@ -106,10 +106,10 @@ final class ContextUniversalNativeRows {
         }catch(Exception failure){return new Result(false,failure.toString(),x,target,Collections.emptyList(),null);}
     }
 
-    /** Exact audited first-barrier successor; original initial signed rows remain pinned. */
+    /** Exact audited barrier successor; original initial signed rows remain pinned. */
     static Result inspectSignedContinuation(ContextSignedWitnessContinuationScope.Receipt scope,Snapshot target,int maximumRows,int maximumWork,int auditWork){
         Snapshot x=scope==null?null:scope.seeds.frame.plan.x;
-        try{if(scope==null||maximumRows!=scope.rows)throw new IllegalStateException("Different signed successor row policy");ContextSignedWitnessContinuationScope.check(scope,auditWork,scope.capacity);Result original=inspectSigned(scope.seeds,target,maximumRows,maximumWork,auditWork);if(!original.classified)throw new IllegalStateException(original.reason);return new Result(true,"Explicit audited first-barrier successor rows",x,target,original.rows,scope.seeds,scope);}catch(Exception failure){return new Result(false,failure.toString(),x,target,Collections.emptyList());}
+        try{if(scope==null||maximumRows!=scope.rows)throw new IllegalStateException("Different signed successor row policy");ContextSignedWitnessContinuationScope.check(scope,auditWork,scope.capacity);Result original=inspectSigned(scope.seeds,target,maximumRows,maximumWork,auditWork);if(!original.classified)throw new IllegalStateException(original.reason);return new Result(true,"Explicit audited barrier successor rows",x,target,original.rows,scope.seeds,scope);}catch(Exception failure){return new Result(false,failure.toString(),x,target,Collections.emptyList());}
     }
 
 }
