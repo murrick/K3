@@ -582,7 +582,8 @@ final class ContextWitnessResultTransport {
             if(!next.checks.keySet().equals(scope.barrier.result.initial.entry.receiver.checks.keySet()))throw new IllegalStateException("Different complete successor cut ledger");
             Map<Cut,ConstraintTransfer> branches=new LinkedHashMap<>();boolean localChanged=false;
             for(Map.Entry<Cut,ContextUniversalFrozenConstraints.Result> e:next.checks.entrySet()){
-                work.run();ConstraintTransfer b=outputs.get(e.getKey());if(b==null||b.proof!=e.getValue()||b.before!=input||b.privateBefore!=prior.privatePools.get(e.getKey())||b.bindings!=null||b.certificate!=null)throw new IllegalStateException("Different actual successor product owner");
+                work.run();ConstraintTransfer b=outputs.get(e.getKey());if(b==null||b.proof!=e.getValue()||b.before!=input||b.privateBefore!=prior.privatePools.get(e.getKey()))throw new IllegalStateException("Different actual successor product owner");
+                ContextSignedWitnessNextReceiver.productOwner(next,e.getKey(),b);
                 ContextSignedWitnessContinuationScope.frame(scope,e.getValue().input,input,b.privateBefore);ContextUniversalSignedProductAudit.Result audit=ContextUniversalSignedProductAudit.bind(e.getValue(),b,65536,maximumWork);if(!audit.bound)throw new IllegalStateException(audit.reason);branches.put(e.getKey(),b);localChanged|=!sameItems(e.getValue().local.items,b.local.items,work);
             }
             List<Item> shared=new ArrayList<>(input.items);for(ConstraintTransfer b:branches.values())for(Item item:b.output.items)for(Support proof:item.proofs){work.run();add(shared,item.atom,proof,work);}parentX(shared,work);privateRank(shared,work);Packet common=new Packet(shared);
