@@ -1023,4 +1023,39 @@ final class ContextWitnessResultTransport {
         if (witnesses.size() != binders.size()) throw new IllegalStateException("Missing transport witness");
         return new Replay(target,witnesses,packet.items);
     }
+    /** Explicit data-only signed seed adapter. Not a PrivatePool, STEP or admission receipt. */
+    static final class SignedSeedFrame {
+        final ContextSignedWitnessPlanAudit.Receipt plan;
+        final int maximumRank;
+        final Packet common;
+        final Map<Cut,Packet> locals;
+        private SignedSeedFrame(ContextSignedWitnessPlanAudit.Receipt plan,int maximumRank,Packet common,Map<Cut,Packet> locals){this.plan=plan;this.maximumRank=maximumRank;this.common=common;this.locals=Collections.unmodifiableMap(new LinkedHashMap<>(locals));}
+    }
+    static final class SignedSeedResult {
+        final boolean assembled;final String phase,reason;final SignedSeedFrame output;
+        private SignedSeedResult(boolean assembled,String phase,String reason,SignedSeedFrame output){this.assembled=assembled;this.phase=phase;this.reason=reason;this.output=output;}
+    }
+    private static void signedSeedShape(Atom atom,int maximumRank,Set<Origin> rank,Runnable work){
+        work.run();if(atom.arguments.size()>8)throw new IllegalStateException("Signed native seed arity limit");Origin root=null;
+        for(Slot slot:atom.arguments){work.run();if(slot.origin!=null){if(root!=null&&!root.equals(slot.origin))throw new IllegalStateException("Multiple Origins in one native seed literal");root=slot.origin;rank.add(root);}else if(slot.value==null)throw new IllegalStateException("Missing ordinary native seed value");}
+        if(rank.size()>maximumRank)throw new IllegalStateException("Signed native seed rank limit");
+    }
+    private static void signedPlanSeeds(ContextSignedWitnessPlan.Row row,List<Item> items,int maximumRank,Set<Origin> rank,Runnable work){
+        if(row.original.bundle!=null){
+            for(ContextSignedWitnessPlan.Seed seed:row.seeds){work.run();List<Slot> terms=new ArrayList<>();for(ContextSignedWitnessPlan.Term term:seed.arguments){work.run();terms.add(new Slot(term.origin==null?null:new Origin(term.origin.source,term.origin.binder),term.value));}Atom atom=new Atom(seed.predicate,seed.positive,terms);signedSeedShape(atom,maximumRank,rank,work);add(items,atom,seed.proof,work);}
+        }else for(Clause clause:row.clauses){
+            work.run();if(!clause.variables.isEmpty()||clause.literals.size()!=1)continue;ContextProductionCapture.Atom literal=clause.literals.get(0);List<Slot> terms=new ArrayList<>();for(ContextProductionCapture.Slot term:literal.arguments){work.run();if(term.variable>=0||term.value==null)throw new IllegalStateException("Ground native primary seed required");terms.add(new Slot(null,term.value));}Atom atom=new Atom(literal.predicate,literal.positive,terms);signedSeedShape(atom,maximumRank,rank,work);add(items,atom,new Support(Collections.singleton(row.original.source),0),work);
+        }
+    }
+    static SignedSeedResult signedWitnessFrame(ContextSignedWitnessPlanAudit.Receipt plan,ContextProductionNativeBinding.Snapshot x,List<ContextProductionNativeBinding.Snapshot> foreign,int maximumRows,int maximumRank,int maximumWork,int auditWork){
+        if(maximumRank<1||maximumRank>8||maximumWork<1||auditWork<1)throw new IllegalArgumentException("Explicit bounded signed seed frame required");String phase="plan-audit";
+        try{
+            ContextSignedWitnessPlanAudit.check(plan,x,foreign,maximumRows,auditWork);Runnable work=budget(maximumWork);List<Item> shared=new ArrayList<>();Set<Origin> commonRank=new HashSet<>();phase="common";
+            for(ContextSignedWitnessPlan.Row row:plan.plan.rows)if(row.cut==x){work.run();signedPlanSeeds(row,shared,maximumRank,commonRank,work);}
+            Packet common=new Packet(shared);if(!parentX(common.items,work).equals(Cut.of(x)))throw new IllegalStateException("Signed common has different actual X");phase="private";Map<Cut,Packet> locals=new LinkedHashMap<>();
+            for(ContextProductionNativeBinding.Snapshot target:plan.foreign){work.run();List<Item> local=new ArrayList<>(common.items);Set<Origin> rank=new HashSet<>(commonRank);for(ContextSignedWitnessPlan.Row row:plan.plan.rows)if(row.cut==target){work.run();signedPlanSeeds(row,local,maximumRank,rank,work);}if(locals.put(Cut.of(target),new Packet(local))!=null)throw new IllegalStateException("Repeated signed seed cut");}
+            phase="final-plan-audit";ContextSignedWitnessPlanAudit.check(plan,x,foreign,maximumRows,auditWork);return new SignedSeedResult(true,"assembled","Original signed primary seeds; no native inference/coverage/admission",new SignedSeedFrame(plan,maximumRank,common,locals));
+        }catch(Exception failure){return new SignedSeedResult(false,phase,failure.toString(),null);}
+    }
+
 }
