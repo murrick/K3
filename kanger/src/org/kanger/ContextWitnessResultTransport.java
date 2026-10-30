@@ -550,6 +550,29 @@ final class ContextWitnessResultTransport {
             return new ConstraintBarrier(true,"All supplied signed products merged; next-barrier qualification remains required",packet,!sameItems(family.input.items,packet.items,work),localChanged,branches,pools);
         }catch(Exception failure){return new ConstraintBarrier(false,failure.toString(),null,false,false,Collections.emptyMap(),Collections.emptyMap());}
     }
+    /** Explicit first signed-witness barrier. Never used by legacy merge/rebase paths. */
+    static ConstraintBarrier mergeSignedWitnessInitial(ContextSignedWitnessInitialEntry.Entry entry,Map<Cut,ConstraintTransfer> outputs,int maximumWork) {
+        Runnable work=budget(maximumWork);
+        try {
+            if(entry==null||entry.receiver.status!=ContextSignedWitnessReceiver.Status.CHECKED||outputs==null||!outputs.keySet().equals(entry.receiver.checks.keySet()))throw new IllegalStateException("Complete actual signed initial cut ledger required");
+            ContextSignedWitnessFrameAudit.Receipt seeds=entry.receiver.frame;
+            Map<Cut,ConstraintTransfer> branches=new LinkedHashMap<>();boolean localChanged=false;
+            for(Map.Entry<Cut,ContextUniversalFrozenConstraints.Result> e:entry.receiver.checks.entrySet()){
+                work.run();ConstraintTransfer b=outputs.get(e.getKey());
+                if(b==null||b.proof!=e.getValue()||b.before!=entry.common||b.privateBefore!=entry.pools.get(e.getKey())||b.bindings!=null||b.certificate!=null)throw new IllegalStateException("Different actual initial signed transfer owner");
+                ContextUniversalSignedProductAudit.Result audit=ContextUniversalSignedProductAudit.bind(e.getValue(),b,65536,maximumWork);if(!audit.bound)throw new IllegalStateException(audit.reason);
+                branches.put(e.getKey(),b);localChanged|=!sameItems(e.getValue().local.items,b.local.items,work);
+            }
+            List<Item> shared=new ArrayList<>(entry.common.items);for(ConstraintTransfer b:branches.values())for(Item item:b.output.items)for(Support proof:item.proofs){work.run();add(shared,item.atom,proof,work);}
+            parentX(shared,work);privateRank(shared,work);Packet common=new Packet(shared);Map<Cut,PrivatePool> pools=new LinkedHashMap<>();
+            for(Map.Entry<Cut,PrivatePool> e:entry.pools.entrySet()){
+                work.run();PrivatePool old=e.getValue();if(old.signedSeeds!=seeds||old.common!=entry.common)throw new IllegalStateException("Different original signed seed scope");
+                List<Item> local=new ArrayList<>(common.items);for(Item item:branches.get(e.getKey()).local.items)for(Support proof:item.proofs){work.run();add(local,item.atom,proof,work);}privateRank(local,work);
+                pools.put(e.getKey(),new PrivatePool(common,old.x,old.snapshot,new Packet(local),old.sources,old.declarations,seeds));
+            }
+            return new ConstraintBarrier(true,"First signed-witness all-cut barrier; next receiver qualification still required",common,!sameItems(entry.common.items,common.items,work),localChanged,branches,pools);
+        }catch(Exception failure){return new ConstraintBarrier(false,failure.toString(),null,false,false,Collections.emptyMap(),Collections.emptyMap());}
+    }
     static final class TypedBarrier {
         final boolean merged,changed,localChanged;
         final String reason;
