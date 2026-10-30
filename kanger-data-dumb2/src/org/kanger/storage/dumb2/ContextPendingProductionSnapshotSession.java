@@ -151,6 +151,32 @@ final class ContextPendingProductionSnapshotSession implements AutoCloseable {
             } finally {requireCurrent();if(cuts!=null)requireNativeCuts(cuts);}
         }
     }
+    /** Actual whole signed child under unchanged pending/retained/native-cut currentness guards. */
+    ContextSignedBranchInspection.Result inspectSigned(ContextSignedCandidateInspection.Limits limits) throws Exception {
+        synchronized(provider) {
+            requireCurrent();if(limits==null||limits.rows!=rows)throw new IllegalArgumentException("Signed pending row bound must match owning lease");
+            List<Snapshot> cuts=null;
+            try {
+                ContextProductionNativeBinding.Result x=ContextProductionNativeBinding.bind(child,childInventory,limits.preparation,limits.events);
+                if(!x.bound)throw new IllegalStateException("Pending signed whole-X binding incomplete: "+x.reason);
+                cuts=bindForeign(limits.preparation,limits.events);requireNativeCuts(cuts);
+                return ContextSignedBranchInspection.inspect(x.snapshot,cuts,limits);
+            } finally {requireCurrent();if(cuts!=null)requireNativeCuts(cuts);}
+        }
+    }
+    /** Actual whole signed child under unchanged pending/retained/native-cut currentness guards. */
+    ContextSignedPendingGuard.Result qualifySigned(ContextSignedCandidateInspection.Limits limits) throws Exception {
+        synchronized(provider) {
+            requireCurrent();if(limits==null||limits.rows!=rows)throw new IllegalArgumentException("Signed pending row bound must match owning lease");
+            List<Snapshot> cuts=null;
+            try {
+                ContextProductionNativeBinding.Result x=ContextProductionNativeBinding.bind(child,childInventory,limits.preparation,limits.events);
+                if(!x.bound)throw new IllegalStateException("Pending signed whole-X binding incomplete: "+x.reason);
+                cuts=bindForeign(limits.preparation,limits.events);requireNativeCuts(cuts);
+                return ContextSignedPendingGuard.inspect(x.snapshot,cuts,limits);
+            } finally {requireCurrent();if(cuts!=null)requireNativeCuts(cuts);}
+        }
+    }
     ContextProductionFamilyAssembly.Evaluation inspectWitness(int rounds,int depth,int work,int events) throws Exception {
         synchronized(provider) {
             requireCurrent();

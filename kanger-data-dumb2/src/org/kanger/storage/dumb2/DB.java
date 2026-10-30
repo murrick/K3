@@ -492,6 +492,14 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         }
     }
 
+    /** Fresh actual-child signed diagnostic only; no settlement or historical-result input. */
+    public synchronized org.kanger.ContextSignedBranchInspection.Result inspectSignedPendingProduction(Mind proposed,org.kanger.ContextSignedCandidateInspection.Limits limits) throws Exception {
+        if(limits==null)throw new IllegalArgumentException("Explicit signed pending limits required");
+        try(ContextPendingProductionSnapshotSession lease=ContextPendingProductionSnapshotSession.open(this,proposed,limits.rows)) {
+            return lease.inspectSigned(limits);
+        }
+    }
+
     /** Explicit conservative opt-in guard: native refusal FIRST, existing complete family gate SECOND.
      * No historical result input; default validateCommit and existing writer selection stay unchanged. */
     synchronized void validatePendingNativeProductionCommit(Mind proposed,org.kanger.ContextNativeCandidateInspection.Limits limits,int familyWork,int familyAudit,int models) throws Exception {

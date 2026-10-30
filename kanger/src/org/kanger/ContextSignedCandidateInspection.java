@@ -15,6 +15,7 @@ public final class ContextSignedCandidateInspection {
    if(audit<1)throw new IllegalArgumentException("Bounded independent signed diagnostic audit required");ContextUniversalFrozenBranch.Limits kernel=new ContextUniversalFrozenBranch.Limits(16,depth,depth,512,256,work,65536,65536);ContextUniversalGroupedLocalRounds.Limits local=new ContextUniversalGroupedLocalRounds.Limits(8,16,512,512,256,depth,65536,work);
    policy=new ContextSignedWitnessNativeCandidate.Policy(new ContextSignedWitnessNativeBranch.Policy(rows,rank,rounds,work,capacity,kernel,local),rows,preparation,events);this.rows=rows;this.rank=rank;this.rounds=rounds;this.depth=depth;this.preparation=preparation;this.events=events;this.work=work;this.audit=audit;this.capacity=capacity;
   }
+  ContextSignedWitnessNativeBranch.Policy branchPolicy(){return policy.branch;}
  }
  public static final class Opposition {
   public final Set<UUID> targetContexts;public final String trustedGroup;
