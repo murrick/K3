@@ -25,6 +25,7 @@ final class ContextUniversalNativeRows {
     static final class Result {
         final boolean classified,withinShape;
         final ContextSignedWitnessFrameAudit.Receipt signedSeeds;
+        final ContextSignedWitnessContinuationScope.Receipt signedContinuation;
         final String reason;
         final Snapshot x,foreign;
         final Cut parent,target;
@@ -34,7 +35,10 @@ final class ContextUniversalNativeRows {
             this(classified,reason,x,foreign,rows,null);
         }
         private Result(boolean classified,String reason,Snapshot x,Snapshot foreign,List<Row> rows,ContextSignedWitnessFrameAudit.Receipt signedSeeds) {
-            this.signedSeeds=signedSeeds;this.classified=classified;this.reason=reason;this.x=x;this.foreign=foreign;
+            this(classified,reason,x,foreign,rows,signedSeeds,null);
+        }
+        private Result(boolean classified,String reason,Snapshot x,Snapshot foreign,List<Row> rows,ContextSignedWitnessFrameAudit.Receipt signedSeeds,ContextSignedWitnessContinuationScope.Receipt signedContinuation) {
+            this.signedContinuation=signedContinuation;this.signedSeeds=signedSeeds;this.classified=classified;this.reason=reason;this.x=x;this.foreign=foreign;
             parent=classified?Cut.of(x):null;target=classified?(foreign==null?parent:Cut.of(foreign)):null;
             this.rows=Collections.unmodifiableList(new ArrayList<>(rows));Set<Source> sources=new LinkedHashSet<>();for(Row row:rows)sources.add(row.original.source);
             this.sources=Collections.unmodifiableSet(sources);withinShape=classified&&rows.stream().allMatch(r->r.withinShape);
@@ -100,6 +104,12 @@ final class ContextUniversalNativeRows {
             for(Entry entry:originals){work.run();if(!sources.add(entry.source))throw new IllegalStateException("Repeated signed receiver Source");List<Part> parts=new ArrayList<>();if(entry.bundle!=null)parts.add(witness(entry,work,true));else{if(entry.clauses.isEmpty()||entry.clauses.size()>8)throw new IllegalStateException("Whole original signed receiver clauses required");for(int n=0;n<entry.clauses.size();n++){work.run();parts.add(clause(entry.clauses.get(n),n,work));}}rows.add(new Row(entry,parts));}
             return new Result(true,"Explicit signed witness frame profile; no continuation/admission authority",x,target,rows,receipt);
         }catch(Exception failure){return new Result(false,failure.toString(),x,target,Collections.emptyList(),null);}
+    }
+
+    /** Exact audited first-barrier successor; original initial signed rows remain pinned. */
+    static Result inspectSignedContinuation(ContextSignedWitnessContinuationScope.Receipt scope,Snapshot target,int maximumRows,int maximumWork,int auditWork){
+        Snapshot x=scope==null?null:scope.seeds.frame.plan.x;
+        try{if(scope==null||maximumRows!=scope.rows)throw new IllegalStateException("Different signed successor row policy");ContextSignedWitnessContinuationScope.check(scope,auditWork,scope.capacity);Result original=inspectSigned(scope.seeds,target,maximumRows,maximumWork,auditWork);if(!original.classified)throw new IllegalStateException(original.reason);return new Result(true,"Explicit audited first-barrier successor rows",x,target,original.rows,scope.seeds,scope);}catch(Exception failure){return new Result(false,failure.toString(),x,target,Collections.emptyList());}
     }
 
 }

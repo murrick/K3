@@ -126,6 +126,7 @@ final class ContextUniversalFrozenConstraints {
         try {
             if(result==null||!result.closed||result.input==null||!result.input.classified||!result.input.withinShape)throw new IllegalStateException("Closed whole rigid-Origin constraint frame required");
             if(result.input.signedSeeds!=null&&!result.signedUnits)throw new IllegalStateException("Explicit signed closure profile required");
+            if(result.input.signedContinuation!=null)ContextSignedWitnessContinuationScope.authenticate(result.input.signedContinuation,result.input,result.common,result.pool,result.exchange,result.compounds,work);
             frame(result.input,result.common,result.pool,maximumDepth,Integer.MAX_VALUE,work);
             if(result.exchange!=null){if(!result.signedUnits)throw new IllegalStateException("Signed symbolic input required");ContextUniversalSignedUnitExchange.check(result.exchange,result.input.x,result.common,maximumDepth,work);}
             if(result.compounds!=null){if(!result.signedUnits)throw new IllegalStateException("Signed compound input required");compoundFrame(result.compounds,result.input,result.common,maximumDepth,work);}
@@ -205,7 +206,8 @@ final class ContextUniversalFrozenConstraints {
         if(common==null)throw new IllegalStateException("Actual common input required");
         ContextWitnessResultTransport.family(common,input.parent.equals(input.target)?Collections.singletonList(input.parent):Arrays.asList(input.parent,input.target),maximumWork);
         if(pool!=null&&(pool.common!=common||pool.x!=input.x||pool.snapshot!=input.foreign||!pool.cut.equals(input.target)))throw new IllegalStateException("Different exact private native/common frame");
-        if(input.signedSeeds!=null){SignedSeedFrame f=input.signedSeeds.frame;if(common!=f.common||input.x!=f.plan.x||input.foreign!=null&&(pool==null||pool.signedSeeds!=input.signedSeeds)||input.foreign==null&&pool!=null)throw new IllegalStateException("Different authenticated signed receiver scope");}
+        if(input.signedContinuation!=null)ContextSignedWitnessContinuationScope.frame(input.signedContinuation,input,common,pool);
+        else if(input.signedSeeds!=null){SignedSeedFrame f=input.signedSeeds.frame;if(common!=f.common||input.x!=f.plan.x||input.foreign!=null&&(pool==null||pool.signedSeeds!=input.signedSeeds)||input.foreign==null&&pool!=null)throw new IllegalStateException("Different authenticated signed receiver scope");}
         else if(pool!=null&&pool.signedSeeds!=null)throw new IllegalStateException("Signed pool requires explicit signed row profile");
         Packet local=pool==null?common:pool.local;
         for(Row row:input.rows)for(Part part:row.parts) {
@@ -299,6 +301,7 @@ final class ContextUniversalFrozenConstraints {
         try {
             if(input==null||!input.classified||!input.withinShape)throw new IllegalStateException("Whole supported native row inventory required");
             if(input.signedSeeds!=null&&!signed)throw new IllegalStateException("Explicit signed closure required for signed row profile");
+            if(input.signedContinuation!=null)ContextSignedWitnessContinuationScope.authenticate(input.signedContinuation,input,common,pool,exchange,compounds,work);
             Packet local=frame(input,common,pool,maximumDepth,maximumWork,work);
             if(exchange!=null)ContextUniversalSignedUnitExchange.check(exchange,input.x,common,maximumDepth,work);
             if(compounds!=null)compoundFrame(compounds,input,common,maximumDepth,work);

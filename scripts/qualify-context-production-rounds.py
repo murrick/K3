@@ -725,6 +725,8 @@ def main():
         names.append(('org.kanger.ContextSignedWitnessInitialBoundaryRunner', 'CONTEXT_SIGNED_WITNESS_INITIAL_BOUNDARY_PASS'))
         names.append(('org.kanger.ContextSignedWitnessBarrierPositiveRunner', 'CONTEXT_SIGNED_WITNESS_BARRIER_POSITIVE_PASS'))
         names.append(('org.kanger.ContextSignedWitnessBarrierBoundaryRunner', 'CONTEXT_SIGNED_WITNESS_BARRIER_BOUNDARY_PASS'))
+        names.append(('org.kanger.ContextSignedWitnessNextPositiveRunner', 'CONTEXT_SIGNED_WITNESS_NEXT_POSITIVE_PASS'))
+        names.append(('org.kanger.ContextSignedWitnessNextBoundaryRunner', 'CONTEXT_SIGNED_WITNESS_NEXT_BOUNDARY_PASS'))
     drivers = [root / 'kanger-qualification/src' / (name.replace('.', '/') + '.java') for name, _ in names]
     if args.ordinary_integration_candidate:
         original = root / 'kanger-data-dumb2/src/org/kanger/storage/dumb2/DB.java'
