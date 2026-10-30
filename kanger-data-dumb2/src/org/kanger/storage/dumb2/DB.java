@@ -476,6 +476,14 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         }
     }
 
+    /** Fresh owner/currentness-guarded signed diagnostic; not a writer or commit decision. */
+    public synchronized org.kanger.ContextSignedCandidateInspection.Result inspectSignedProductionCandidate(Mind source,String statement,org.kanger.ContextSignedCandidateInspection.Limits limits) throws Exception {
+        if(limits==null)throw new IllegalArgumentException("Explicit signed diagnostic limits required");
+        try(ContextProductionSnapshotSession lease=ContextProductionSnapshotSession.open(this,source,limits.rows)) {
+            return lease.inspectSignedCandidate(statement,limits);
+        }
+    }
+
     /** Read-only whole proposed-child diagnostic, guarded by actual pending/rollback ownership. */
     public synchronized org.kanger.ContextNativeBranchInspection.Result inspectNativePendingProduction(Mind proposed,org.kanger.ContextNativeCandidateInspection.Limits limits) throws Exception {
         if(limits==null)throw new IllegalArgumentException("Explicit native pending limits required");

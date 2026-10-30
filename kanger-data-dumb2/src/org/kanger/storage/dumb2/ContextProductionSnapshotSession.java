@@ -167,6 +167,17 @@ final class ContextProductionSnapshotSession implements AutoCloseable {
             } finally {requireCurrent();}
         }
     }
+    /** Fresh signed candidate on exact owning initialized views; historical receipts are never inputs. */
+    org.kanger.ContextSignedCandidateInspection.Result inspectSignedCandidate(String statement,org.kanger.ContextSignedCandidateInspection.Limits limits) throws Exception {
+        synchronized(provider) {
+            requireCurrent();
+            if(limits==null||limits.rows!=maximumRows)throw new IllegalArgumentException("Signed diagnostic rows must match owning lease");
+            try {
+                Binding bound=bind(limits.preparation,limits.events);
+                return org.kanger.ContextSignedCandidateInspection.inspect(bound.x,bound.foreign,statement,limits);
+            } finally { requireCurrent(); }
+        }
+    }
     enum WriteStatus { PUBLISHED, COLLISION, INCOMPLETE, NATIVE_REJECTED }
     static final class WriteResult {
         final WriteStatus status;
