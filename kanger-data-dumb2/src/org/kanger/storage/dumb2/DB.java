@@ -535,6 +535,39 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         }
     }
 
+    /** Explicit same-operation signed refusal FIRST, mandatory complete-family gate SECOND.
+     * Does not select a writer, settle a child, or accept historical diagnostic input. */
+    synchronized void validatePendingSignedProductionCommit(Mind proposed,org.kanger.ContextSignedCandidateInspection.Limits limits,int familyWork,int familyAudit,int models) throws Exception {
+        if(limits==null||familyWork<1||familyAudit<1||models<1)throw new IllegalArgumentException("Explicit bounded signed/full-family gates required");
+        try(ContextPendingProductionSnapshotSession lease=ContextPendingProductionSnapshotSession.open(this,proposed,limits.rows)) {
+            requireSignedPendingFamily(lease,limits,familyWork,familyAudit,models);
+        } catch(IllegalStateException unsupported) {
+            org.kanger.exception.ContextSignedCommitException failure=org.kanger.exception.ContextSignedCommitException.incomplete("pending-capture",unsupported.getMessage());failure.initCause(unsupported);throw failure;
+        }
+    }
+
+    /** Same actual lease throughout both qualifications; scoped quiescence alone is insufficient. */
+    static void requireSignedPendingFamily(ContextPendingProductionSnapshotSession lease,org.kanger.ContextSignedCandidateInspection.Limits limits,int familyWork,int familyAudit,int models) throws Exception {
+        String phase="signed-qualification";ContextPendingProductionSnapshotSession.Decision decision;
+        try {
+            org.kanger.ContextSignedPendingGuard.Result signed=lease.qualifySigned(limits);lease.requireCurrent();
+            if(signed.status==org.kanger.ContextSignedPendingGuard.Status.INCOMPLETE)throw org.kanger.exception.ContextSignedCommitException.incomplete(signed.phase,signed.reason);
+            if(signed.status==org.kanger.ContextSignedPendingGuard.Status.REFUTED)throw org.kanger.exception.ContextSignedCommitException.conflict(signed.evidence);
+            if(signed.status!=org.kanger.ContextSignedPendingGuard.Status.SCOPED_QUIESCENT)throw org.kanger.exception.ContextSignedCommitException.incomplete(phase,"No complete signed scoped verdict");
+            phase="full-family-qualification";java.util.Map<String,Integer> d=org.kanger.ContextUniversalCandidateRequest.DEFAULTS;
+            decision=lease.inspectAutomatic(d.get("rounds"),d.get("local"),limits.depth,d.get("instances"),models,limits.preparation,limits.events,familyWork,familyAudit,100000);lease.requireCurrent();
+        } catch(IllegalStateException unsupported) {
+            org.kanger.exception.ContextSignedCommitException failure=org.kanger.exception.ContextSignedCommitException.incomplete(phase,unsupported.getMessage());failure.initCause(unsupported);throw failure;
+        }
+        // Preserve existing complete-family verdict/audit contracts, including unsupported signed cases.
+        switch(decision.engine) {
+            case UNIVERSAL: requirePendingUniversalResult(decision.universal);return;
+            case GROUND: if(decision.ground.status!=org.kanger.ContextGroundClauseFamily.Status.GROUND_FIXED_POINT)throw new org.kanger.exception.ContextGroundProductionCommitException("Pending ground family: "+decision.ground.reason,decision.ground);return;
+            case WITNESS: if(decision.witness.status!=org.kanger.ContextProductionFamilyAssembly.Status.FIXED_POINT)throw new org.kanger.exception.ContextWitnessProductionCommitException("Pending witness family: "+decision.witness.reason,decision.witness);return;
+            default: throw org.kanger.exception.ContextSignedCommitException.incomplete("full-family-qualification","No complete full-family engine decision");
+        }
+    }
+
     private boolean validatingCommit;
 
     @Override
