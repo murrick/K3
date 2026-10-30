@@ -365,6 +365,22 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         return pendingNativeWrite=new ContextPendingBranchWrite(this,source,limits,familyWork,familyAudit,models);
     }
 
+    /** Explicit standalone signed/full-family writer; historical diagnostics are never inputs.
+     * Native acceptance boolean and legacy validation remain unchanged; typed refusals propagate. */
+    public synchronized boolean writeSignedProductionCandidate(Mind source,String statement,org.kanger.ContextSignedCandidateInspection.Limits limits,int familyWork,int familyAudit,int models,boolean logging) throws Exception {
+        requireInitialized();requireWritable();
+        if(statement==null||!statement.startsWith("!")||limits==null||familyWork<1||familyAudit<1||models<1)throw new IllegalArgumentException("One assertion and explicit signed/full-family bounds required");
+        org.kanger.compiler.Token token=org.kanger.enums.Tools.extractLine(statement,null);
+        if(token==null||org.kanger.enums.Tools.extractLine(statement,token)!=null)throw new IllegalArgumentException("Exactly one assertion required");
+        ContextPendingNativeWrite attempt=beginSignedProductionWrite(source,limits,familyWork,familyAudit,models);
+        try{return Boolean.TRUE.equals(source.query(statement,null,logging));}finally{endNativeWrite(attempt);}
+    }
+    synchronized ContextPendingNativeWrite beginSignedProductionWrite(Mind source,org.kanger.ContextSignedCandidateInspection.Limits limits,int familyWork,int familyAudit,int models) throws Exception {
+        if(pendingNativeWrite!=null)throw new IllegalStateException("Nested native write attempt");
+        if(limits==null||familyWork<1||familyAudit<1||models<1)throw new IllegalArgumentException("Explicit signed/full-family bounds required");
+        return pendingNativeWrite=new ContextPendingSignedWrite(this,source,limits,familyWork,familyAudit,models);
+    }
+
     private ContextPendingNativeWrite pendingNativeWrite;
     synchronized ContextPendingWitnessWrite beginWitnessWrite(Mind source,int rows,int rounds,int depth,int work,int events) throws Exception {
         if(pendingNativeWrite!=null) throw new IllegalStateException("Nested native write attempt");
