@@ -381,6 +381,25 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         return pendingNativeWrite=new ContextPendingSignedWrite(this,source,limits,familyWork,familyAudit,models);
     }
 
+    /** Explicit fixed-basis unary-model writer. Existing signed/default writers keep their gates.
+     * No historical model/result input; native boolean and legacy validation remain mandatory. */
+    public synchronized boolean writeSignedModelProductionCandidate(Mind source,String statement,java.util.List<org.kanger.SemanticTermSnapshot> namedBasis,org.kanger.ContextSignedModelInspection.Limits limits,boolean logging) throws Exception {
+        requireInitialized();requireWritable();
+        if(statement==null||!statement.startsWith("!")||limits==null)throw new IllegalArgumentException("One assertion and explicit unary-model limits required");
+        org.kanger.compiler.Token token=org.kanger.enums.Tools.extractLine(statement,null);
+        if(token==null||org.kanger.enums.Tools.extractLine(statement,token)!=null)throw new IllegalArgumentException("Exactly one assertion required");
+        ContextPendingNativeWrite attempt=beginSignedModelProductionWrite(source,namedBasis,limits);
+        try{return Boolean.TRUE.equals(source.query(statement,null,logging));}finally{endNativeWrite(attempt);}
+    }
+    synchronized ContextPendingNativeWrite beginSignedModelProductionWrite(Mind source,java.util.List<org.kanger.SemanticTermSnapshot> namedBasis,org.kanger.ContextSignedModelInspection.Limits limits) throws Exception {
+        if(pendingNativeWrite!=null)throw new IllegalStateException("Nested native write attempt");
+        if(limits==null||namedBasis==null||namedBasis.isEmpty()||namedBasis.size()>16)throw new IllegalArgumentException("Explicit bounded unary-model basis and limits required");
+        java.util.List<org.kanger.SemanticTermSnapshot> basis=java.util.Collections.unmodifiableList(new java.util.ArrayList<>(namedBasis));
+        // A caller collection may reenter while being copied under this reentrant monitor.
+        if(pendingNativeWrite!=null)throw new IllegalStateException("Nested native write attempt during basis copy");
+        return pendingNativeWrite=new ContextPendingModelWrite(this,source,basis,limits);
+    }
+
     private ContextPendingNativeWrite pendingNativeWrite;
     synchronized ContextPendingWitnessWrite beginWitnessWrite(Mind source,int rows,int rounds,int depth,int work,int events) throws Exception {
         if(pendingNativeWrite!=null) throw new IllegalStateException("Nested native write attempt");
