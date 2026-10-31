@@ -172,7 +172,7 @@ final class ContextWitnessPrimaryStepVerifier {
             if (old != null && old != input.nativeRule) throw new IllegalStateException("conflicting-source-occurrence");
             producers.computeIfAbsent(input.nativeRule,k -> new LinkedHashSet<>()).add(input.source);
             if (!bundleSources.contains(input.source)) {
-                if (input.variableCount > 2 || input.shapes.size() != input.branches) throw new IllegalStateException("producer-scope-unproved");
+                if (input.shapes.size() != input.branches) throw new IllegalStateException("producer-scope-unproved");
                 for (Clause shape : input.shapes) { work.run(); if (shape.literals.size() > maximumLiterals) throw new IllegalStateException("producer-scope-unproved"); }
                 producerShapes.put(input.nativeRule,input.shapes);
             }

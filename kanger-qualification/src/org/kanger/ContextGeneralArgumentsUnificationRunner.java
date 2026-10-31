@@ -1,0 +1,2 @@
+package org.kanger;
+public final class ContextGeneralArgumentsUnificationRunner{public static void main(String[] args){try{System.setProperty("user.home",java.nio.file.Files.createTempDirectory("general-arguments-unification-").toString());ContextGeneralArgumentsMatrix.unification();System.out.println("CONTEXT_GENERAL_ARGUMENT_UNIFICATION_PASS checks="+ContextGeneralArgumentsMatrix.checks);System.exit(0);}catch(Throwable t){t.printStackTrace();System.exit(1);}}}

@@ -89,7 +89,7 @@ public final class ContextProductionNativeBinding {
         for (List<Domain> branch : rule.getTree()) {
             work.run(); if (branch.isEmpty() || branch.size() > 8) throw new IllegalStateException("Native clause width limit");
             for (Domain domain : branch) {
-                work.run(); if (domain.getRange() < 0 || domain.getRange() > 8) throw new IllegalStateException("Native clause arity limit");
+                work.run(); if (domain.getRange() < 0) throw new IllegalStateException("Native clause arity limit");
                 for (IArgument argument : domain.getArguments()) {
                     work.run();
                     if (argument.getType() == ArgumentType.TVARIABLE) {
@@ -103,14 +103,14 @@ public final class ContextProductionNativeBinding {
             Clause clause = Clause.shapeOf(branch,mind);
             if (clause == null) throw new IllegalStateException("Unsupported native clause semantics"); result.add(clause);
         }
-        if (variables.size() > 3) throw new IllegalStateException("Native clause variable limit"); return result;
+        ContextArgumentBudget.positions(variables,work); return result;
     }
     private static void sameClauses(List<Clause> left,List<Clause> right,Runnable work) {
         if (left.size() != right.size()) throw new IllegalStateException("Origin/native clause count differs");
         boolean[] used = new boolean[right.size()];
         for (Clause clause : left) {
             boolean found = false;
-            for (int i=0;i<used.length;++i) { work.run(); if (!used[i] && clause.equivalent(right.get(i))) { used[i] = true; found = true; break; } }
+            for (int i=0;i<used.length;++i) { work.run(); if (!used[i] && clause.equivalent(right.get(i),work)) { used[i] = true; found = true; break; } }
             if (!found) throw new IllegalStateException("Origin/native signed clause or variable sharing differs");
         }
     }

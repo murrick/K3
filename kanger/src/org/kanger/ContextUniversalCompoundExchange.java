@@ -29,8 +29,8 @@ final class ContextUniversalCompoundExchange {
     private static void require(boolean valid,String reason){if(!valid)throw new IllegalStateException(reason);}
     private static boolean eligible(Proof proof){return proof.clause!=null&&proof.clause.literals.size()>1&&proof.support.sources.stream().anyMatch(s->s.localX);}
     private static void shape(Residual clause,Runnable work){
-        require(clause.literals.size()>=2&&clause.literals.size()<=8&&clause.variables.size()<=3&&clause.origins.size()<=8,"Outside bounded compound clause shape");int positive=0;
-        for(ContextUniversalInputResiduals.Literal literal:clause.literals){work.run();require(literal.arguments.size()<=8,"Compound arity limit");if(literal.positive)++positive;}require(positive<=1,"Typed Horn/constraint compound required");
+        require(clause.literals.size()>=2&&clause.literals.size()<=8&&clause.origins.size()<=8,"Outside bounded compound clause shape");int positive=0;
+        for(ContextUniversalInputResiduals.Literal literal:clause.literals){work.run();ContextArgumentBudget.positions(literal.arguments,work);if(literal.positive)++positive;}require(positive<=1,"Typed Horn/constraint compound required");
     }
     private static void limits(int clauses,int alternatives,int depth){if(clauses<1||clauses>512||alternatives<1||alternatives>256||depth<0||depth>64)throw new IllegalArgumentException("Bounded compound limits required");}
     private static List<ResidualProof> select(Map<Cut,Result> checks,int maximumClauses,int maximumAlternatives,Runnable work){

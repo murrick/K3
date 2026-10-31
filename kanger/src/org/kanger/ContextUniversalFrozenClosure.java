@@ -70,8 +70,8 @@ final class ContextUniversalFrozenClosure {
         }
     }
     private static void shape(Residual clause,Runnable work) {
-        if(clause.literals.isEmpty()||clause.literals.size()>8||clause.variables.size()>3||clause.origins.size()>8)throw new IllegalStateException("Outside bounded typed Horn shape");
-        int heads=0;for(Literal literal:clause.literals){work.run();if(literal.positive)++heads;if(literal.arguments.size()>8)throw new IllegalStateException("Typed Horn arity limit");}
+        if(clause.literals.isEmpty()||clause.literals.size()>8||clause.origins.size()>8)throw new IllegalStateException("Outside bounded typed Horn shape");
+        int heads=0;for(Literal literal:clause.literals){work.run();if(literal.positive)++heads;ContextArgumentBudget.positions(literal.arguments,work);}
         if(heads!=1)throw new IllegalStateException("Typed positive definite Horn required");
     }
     private static boolean unit(Proof proof){return proof.clause.literals.size()==1&&proof.clause.literals.get(0).positive;}

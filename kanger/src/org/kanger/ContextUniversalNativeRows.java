@@ -47,9 +47,9 @@ final class ContextUniversalNativeRows {
     private static Part clause(Clause clause,int index,Runnable work) { return clause(clause,index,2,work); }
     private static Part clause(Clause clause,int index,int maximumVariables,Runnable work) {
         String reason=null;int heads=0;Atom head=null;Set<Integer> body=new HashSet<>();
-        if(clause.literals.isEmpty()||clause.literals.size()>8||clause.variables.size()>maximumVariables)reason="Outside bounded original Horn shape";
+        if(clause.literals.isEmpty()||clause.literals.size()>8||(maximumVariables>0&&clause.variables.size()>maximumVariables))reason="Outside bounded original Horn shape";
         for(Atom literal:clause.literals) {
-            work.run();if(literal.arguments.size()>8)reason="Original Horn arity limit";
+            work.run();if(maximumVariables>0&&literal.arguments.size()>8)reason="Original Horn arity limit";ContextArgumentBudget.positions(literal.arguments,work);
             if(literal.positive){++heads;head=literal;}
             else for(Slot slot:literal.arguments){work.run();if(slot.variable>=0)body.add(slot.variable);}
         }
@@ -66,7 +66,7 @@ final class ContextUniversalNativeRows {
         if(bundle.witnesses<1||bundle.witnesses>8||bundle.atoms.isEmpty()||bundle.atoms.size()>8)reason="Outside bounded witness inventory";
         for(ContextWitnessBundle.Atom atom:bundle.atoms) {
             work.run();if(!signed&&!atom.positive)reason="Signed existential row is not a universal constraint";
-            if(atom.arguments.size()>8)reason="Witness inventory arity limit";
+            if(!signed&&atom.arguments.size()>8)reason="Witness inventory arity limit";ContextArgumentBudget.positions(atom.arguments,work);
             for(ContextWitnessBundle.Slot slot:atom.arguments){work.run();if(slot.witness>=bundle.witnesses)reason="Witness binder outside original row";}
         }
         return new Part(-1,null,reason==null?Role.WITNESS:Role.UNSUPPORTED,reason==null?(signed?"Whole signed witness row backed by audited native seed frame":"Whole positive existential row, separate materialization obligations"):reason);
@@ -102,7 +102,7 @@ final class ContextUniversalNativeRows {
             ContextSignedWitnessFrameAudit.check(receipt,f.plan,x,f.plan.foreign,f.plan.maximumRows,f.maximumRank,auditWork,auditWork);
             if(target!=null&&!f.plan.foreign.contains(target))throw new IllegalStateException("Different actual signed receiver cut");
             List<Entry> originals=new ArrayList<>(x.primary);if(target!=null)originals.addAll(target.primary);if(originals.size()>maximumRows)throw new IllegalStateException("Signed whole receiver row limit");Set<Source> sources=new HashSet<>();List<Row> rows=new ArrayList<>();
-            for(Entry entry:originals){work.run();if(!sources.add(entry.source))throw new IllegalStateException("Repeated signed receiver Source");List<Part> parts=new ArrayList<>();if(entry.bundle!=null)parts.add(witness(entry,work,true));else{if(entry.clauses.isEmpty()||entry.clauses.size()>8)throw new IllegalStateException("Whole original signed receiver clauses required");for(int n=0;n<entry.clauses.size();n++){work.run();parts.add(clause(entry.clauses.get(n),n,3,work));}}rows.add(new Row(entry,parts));}
+            for(Entry entry:originals){work.run();if(!sources.add(entry.source))throw new IllegalStateException("Repeated signed receiver Source");List<Part> parts=new ArrayList<>();if(entry.bundle!=null)parts.add(witness(entry,work,true));else{if(entry.clauses.isEmpty()||entry.clauses.size()>8)throw new IllegalStateException("Whole original signed receiver clauses required");for(int n=0;n<entry.clauses.size();n++){work.run();parts.add(clause(entry.clauses.get(n),n,0,work));}}rows.add(new Row(entry,parts));}
             return new Result(true,"Explicit signed witness frame profile; no continuation/admission authority",x,target,rows,receipt);
         }catch(Exception failure){return new Result(false,failure.toString(),x,target,Collections.emptyList(),null);}
     }

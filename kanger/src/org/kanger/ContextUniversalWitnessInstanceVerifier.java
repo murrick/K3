@@ -24,7 +24,7 @@ final class ContextUniversalWitnessInstanceVerifier {
     }
     static void whole(Entry owner,Input input,Runnable work) {
         if(owner.kind!=ContextProductionNativeBinding.Kind.CLAUSES||input.shapes.size()!=input.branches
-                ||input.variableCount>2||input.shapes.isEmpty()||input.shapes.size()>8
+                ||input.shapes.isEmpty()||input.shapes.size()>8
                 ||owner.clauses.size()!=input.shapes.size())
             throw new IllegalStateException("Incomplete universal instance owner shape");
         boolean[] used=new boolean[owner.clauses.size()];
@@ -38,7 +38,7 @@ final class ContextUniversalWitnessInstanceVerifier {
         work.run();
         if(shape.literals.size()!=1||shape.variables.isEmpty()||!shape.literals.get(0).positive)return false;
         ContextProductionCapture.Atom atom=shape.literals.get(0);
-        if(atom.arguments.size()>8)return false;
+        ContextArgumentBudget.positions(atom.arguments,work);
         return ContextWitnessPrimaryStepVerifier.producerInstance(shape,observation,work);
     }
     static Instance verify(Replay replay,ContextProductionCapture capture,ContextWitnessProjection observation,

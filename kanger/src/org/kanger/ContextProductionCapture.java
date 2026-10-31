@@ -132,10 +132,11 @@ public final class ContextProductionCapture implements AutoCloseable {
             for (Slot slot : arguments) { if (slot.variable >= 0) return null; values.add(slot.value); }
             return new Fact(predicate, positive, values);
         }
-        private boolean matches(Atom other, Map<Integer,Integer> forward, Map<Integer,Integer> reverse) {
+        private boolean matches(Atom other, Map<Integer,Integer> forward, Map<Integer,Integer> reverse) { return matches(other,forward,reverse,()->{}); }
+        private boolean matches(Atom other, Map<Integer,Integer> forward, Map<Integer,Integer> reverse,Runnable work) {
             if (positive != other.positive || !predicate.equals(other.predicate) || arguments.size() != other.arguments.size()) return false;
             for (int i=0; i<arguments.size(); ++i) {
-                Slot left = arguments.get(i), right = other.arguments.get(i);
+                work.run();Slot left = arguments.get(i), right = other.arguments.get(i);
                 if (left.variable < 0 || right.variable < 0) {
                     if (left.variable != right.variable || !left.value.semanticallyEquals(right.value)) return false;
                 } else {
@@ -191,20 +192,21 @@ public final class ContextProductionCapture implements AutoCloseable {
             }
             return atoms.isEmpty() ? null : new Clause(atoms);
         }
-        public boolean equivalent(Clause other) {
+        public boolean equivalent(Clause other) { return equivalent(other,()->{}); }
+        boolean equivalent(Clause other,Runnable work) {
             if (other == null || literals.size() != other.literals.size() || variables.size() != other.variables.size()) return false;
-            return match(other, 0, new boolean[literals.size()], new HashMap<Integer,Integer>(), new HashMap<Integer,Integer>(), new int[]{10000});
+            return match(other, 0, new boolean[literals.size()], new HashMap<Integer,Integer>(), new HashMap<Integer,Integer>(), new int[]{10000},work);
         }
         private boolean match(Clause other, int slot, boolean[] used, Map<Integer,Integer> forward,
-                              Map<Integer,Integer> reverse, int[] budget) {
-            if (--budget[0] < 0) throw new IllegalStateException("Clause comparison budget; qualification incomplete");
+                              Map<Integer,Integer> reverse, int[] budget,Runnable work) {
+            work.run();if (--budget[0] < 0) throw new IllegalStateException("Clause comparison budget; qualification incomplete");
             if (slot == literals.size()) return true;
             for (int i=0; i<used.length; ++i) if (!used[i]) {
-                if (--budget[0] < 0) throw new IllegalStateException("Clause comparison budget; qualification incomplete");
+                work.run();if (--budget[0] < 0) throw new IllegalStateException("Clause comparison budget; qualification incomplete");
                 Map<Integer,Integer> next = new HashMap<>(forward), back = new HashMap<>(reverse);
-                if (!literals.get(slot).matches(other.literals.get(i), next, back)) continue;
+                if (!literals.get(slot).matches(other.literals.get(i), next, back,work)) continue;
                 used[i] = true;
-                boolean found = match(other, slot+1, used, next, back, budget);
+                boolean found = match(other, slot+1, used, next, back, budget,work);
                 used[i] = false;
                 if (found) return true;
             }

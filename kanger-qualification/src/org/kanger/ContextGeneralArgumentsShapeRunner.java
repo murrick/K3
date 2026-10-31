@@ -1,0 +1,2 @@
+package org.kanger;
+public final class ContextGeneralArgumentsShapeRunner{public static void main(String[] args){try{System.setProperty("user.home",java.nio.file.Files.createTempDirectory("general-arguments-shapes-").toString());ContextGeneralArgumentsMatrix.shapes();System.out.println("CONTEXT_GENERAL_ARGUMENT_SHAPE_PASS checks="+ContextGeneralArgumentsMatrix.checks);System.exit(0);}catch(Throwable t){t.printStackTrace();System.exit(1);}}}

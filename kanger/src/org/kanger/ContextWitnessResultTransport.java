@@ -1095,7 +1095,7 @@ final class ContextWitnessResultTransport {
         private SignedSeedResult(boolean assembled,String phase,String reason,SignedSeedFrame output){this.assembled=assembled;this.phase=phase;this.reason=reason;this.output=output;}
     }
     private static void signedSeedShape(Atom atom,int maximumRank,Set<Origin> rank,Runnable work){
-        work.run();if(atom.arguments.size()>8)throw new IllegalStateException("Signed native seed arity limit");Origin root=null;
+        work.run();ContextArgumentBudget.positions(atom.arguments,work);Origin root=null;
         for(Slot slot:atom.arguments){work.run();if(slot.origin!=null){if(root!=null&&!root.equals(slot.origin))throw new IllegalStateException("Multiple Origins in one native seed literal");root=slot.origin;rank.add(root);}else if(slot.value==null)throw new IllegalStateException("Missing ordinary native seed value");}
         if(rank.size()>maximumRank)throw new IllegalStateException("Signed native seed rank limit");
     }
