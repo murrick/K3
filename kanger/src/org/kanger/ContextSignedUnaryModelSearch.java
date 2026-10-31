@@ -1,0 +1,46 @@
+/* MIT License. Copyright (c) 2026 Dmitry G. Quznetsov. */
+package org.kanger;
+import java.util.*;
+import org.kanger.ContextProductionCapture.*;
+import org.kanger.ContextProductionNativeBinding.*;
+import org.kanger.ContextProductionNativeBinding.Snapshot;
+import org.kanger.ContextWitnessResultTransport.Cut;
+import org.kanger.ContextSignedUnaryModel.Interpretation;
+
+/** Fixed-basis original candidates, independently audited before final extension search. No write authority. */
+final class ContextSignedUnaryModelSearch {
+ enum Status { CONSTRUCTED_FINAL_UNARY, INCOMPLETE }
+ static final class Policy {
+  final int candidates,cells,witnesses,work;final ContextSignedUnaryModel.Policy original;final ContextSignedUnaryExtensionSearch.Policy extension;
+  Policy(int candidates,int cells,int witnesses,int work,ContextSignedUnaryModel.Policy original,ContextSignedUnaryExtensionSearch.Policy extension){if(candidates<1||candidates>512||cells<0||cells>16||witnesses<0||witnesses>8||work<1||original==null||extension==null)throw new IllegalArgumentException("Bounded fixed-basis original model search required");this.candidates=candidates;this.cells=cells;this.witnesses=witnesses;this.work=work;this.original=original;this.extension=extension;}
+ }
+ static final class Result {
+  final Status status;final int tried,originals,extensionCandidates;final String reason;final ContextSignedUnaryBranchModelAudit.Receipt output;
+  private Result(Status status,int tried,int originals,int extensionCandidates,String reason,ContextSignedUnaryBranchModelAudit.Receipt output){this.status=status;this.tried=tried;this.originals=originals;this.extensionCandidates=extensionCandidates;this.reason=reason;this.output=output;}
+ }
+ private static final class Data {
+  final Cut cut;final List<SemanticTermSnapshot> points;final Set<String> names=new LinkedHashSet<>();final Set<Source> witnesses=new LinkedHashSet<>();
+  Data(Cut cut,List<SemanticTermSnapshot> points){this.cut=cut;this.points=Collections.unmodifiableList(new ArrayList<>(points));}
+ }
+ private static final class Choice {
+  final Data data;final String name;final int point,radix;final Source source;
+  Choice(Data data,String name,int point,Source source,int radix){this.data=data;this.name=name;this.point=point;this.source=source;this.radix=radix;}
+ }
+ private static void constant(Data d,SemanticTermSnapshot v,Runnable work){if(v==null)throw new IllegalArgumentException("Ordinary original constant required");for(SemanticTermSnapshot p:d.points){work.run();if(p.semanticallyEquals(v))return;}throw new IllegalArgumentException("Every original constant must be in explicit named basis");}
+ private static void name(Data d,String name,int arity,Policy p,Runnable work){work.run();if(name==null||name.isEmpty()||name.length()>256||arity!=1)throw new IllegalArgumentException("Uninterpreted unary original atoms required");d.names.add(name);if(d.names.size()>p.original.predicates)throw new IllegalStateException("Original predicate bound");}
+ private static void shape(Data d,Entry e,Policy p,Runnable work){work.run();if(e.bundle!=null){ContextWitnessBundle.Bundle b=e.bundle;if(e.kind!=Kind.WITNESS_BUNDLE||!e.clauses.isEmpty()||!b.source.equals(e.source)||b.witnesses!=1||b.atoms.isEmpty()||b.atoms.size()>8||!d.witnesses.add(e.source))throw new IllegalArgumentException("Whole original one-binder bundle required");boolean used=false;for(ContextWitnessBundle.Atom a:b.atoms){name(d,a.predicate,a.arguments.size(),p,work);ContextWitnessBundle.Slot s=a.arguments.get(0);if(s.witness==0){if(s.value!=null)throw new IllegalArgumentException("Unaliased binder required");used=true;}else if(s.witness==-1)constant(d,s.value,work);else throw new IllegalArgumentException("One original binder required");}if(!used)throw new IllegalArgumentException("Used original binder required");}
+  else{if(e.kind!=Kind.CLAUSES||e.clauses.isEmpty()||e.clauses.size()>8)throw new IllegalArgumentException("Whole original clauses required");for(Clause c:e.clauses){work.run();if(c.literals.isEmpty()||c.literals.size()>8||c.variables.size()>1)throw new IllegalArgumentException("Bounded original single-variable clauses required");Set<Integer> variables=new LinkedHashSet<>();for(Atom a:c.literals){name(d,a.predicate,a.arguments.size(),p,work);Slot s=a.arguments.get(0);if(s.variable>=0){if(s.value!=null)throw new IllegalArgumentException("Unaliased variable required");variables.add(s.variable);}else if(s.variable==-1)constant(d,s.value,work);else throw new IllegalArgumentException("Original slot required");}if(!variables.equals(c.variables))throw new IllegalArgumentException("Exact original variable coverage required");}}
+ }
+ private static Map<Cut,Interpretation> candidate(List<Data> data,List<Choice> choices,int[] digits,Runnable work){Map<Cut,Interpretation> models=new LinkedHashMap<>();for(Data d:data){Map<String,List<Boolean>> truth=new LinkedHashMap<>();Map<Source,Integer> witnesses=new LinkedHashMap<>();for(String name:d.names)truth.put(name,new ArrayList<>(Collections.nCopies(d.points.size()+1,false)));for(int i=0;i<choices.size();i++){work.run();Choice c=choices.get(i);if(c.data==d){if(c.source==null)truth.get(c.name).set(c.point,digits[i]!=0);else witnesses.put(c.source,digits[i]);}}models.put(d.cut,new Interpretation(d.points,truth,witnesses));}return models;}
+ private static boolean next(List<Choice> choices,int[] digits,Runnable work){for(int i=0;i<digits.length;i++){work.run();if(++digits[i]<choices.get(i).radix)return true;digits[i]=0;}return false;}
+ static Result run(ContextSignedWitnessNativeBranch.Receipt branch,Map<Cut,List<SemanticTermSnapshot>> bases,Policy p){int tried=0,originals=0,extensionCandidates=0;
+  try{if(branch==null||bases==null||bases.size()>16||p==null||branch.status!=ContextSignedWitnessNativeBranch.Status.QUIESCENT_SUPPLIED)throw new IllegalArgumentException("Completed actual signed branch and explicit cut bases required");new Policy(p.candidates,p.cells,p.witnesses,p.work,p.original,p.extension);ContextSignedWitnessNativeBranchAudit.check(branch,branch.x,branch.foreign,branch.policy,p.extension.audit.work,p.extension.audit.capacity);Runnable work=ContextGroundProductionRounds.budget(p.work);List<Snapshot> cuts=new ArrayList<>();cuts.add(branch.x);cuts.addAll(branch.foreign);Set<Cut> expected=new LinkedHashSet<>();List<Data> data=new ArrayList<>();int rows=0;
+   for(Snapshot cut:cuts){work.run();if(!expected.add(Cut.of(cut)))throw new IllegalArgumentException("Unique logical cuts required");for(Snapshot member:cut.physicalMembers())for(Entry ignored:member.primary){work.run();if(++rows>p.original.rows)throw new IllegalStateException("Whole physical original row bound");}}
+   if(!bases.keySet().equals(expected))throw new IllegalArgumentException("Exact ALL original cut bases required");
+   for(Snapshot cut:cuts){work.run();List<SemanticTermSnapshot> points=bases.get(Cut.of(cut));if(points==null||points.isEmpty()||points.size()>p.original.points)throw new IllegalArgumentException("Explicit bounded nonempty named basis required");Data d=new Data(Cut.of(cut),points);data.add(d);for(int i=0;i<d.points.size();i++){work.run();if(d.points.get(i)==null)throw new IllegalArgumentException("Concrete named point required");for(int j=0;j<i;j++){work.run();if(d.points.get(i).semanticallyEquals(d.points.get(j)))throw new IllegalArgumentException("Distinct named values required; not Origin disequality");}}for(Entry e:branch.x.primary)shape(d,e,p,work);if(cut!=branch.x)for(Entry e:cut.primary)shape(d,e,p,work);}
+   List<Choice> choices=new ArrayList<>();int cells=0,witnesses=0;for(Data d:data){for(String name:d.names)for(int point=0;point<=d.points.size();point++){work.run();if(++cells>p.cells)throw new IllegalStateException("Original truth cell bound including ALL-other default");choices.add(new Choice(d,name,point,null,2));}for(Source source:d.witnesses){work.run();if(++witnesses>p.witnesses)throw new IllegalStateException("Original Source-owned witness choice bound");choices.add(new Choice(d,null,-1,source,d.points.size()));}}
+   int[] digits=new int[choices.size()];while(tried<p.candidates){Map<Cut,Interpretation> models=candidate(data,choices,digits,work);++tried;ContextSignedUnaryModel.Result checked=ContextSignedUnaryModel.run(branch.x,branch.foreign,models,p.original);if(checked.status==ContextSignedUnaryModel.Status.MODELLED_SUPPLIED_UNARY){++originals;ContextSignedUnaryExtensionSearch.Result extension=ContextSignedUnaryExtensionSearch.run(checked.output,branch,p.extension);extensionCandidates+=extension.tried;if(extension.status==ContextSignedUnaryExtensionSearch.Status.CONSTRUCTED_FINAL_UNARY)return new Result(Status.CONSTRUCTED_FINAL_UNARY,tried,originals,extensionCandidates,"Original candidate and final extension independently audited; no writer capability",extension.output);}if(!next(choices,digits,work))return new Result(Status.INCOMPLETE,tried,originals,extensionCandidates,"Fixed-basis original candidate space exhausted; not a no-model proof",null);}
+   return new Result(Status.INCOMPLETE,tried,originals,extensionCandidates,"Original candidate limit reached; not a conflict proof",null);
+  }catch(Exception failure){return new Result(Status.INCOMPLETE,tried,originals,extensionCandidates,failure.toString(),null);}
+ }
+}
