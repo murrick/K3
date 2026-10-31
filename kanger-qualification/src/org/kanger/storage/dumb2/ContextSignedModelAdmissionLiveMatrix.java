@@ -1,0 +1,35 @@
+/* MIT License. Copyright (c) 2026 Dmitry G. Quznetsov. */
+package org.kanger.storage.dumb2;
+import java.nio.file.*;
+import java.lang.reflect.*;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import org.kanger.*;
+import org.kanger.ContextProductionNativeBinding.Snapshot;
+import org.kanger.ContextSignedModelAdmissionProbe.Historical;
+/** QA ONLY reflected capture of actual owning lease's bound originals; no production admission hook. */
+final class ContextSignedModelAdmissionLiveMatrix {
+ static int checks;static final int WORK=64000000;
+ static void require(boolean b,String why){checks++;if(!b)throw new AssertionError(why);}
+ interface Attempt{void run()throws Exception;}
+ static String reject(Attempt action,String why)throws Exception{String reason=null;try{action.run();}catch(Exception expected){reason=expected.getMessage();}require(reason!=null,why);return reason;}
+ @SuppressWarnings("unchecked") static Historical capture(ContextPendingProductionSnapshotSession lease,Mind child)throws Exception{
+  lease.requireCurrent();Field field=ContextPendingProductionSnapshotSession.class.getDeclaredField("childInventory");field.setAccessible(true);ContextProductionInventory inventory=(ContextProductionInventory)field.get(lease);Method bind=ContextPendingProductionSnapshotSession.class.getDeclaredMethod("bindForeign",int.class,int.class);bind.setAccessible(true);List<Snapshot> foreign=(List<Snapshot>)bind.invoke(lease,WORK,500000);Method exact=ContextPendingProductionSnapshotSession.class.getDeclaredMethod("requireNativeCuts",List.class);exact.setAccessible(true);exact.invoke(lease,foreign);ContextProductionNativeBinding.Result x=ContextProductionNativeBinding.bind(child,inventory,WORK,500000);require(x.bound,x.reason);Historical result=ContextSignedModelAdmissionProbe.construct(x.snapshot,foreign);lease.requireCurrent();exact.invoke(lease,foreign);return result;
+ }
+ static String fingerprint(ContextNativeCandidateLeaseMatrix.Fixture f,Mind m)throws Exception{return ContextProductionInventory.inspect(m,f.db.getContextId(),f.db.getRevision(),true,Collections.emptyList(),64).fingerprint;}
+ static void foreign()throws Exception{
+  Path dir=Files.createTempDirectory("signed-model-admission-foreign-");ContextNativeCandidateLeaseMatrix.create(dir,"A","!$u seed(u);");try(ContextNativeCandidateLeaseMatrix.Fixture f=new ContextNativeCandidateLeaseMatrix.Fixture(dir,"X")){
+   require(f.mind.compile("!anchor(1);",null,false),"real physical root");f.db.connectContext("A");long revision=f.db.getRevision();String parent=fingerprint(f,f.mind);Mind child=new Mind(f.mind);Historical old=null;try{require(child.compile("!@u seed(u)->~blocked(u);",null,false),"actual prepared child");try(ContextPendingProductionSnapshotSession lease=ContextPendingProductionSnapshotSession.open(f.db,child,64)){
+    ContextSignedCandidateInspection.Limits limits=ContextSignedCandidateLeaseMatrix.limits();require(lease.qualifySigned(limits).status==ContextSignedPendingGuard.Status.SCOPED_QUIESCENT,"initial current native signed gate passes");old=capture(lease,child);old.check();require(old.proposedFingerprint().equals(fingerprint(f,child)),"modelled EXACT actual prepared child");String member=old.foreignFingerprints().values().iterator().next();
+    f.db.applyConnectionCommand(f.mind,"A","!@u seed(u)->blocked(u);");require(f.db.getRevision()==revision,"physical X REVISION ALONE unchanged by initialized foreign edit");old.check();require(true,"old constructed original AND final model receipt STILL independently valid historically");String reason=reject(()->lease.requireCurrent(),"live lease rejects stale model view");require(reason.contains("changed"),"actual ownership/currentness boundary rejects changed view");ContextSignedBranchInspection.Result fresh=f.db.inspectSignedPendingProduction(child,limits);require(fresh.status==ContextSignedBranchInspection.Status.REFUTED&&!fresh.oppositions.isEmpty(),fresh.phase+": "+fresh.reason);require(fresh.foreign.stream().flatMap(c->c.members.stream()).anyMatch(v->!v.fingerprint.equals(member)),"fresh proof uses different initialized original fingerprint");require(fresh.oppositions.stream().anyMatch(o->o.sources.size()==3),"new initialized rule plus original seed and pending rule are actual three-Source contradiction");try(ContextPendingProductionSnapshotSession renewed=ContextPendingProductionSnapshotSession.open(f.db,child,64)){ContextSignedPendingGuard.Result proof=renewed.qualifySigned(limits);require(proof.status==ContextSignedPendingGuard.Status.REFUTED&&proof.evidence!=null,"fresh owning signed gate returns sealed actual contradiction, not failed model search");proof.evidence.check(WORK,64);require(true,"fresh three-Source refutation independently audited");}require(parent.equals(fingerprint(f,f.mind)),"physical parent inventory unchanged");
+   }old.check();require(true,"closing live owner does not falsify historical model proof");}finally{f.mind.release(child);}require(f.db.getRevision()==revision&&parent.equals(fingerprint(f,f.mind)),"experiment never publishes pending child");
+  }System.out.println("SIGNED_MODEL_ADMISSION_FOREIGN sameXRevision=true historicalModelStillValid=true freshActualRefutation=true owningLeaseRejects=true noPublication=true");
+ }
+ static void ownership()throws Exception{
+  Path dir=Files.createTempDirectory("signed-model-admission-owner-");try(ContextNativeCandidateLeaseMatrix.Fixture f=new ContextNativeCandidateLeaseMatrix.Fixture(dir,"X")){
+   require(f.mind.compile("!anchor(1);",null,false),"actual parent");long revision=f.db.getRevision();String parent=fingerprint(f,f.mind);Mind child=new Mind(f.mind);Historical historical;try{require(child.compile("!p(1);",null,false),"actual candidate");try(ContextPendingProductionSnapshotSession lease=ContextPendingProductionSnapshotSession.open(f.db,child,64)){
+    historical=capture(lease,child);AtomicBoolean rejected=new AtomicBoolean();Thread other=new Thread(()->{try{lease.requireCurrent();}catch(Exception expected){rejected.set(true);}});other.start();other.join();require(rejected.get(),"off-thread live owner refused");historical.check();require(true,"historical exact proof is separate from live owner capability");require(child.compile("!q(1);",null,false),"mutated actual child after model construction");require(!historical.proposedFingerprint().equals(fingerprint(f,child)),"old model binds PRE-mutation whole child inventory");historical.check();require(true,"detached old proof remains valid for original child");require(reject(()->lease.requireCurrent(),"stale actual child rejected").contains("parent/child inventory changed"),"exact actual child currentness guard");
+   }historical.check();require(true,"closed operation cannot be reopened by historical proof validity");}finally{f.mind.release(child);}require(f.db.getRevision()==revision&&parent.equals(fingerprint(f,f.mind)),"owner experiment preserves physical parent");
+  }System.out.println("SIGNED_MODEL_ADMISSION_OWNER changedChildHistoricalProof=true offThreadOwnerRejected=true noHistoricalAuthority=true noPublication=true");
+ }
+}

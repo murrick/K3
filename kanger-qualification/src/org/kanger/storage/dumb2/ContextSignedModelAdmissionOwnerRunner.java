@@ -1,0 +1,2 @@
+package org.kanger.storage.dumb2;
+public final class ContextSignedModelAdmissionOwnerRunner {public static void main(String[] args){try{System.setProperty("user.home",java.nio.file.Files.createTempDirectory("signed-admission-").toString());ContextSignedModelAdmissionLiveMatrix.ownership();System.out.println("CONTEXT_SIGNED_MODEL_ADMISSION_OWNER_PASS checks="+ContextSignedModelAdmissionLiveMatrix.checks);System.exit(0);}catch(Throwable t){t.printStackTrace();System.exit(1);}}}

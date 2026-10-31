@@ -1,0 +1,2 @@
+package org.kanger.storage.dumb2;
+public final class ContextSignedModelAdmissionForeignRunner {public static void main(String[] args){try{System.setProperty("user.home",java.nio.file.Files.createTempDirectory("signed-admission-").toString());ContextSignedModelAdmissionLiveMatrix.foreign();System.out.println("CONTEXT_SIGNED_MODEL_ADMISSION_FOREIGN_PASS checks="+ContextSignedModelAdmissionLiveMatrix.checks);System.exit(0);}catch(Throwable t){t.printStackTrace();System.exit(1);}}}
