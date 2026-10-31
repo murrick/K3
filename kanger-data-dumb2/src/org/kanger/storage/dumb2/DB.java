@@ -516,6 +516,14 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         }
     }
 
+    /** Read-only actual-child model diagnostic; scoped historical metadata is never write authority. */
+    public synchronized org.kanger.ContextSignedModelInspection.Result inspectSignedModelPendingProduction(Mind proposed,java.util.List<org.kanger.SemanticTermSnapshot> namedBasis,org.kanger.ContextSignedModelInspection.Limits limits) throws Exception {
+        if(limits==null)throw new IllegalArgumentException("Explicit native/model inspection bounds required");
+        try(ContextPendingProductionSnapshotSession lease=ContextPendingProductionSnapshotSession.open(this,proposed,limits.nativeLimits.rows)) {
+            return lease.inspectSignedModel(namedBasis,limits);
+        }
+    }
+
     /** Explicit conservative opt-in guard: native refusal FIRST, existing complete family gate SECOND.
      * No historical result input; default validateCommit and existing writer selection stay unchanged. */
     synchronized void validatePendingNativeProductionCommit(Mind proposed,org.kanger.ContextNativeCandidateInspection.Limits limits,int familyWork,int familyAudit,int models) throws Exception {

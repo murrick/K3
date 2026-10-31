@@ -177,6 +177,20 @@ final class ContextPendingProductionSnapshotSession implements AutoCloseable {
             } finally {requireCurrent();if(cuts!=null)requireNativeCuts(cuts);}
         }
     }
+    /** Fresh actual original+final model diagnostic; historical receipts are NEVER inputs. */
+    ContextSignedModelInspection.Result inspectSignedModel(List<SemanticTermSnapshot> basis,ContextSignedModelInspection.Limits limits) throws Exception {
+        synchronized(provider) {
+            requireCurrent();if(limits==null||limits.nativeLimits.rows!=rows)throw new IllegalArgumentException("Model pending row bound must match owning lease");
+            List<Snapshot> cuts=null;
+            try {
+                ContextSignedCandidateInspection.Limits nativeLimits=limits.nativeLimits;
+                ContextProductionNativeBinding.Result x=ContextProductionNativeBinding.bind(child,childInventory,nativeLimits.preparation,nativeLimits.events);
+                if(!x.bound)throw new IllegalStateException("Pending model whole-X binding incomplete: "+x.reason);
+                cuts=bindForeign(nativeLimits.preparation,nativeLimits.events);requireNativeCuts(cuts);
+                return ContextSignedModelInspection.inspect(x.snapshot,cuts,basis,limits);
+            } finally {requireCurrent();if(cuts!=null)requireNativeCuts(cuts);}
+        }
+    }
     ContextProductionFamilyAssembly.Evaluation inspectWitness(int rounds,int depth,int work,int events) throws Exception {
         synchronized(provider) {
             requireCurrent();

@@ -1,0 +1,2 @@
+package org.kanger.storage.dumb2;
+public final class ContextSignedLiveModelPositiveRunner {public static void main(String[] args){try{System.setProperty("user.home",java.nio.file.Files.createTempDirectory("signed-live-model-").toString());ContextSignedLiveModelMatrix.positive();System.out.println("CONTEXT_SIGNED_LIVE_MODEL_POSITIVE_PASS checks="+ContextSignedLiveModelMatrix.checks);System.exit(0);}catch(Throwable t){t.printStackTrace();System.exit(1);}}}
