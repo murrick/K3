@@ -400,6 +400,37 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         return pendingNativeWrite=new ContextPendingModelWrite(this,source,basis,limits);
     }
 
+    /** Explicit automatic-basis unary writer; ordinary/default selection is unchanged. */
+    public synchronized boolean writeAutomaticSignedModelCandidate(Mind source,String statement,org.kanger.ContextSignedModelInspection.Automatic limits,boolean logging) throws Exception {
+        requireInitialized();requireWritable();
+        if(statement==null||!statement.startsWith("!")||limits==null)throw new IllegalArgumentException("One assertion and automatic model policy required");
+        org.kanger.compiler.Token token=org.kanger.enums.Tools.extractLine(statement,null);
+        if(token==null||org.kanger.enums.Tools.extractLine(statement,token)!=null)throw new IllegalArgumentException("Exactly one assertion required");
+        ContextPendingNativeWrite attempt=beginAutomaticSignedModelWrite(source,limits);
+        try{return Boolean.TRUE.equals(source.query(statement,null,logging));}finally{endNativeWrite(attempt);}
+    }
+    synchronized ContextPendingNativeWrite beginAutomaticSignedModelWrite(Mind source,org.kanger.ContextSignedModelInspection.Automatic limits) throws Exception {
+        if(pendingNativeWrite!=null)throw new IllegalStateException("Nested native write attempt");
+        if(limits==null)throw new IllegalArgumentException("Automatic model policy required");
+        return pendingNativeWrite=new ContextPendingAutomaticModelWrite(this,source,limits);
+    }
+    public synchronized org.kanger.ContextSignedModelInspection.Result inspectAutomaticSignedModelPendingProduction(Mind child,org.kanger.ContextSignedModelInspection.Automatic limits) throws Exception {
+        if(limits==null)throw new IllegalArgumentException("Automatic model policy required");
+        try(ContextPendingProductionSnapshotSession lease=ContextPendingProductionSnapshotSession.open(this,child,limits.model.nativeLimits.rows)){return lease.inspectAutomaticSignedModel(limits);}
+    }
+
+    @Override public synchronized org.kanger.ContextSignedModelPublication publishSignedModelCandidate(org.kanger.interfaces.IMind source,org.kanger.ContextSignedModelRequest request) throws Exception {
+        if(!(source instanceof Mind)||request==null)throw new IllegalArgumentException("Actual model authoring source/request required");
+        requireInitialized();requireWritable();
+        org.kanger.interfaces.IContextResults.Revision before=new org.kanger.interfaces.IContextResults.Revision(getContextId(),getRevision());
+        try {
+            boolean written=writeAutomaticSignedModelCandidate((Mind)source,request.statement,request.policy,false);
+            return new org.kanger.ContextSignedModelPublication(written?org.kanger.ContextSignedModelPublication.Status.PUBLISHED:org.kanger.ContextSignedModelPublication.Status.NATIVE_REJECTED,"native-settlement",written?"Original assertion published":"Native local assertion refused",before,new org.kanger.interfaces.IContextResults.Revision(getContextId(),getRevision()),null);
+        } catch(org.kanger.exception.ContextSignedCommitException refused) {
+            return new org.kanger.ContextSignedModelPublication(refused.getSignedEvidence()==null?org.kanger.ContextSignedModelPublication.Status.INCOMPLETE:org.kanger.ContextSignedModelPublication.Status.REFUTED,refused.getPhase(),refused.getMessage(),before,new org.kanger.interfaces.IContextResults.Revision(getContextId(),getRevision()),refused.getSignedEvidence());
+        }
+    }
+
     private ContextPendingNativeWrite pendingNativeWrite;
     synchronized ContextPendingWitnessWrite beginWitnessWrite(Mind source,int rows,int rounds,int depth,int work,int events) throws Exception {
         if(pendingNativeWrite!=null) throw new IllegalStateException("Nested native write attempt");

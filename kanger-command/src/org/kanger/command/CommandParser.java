@@ -529,6 +529,10 @@ public final class CommandParser {
         switch (keyword) {
             case CANDIDATE:
                 requireRequiredArgument(tokens,3);
+                if(tokens.get(2).value.equalsIgnoreCase("model")) {
+                    requireRequiredArgument(tokens,5);if(!tokens.get(3).value.equalsIgnoreCase("write"))throw error(INVALID_GRAMMAR,"Explicit model write verb required");Map<String,Integer> bounds=new LinkedHashMap<String,Integer>();
+                    try{for(int i=5;i<tokens.size();i++){String option=tokens.get(i).value;int eq=option.indexOf('=');if(eq<1||!option.substring(eq+1).matches("[0-9]+"))throw new IllegalArgumentException("Expected model limit=integer");String key=option.substring(0,eq);if(bounds.put(key,Integer.valueOf(option.substring(eq+1)))!=null)throw new IllegalArgumentException("Repeated model limit: "+key);}return CommandInvocation.command(CommandIntent.CTX_MODEL_WRITE,args("request",new org.kanger.ContextSignedModelRequest(tokens.get(4).value,bounds)),raw);}catch(IllegalArgumentException invalid){throw error(INVALID_ARGUMENT_SHAPE,invalid.getMessage());}
+                }
                 boolean candidateWrite=tokens.get(2).value.equalsIgnoreCase("write");
                 int assertionIndex=candidateWrite?3:2;
                 requireRequiredArgument(tokens,assertionIndex+1);

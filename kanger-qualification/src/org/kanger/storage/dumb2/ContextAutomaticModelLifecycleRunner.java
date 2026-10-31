@@ -1,0 +1,2 @@
+package org.kanger.storage.dumb2;
+public final class ContextAutomaticModelLifecycleRunner {public static void main(String[] args){try{System.setProperty("user.home",java.nio.file.Files.createTempDirectory("automatic-model-").toString());ContextAutomaticModelMatrix.lifecycle();System.out.println("CONTEXT_AUTOMATIC_MODEL_LIFECYCLE_PASS checks="+ContextAutomaticModelMatrix.checks);System.exit(0);}catch(Throwable t){t.printStackTrace();System.exit(1);}}}

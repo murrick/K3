@@ -1,0 +1,13 @@
+/* MIT License. Copyright (c) 2026 Dmitry G. Quznetsov. */
+package org.kanger;
+import java.util.*;
+/** Explicit authoring request, not an ordinary/default policy switch. */
+public final class ContextSignedModelRequest {
+ public static final Map<String,Integer> DEFAULTS;
+ static{Map<String,Integer>d=new LinkedHashMap<>();d.put("points",4);d.put("fresh",2);d.put("rows",64);d.put("rounds",2);d.put("depth",16);d.put("candidates",512);d.put("cells",16);d.put("witnesses",8);d.put("work",64000000);d.put("audit",64000000);d.put("basis-work",64000000);DEFAULTS=Collections.unmodifiableMap(d);}
+ public final String statement;public final Map<String,Integer> limits;public final ContextSignedModelInspection.Automatic policy;
+ public ContextSignedModelRequest(String statement,Map<String,Integer> overrides){if(statement==null||!statement.startsWith("!")||overrides==null)throw new IllegalArgumentException("Explicit model assertion and bounds required");try{org.kanger.compiler.Token token=org.kanger.enums.Tools.extractLine(statement,null);if(token==null||org.kanger.enums.Tools.extractLine(statement,token)!=null)throw new IllegalArgumentException("Exactly one assertion required");}catch(org.kanger.exception.ParseErrorException invalid){throw new IllegalArgumentException("Invalid model assertion",invalid);}Map<String,Integer> values=new LinkedHashMap<>(DEFAULTS);for(Map.Entry<String,Integer> e:overrides.entrySet()){if(!DEFAULTS.containsKey(e.getKey())||e.getValue()==null||e.getValue()<0)throw new IllegalArgumentException("Invalid model limit: "+e.getKey());values.put(e.getKey(),e.getValue());}this.statement=statement;limits=Collections.unmodifiableMap(values);int work=limit("work"),audit=limit("audit");ContextSignedCandidateInspection.Limits nativePolicy=new ContextSignedCandidateInspection.Limits(limit("rows"),8,limit("rounds"),limit("depth"),work,500000,work,audit,64);ContextSignedModelInspection.Limits model=new ContextSignedModelInspection.Limits(nativePolicy,limit("candidates"),limit("cells"),limit("witnesses"),work,limit("points"),64,audit,16,16,8,work,65536,audit);policy=new ContextSignedModelInspection.Automatic(model,limit("points"),limit("fresh"),limit("basis-work"));}
+ public int limit(String key){Integer n=limits.get(key);if(n==null)throw new IllegalArgumentException("Unknown model limit: "+key);return n;}
+ @Override public boolean equals(Object other){return other instanceof ContextSignedModelRequest&&statement.equals(((ContextSignedModelRequest)other).statement)&&limits.equals(((ContextSignedModelRequest)other).limits);}
+ @Override public int hashCode(){return Objects.hash(statement,limits);}
+}

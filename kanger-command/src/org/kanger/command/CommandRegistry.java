@@ -345,6 +345,9 @@ public final class CommandRegistry {
         define(CommandIntent.STORAGE_REINDEX, "storage reindex <name>", "STORAGE", "Reindex one explicitly named storage.",
                 args("name", "Storage logical name."), aliases("reindex <name>"), n++);
 
+        define(CommandIntent.CTX_MODEL_WRITE,"ctx candidate model write <assertion> [<limit>=<value> ...]","CONTEXT",
+                "Explicit bounded unary-model publication with automatic constants/witness values. Quote one assertion. Optional points=4, fresh=2. Incomplete never means conflict or approval; ordinary assertions keep their policy.",
+                args("request","One original assertion and explicit optional bounds."),n++);
         define(CommandIntent.CTX_CANDIDATE_WRITE,"ctx candidate write <assertion> [<limit>=<value> ...]","CONTEXT",
                 "Console: explicit flat universal publication: freshly qualifies/audits the assertion, then runs native settlement. Uses the same limits as ctx candidate; no previous diagnostic is reused.",
                 args("request","One new assertion and optional bounded qualification limits."),n++);

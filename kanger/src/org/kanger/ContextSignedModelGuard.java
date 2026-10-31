@@ -14,6 +14,10 @@ public final class ContextSignedModelGuard {
  /** Inputs are fresh actual whole snapshots/basis only; no prior model, diagnostic or receipt input. */
  public static Result inspect(Snapshot x,List<Snapshot> foreign,List<SemanticTermSnapshot> namedBasis,ContextSignedModelInspection.Limits limits){
   ContextSignedModelEvaluation.Result r=ContextSignedModelEvaluation.run(x,foreign,namedBasis,limits);
+  return verdict(r,limits);
+ }
+ public static Result inspectAutomatic(Snapshot x,List<Snapshot> foreign,ContextSignedModelInspection.Automatic limits){return verdict(ContextSignedModelEvaluation.runAutomatic(x,foreign,limits),limits==null?null:limits.model);}
+ private static Result verdict(ContextSignedModelEvaluation.Result r,ContextSignedModelInspection.Limits limits){
   if(r.status==ContextSignedModelInspection.Status.INCOMPLETE)return new Result(Status.INCOMPLETE,r.phase,r.reason,null);
   if(r.status==ContextSignedModelInspection.Status.MODELLED_SUPPLIED)return new Result(Status.SCOPED_MODELLED_UNARY,r.phase,"Exact original and actual-final unary model checked; owning currentness/legacy gates still mandatory",null);
   try{return new Result(Status.REFUTED,"signed-refutation-audit","Actual signed refutation; never failed model search",ContextSignedPendingGuard.sealRefutation(r.x,r.cuts,limits.nativeLimits.branchPolicy(),r.branch,limits.nativeLimits.audit,limits.nativeLimits.capacity));}

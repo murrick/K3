@@ -60,6 +60,7 @@ public final class CanonicalCommandProcessor {
                 || intent == CommandIntent.STORAGE_REINDEX
                 || intent == CommandIntent.CTX_CANDIDATE
                 || intent == CommandIntent.CTX_CANDIDATE_WRITE
+                || intent == CommandIntent.CTX_MODEL_WRITE
                 || intent == CommandIntent.CTX_DMZ_EXPLAIN
                 || intent == CommandIntent.CTX_DMZ_CHOOSE
                 || intent == CommandIntent.CTX_OPINION_TREE
@@ -324,6 +325,9 @@ public final class CanonicalCommandProcessor {
                         federation.federationSnapshot(), null);
             }
 
+            case CTX_MODEL_WRITE: {
+                Object request=invocation.getArgument("request");if(!(request instanceof org.kanger.ContextSignedModelRequest))throw new IllegalArgumentException("Model authoring request required");org.kanger.ContextSignedModelPublication publication=contextFederation(user,mind).publishSignedModelCandidate(mind,(org.kanger.ContextSignedModelRequest)request);return new Result(true,publication.status==org.kanger.ContextSignedModelPublication.Status.PUBLISHED,mind,publication.description(),null,null,null);
+            }
             case CTX_CANDIDATE_WRITE: {
                 Object request=invocation.getArgument("request");
                 if(!(request instanceof ContextUniversalCandidateRequest)) throw new IllegalArgumentException("Candidate request required");

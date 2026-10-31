@@ -658,6 +658,11 @@ public interface IContextFederation extends org.kanger.interfaces.IContextResult
         throw new UnsupportedOperationException("Universal candidate publication is unavailable for this provider");
     }
 
+    /** Explicit opt-in automatic unary-model authoring; no historical result is accepted. */
+    default org.kanger.ContextSignedModelPublication publishSignedModelCandidate(IMind sourceMind,org.kanger.ContextSignedModelRequest request) throws Exception {
+        throw new UnsupportedOperationException("Unary-model publication is unavailable for this provider");
+    }
+
     /** Experimental fresh exact-pinned whole-source DMZ query. No owner escapes this operation.
      * Planning refusals are typed; acquisition/phase failures propagate as exceptions.
      * A bounded stop returns partial histories with restartRequired, never a complete answer. */

@@ -387,6 +387,15 @@ public final class CanonicalConsole {
                 }
                 return same(mind);
 
+            case CTX_MODEL_WRITE:
+                try {
+                    CanonicalCommandProcessor.Result written=COMMAND_PROCESSOR.execute(invocation,mind.getUser());
+                    if(!written.isHandled())throw new CommandErrorException("Unsupported model publication");
+                    mind=track(shutdownHook,written.getMind());System.out.println(written.getDescription());
+                } catch(org.kanger.exception.TransactionSettlementException settled) {ConsoleCandidateView.settlementFailure(settled);}
+                catch(Exception refusal){throw new CommandErrorException("Model write failed: "+(refusal.getMessage()==null?refusal.toString():refusal.getMessage()));}
+                return same(mind);
+
             case CTX_CANDIDATE_WRITE:
                 try {
                     CanonicalCommandProcessor.Result written=COMMAND_PROCESSOR.execute(invocation,mind.getUser());

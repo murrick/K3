@@ -60,6 +60,7 @@ public enum CommandIntent {
 
     CTX_CANDIDATE,
     CTX_CANDIDATE_WRITE,
+    CTX_MODEL_WRITE,
     CTX_DMZ,
     CTX_DMZ_EXPLAIN,
     CTX_DMZ_FAMILY,

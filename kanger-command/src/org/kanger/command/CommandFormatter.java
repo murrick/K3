@@ -117,6 +117,9 @@ public final class CommandFormatter {
             case STORAGE_REINDEX:
                 return "storage reindex " + argument(invocation.getArgument("name"));
 
+            case CTX_MODEL_WRITE: {
+                org.kanger.ContextSignedModelRequest model=(org.kanger.ContextSignedModelRequest)invocation.getArgument("request");StringBuilder text=new StringBuilder("ctx candidate model write ").append(argument(model.statement));for(java.util.Map.Entry<String,Integer> e:model.limits.entrySet())if(!e.getValue().equals(org.kanger.ContextSignedModelRequest.DEFAULTS.get(e.getKey())))text.append(' ').append(e.getKey()).append('=').append(e.getValue());return text.toString();
+            }
             case CTX_CANDIDATE:
             case CTX_CANDIDATE_WRITE:
                 org.kanger.ContextUniversalCandidateRequest candidate=(org.kanger.ContextUniversalCandidateRequest)invocation.getArgument("request");
