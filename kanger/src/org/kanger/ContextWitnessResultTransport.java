@@ -56,6 +56,8 @@ final class ContextWitnessResultTransport {
     }
     static final class Packet {
         final List<Item> items;
+        /** Structural owner only; never a fact or a Source proof. Signed seed audit authenticates it. */
+        final Cut anchoredX;
         final UUID identity = UUID.randomUUID();
         final UUID basis;
         final Set<Source> producers;
@@ -81,7 +83,10 @@ final class ContextWitnessResultTransport {
         private Packet(List<Item> items,UUID basis,Set<Source> producers,boolean observedStep,Cut emptyCut,Cut coveredCut,Cut roundCut,ContextWitnessEmptyTarget emptyTarget) {
             this(items,basis,producers,observedStep,emptyCut,coveredCut,roundCut,emptyTarget,null);
         }
-        private Packet(List<Item> items,UUID basis,Set<Source> producers,boolean observedStep,Cut emptyCut,Cut coveredCut,Cut roundCut,ContextWitnessEmptyTarget emptyTarget,PrivatePool privateTarget) {
+        private Packet(List<Item> items,Cut anchoredX) {this(items,null,Collections.emptySet(),false,null,null,null,null,null,anchoredX);}
+        private Packet(List<Item> items,UUID basis,Set<Source> producers,boolean observedStep,Cut emptyCut,Cut coveredCut,Cut roundCut,ContextWitnessEmptyTarget emptyTarget,PrivatePool privateTarget) {this(items,basis,producers,observedStep,emptyCut,coveredCut,roundCut,emptyTarget,privateTarget,null);}
+        private Packet(List<Item> items,UUID basis,Set<Source> producers,boolean observedStep,Cut emptyCut,Cut coveredCut,Cut roundCut,ContextWitnessEmptyTarget emptyTarget,PrivatePool privateTarget,Cut anchoredX) {
+            this.anchoredX=anchoredX;
             this.privateTarget=privateTarget;
             this.emptyTarget = emptyTarget;
             this.roundCut = roundCut;
@@ -131,7 +136,7 @@ final class ContextWitnessResultTransport {
     }
     private static PrivatePool privatePool(Packet common,ContextProductionNativeBinding.Snapshot x,ContextProductionNativeBinding.Snapshot target,int maximumWork,boolean signedCommon) {
         Runnable work=budget(maximumWork);ContextProductionFamilyAssembly.identity(x,true,work);ContextProductionFamilyAssembly.identity(target,false,work);
-        if(!Cut.of(x).equals(parentX(common.items,work)))throw new IllegalStateException("Private pool has another X view");
+        if(!Cut.of(x).equals(parentX(common,work)))throw new IllegalStateException("Private pool has another X view");
         if(x.primary.size()+target.primary.size()>64)throw new IllegalStateException("Private whole declaration limit");
         for(Item item:common.items){work.run();if(!signedCommon&&!item.atom.positive)throw new IllegalStateException("Positive common witness pool required");}
         family(common,Collections.singletonList(Cut.of(target)),maximumWork);
@@ -165,7 +170,7 @@ final class ContextWitnessResultTransport {
         if(rank.size()>8)throw new IllegalStateException("Private carrier witness rank limit");
         List<ContextProductionInputs.Declaration> declarations=new ArrayList<>();
         for(ContextProductionNativeBinding.Snapshot view:Arrays.asList(x,target))for(ContextProductionNativeBinding.Entry entry:view.primary){work.run();if(entry.bundle==null)declarations.add(new ContextProductionInputs.Declaration(entry.source,entry.statement));}
-        return new PrivatePool(common,x,target,new Packet(local),sources,declarations);
+        return new PrivatePool(common,x,target,new Packet(local,common.anchoredX),sources,declarations);
     }
     /** A local continuation receipt, deliberately not a shared-family coverage receipt. */
     static final class PrivateAdvance {
@@ -195,7 +200,7 @@ final class ContextWitnessResultTransport {
         List<Item> local=new ArrayList<>(fresh.local.items);
         for(Item item:previous.local.items)for(Support proof:item.proofs){work.run();add(local,item.atom,proof,work);}
         privateRank(local,work);
-        return new PrivatePool(common,previous.x,previous.snapshot,new Packet(local),previous.sources,previous.declarations);
+        return new PrivatePool(common,previous.x,previous.snapshot,new Packet(local,common.anchoredX),previous.sources,previous.declarations);
     }
     /** Select whole declarations from the owning native snapshots; never accept alleged caller statements. */
     private static List<Input> privateDefinitions(PrivatePool pool,Set<Source> selected,int maximumWork,int maximumEvents,Runnable work)throws Exception {
@@ -225,7 +230,7 @@ final class ContextWitnessResultTransport {
     private static Packet privateShared(Packet common,Packet local,Runnable work) {
         List<Item> shared=new ArrayList<>(common.items);
         for(Item item:local.items)for(Support proof:item.proofs){work.run();if(usesX(proof))add(shared,item.atom,proof,work);}
-        Packet output=new Packet(shared);parentX(output.items,work);return output;
+        Packet output=new Packet(shared,common.anchoredX);parentX(output,work);return output;
     }
     /** One native pass with input-enabled obligations over local before/after pools, not just X exports. */
     static PrivateAdvance advancePrivate(PrivatePool pool,Set<Source> selected,int maximumDepth,int maximumWork,int maximumEvents)throws Exception {
@@ -256,7 +261,7 @@ final class ContextWitnessResultTransport {
     /** Only a verified local input-enabled continuation can issue this common-output round receipt. */
     static Packet privateRoundOutput(PrivateAdvance step,int maximumWork) {
         Runnable work=budget(maximumWork);
-        parentX(step.output.items,work);
+        parentX(step.output,work);
         if(!retains(step.before.common,step.output,work))throw new IllegalStateException("Private round lost common input");
         return new Packet(step.output.items,step.before.common.identity,step.producers,step.localChanged,
                 step.localChanged?null:step.before.cut,null,step.before.cut,null,step.before);
@@ -304,7 +309,7 @@ final class ContextWitnessResultTransport {
             ContextUniversalDerivedReplay.Result replay=proof.input;Packet local=pool==null?input:pool.local;
             if(replay.privateInput!=(pool!=null)||!input.identity.equals(proof.basis)||!local.identity.equals(proof.localBasis))
                 throw new IllegalStateException("Derived transport has a different common/local input barrier");
-            if(!replay.parent.equals(parentX(input.items,work)))throw new IllegalStateException("Derived transport changed parent X");
+            if(!replay.parent.equals(parentX(input,work)))throw new IllegalStateException("Derived transport changed parent X");
             if(pool!=null&&(!pool.cut.equals(replay.target)||!Cut.of(pool.x).equals(replay.parent)))
                 throw new IllegalStateException("Derived transport changed owning private frame");
             for(Item item:local.items)for(Support support:item.proofs){work.run();if(support.depth>maximumDepth)throw new IllegalStateException("Derived input depth limit");}
@@ -319,7 +324,7 @@ final class ContextWitnessResultTransport {
             }
             privateRank(after,work);Packet retained=new Packet(after);
             Packet output=pool==null?retained:privateShared(input,retained,work);
-            parentX(output.items,work);
+            parentX(output,work);
             PrivatePool next=pool==null?null:new PrivatePool(input,pool.x,pool.snapshot,retained,pool.sources,pool.declarations);
             return new DerivedTransfer(true,"Observed derived facts transported; schema gaps and round coverage remain open",input,output,retained,pool,next,proof,work);
         }catch(Exception failure){return new DerivedTransfer(false,failure.getMessage(),input,null,null,pool,null,proof,work);}
@@ -355,7 +360,7 @@ final class ContextWitnessResultTransport {
             }
             // No branch sees another branch's same-round products. Private rebasing
             // happens only after every output has passed the common-input check.
-            Packet packet=new Packet(merged);parentX(packet.items,work);privateRank(packet.items,work);
+            Packet packet=new Packet(merged,family.input.anchoredX);parentX(packet,work);privateRank(packet.items,work);
             Map<Cut,PrivatePool> pools=new LinkedHashMap<>();
             for(Map.Entry<Cut,DerivedTransfer> entry:branches.entrySet())if(entry.getValue().privateAfter!=null) {
                 work.run();pools.put(entry.getKey(),rebasePrivate(entry.getValue().privateAfter,packet,maximumWork));
@@ -422,7 +427,7 @@ final class ContextWitnessResultTransport {
             ContextUniversalInputResiduals.Frame frame=replay.theory.frame;Packet local=pool==null?input:pool.local;
             if(frame.common!=input||frame.local!=local||frame.pool!=pool||replay.theory.privateInput!=(pool!=null))
                 throw new IllegalStateException("Typed transfer changed exact common/local input frame");
-            if(!replay.theory.parent.equals(parentX(input.items,work)))throw new IllegalStateException("Typed transfer changed X cut");
+            if(!replay.theory.parent.equals(parentX(input,work)))throw new IllegalStateException("Typed transfer changed X cut");
             if(pool!=null&&(!pool.cut.equals(replay.theory.target)||!Cut.of(pool.x).equals(replay.theory.parent)))
                 throw new IllegalStateException("Typed transfer changed owning private cut");
             Set<Origin> known=new HashSet<>();for(Origin origin:replay.carried.values()){work.run();known.add(origin);}
@@ -445,7 +450,7 @@ final class ContextWitnessResultTransport {
             for(Item item:after)for(Support support:item.proofs){work.run();if(support.depth>maximumDepth)throw new IllegalStateException("Uncovered typed fact depth limit");}
             privateRank(after,work);Packet retained=new Packet(after);
             if(!retains(local,retained,work))throw new IllegalStateException("Typed transfer lost a local input proof");
-            Packet output=pool==null?retained:privateShared(input,retained,work);parentX(output.items,work);
+            Packet output=pool==null?retained:privateShared(input,retained,work);parentX(output,work);
             PrivatePool next=pool==null?null:new PrivatePool(input,pool.x,pool.snapshot,retained,pool.sources,pool.declarations);
             return new TypedTransfer(true,"Minimum typed fixed/event/instance products transported; full round qualification remains open",input,output,retained,pool,next,proof,instances,work);
         }catch(Exception failure){return new TypedTransfer(false,failure.getMessage(),input,null,null,pool,null,proof,instances,work);}
@@ -512,8 +517,8 @@ final class ContextWitnessResultTransport {
                 add(after,typedAtom(unit.clause,known,true,work),unit.support,work);
             }
             for(Item item:after)for(Support support:item.proofs){work.run();if(support.depth>maximumDepth)throw new IllegalStateException("Uncovered signed fact depth limit");}
-            privateRank(after,work);Packet retained=new Packet(after);if(!retains(local,retained,work))throw new IllegalStateException("Signed transfer lost an input proof");
-            Packet output=pool==null?retained:privateShared(input,retained,work);parentX(output.items,work);
+            privateRank(after,work);Packet retained=new Packet(after,input.anchoredX);if(!retains(local,retained,work))throw new IllegalStateException("Signed transfer lost an input proof");
+            Packet output=pool==null?retained:privateShared(input,retained,work);parentX(output,work);
             PrivatePool next=pool==null?null:new PrivatePool(input,pool.x,pool.snapshot,retained,pool.sources,pool.declarations);
             return new ConstraintTransfer(true,"Checked fixed signed units transported; symbolic/all-cut qualification remains open",proof,input,output,retained,pool,next,work,bindings,certificate);
         }catch(Exception failure){return new ConstraintTransfer(false,failure.toString(),proof,input,null,null,pool,null,work);}
@@ -545,7 +550,7 @@ final class ContextWitnessResultTransport {
             }
             // No merge or private rebase before all supplied outputs have passed validation.
             List<Item> merged=new ArrayList<>(family.input.items);for(ConstraintTransfer b:branches.values())for(Item item:b.output.items)for(Support support:item.proofs){work.run();add(merged,item.atom,support,work);}
-            Packet packet=new Packet(merged);parentX(packet.items,work);privateRank(packet.items,work);Map<Cut,PrivatePool> pools=new LinkedHashMap<>();
+            Packet packet=new Packet(merged,family.input.anchoredX);parentX(packet,work);privateRank(packet.items,work);Map<Cut,PrivatePool> pools=new LinkedHashMap<>();
             for(Map.Entry<Cut,ConstraintTransfer> e:branches.entrySet())if(e.getValue().privateAfter!=null){work.run();pools.put(e.getKey(),rebasePrivateSigned(e.getValue().privateAfter,packet,maximumWork));}
             return new ConstraintBarrier(true,"All supplied signed products merged; next-barrier qualification remains required",packet,!sameItems(family.input.items,packet.items,work),localChanged,branches,pools);
         }catch(Exception failure){return new ConstraintBarrier(false,failure.toString(),null,false,false,Collections.emptyMap(),Collections.emptyMap());}
@@ -564,11 +569,11 @@ final class ContextWitnessResultTransport {
                 branches.put(e.getKey(),b);localChanged|=!sameItems(e.getValue().local.items,b.local.items,work);
             }
             List<Item> shared=new ArrayList<>(entry.common.items);for(ConstraintTransfer b:branches.values())for(Item item:b.output.items)for(Support proof:item.proofs){work.run();add(shared,item.atom,proof,work);}
-            parentX(shared,work);privateRank(shared,work);Packet common=new Packet(shared);Map<Cut,PrivatePool> pools=new LinkedHashMap<>();
+            privateRank(shared,work);Packet common=new Packet(shared,entry.common.anchoredX);parentX(common,work);Map<Cut,PrivatePool> pools=new LinkedHashMap<>();
             for(Map.Entry<Cut,PrivatePool> e:entry.pools.entrySet()){
                 work.run();PrivatePool old=e.getValue();if(old.signedSeeds!=seeds||old.common!=entry.common)throw new IllegalStateException("Different original signed seed scope");
                 List<Item> local=new ArrayList<>(common.items);for(Item item:branches.get(e.getKey()).local.items)for(Support proof:item.proofs){work.run();add(local,item.atom,proof,work);}privateRank(local,work);
-                pools.put(e.getKey(),new PrivatePool(common,old.x,old.snapshot,new Packet(local),old.sources,old.declarations,seeds));
+                pools.put(e.getKey(),new PrivatePool(common,old.x,old.snapshot,new Packet(local,common.anchoredX),old.sources,old.declarations,seeds));
             }
             return new ConstraintBarrier(true,"First signed-witness all-cut barrier; next receiver qualification still required",common,!sameItems(entry.common.items,common.items,work),localChanged,branches,pools);
         }catch(Exception failure){return new ConstraintBarrier(false,failure.toString(),null,false,false,Collections.emptyMap(),Collections.emptyMap());}
@@ -588,8 +593,8 @@ final class ContextWitnessResultTransport {
                 ContextSignedWitnessNextReceiver.productOwner(next,e.getKey(),b);
                 ContextSignedWitnessContinuationScope.frame(scope,e.getValue().input,input,b.privateBefore);ContextUniversalSignedProductAudit.Result audit=capacity==0?ContextUniversalSignedProductAudit.bind(e.getValue(),b,65536,maximumWork):ContextUniversalSignedProductAudit.bindWithValidationReuse(e.getValue(),b,65536,maximumWork,capacity).result;if(!audit.bound)throw new IllegalStateException(audit.reason);branches.put(e.getKey(),b);localChanged|=!sameItems(e.getValue().local.items,b.local.items,work);
             }
-            List<Item> shared=new ArrayList<>(input.items);for(ConstraintTransfer b:branches.values())for(Item item:b.output.items)for(Support proof:item.proofs){work.run();add(shared,item.atom,proof,work);}parentX(shared,work);privateRank(shared,work);Packet common=new Packet(shared);
-            Map<Cut,PrivatePool> pools=new LinkedHashMap<>();for(Map.Entry<Cut,PrivatePool> e:prior.privatePools.entrySet()){work.run();PrivatePool old=e.getValue();if(old.signedSeeds!=scope.seeds||old.common!=input)throw new IllegalStateException("Different original successor private scope");List<Item> local=new ArrayList<>(common.items);for(Item item:branches.get(e.getKey()).local.items)for(Support proof:item.proofs){work.run();add(local,item.atom,proof,work);}privateRank(local,work);pools.put(e.getKey(),new PrivatePool(common,old.x,old.snapshot,new Packet(local),old.sources,old.declarations,scope.seeds));}
+            List<Item> shared=new ArrayList<>(input.items);for(ConstraintTransfer b:branches.values())for(Item item:b.output.items)for(Support proof:item.proofs){work.run();add(shared,item.atom,proof,work);}privateRank(shared,work);Packet common=new Packet(shared,input.anchoredX);parentX(common,work);
+            Map<Cut,PrivatePool> pools=new LinkedHashMap<>();for(Map.Entry<Cut,PrivatePool> e:prior.privatePools.entrySet()){work.run();PrivatePool old=e.getValue();if(old.signedSeeds!=scope.seeds||old.common!=input)throw new IllegalStateException("Different original successor private scope");List<Item> local=new ArrayList<>(common.items);for(Item item:branches.get(e.getKey()).local.items)for(Support proof:item.proofs){work.run();add(local,item.atom,proof,work);}privateRank(local,work);pools.put(e.getKey(),new PrivatePool(common,old.x,old.snapshot,new Packet(local,common.anchoredX),old.sources,old.declarations,scope.seeds));}
             return new ConstraintBarrier(true,"Audited successor signed-witness barrier; later receiver qualification required",common,!sameItems(input.items,common.items,work),localChanged,branches,pools);
         }catch(Exception failure){return new ConstraintBarrier(false,failure.toString(),null,false,false,Collections.emptyMap(),Collections.emptyMap());}
     }
@@ -618,7 +623,7 @@ final class ContextWitnessResultTransport {
                 for(Item item:branch.output.items)for(Support support:item.proofs){work.run();add(merged,item.atom,support,work);}
                 branches.put(cut,branch);localChanged|=branch.localChanged;
             }
-            Packet packet=new Packet(merged);parentX(packet.items,work);privateRank(packet.items,work);
+            Packet packet=new Packet(merged,family.input.anchoredX);parentX(packet,work);privateRank(packet.items,work);
             Map<Cut,PrivatePool> pools=new LinkedHashMap<>();
             for(Map.Entry<Cut,TypedTransfer> entry:branches.entrySet())if(entry.getValue().privateAfter!=null) {
                 work.run();pools.put(entry.getKey(),rebasePrivate(entry.getValue().privateAfter,packet,maximumWork));
@@ -738,7 +743,7 @@ final class ContextWitnessResultTransport {
                         throw new IllegalStateException("Covered witness branch has a different target cut");
                     if (output.roundCut != null && !cut.equals(output.roundCut))
                         throw new IllegalStateException("Round witness branch has a different target cut");
-                    if (!parent.equals(parentX(output.items,work))) throw new IllegalStateException("Witness branch changed parent X");
+                    if (!parent.equals(parentX(output,work))) throw new IllegalStateException("Witness branch changed parent X");
                     boolean matched = output.emptyTarget != null;
                     if (matched) output.emptyTarget.validate(cut,work);
                     if(output.privateTarget!=null) {
@@ -776,7 +781,7 @@ final class ContextWitnessResultTransport {
         }
     }
     static Family family(Packet input,List<Cut> expected,int maximumWork) {
-        Runnable work = budget(maximumWork); Cut parent = parentX(input.items,work);
+        Runnable work = budget(maximumWork); Cut parent = parentX(input,work);
         if (expected.isEmpty() || expected.size() > 16) throw new IllegalArgumentException("Bounded nonempty witness family required");
         Set<UUID> contexts = new HashSet<>();
         for (Cut cut : expected) {
@@ -787,6 +792,12 @@ final class ContextWitnessResultTransport {
             cut.claimContexts(contexts,work);
         }
         return new Family(input,expected,parent);
+    }
+    private static Cut parentX(Packet packet,Runnable work) {
+        if(packet.items.isEmpty()&&packet.anchoredX!=null){work.run();if(!packet.anchoredX.localX)throw new IllegalStateException("Signed structural X anchor must be local");return packet.anchoredX;}
+        Cut inferred=parentX(packet.items,work);
+        if(packet.anchoredX!=null&&!packet.anchoredX.equals(inferred))throw new IllegalStateException("Structural X anchor disagrees with actual proof Sources");
+        return inferred;
     }
     private static Cut parentX(List<Item> items,Runnable work) {
         Cut parent = null;
@@ -803,7 +814,7 @@ final class ContextWitnessResultTransport {
         return parent;
     }
     /** Equality of the logical/proof pool, ignoring allocation IDs and list order. Not a coverage verdict. */
-    static boolean sameContents(Packet left,Packet right,int maximumWork) { return sameItems(left.items,right.items,budget(maximumWork)); }
+    static boolean sameContents(Packet left,Packet right,int maximumWork) { return (!left.items.isEmpty()||!right.items.isEmpty()||Objects.equals(left.anchoredX,right.anchoredX))&&sameItems(left.items,right.items,budget(maximumWork)); }
     /** A shorter proof with the same whole source set may replace a carried one. */
     static boolean retains(Packet input,Packet output,Runnable work) {
         for (Item item : input.items) {
@@ -1021,6 +1032,7 @@ final class ContextWitnessResultTransport {
     /** Fresh private logical carrier plus an immutable ledger, not authenticated primary inputs. */
     static Replay restore(Packet packet,int maximumWork) throws Exception {
         Runnable work = budget(maximumWork); User user = new User(); Mind target = new Mind(user); user.setCurrentMind(target);
+        if(packet.items.isEmpty()&&packet.anchoredX!=null){parentX(packet,work);return new Replay(target,Collections.emptyMap(),packet.items);}
         Map<Origin,Integer> binders = new LinkedHashMap<>();
         for (Item item : packet.items) for (Slot slot : item.atom.arguments) {
             work.run(); if (slot.origin != null && !binders.containsKey(slot.origin)) binders.put(slot.origin,binders.size());
@@ -1099,8 +1111,8 @@ final class ContextWitnessResultTransport {
         try{
             ContextSignedWitnessPlanAudit.check(plan,x,foreign,maximumRows,auditWork);Runnable work=budget(maximumWork);List<Item> shared=new ArrayList<>();Set<Origin> commonRank=new HashSet<>();phase="common";
             for(ContextSignedWitnessPlan.Row row:plan.plan.rows)if(row.cut==x){work.run();signedPlanSeeds(row,shared,maximumRank,commonRank,work);}
-            Packet common=new Packet(shared);if(!parentX(common.items,work).equals(Cut.of(x)))throw new IllegalStateException("Signed common has different actual X");phase="private";Map<Cut,Packet> locals=new LinkedHashMap<>();
-            for(ContextProductionNativeBinding.Snapshot target:plan.foreign){work.run();List<Item> local=new ArrayList<>(common.items);Set<Origin> rank=new HashSet<>(commonRank);for(ContextSignedWitnessPlan.Row row:plan.plan.rows)if(row.cut==target){work.run();signedPlanSeeds(row,local,maximumRank,rank,work);}if(locals.put(Cut.of(target),new Packet(local))!=null)throw new IllegalStateException("Repeated signed seed cut");}
+            Packet common=new Packet(shared,Cut.of(x));if(!parentX(common,work).equals(Cut.of(x)))throw new IllegalStateException("Signed common has different actual X");phase="private";Map<Cut,Packet> locals=new LinkedHashMap<>();
+            for(ContextProductionNativeBinding.Snapshot target:plan.foreign){work.run();List<Item> local=new ArrayList<>(common.items);Set<Origin> rank=new HashSet<>(commonRank);for(ContextSignedWitnessPlan.Row row:plan.plan.rows)if(row.cut==target){work.run();signedPlanSeeds(row,local,maximumRank,rank,work);}if(locals.put(Cut.of(target),new Packet(local,Cut.of(x)))!=null)throw new IllegalStateException("Repeated signed seed cut");}
             phase="final-plan-audit";ContextSignedWitnessPlanAudit.check(plan,x,foreign,maximumRows,auditWork);return new SignedSeedResult(true,"assembled","Original signed primary seeds; no native inference/coverage/admission",new SignedSeedFrame(plan,maximumRank,common,locals));
         }catch(Exception failure){return new SignedSeedResult(false,phase,failure.toString(),null);}
     }
