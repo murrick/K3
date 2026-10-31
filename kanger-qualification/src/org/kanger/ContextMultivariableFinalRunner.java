@@ -1,0 +1,2 @@
+package org.kanger;
+public final class ContextMultivariableFinalRunner {public static void main(String[] args){try{System.setProperty("user.home",java.nio.file.Files.createTempDirectory("multivariable-final-").toString());ContextMultivariableModelMatrix.finalAudit();System.out.println("CONTEXT_MULTIVARIABLE_FINAL_PASS checks="+ContextMultivariableModelMatrix.checks);System.exit(0);}catch(Throwable t){t.printStackTrace();System.exit(1);}}}

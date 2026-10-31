@@ -1,0 +1,2 @@
+package org.kanger;
+public final class ContextMultivariableTopologyRunner {public static void main(String[] args){try{System.setProperty("user.home",java.nio.file.Files.createTempDirectory("multivariable-topology-").toString());ContextMultivariableModelMatrix.topology();System.out.println("CONTEXT_MULTIVARIABLE_TOPOLOGY_PASS checks="+ContextMultivariableModelMatrix.checks);System.exit(0);}catch(Throwable t){t.printStackTrace();System.exit(1);}}}
