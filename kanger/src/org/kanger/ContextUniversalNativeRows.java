@@ -44,9 +44,10 @@ final class ContextUniversalNativeRows {
             this.sources=Collections.unmodifiableSet(sources);withinShape=classified&&rows.stream().allMatch(r->r.withinShape);
         }
     }
-    private static Part clause(Clause clause,int index,Runnable work) {
+    private static Part clause(Clause clause,int index,Runnable work) { return clause(clause,index,2,work); }
+    private static Part clause(Clause clause,int index,int maximumVariables,Runnable work) {
         String reason=null;int heads=0;Atom head=null;Set<Integer> body=new HashSet<>();
-        if(clause.literals.isEmpty()||clause.literals.size()>8||clause.variables.size()>2)reason="Outside bounded original Horn shape";
+        if(clause.literals.isEmpty()||clause.literals.size()>8||clause.variables.size()>maximumVariables)reason="Outside bounded original Horn shape";
         for(Atom literal:clause.literals) {
             work.run();if(literal.arguments.size()>8)reason="Original Horn arity limit";
             if(literal.positive){++heads;head=literal;}
@@ -101,7 +102,7 @@ final class ContextUniversalNativeRows {
             ContextSignedWitnessFrameAudit.check(receipt,f.plan,x,f.plan.foreign,f.plan.maximumRows,f.maximumRank,auditWork,auditWork);
             if(target!=null&&!f.plan.foreign.contains(target))throw new IllegalStateException("Different actual signed receiver cut");
             List<Entry> originals=new ArrayList<>(x.primary);if(target!=null)originals.addAll(target.primary);if(originals.size()>maximumRows)throw new IllegalStateException("Signed whole receiver row limit");Set<Source> sources=new HashSet<>();List<Row> rows=new ArrayList<>();
-            for(Entry entry:originals){work.run();if(!sources.add(entry.source))throw new IllegalStateException("Repeated signed receiver Source");List<Part> parts=new ArrayList<>();if(entry.bundle!=null)parts.add(witness(entry,work,true));else{if(entry.clauses.isEmpty()||entry.clauses.size()>8)throw new IllegalStateException("Whole original signed receiver clauses required");for(int n=0;n<entry.clauses.size();n++){work.run();parts.add(clause(entry.clauses.get(n),n,work));}}rows.add(new Row(entry,parts));}
+            for(Entry entry:originals){work.run();if(!sources.add(entry.source))throw new IllegalStateException("Repeated signed receiver Source");List<Part> parts=new ArrayList<>();if(entry.bundle!=null)parts.add(witness(entry,work,true));else{if(entry.clauses.isEmpty()||entry.clauses.size()>8)throw new IllegalStateException("Whole original signed receiver clauses required");for(int n=0;n<entry.clauses.size();n++){work.run();parts.add(clause(entry.clauses.get(n),n,3,work));}}rows.add(new Row(entry,parts));}
             return new Result(true,"Explicit signed witness frame profile; no continuation/admission authority",x,target,rows,receipt);
         }catch(Exception failure){return new Result(false,failure.toString(),x,target,Collections.emptyList(),null);}
     }

@@ -58,7 +58,7 @@ final class ContextUniversalUnitClosure {
         }
     }
     private static void shape(Clause clause,boolean primary,Runnable work) {
-        if(clause.literals.isEmpty()||clause.literals.size()>8||clause.variables.size()>2)throw new IllegalStateException("Outside bounded symbolic Horn shape");
+        if(clause.literals.isEmpty()||clause.literals.size()>8||clause.variables.size()>3)throw new IllegalStateException("Outside bounded symbolic Horn shape");
         Atom head=null;Set<Integer> body=new HashSet<>();
         for(Atom literal:clause.literals) {
             work.run();if(literal.arguments.size()>8)throw new IllegalStateException("Symbolic Horn arity limit");

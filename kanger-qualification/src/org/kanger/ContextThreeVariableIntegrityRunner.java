@@ -1,0 +1,2 @@
+package org.kanger;
+public final class ContextThreeVariableIntegrityRunner{public static void main(String[] args){try{System.setProperty("user.home",java.nio.file.Files.createTempDirectory("three-variable-integrity-").toString());ContextThreeVariableNativeMatrix.integrity();System.out.println("CONTEXT_THREE_VARIABLE_INTEGRITY_PASS checks="+ContextThreeVariableNativeMatrix.checks);System.exit(0);}catch(Throwable t){t.printStackTrace();System.exit(1);}}}

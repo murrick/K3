@@ -63,7 +63,7 @@ final class ContextUniversalFrozenConstraints {
     private static boolean same(Residual a,Residual b,Runnable work){return a==null?b==null:b!=null&&a.equivalent(b,work);}
     private static void shape(Residual clause,Runnable work) {
         if(clause==null)return;
-        if(clause.literals.isEmpty()||clause.literals.size()>8||clause.variables.size()>2||clause.origins.size()>8)throw new IllegalStateException("Outside bounded rigid-Origin Horn shape");
+        if(clause.literals.isEmpty()||clause.literals.size()>8||clause.variables.size()>3||clause.origins.size()>8)throw new IllegalStateException("Outside bounded rigid-Origin Horn shape");
         int heads=0;for(Literal literal:clause.literals){work.run();if(literal.positive)++heads;if(literal.arguments.size()>8)throw new IllegalStateException("Rigid-Origin Horn arity limit");}
         if(heads>1)throw new IllegalStateException("Horn producer or headless constraint required");
     }
