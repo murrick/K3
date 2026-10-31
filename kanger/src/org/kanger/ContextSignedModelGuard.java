@@ -3,10 +3,10 @@ package org.kanger;
 import java.util.*;
 import org.kanger.ContextProductionNativeBinding.Snapshot;
 
-/** Fresh bounded unary qualification; owning provider must guard currentness and settlement. */
+/** Fresh bounded model qualification; owning provider must guard currentness and settlement. */
 public final class ContextSignedModelGuard {
  private ContextSignedModelGuard(){}
- public enum Status { SCOPED_MODELLED_UNARY, REFUTED, INCOMPLETE }
+ public enum Status { SCOPED_MODELLED_UNARY, SCOPED_MODELLED_RELATIONAL, REFUTED, INCOMPLETE }
  public static final class Result {
   public final Status status;public final String phase,reason;public final ContextSignedPendingGuard.Evidence evidence;
   private Result(Status status,String phase,String reason,ContextSignedPendingGuard.Evidence evidence){this.status=status;this.phase=phase;this.reason=reason;this.evidence=evidence;}
@@ -19,7 +19,7 @@ public final class ContextSignedModelGuard {
  public static Result inspectAutomatic(Snapshot x,List<Snapshot> foreign,ContextSignedModelInspection.Automatic limits){return verdict(ContextSignedModelEvaluation.runAutomatic(x,foreign,limits),limits==null?null:limits.model);}
  private static Result verdict(ContextSignedModelEvaluation.Result r,ContextSignedModelInspection.Limits limits){
   if(r.status==ContextSignedModelInspection.Status.INCOMPLETE)return new Result(Status.INCOMPLETE,r.phase,r.reason,null);
-  if(r.status==ContextSignedModelInspection.Status.MODELLED_SUPPLIED)return new Result(Status.SCOPED_MODELLED_UNARY,r.phase,"Exact original and actual-final unary model checked; owning currentness/legacy gates still mandatory",null);
+  if(r.status==ContextSignedModelInspection.Status.MODELLED_SUPPLIED)return new Result(r.relational==null?Status.SCOPED_MODELLED_UNARY:Status.SCOPED_MODELLED_RELATIONAL,r.phase,"Exact original and actual-final model checked; owning currentness/legacy gates still mandatory",null);
   try{return new Result(Status.REFUTED,"signed-refutation-audit","Actual signed refutation; never failed model search",ContextSignedPendingGuard.sealRefutation(r.x,r.cuts,limits.nativeLimits.branchPolicy(),r.branch,limits.nativeLimits.audit,limits.nativeLimits.capacity));}
   catch(Exception failure){return new Result(Status.INCOMPLETE,"signed-refutation-audit",failure.toString(),null);}
  }

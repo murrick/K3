@@ -11,7 +11,7 @@ final class ContextSignedUnaryModel {
  enum Status { MODELLED_SUPPLIED_UNARY, INCOMPLETE }
  static final class Policy {
   final int rows,points,predicates,work;
-  Policy(int rows,int points,int predicates,int work){if(rows<1||rows>64||points<1||points>16||predicates<1||predicates>64||work<1)throw new IllegalArgumentException("Bounded original unary model policy required");this.rows=rows;this.points=points;this.predicates=predicates;this.work=work;}
+  Policy(int rows,int points,int predicates,int work){if(rows<1||rows>64||points<1||predicates<1||predicates>64||work<1)throw new IllegalArgumentException("Bounded original unary model policy required");this.rows=rows;this.points=points;this.predicates=predicates;this.work=work;}
  }
  static final class Interpretation {
   final List<SemanticTermSnapshot> points;final Map<String,List<Boolean>> truth;final Map<Source,Integer> witnesses;
