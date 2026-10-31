@@ -15,7 +15,7 @@ final class DmzCacheRestrictionSet {
         this.patterns=Collections.unmodifiableList(new ArrayList<DmzProofWitnesses.NoGood>(patterns));
     }
     static DmzCacheRestrictionSet begin(DmzCacheCollisionEvidence evidence,Mind target) throws Exception {
-        if(evidence==null || !evidence.isCurrent(target))throw new IllegalStateException("Current cache evidence required");
+        if(evidence==null || !evidence.isInitial() || !evidence.isCurrent(target))throw new IllegalStateException("Current cache evidence required");
         return new DmzCacheRestrictionSet(evidence,Collections.<DmzProofWitnesses.Witness>emptyList(),Collections.<DmzProofWitnesses.NoGood>emptyList(),evidence.graph);
     }
     DmzCacheRestrictionSet append(DmzProofWitnesses.Witness selected,Mind target,int budget) throws Exception {

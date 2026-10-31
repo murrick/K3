@@ -712,6 +712,12 @@ final class TerminalSupportCapture implements AutoCloseable {
         ACTIVE.set(this);
     }
 
+    static TerminalSupportCapture currentCapture() {
+        TerminalSupportCapture capture=ACTIVE.get();
+        if(capture==null)throw new IllegalStateException("Active capture scope required");
+        capture.requireActive();return capture;
+    }
+
     static TerminalSupportCapture begin() { return new TerminalSupportCapture(null); }
 
     static TerminalSupportCapture begin(Mind operationBoundary) {

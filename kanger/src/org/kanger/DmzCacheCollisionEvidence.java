@@ -20,13 +20,22 @@ final class DmzCacheCollisionEvidence {
         private final Mind target;
         private final TerminalSupportCapture.Checkpoint state;
         private final DmzReplayProvenance.SourceCheckpoint sources;
+        private final DmzTypedNativeResume.Result origin;
+        private final CollisionProofCapture.Conflict authorizedEvent;
         private Baseline(TerminalSupportCapture capture,Mind target) throws Exception {
             this.capture=capture;this.target=target;state=capture.baselineCheckpoint(target);
-            sources=DmzReplayProvenance.sourceCheckpoint(target);
+            sources=DmzReplayProvenance.sourceCheckpoint(target);origin=null;authorizedEvent=null;
+        }
+        private Baseline(Baseline prior,DmzTypedNativeResume.Result origin,CollisionProofCapture.Conflict event) {
+            capture=prior.capture;target=prior.target;state=prior.state;sources=prior.sources;
+            this.origin=origin;authorizedEvent=event;
+        }
+        boolean stateCurrent(Mind candidate) throws Exception {
+            return candidate==target && capture.isCurrent(state,target) && sources.isCurrent(target);
         }
         boolean current(CollisionProofCapture.Conflict event,Mind candidate) throws Exception {
-            return candidate==target && event!=null && capture.isCurrent(state,target)
-                    && sources.isCurrent(target) && capture.followsImmediate(state,event.observations);
+            return event!=null && stateCurrent(candidate) && (authorizedEvent==null
+                    ?capture.followsImmediate(state,event.observations):authorizedEvent==event);
         }
     }
     final boolean eligible,truncated,complete=false;
@@ -44,6 +53,16 @@ final class DmzCacheCollisionEvidence {
     }
     static Baseline beforeOperation(TerminalSupportCapture capture,Mind target) throws Exception {
         return new Baseline(capture,target);
+    }
+    static DmzCacheCollisionEvidence successor(DmzTypedNativeResume.Result result,Mind target,int budget) throws Exception {
+        Baseline prior=result.successorBaseline(target);
+        if(prior==null)throw new IllegalStateException("Current owned rejected continuation required");
+        CollisionProofCapture.Conflict event=result.conflicts.get(result.conflicts.size()-1);
+        return bind(new Baseline(prior,result,event),event,target,budget);
+    }
+    boolean isInitial(){return baseline.origin==null;}
+    boolean followsSelections(List<DmzProofWitnesses.Witness> selections,Mind target) throws Exception {
+        return baseline.origin!=null && isCurrent(target) && baseline.origin.issuedFor(selections,target);
     }
     static DmzCacheCollisionEvidence bind(Baseline baseline,CollisionProofCapture.Conflict event,Mind target,int budget) throws Exception {
         if(budget<1 || budget>10000)throw new IllegalArgumentException("Bounded cache collision evidence required");
