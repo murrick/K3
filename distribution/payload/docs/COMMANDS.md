@@ -726,7 +726,7 @@ additional original facts.
 | `depth` | 16 | Native proof/traversal depth bound. |
 | `candidates` | 512 | Model candidate bound, at most 512. |
 | `cells` | 16 | Relation/default/exception or complete-cell search budget, at most 16. |
-| `witnesses` | 8 | Source-owned witness choice budget. |
+| `witnesses` | 8 | Source/binder choice budget across all cuts. |
 | `work` | 64000000 | Construction/native work budgets. |
 | `audit` | 64000000 | Independent audit work budgets. |
 | `basis-work` | 64000000 | Complete basis collection/fresh-value search work. |
@@ -745,8 +745,17 @@ It uses compact relation defaults/exceptions and checks original plus actual
 final common/private/unit/compound/terminal obligations. Uniform relations and
 sparse ground requirements can avoid a full Cartesian table. Exhausting the
 search remains INCOMPLETE. Current row/clause/predicate/cell/witness/depth and
-quantifier-profile bounds remain; functions, arbitrary mixed quantifiers and
-multiple-binder patterns are not thereby qualified. Independent A-X and B-X
+quantifier-profile bounds remain; functions and arbitrary mixed quantifiers remain outside this profile.
+For a primary existential conjunction, up to four captured binders can have
+separate model choices, keyed by original Source and binder ordinal. For example,
+`ctx candidate model write "!$u $v p(u)&&~p(v);"` can publish without asserting
+any chosen value as a ground fact. Each binder keeps its choice across all
+occurrences and at the final barrier. Different binders may share a value;
+truth constraints can require different choices. The `witnesses` budget counts
+choices across every cut, not just original Sources. A native literal containing
+two distinct existential binders, such as `rel(u,v)` in
+`!$u $v rel(u,v);`, still returns INCOMPLETE under the current native profile.
+Independent A-X and B-X
 have separate models; TRUST checks every physical member as one logical cut.
 This model-authoring scope does not widen the separately qualified DMZ query
 language, nor does it activate a new default writer.
