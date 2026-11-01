@@ -752,9 +752,12 @@ separate model choices, keyed by original Source and binder ordinal. For example
 any chosen value as a ground fact. Each binder keeps its choice across all
 occurrences and at the final barrier. Different binders may share a value;
 truth constraints can require different choices. The `witnesses` budget counts
-choices across every cut, not just original Sources. A native literal containing
-two distinct existential binders, such as `rel(u,v)` in
-`!$u $v rel(u,v);`, still returns INCOMPLETE under the current native profile.
+choices across every cut, not just original Sources. A native literal can contain several distinct existential binders, for example
+`!$u $v rel(u,v)&&~rel(v,u);`. Every position keeps its original Source and
+binder ordinal through seed restoration, inference and final proof checks. The
+existing capture bound of four binders per primary conjunction and native packet
+rank budgets still apply. Model search pairs low/high relation-default candidates
+for each unchanged witness assignment; it remains bounded and can return INCOMPLETE.
 Independent A-X and B-X
 have separate models; TRUST checks every physical member as one logical cut.
 This model-authoring scope does not widen the separately qualified DMZ query
