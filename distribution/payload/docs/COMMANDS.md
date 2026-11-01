@@ -709,6 +709,13 @@ not become the same tuple. Types are preserved, including string "7" versus 7.
 | `INCOMPLETE` | Unsupported profile, unavailable candidate/model or exhausted resource limit; no assertion is published and no contradiction is proved. |
 | `NATIVE_REJECTED` | Native compilation/settlement refused the assertion; it was not published as a successful model write. |
 
+Non-published reports retain the existing refusal explanation. For a bounded
+stop, the message identifies the failing stage or resource (for example native
+rank, original witness choices or imported Origins). Read `INCOMPLETE`, `REFUTED`
+and `NATIVE_REJECTED` as distinct outcomes; the text is explanation, not a proof
+or permission to write. The existing `Runtime error:` prefix can appear in that
+text. The structured report also retains its original phase and sealed evidence.
+
 The operation owns a fresh attempt and checks exact source/child/initialization
 views before and after qualification. Historical models or saved DMZ branches
 are not write authority. Retained/read-only/user-transaction contexts may be

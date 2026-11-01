@@ -859,3 +859,4 @@ org.kanger.ContextRankBudgetPositiveRunner | CONTEXT_RANK_BUDGET_POSITIVE_PASS
 org.kanger.ContextRankBudgetIntegrityRunner | CONTEXT_RANK_BUDGET_INTEGRITY_PASS
 org.kanger.ContextRankBudgetTopologyRunner | CONTEXT_RANK_BUDGET_TOPOLOGY_PASS
 org.kanger.storage.dumb2.ContextRankBudgetPublicationRunner | CONTEXT_RANK_BUDGET_PUBLICATION_PASS
+org.kanger.storage.dumb2.ContextModelRefusalDiagnosticsRunner | CONTEXT_MODEL_REFUSAL_DIAGNOSTICS_PASS

@@ -427,7 +427,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
             boolean written=writeAutomaticSignedModelCandidate((Mind)source,request.statement,request.policy,false);
             return new org.kanger.ContextSignedModelPublication(written?org.kanger.ContextSignedModelPublication.Status.PUBLISHED:org.kanger.ContextSignedModelPublication.Status.NATIVE_REJECTED,"native-settlement",written?"Original assertion published":"Native local assertion refused",before,new org.kanger.interfaces.IContextResults.Revision(getContextId(),getRevision()),null);
         } catch(org.kanger.exception.ContextSignedCommitException refused) {
-            return new org.kanger.ContextSignedModelPublication(refused.getSignedEvidence()==null?org.kanger.ContextSignedModelPublication.Status.INCOMPLETE:org.kanger.ContextSignedModelPublication.Status.REFUTED,refused.getPhase(),refused.getMessage(),before,new org.kanger.interfaces.IContextResults.Revision(getContextId(),getRevision()),refused.getSignedEvidence());
+            return new org.kanger.ContextSignedModelPublication(refused.getSignedEvidence()==null?org.kanger.ContextSignedModelPublication.Status.INCOMPLETE:org.kanger.ContextSignedModelPublication.Status.REFUTED,refused.getPhase(),refused.toString(),before,new org.kanger.interfaces.IContextResults.Revision(getContextId(),getRevision()),refused.getSignedEvidence());
         }
     }
 
