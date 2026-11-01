@@ -5,6 +5,10 @@ on:
     paths:
       - "distribution/**"
       - "kanger-command/**"
+      - "kanger/src/org/kanger/ContextSignedModel*.java"
+      - "kanger/src/org/kanger/ContextSignedRelationalModel*.java"
+      - "kanger/src/org/kanger/ContextRelationalInterpretation.java"
+      - "docs/dmz-operator-guide.md"
       - "kanger/src/org/kanger/CanonicalStatusRenderer.java"
       - "kanger/src/org/kanger/CanonicalStatusSnapshot.java"
       - "kanger/src/org/kanger/User.java"
@@ -22,6 +26,10 @@ on:
     paths:
       - "distribution/**"
       - "kanger-command/**"
+      - "kanger/src/org/kanger/ContextSignedModel*.java"
+      - "kanger/src/org/kanger/ContextSignedRelationalModel*.java"
+      - "kanger/src/org/kanger/ContextRelationalInterpretation.java"
+      - "docs/dmz-operator-guide.md"
       - "kanger/src/org/kanger/CanonicalStatusRenderer.java"
       - "kanger/src/org/kanger/CanonicalStatusSnapshot.java"
       - "kanger/src/org/kanger/User.java"

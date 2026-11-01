@@ -73,6 +73,34 @@ if len(syntaxes) < 30:
 for syntax in syntaxes:
     require(commands, syntax, "docs/COMMANDS.md")
 
+# Model defaults/statuses are customer-visible contracts as well as syntax.
+# Inspect the model section specifically; an unrelated older limit table is not coverage.
+model_section = re.search(r"<!-- MODEL_AUTHORING_BEGIN -->(.*?)<!-- MODEL_AUTHORING_END -->", commands, re.S)
+if model_section is None:
+    fail("docs/COMMANDS.md missing model-authoring section")
+model_limits = re.search(r"<!-- MODEL_LIMIT_DEFAULTS_BEGIN -->(.*?)<!-- MODEL_LIMIT_DEFAULTS_END -->", model_section.group(1), re.S)
+if model_limits is None:
+    fail("docs/COMMANDS.md missing model limit table")
+model_request = text(ROOT / "kanger" / "src" / "org" / "kanger" / "ContextSignedModelRequest.java")
+model_defaults = {name: value.replace("_", "") for name, value in re.findall(
+    r'\bd\.put\(\s*"([a-z-]+)"\s*,\s*([0-9][0-9_]*)\s*\)', model_request)}
+model_default_names = set(re.findall(r'\bd\.put\(\s*"([a-z-]+)"', model_request))
+if set(model_defaults) != model_default_names:
+    fail("cannot parse every automatic-model default; update documentation qualification")
+if len(model_defaults) < 10:
+    fail("cannot discover complete automatic-model defaults")
+for name, value in model_defaults.items():
+    row = r"\|\s*`" + re.escape(name) + r"`\s*\|\s*" + value + r"\s*\|"
+    if re.search(row, model_limits.group(1)) is None:
+        fail(f"docs/COMMANDS.md model default differs or is missing: {name}={value}")
+publication = text(ROOT / "kanger" / "src" / "org" / "kanger" / "ContextSignedModelPublication.java")
+status_enum = re.search(r"enum Status\s*\{([^}]+)\}", publication)
+if status_enum is None:
+    fail("cannot discover model publication outcomes")
+model_statuses = [status.strip() for status in status_enum.group(1).split(",")]
+for status in model_statuses:
+    require(model_section.group(1), "`" + status + "`", "docs/COMMANDS.md model outcomes")
+
 for marker in (
     "Prefix resolution",
     "Confirmation boundary",
@@ -131,4 +159,5 @@ for marker in (
 
 print(f"DOCUMENTATION_PASS manuals=3 canonical_syntaxes={len(syntaxes)} config_keys={len(keys)}")
 print(f"DOCUMENTATION_PASS tech_sections={len(local_sections) + len(canonical_sections)} tech_labels={len(metric_labels)}")
+print(f"DOCUMENTATION_PASS model_defaults={len(model_defaults)} model_outcomes={len(model_statuses)}")
 print("DOCUMENTATION_OK")

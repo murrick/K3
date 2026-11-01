@@ -554,7 +554,7 @@ and its informational `CURRENT` revision. Revision descriptions come from the
 immutable revision manifest. The command is read-only: it does not notify,
 follow HEAD, switch pins or publish anything.
 
-### `dmz <name>@<revision> <query> [from=<name>@<revision> ...] [<limit>=<value> ...]`
+### `dmz <name>@<revision> <query> [from=<name>@<revision> ...] [restrict=<name>@<revision>:<rule>] [choice=<proof-identity> ...] [restriction-budget=<value>] [<limit>=<value> ...]`
 
 DMZ uses a settled physical Q with no active child transaction/reservation.
 Direct TRUST-tagged connections form one protected Q authority; untagged
@@ -635,6 +635,144 @@ Read the selected last DMZ opinion's detached inference alternatives. N is a
 positive number displayed by that query. Trees retain Context UUIDs/revisions,
 source-local rules and configured-by-Q view provenance. UNKNOWN has no resolved
 tree. Partial opinions remain labelled partial.
+
+### Explicit candidate qualification and model publication
+
+These are explicit operations on the current exact views. The examples below are
+qualified with the Java Console and DUMB2 provider. Optional providers can refuse
+the capability; this section does not qualify a new Browser/Server model workflow.
+Ordinary `!…;` assertions keep their existing policy.
+
+#### Read-only flat candidate
+
+```text
+ctx candidate <assertion> [<limit>=<value> ...]
+```
+
+Quote one assertion, for example `ctx candidate "!@u p(u)->q(u);"`.
+This runs the older flat-universal diagnostic without writing the assertion.
+INCOMPLETE is not approval. A diagnostic result is historical and cannot be
+submitted as permission for a later write.
+
+The older flat diagnostic and flat writer share these optional limits:
+`rows=1000`, `rounds=16`, `local=16`, `depth=16`, `instances=20000`,
+`models=1000000`, `preparation=64000000`, `events=500000`,
+`work=64000000`, `audit=64000000`. Unsupported forms or exhausted budgets
+can stop qualification without proving a contradiction.
+
+#### Explicit flat publication
+
+```text
+ctx candidate write <assertion> [<limit>=<value> ...]
+```
+
+This freshly qualifies the assertion and performs native settlement; it does not
+reuse the previous diagnostic. Its outcomes are PUBLISHED, COLLISION, INCOMPLETE
+and NATIVE_REJECTED. COLLISION means a proved conflict in this older qualifier;
+INCOMPLETE means no publication, not a conflict proof. Native rejection is also
+not a successfully qualified publication. The model writer below uses its own
+qualification mechanism and a distinct REFUTED outcome.
+
+<!-- MODEL_AUTHORING_BEGIN -->
+#### Explicit model-qualified publication
+
+```text
+ctx candidate model write <assertion> [<limit>=<value> ...]
+```
+
+`write` is mandatory. `ctx candidate model "!p(1);"` is rejected before authoring.
+Quote exactly one original assertion ending in `;`. A compound assertion is still
+one original; two separate assertions in one request are refused. For example,
+in a new empty test storage:
+
+```text
+ctx candidate model write "!rel(1,2);"
+ctx candidate model write "!~rel(2,1);"
+?rel(1,2);
+?~rel(2,1);
+?rel(3,4);
+```
+
+Both writes publish. The first two queries are TRUE; the last remains WHO KNOWS.
+Arguments are ordered, and a selected model's truth/default is not knowledge
+in Core. In another empty test storage, model-writing `!@u @v rel(u,v);` allows
+`?rel(42,43);` after reopening: the stored universal rule covers all admissible
+values, including unmentioned values. Repeating one variable, as in `rel(u,u)`,
+requires the same value in both positions; distinct variables do not impose
+inequality. Name and arity form the signature, so `rel(1)` and `rel(1,1)` do
+not become the same tuple. Types are preserved, including string "7" versus 7.
+
+| Model write outcome | Meaning |
+| --- | --- |
+| `PUBLISHED` | Both original and every actual-final obligation passed fresh model/native checks, and the original assertion was committed. |
+| `REFUTED` | An independently checked sourced native refutation; the assertion is not published. |
+| `INCOMPLETE` | Unsupported profile, unavailable candidate/model or exhausted resource limit; no assertion is published and no contradiction is proved. |
+| `NATIVE_REJECTED` | Native compilation/settlement refused the assertion; it was not published as a successful model write. |
+
+The operation owns a fresh attempt and checks exact source/child/initialization
+views before and after qualification. Historical models or saved DMZ branches
+are not write authority. Retained/read-only/user-transaction contexts may be
+refused; the command does not silently commit or replace them. Only the accepted
+whole original is persisted. Chosen witness values/model tables do not become
+additional original facts.
+
+<!-- MODEL_LIMIT_DEFAULTS_BEGIN -->
+| Parameter | Default | Scope |
+| --- | ---: | --- |
+| `points` | 4 | Positive named-value budget; no small ceiling of 16. |
+| `fresh` | 2 | Additional genuine candidate values; at most 8. Zero forbids additions. |
+| `rows` | 64 | Complete supplied original-row bound. |
+| `rounds` | 2 | Native synchronous round bound. |
+| `depth` | 16 | Native proof/traversal depth bound. |
+| `candidates` | 512 | Model candidate bound, at most 512. |
+| `cells` | 16 | Relation/default/exception or complete-cell search budget, at most 16. |
+| `witnesses` | 8 | Source-owned witness choice budget. |
+| `work` | 64000000 | Construction/native work budgets. |
+| `audit` | 64000000 | Independent audit work budgets. |
+| `basis-work` | 64000000 | Complete basis collection/fresh-value search work. |
+<!-- MODEL_LIMIT_DEFAULTS_END -->
+
+These are separate stage budgets, not one wall-clock or total-work guarantee.
+Unknown/repeated limits and invalid values are rejected. Zero work/audit is
+invalid. Increasing `points` does not allocate a complete Cartesian table up
+front, and may still exceed `cells`, `candidates` or work. For a tuple with many
+distinct constants, set the point budget explicitly, for example
+`ctx candidate model write "!wide(1,2,3,4,5);" points=5`.
+
+Automatic model qualification handles flat ordinary unary/relational predicates
+with finite argument lists: constants, variables, mixtures and repeated variables.
+It uses compact relation defaults/exceptions and checks original plus actual
+final common/private/unit/compound/terminal obligations. Uniform relations and
+sparse ground requirements can avoid a full Cartesian table. Exhausting the
+search remains INCOMPLETE. Current row/clause/predicate/cell/witness/depth and
+quantifier-profile bounds remain; functions, arbitrary mixed quantifiers and
+multiple-binder patterns are not thereby qualified. Independent A-X and B-X
+have separate models; TRUST checks every physical member as one logical cut.
+This model-authoring scope does not widen the separately qualified DMZ query
+language, nor does it activate a new default writer.
+<!-- MODEL_AUTHORING_END -->
+
+### Saved DMZ families and explicit branch replay
+
+```text
+ctx dmz family [<invocations>]
+ctx dmz branch <N>
+ctx dmz choose <N> [<limit>=<value> ...]
+```
+
+`ctx dmz family` reads the saved family. With an invocation cap (1..10000), it
+starts a fresh exploration of the saved exact restriction request. A bounded
+stop does not prove that the complete family has been explored.
+`ctx dmz branch N` reads a saved leaf and its proof trees without inference.
+`ctx dmz choose N` selects an alternative from the latest pending restriction
+result and replays the full exact-pinned request. Optional limits replace
+traversal limits while the other saved inputs are retained. It executes new
+inference and replaces saved history; it is not a read-only branch display.
+N is positive and one-based in the appropriate saved list. Missing history or
+an unavailable number is refused. A selected branch/opinion/hypothesis is not
+an approved assertion, model publication or permission for future settlement.
+After changing assertions, pins or initialization, run a new query; saved
+explanations can describe older snapshots.
 
 ### `ctx dmz explain`
 
@@ -1046,7 +1184,7 @@ For example, `ctx ask all rules` selects the Context named **all**, whereas
 The source's own connections are not followed; private working initialization is
 retained and inspection does not change the active Mind or publish a revision.
 
-`dmz <name>@<revision> <query> [from=<name>@<revision> ...] [<limit>=<value> ...]`
+`dmz <name>@<revision> <query> [from=<name>@<revision> ...] [restrict=<name>@<revision>:<rule>] [choice=<proof-identity> ...] [restriction-budget=<value>] [<limit>=<value> ...]`
 resolves names to UUIDs and exact published revisions at execution. For example:
 `dmz Q@1 ?left(2); from=A@1 from=B@1`. Names containing spaces are quoted.
 Queries containing spaces are quoted as one argument. Missing names/revisions
