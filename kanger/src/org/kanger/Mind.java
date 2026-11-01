@@ -1103,7 +1103,11 @@ public class Mind implements IMind {
     }
 
     public boolean analyze(Rule rule, boolean logging) throws Exception {
-        boolean result = analyzer.analyze(rule, logging);
+        return analyze(rule, logging, false);
+    }
+
+    private boolean analyze(Rule rule, boolean logging, boolean ordinaryUnitQualification) throws Exception {
+        boolean result = analyzer.analyze(rule, logging, ordinaryUnitQualification);
         if (causalFrontierCapture != null) {
             causalFrontierCapture.afterAnalyze(this, rule, result);
         }
@@ -1814,7 +1818,7 @@ public class Mind implements IMind {
             }
 
             m.link(null, logging);
-            boolean collision = m.analyze(null, logging);
+            boolean collision = m.analyze(null, logging, true);
             List<ContextQualification.CollisionWitness> witnesses =
                     m.analyzer.getCollisionWitnesses();
 

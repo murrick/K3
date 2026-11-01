@@ -110,6 +110,10 @@ public class Analyzer {
 
 
     public boolean analyze(Rule rule, boolean logging) throws Exception {
+        return analyze(rule, logging, false);
+    }
+
+    boolean analyze(Rule rule, boolean logging, boolean ordinaryUnitQualification) throws Exception {
         boolean result = false;
         collisions.clear();
         mind.clearFrontierDomains();
@@ -124,6 +128,20 @@ public class Analyzer {
         mind.getValues().clear();
 
         result = checkDatabase(null, logging);
+
+        // Ordinary universal units may never acquire a concrete TValue. During
+        // authoring, check their complete symbolic shapes as well as stored rows.
+        // Query passes retain their historical solution/hypothesis semantics.
+        if (ordinaryUnitQualification || mind.getQueryPass() == org.kanger.enums.QueryPass.ACCEPT) {
+            for (NativeUniversalUnitCollision.Pair pair : NativeUniversalUnitCollision.find(mind)) {
+                pair.verify(mind);
+                recordCollision(pair.left, pair.right);
+                result = true;
+                if (logging) log.add(LogMode.ANALYZER,
+                        "Symbolic universal unit collision: " + diagnosticRule(pair.left)
+                                + " / " + diagnosticRule(pair.right));
+            }
+        }
 
         if (!result) {
 
