@@ -12,7 +12,7 @@ final class ContextSignedWitnessNativeBranch {
   final ContextUniversalFrozenBranch.Limits kernel;
   final ContextUniversalGroupedLocalRounds.Limits local;
   Policy(int rows,int rank,int rounds,int work,int capacity,ContextUniversalFrozenBranch.Limits kernel,ContextUniversalGroupedLocalRounds.Limits local){
-   require(rows>=1&&rows<=64&&rank>=1&&rank<=8&&rounds>=1&&rounds<=63&&work>0&&capacity>=1&&capacity<=4096&&kernel!=null,"Exact bounded signed native policy required");ContextSignedWitnessNextReceiver.localPolicy(kernel,local);this.rows=rows;this.rank=rank;this.rounds=rounds;this.work=work;this.capacity=capacity;this.kernel=kernel;this.local=local;
+   require(rows>=1&&rows<=64&&rank>=1&&rounds>=1&&rounds<=63&&work>0&&capacity>=1&&capacity<=4096&&kernel!=null,"Exact bounded signed native policy required");ContextSignedWitnessNextReceiver.localPolicy(kernel,local);this.rows=rows;this.rank=rank;this.rounds=rounds;this.work=work;this.capacity=capacity;this.kernel=kernel;this.local=local;
   }
  }
  static final class Receipt {

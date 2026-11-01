@@ -63,7 +63,7 @@ final class ContextUniversalNativeRows {
     }
     private static Part witness(Entry entry,Runnable work,boolean signed) {
         String reason=null;ContextWitnessBundle.Bundle bundle=entry.bundle;
-        if(bundle.witnesses<1||bundle.witnesses>8||bundle.atoms.isEmpty()||bundle.atoms.size()>8)reason="Outside bounded witness inventory";
+        if(bundle.witnesses<1||(!signed&&bundle.witnesses>8)||bundle.atoms.isEmpty()||bundle.atoms.size()>8)reason="Outside bounded witness inventory";
         for(ContextWitnessBundle.Atom atom:bundle.atoms) {
             work.run();if(!signed&&!atom.positive)reason="Signed existential row is not a universal constraint";
             if(!signed&&atom.arguments.size()>8)reason="Witness inventory arity limit";ContextArgumentBudget.positions(atom.arguments,work);

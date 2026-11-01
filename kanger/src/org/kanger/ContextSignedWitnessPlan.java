@@ -47,7 +47,7 @@ final class ContextSignedWitnessPlan {
    for(Snapshot cut:cuts)for(Snapshot member:cut.trustedGroup==null?Collections.singletonList(cut):cut.members)for(Entry entry:member.primary){
     work.run();require(rows.size()<maximumRows&&sources.add(entry.source),"Complete unique original row budget required");
     if(entry.bundle==null){require(!entry.clauses.isEmpty()&&entry.clauses.size()<=8,"Bounded opaque original clauses required");rows.add(new Row(cut,member,entry,Kind.OPAQUE_CLAUSES,0,Collections.emptyList()));continue;}
-    ContextWitnessBundle.Bundle b=entry.bundle;require(b.source.equals(entry.source)&&b.witnesses>=1&&b.witnesses<=8&&!b.atoms.isEmpty()&&b.atoms.size()<=8,"Bounded authenticated whole witness bundle required");
+    ContextWitnessBundle.Bundle b=entry.bundle;require(b.source.equals(entry.source)&&b.witnesses>=1&&!b.atoms.isEmpty()&&b.atoms.size()<=8,"Bounded authenticated whole witness bundle required");
     List<Seed> seeds=new ArrayList<>();boolean signed=false;
     for(ContextWitnessBundle.Atom atom:b.atoms){work.run();require(atom.predicate!=null,"Witness predicate required");ContextArgumentBudget.positions(atom.arguments,work);signed|=!atom.positive;List<Term> terms=new ArrayList<>();
      for(ContextWitnessBundle.Slot slot:atom.arguments){work.run();require(slot.witness>=-1&&slot.witness<b.witnesses&&(slot.witness<0?slot.value!=null:slot.value==null),"Exact binder or ordinary value required");terms.add(new Term(slot.witness<0?null:new Origin(entry.source,slot.witness),slot.value));}

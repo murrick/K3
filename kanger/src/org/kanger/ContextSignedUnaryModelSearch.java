@@ -12,7 +12,7 @@ final class ContextSignedUnaryModelSearch {
  enum Status { CONSTRUCTED_FINAL_UNARY, INCOMPLETE }
  static final class Policy {
   final int candidates,cells,witnesses,work;final ContextSignedUnaryModel.Policy original;final ContextSignedUnaryExtensionSearch.Policy extension;
-  Policy(int candidates,int cells,int witnesses,int work,ContextSignedUnaryModel.Policy original,ContextSignedUnaryExtensionSearch.Policy extension){if(candidates<1||candidates>512||cells<0||cells>16||witnesses<0||witnesses>8||work<1||original==null||extension==null)throw new IllegalArgumentException("Bounded fixed-basis original model search required");this.candidates=candidates;this.cells=cells;this.witnesses=witnesses;this.work=work;this.original=original;this.extension=extension;}
+  Policy(int candidates,int cells,int witnesses,int work,ContextSignedUnaryModel.Policy original,ContextSignedUnaryExtensionSearch.Policy extension){if(candidates<1||candidates>512||cells<0||cells>16||witnesses<0||work<1||original==null||extension==null)throw new IllegalArgumentException("Bounded fixed-basis original model search required");this.candidates=candidates;this.cells=cells;this.witnesses=witnesses;this.work=work;this.original=original;this.extension=extension;}
  }
  static final class Result {
   final Status status;final int tried,originals,extensionCandidates;final String reason;final ContextSignedUnaryBranchModelAudit.Receipt output;

@@ -517,7 +517,7 @@ final class ContextWitnessResultTransport {
                 add(after,typedAtom(unit.clause,known,true,work),unit.support,work);
             }
             for(Item item:after)for(Support support:item.proofs){work.run();if(support.depth>maximumDepth)throw new IllegalStateException("Uncovered signed fact depth limit");}
-            privateRank(after,work);Packet retained=new Packet(after,input.anchoredX);if(!retains(local,retained,work))throw new IllegalStateException("Signed transfer lost an input proof");
+            privateRank(after,work,proof.input.signedSeeds==null?8:proof.input.signedSeeds.frame.maximumRank);Packet retained=new Packet(after,input.anchoredX);if(!retains(local,retained,work))throw new IllegalStateException("Signed transfer lost an input proof");
             Packet output=pool==null?retained:privateShared(input,retained,work);parentX(output,work);
             PrivatePool next=pool==null?null:new PrivatePool(input,pool.x,pool.snapshot,retained,pool.sources,pool.declarations);
             return new ConstraintTransfer(true,"Checked fixed signed units transported; symbolic/all-cut qualification remains open",proof,input,output,retained,pool,next,work,bindings,certificate);
@@ -569,10 +569,10 @@ final class ContextWitnessResultTransport {
                 branches.put(e.getKey(),b);localChanged|=!sameItems(e.getValue().local.items,b.local.items,work);
             }
             List<Item> shared=new ArrayList<>(entry.common.items);for(ConstraintTransfer b:branches.values())for(Item item:b.output.items)for(Support proof:item.proofs){work.run();add(shared,item.atom,proof,work);}
-            privateRank(shared,work);Packet common=new Packet(shared,entry.common.anchoredX);parentX(common,work);Map<Cut,PrivatePool> pools=new LinkedHashMap<>();
+            privateRank(shared,work,seeds.frame.maximumRank);Packet common=new Packet(shared,entry.common.anchoredX);parentX(common,work);Map<Cut,PrivatePool> pools=new LinkedHashMap<>();
             for(Map.Entry<Cut,PrivatePool> e:entry.pools.entrySet()){
                 work.run();PrivatePool old=e.getValue();if(old.signedSeeds!=seeds||old.common!=entry.common)throw new IllegalStateException("Different original signed seed scope");
-                List<Item> local=new ArrayList<>(common.items);for(Item item:branches.get(e.getKey()).local.items)for(Support proof:item.proofs){work.run();add(local,item.atom,proof,work);}privateRank(local,work);
+                List<Item> local=new ArrayList<>(common.items);for(Item item:branches.get(e.getKey()).local.items)for(Support proof:item.proofs){work.run();add(local,item.atom,proof,work);}privateRank(local,work,seeds.frame.maximumRank);
                 pools.put(e.getKey(),new PrivatePool(common,old.x,old.snapshot,new Packet(local,common.anchoredX),old.sources,old.declarations,seeds));
             }
             return new ConstraintBarrier(true,"First signed-witness all-cut barrier; next receiver qualification still required",common,!sameItems(entry.common.items,common.items,work),localChanged,branches,pools);
@@ -593,8 +593,8 @@ final class ContextWitnessResultTransport {
                 ContextSignedWitnessNextReceiver.productOwner(next,e.getKey(),b);
                 ContextSignedWitnessContinuationScope.frame(scope,e.getValue().input,input,b.privateBefore);ContextUniversalSignedProductAudit.Result audit=capacity==0?ContextUniversalSignedProductAudit.bind(e.getValue(),b,65536,maximumWork):ContextUniversalSignedProductAudit.bindWithValidationReuse(e.getValue(),b,65536,maximumWork,capacity).result;if(!audit.bound)throw new IllegalStateException(audit.reason);branches.put(e.getKey(),b);localChanged|=!sameItems(e.getValue().local.items,b.local.items,work);
             }
-            List<Item> shared=new ArrayList<>(input.items);for(ConstraintTransfer b:branches.values())for(Item item:b.output.items)for(Support proof:item.proofs){work.run();add(shared,item.atom,proof,work);}privateRank(shared,work);Packet common=new Packet(shared,input.anchoredX);parentX(common,work);
-            Map<Cut,PrivatePool> pools=new LinkedHashMap<>();for(Map.Entry<Cut,PrivatePool> e:prior.privatePools.entrySet()){work.run();PrivatePool old=e.getValue();if(old.signedSeeds!=scope.seeds||old.common!=input)throw new IllegalStateException("Different original successor private scope");List<Item> local=new ArrayList<>(common.items);for(Item item:branches.get(e.getKey()).local.items)for(Support proof:item.proofs){work.run();add(local,item.atom,proof,work);}privateRank(local,work);pools.put(e.getKey(),new PrivatePool(common,old.x,old.snapshot,new Packet(local,common.anchoredX),old.sources,old.declarations,scope.seeds));}
+            List<Item> shared=new ArrayList<>(input.items);for(ConstraintTransfer b:branches.values())for(Item item:b.output.items)for(Support proof:item.proofs){work.run();add(shared,item.atom,proof,work);}privateRank(shared,work,scope.seeds.frame.maximumRank);Packet common=new Packet(shared,input.anchoredX);parentX(common,work);
+            Map<Cut,PrivatePool> pools=new LinkedHashMap<>();for(Map.Entry<Cut,PrivatePool> e:prior.privatePools.entrySet()){work.run();PrivatePool old=e.getValue();if(old.signedSeeds!=scope.seeds||old.common!=input)throw new IllegalStateException("Different original successor private scope");List<Item> local=new ArrayList<>(common.items);for(Item item:branches.get(e.getKey()).local.items)for(Support proof:item.proofs){work.run();add(local,item.atom,proof,work);}privateRank(local,work,scope.seeds.frame.maximumRank);pools.put(e.getKey(),new PrivatePool(common,old.x,old.snapshot,new Packet(local,common.anchoredX),old.sources,old.declarations,scope.seeds));}
             return new ConstraintBarrier(true,"Audited successor signed-witness barrier; later receiver qualification required",common,!sameItems(input.items,common.items,work),localChanged,branches,pools);
         }catch(Exception failure){return new ConstraintBarrier(false,failure.toString(),null,false,false,Collections.emptyMap(),Collections.emptyMap());}
     }
@@ -632,10 +632,11 @@ final class ContextWitnessResultTransport {
                 !sameItems(family.input.items,packet.items,work),localChanged,branches,pools);
         }catch(Exception failure){return new TypedBarrier(false,failure.getMessage(),null,false,false,Collections.emptyMap(),Collections.emptyMap());}
     }
-    private static void privateRank(List<Item> items,Runnable work) {
+    private static void privateRank(List<Item> items,Runnable work) { privateRank(items,work,8); }
+    private static void privateRank(List<Item> items,Runnable work,int maximumRank) {
         Set<Origin> rank=new HashSet<>();
         for(Item item:items)for(Slot slot:item.atom.arguments){work.run();if(slot.origin!=null)rank.add(slot.origin);}
-        if(rank.size()>8)throw new IllegalStateException("Private carrier witness rank limit");
+        if(rank.size()>maximumRank)throw new IllegalStateException("Private carrier witness rank limit");
     }
     private static Atom transportAtom(Route route,Map<Root,Origin> origins,UUID namespace,Runnable work) {
         if(!route.replay.equals(namespace)||!Objects.equals(route.physical.root,route.origin))throw new IllegalStateException("Non-primary carrier cannot be transported");
@@ -1107,7 +1108,7 @@ final class ContextWitnessResultTransport {
         }
     }
     static SignedSeedResult signedWitnessFrame(ContextSignedWitnessPlanAudit.Receipt plan,ContextProductionNativeBinding.Snapshot x,List<ContextProductionNativeBinding.Snapshot> foreign,int maximumRows,int maximumRank,int maximumWork,int auditWork){
-        if(maximumRank<1||maximumRank>8||maximumWork<1||auditWork<1)throw new IllegalArgumentException("Explicit bounded signed seed frame required");String phase="plan-audit";
+        if(maximumRank<1||maximumWork<1||auditWork<1)throw new IllegalArgumentException("Explicit bounded signed seed frame required");String phase="plan-audit";
         try{
             ContextSignedWitnessPlanAudit.check(plan,x,foreign,maximumRows,auditWork);Runnable work=budget(maximumWork);List<Item> shared=new ArrayList<>();Set<Origin> commonRank=new HashSet<>();phase="common";
             for(ContextSignedWitnessPlan.Row row:plan.plan.rows)if(row.cut==x){work.run();signedPlanSeeds(row,shared,maximumRank,commonRank,work);}

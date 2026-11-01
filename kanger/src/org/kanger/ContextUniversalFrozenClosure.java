@@ -70,7 +70,7 @@ final class ContextUniversalFrozenClosure {
         }
     }
     private static void shape(Residual clause,Runnable work) {
-        if(clause.literals.isEmpty()||clause.literals.size()>8||clause.origins.size()>8)throw new IllegalStateException("Outside bounded typed Horn shape");
+        if(clause.literals.isEmpty()||clause.literals.size()>8)throw new IllegalStateException("Outside bounded typed Horn shape");
         int heads=0;for(Literal literal:clause.literals){work.run();if(literal.positive)++heads;ContextArgumentBudget.positions(literal.arguments,work);}
         if(heads!=1)throw new IllegalStateException("Typed positive definite Horn required");
     }

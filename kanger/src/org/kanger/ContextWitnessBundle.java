@@ -83,7 +83,6 @@ final class ContextWitnessBundle {
                         throw new IllegalArgumentException("Only primary local existential binders supported");
                     Integer index = witnesses.get(term.getId());
                     if (index == null) { index = witnesses.size(); witnesses.put(term.getId(),index); }
-                    if (witnesses.size() > 4) throw new IllegalArgumentException("Witness bundle rank limit");
                     arguments.add(new Slot(index,null));
                 } else {
                     if (!SemanticTermSnapshot.isOrdinaryValue(value)) throw new IllegalArgumentException("Ordinary fixed value required");

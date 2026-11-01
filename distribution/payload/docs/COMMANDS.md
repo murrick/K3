@@ -726,7 +726,9 @@ additional original facts.
 | `depth` | 16 | Native proof/traversal depth bound. |
 | `candidates` | 512 | Model candidate bound, at most 512. |
 | `cells` | 16 | Relation/default/exception or complete-cell search budget, at most 16. |
-| `witnesses` | 8 | Source/binder choice budget across all cuts. |
+| `witnesses` | 8 | Original Source/binder choices across all model cuts; nonnegative, no fixed ceiling of 8. |
+| `rank` | 8 | Positive distinct-Origin budget per signed seed/fact packet and barrier. |
+| `origins` | 8 | Imported-Origin model choices across all cuts; nonnegative, no fixed ceiling of 8. |
 | `work` | 64000000 | Construction/native work budgets. |
 | `audit` | 64000000 | Independent audit work budgets. |
 | `basis-work` | 64000000 | Complete basis collection/fresh-value search work. |
@@ -746,7 +748,7 @@ final common/private/unit/compound/terminal obligations. Uniform relations and
 sparse ground requirements can avoid a full Cartesian table. Exhausting the
 search remains INCOMPLETE. Current row/clause/predicate/cell/witness/depth and
 quantifier-profile bounds remain; functions and arbitrary mixed quantifiers remain outside this profile.
-For a primary existential conjunction, up to four captured binders can have
+For a primary existential conjunction, captured binders can have
 separate model choices, keyed by original Source and binder ordinal. For example,
 `ctx candidate model write "!$u $v p(u)&&~p(v);"` can publish without asserting
 any chosen value as a ground fact. Each binder keeps its choice across all
@@ -754,10 +756,22 @@ occurrences and at the final barrier. Different binders may share a value;
 truth constraints can require different choices. The `witnesses` budget counts
 choices across every cut, not just original Sources. A native literal can contain several distinct existential binders, for example
 `!$u $v rel(u,v)&&~rel(v,u);`. Every position keeps its original Source and
-binder ordinal through seed restoration, inference and final proof checks. The
-existing capture bound of four binders per primary conjunction and native packet
-rank budgets still apply. Model search pairs low/high relation-default candidates
+binder ordinal through seed restoration, inference and final proof checks. Capture and original/final relational data have no fixed four-, eight- or
+64-binder ceiling. Configured rank/choice/work limits still apply. Model search pairs low/high relation-default candidates
 for each unchanged witness assignment; it remains bounded and can return INCOMPLETE.
+The three budgets are distinct: rank counts native symbolic identities even when
+a model gives them one value; witnesses counts original choices separately in
+each cut; origins counts final denotations imported into a model from another
+original cut. Symbolic formula traversal also remains subject to work and clause
+budgets. For example, in empty test storage:
+
+```text
+ctx candidate model write "!$v0 $v1 $v2 $v3 $v4 $v5 $v6 $v7 $v8 wide(v0,v1,v2,v3,v4,v5,v6,v7,v8);" rank=9 witnesses=9
+```
+
+Connected cuts may need a larger total witness/imported budget. Raising rank
+alone does not raise the other budgets. Low limits stop qualification with
+INCOMPLETE; a sourced native refutation still precedes model choice limits.
 Independent A-X and B-X
 have separate models; TRUST checks every physical member as one logical cut.
 This model-authoring scope does not widen the separately qualified DMZ query

@@ -346,7 +346,7 @@ public final class CommandRegistry {
                 args("name", "Storage logical name."), aliases("reindex <name>"), n++);
 
         define(CommandIntent.CTX_MODEL_WRITE,"ctx candidate model write <assertion> [<limit>=<value> ...]","CONTEXT",
-                "Explicit bounded unary/relational model publication with automatic constants/witness values. Quote one assertion. Optional points=4, fresh=2. Incomplete never means conflict or approval; ordinary assertions keep their policy.",
+                "Explicit bounded unary/relational model publication with automatic constants/witness values. Quote one assertion. Optional points=4, fresh=2, rank=8, witnesses=8, origins=8. Incomplete never means conflict or approval; ordinary assertions keep their policy.",
                 args("request","One original assertion and explicit optional bounds."),n++);
         define(CommandIntent.CTX_CANDIDATE_WRITE,"ctx candidate write <assertion> [<limit>=<value> ...]","CONTEXT",
                 "Console: explicit flat universal publication: freshly qualifies/audits the assertion, then runs native settlement. Uses the same limits as ctx candidate; no previous diagnostic is reused.",
