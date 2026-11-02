@@ -137,6 +137,14 @@ final class ContextPendingProductionSnapshotSession implements AutoCloseable {
             } finally {requireCurrent();}
         }
     }
+    /** Typed productions stay in a private owned candidate; no write/full-family eligibility is returned. */
+    ContextDependentProductionInspection.Result inspectDependentProductions(ContextDependentProductionInspection.Request request) throws Exception {
+        synchronized(provider) {
+            requireCurrent();if(request==null||request.policy.rows!=rows)throw new IllegalArgumentException("Production diagnostic rows must match owning lease");
+            try {provider.productionExecutionTopology();return ContextDependentProductionInspection.inspect(child,childInventory,request);}
+            finally {requireCurrent();}
+        }
+    }
     /** Read-only ACTUAL prepared child, including whole batches; never stage/append it again. */
     ContextNativeBranchInspection.Result inspectNative(ContextNativeCandidateInspection.Limits limits) throws Exception {
         synchronized(provider) {

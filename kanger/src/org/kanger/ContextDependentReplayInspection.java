@@ -64,32 +64,49 @@ public final class ContextDependentReplayInspection {
             result.verify();return new Historical(result.materialization,result.sources);
         }
     }
-    private static void current(Mind mind,ContextProductionInventory expected,Policy policy)throws Exception {
+    static void current(Mind mind,ContextProductionInventory expected,Policy policy)throws Exception {
         if(expected==null||!expected.localX)throw new IllegalArgumentException("Actual local-X inventory required");
         ContextProductionInventory now=ContextProductionInventory.inspect(mind,expected.context,expected.revision,true,expected.initialization,policy.rows);
         if(!expected.fingerprint.equals(now.fingerprint))throw new IllegalStateException("Changed local-X replay diagnostic inventory");
     }
-    public static Result inspect(Mind actual,ContextProductionInventory expected,Request request)throws Exception {
-        if(actual==null||request==null)throw new IllegalArgumentException("Actual local-X and exact replay request required");
-        Policy policy=request.policy;current(actual,expected,policy);
+    static final class Projection {
+        final Mind mind;final Map<Long,Long> mapping;
+        Projection(Mind mind,Map<Long,Long> mapping){this.mind=mind;this.mapping=Collections.unmodifiableMap(new LinkedHashMap<>(mapping));}
+    }
+    static Projection project(Mind actual,ContextProductionInventory expected,Policy policy,boolean horn)throws Exception {
+        return project(actual,expected,policy,horn,ContextGroundProductionRounds.budget(policy.work));
+    }
+    private static Projection project(Mind actual,ContextProductionInventory expected,Policy policy,boolean horn,Runnable work)throws Exception {
+        current(actual,expected,policy);
         if(!expected.initialization.isEmpty()||expected.rows.size()!=expected.primary.size())throw new IllegalStateException("Whole primary-only local-X diagnostic required");
-        Runnable work=ContextGroundProductionRounds.budget(policy.work);User user=new User();Mind isolated=new Mind(user);user.setCurrentMind(isolated);
-        Map<Long,Long> mapping=new LinkedHashMap<>();
+        User user=new User();Mind isolated=new Mind(user);user.setCurrentMind(isolated);Map<Long,Long> mapping=new LinkedHashMap<>();
         try {
             for(ContextProductionInventory.Row row:expected.rows) {
-                work.run();Rule original=(Rule)actual.getRules().get(row.nativeRule);
-                Rule copy=(Rule)isolated.compileLine(row.origin,false,new LinkedList<org.kanger.interfaces.ITerm>());
+                work.run();Rule original=(Rule)actual.getRules().get(row.nativeRule),copy=(Rule)isolated.compileLine(row.origin,false,new LinkedList<org.kanger.interfaces.ITerm>());
                 if(original==null||copy==null)throw new IllegalStateException("Missing whole native original or replay");
-                List<ContextProductionCapture.Clause> left=NativeDependentMatchFrame.headlessShape(original,actual,work),right=NativeDependentMatchFrame.headlessShape(copy,isolated,work);
-                if(left==null||right==null) {
-                    if(left!=null||right!=null||!NativePrenexUnitScope.same(NativePrenexUnitScope.observeFactoryRow(row.nativeRule,actual,work),NativePrenexUnitScope.observe(copy,isolated,work),work))
-                        throw new IllegalStateException("Different native/replayed whole producer");
+                if(horn&&!NativeDependentProductionRows.unit(original)) {
+                    ContextProductionCapture.Clause left=NativeDependentProductionRows.ordinary(original,actual,work),right=NativeDependentProductionRows.ordinary(copy,isolated,work);
+                    if(!left.equivalent(right,work))throw new IllegalStateException("Different whole native/replayed Horn or constraint row");
                 }else {
-                    if(left.size()!=right.size())throw new IllegalStateException("Different whole receiver branch count");
-                    for(int i=0;i<left.size();i++)if(!left.get(i).equivalent(right.get(i),work))throw new IllegalStateException("Different native/replayed receiver");
+                    List<ContextProductionCapture.Clause> left=NativeDependentMatchFrame.headlessShape(original,actual,work),right=NativeDependentMatchFrame.headlessShape(copy,isolated,work);
+                    if(left==null||right==null) {
+                        if(left!=null||right!=null||!NativePrenexUnitScope.same(NativePrenexUnitScope.observeFactoryRow(row.nativeRule,actual,work),NativePrenexUnitScope.observe(copy,isolated,work),work))throw new IllegalStateException("Different native/replayed whole producer");
+                    }else {
+                        if(left.size()!=right.size())throw new IllegalStateException("Different whole receiver branch count");
+                        for(int i=0;i<left.size();i++)if(!left.get(i).equivalent(right.get(i),work))throw new IllegalStateException("Different native/replayed receiver");
+                    }
                 }
                 mapping.put(row.nativeRule,copy.getId());
             }
+            return new Projection(isolated,mapping);
+        }finally{current(actual,expected,policy);}
+    }
+    public static Result inspect(Mind actual,ContextProductionInventory expected,Request request)throws Exception {
+        if(actual==null||request==null)throw new IllegalArgumentException("Actual local-X and exact replay request required");
+        Policy policy=request.policy;current(actual,expected,policy);
+        Runnable work=ContextGroundProductionRounds.budget(policy.work);
+        Projection projection=project(actual,expected,policy,false,work);Mind isolated=projection.mind;Map<Long,Long> mapping=projection.mapping;
+        try {
             try(NativeDependentMatchFrame frame=NativeDependentMatchFrame.open(isolated,expected.context,expected.revision,true,expected.initialization,policy.rows,policy.steps,policy.work,policy.nodes)) {
                 Long receiverId=mapping.get(request.receiver);if(receiverId==null)throw new IllegalStateException("Missing actual receiver");
                 Instance instance=frame.instantiate(frame.entry((Rule)isolated.getRules().get(receiverId)),request.branch);Match last=null;

@@ -871,3 +871,5 @@ org.kanger.NativeDependentMaterializationRunner | NATIVE_DEPENDENT_MATERIALIZATI
 org.kanger.NativeDependentReplayCapsuleRunner | NATIVE_DEPENDENT_REPLAY_CAPSULE_PASS
 
 org.kanger.storage.dumb2.ContextDependentPendingReplayRunner | CONTEXT_DEPENDENT_PENDING_REPLAY_PASS
+
+org.kanger.storage.dumb2.ContextDependentProductionRunner | CONTEXT_DEPENDENT_PRODUCTION_PASS

@@ -139,6 +139,13 @@ final class NativeDependentReplayCapsule {
         out.writeInt(m.support.depth);List<Integer> support=new ArrayList<>();for(Source source:m.support.sources){budget.spend(1);support.add(ordinal(rows,source.rule));}
         Collections.sort(support);out.writeInt(support.size());for(int source:support)out.writeInt(source);out.flush();return buffer.toByteArray();
     }
+    /** Canonical typed graph for independent reconstruction; not a capsule or admission receipt. */
+    static byte[] atomGraph(List<Atom> atoms,Map<Long,Integer> rows,Limits limits)throws Exception {
+        Budget budget=new Budget(limits);BoundedBytes buffer=new BoundedBytes(limits.bytes);DataOutputStream out=new DataOutputStream(buffer);
+        Transcript transcript=new Transcript(out,limits,budget,rows);out.writeInt(atoms.size());
+        for(Atom atom:atoms){budget.spend(1);out.writeInt(ordinal(rows,atom.nativeRule));text(out,atom.predicate,limits,budget);transcript.nodes(atom.arguments);transcript.nodes(atom.binders);}
+        out.flush();return buffer.toByteArray();
+    }
     static Saved capture(NativeDependentMatchFrame frame,Match match,Limits limits)throws Exception {
         return captureProjected(frame,match,limits,null,null);
     }

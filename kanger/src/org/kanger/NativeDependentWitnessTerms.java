@@ -153,6 +153,12 @@ final class NativeDependentWitnessTerms {
             for(NativePrenexUnitScope.Slot slot:root.scope.slots) { tick();arguments.add(slot.binder<0?valueNode(slot.value):binders.get(slot.binder)); }
             return new Atom(id,root.original.getId(),root.scope.predicate,arguments,binders);
         }
+        /** Owned symbolic atom shape only; this method grants no inference or Source authority. */
+        Atom shape(long nativeRule,String predicate,List<Node> arguments) throws Exception {
+            current();if(mind.getRules().get(nativeRule)==null||predicate==null)throw refuse("Actual symbolic atom owner required");
+            for(Node argument:arguments)owned(argument);
+            return new Atom(id,nativeRule,predicate,arguments,Collections.emptyList());
+        }
         private Node dereference(Node node,Map<Integer,Node> bindings) {
             int depth=0;
             while(node.kind==Kind.VARIABLE&&bindings.containsKey(node.variable)) {
