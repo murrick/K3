@@ -143,6 +143,21 @@ public final class ContextProductionNativeBinding {
                     if (parsed.inputs.size() != 1 || !source.equals(parsed.inputs.get(0).source)) throw new IllegalStateException("One whole sourced origin required");
                     Rule reconstructed = (Rule)replay.getRules().get(parsed.inputs.get(0).nativeRule);
                     if (witness(nativeRule,mind,work)) {
+                        boolean universal=false;
+                        for (List<Domain> branch:nativeRule.getTree()) for (Domain domain:branch) for (IArgument argument:domain.getArguments()) {
+                            work.run(); universal|=argument.getType()==ArgumentType.TVARIABLE;
+                        }
+                        if (universal) {
+                            try {
+                                NativePrenexUnitScope observed=NativePrenexUnitScope.observe(nativeRule,mind,work);
+                                NativePrenexUnitScope replayed=NativePrenexUnitScope.observe(reconstructed,replay,work);
+                                if (!NativePrenexUnitScope.same(observed,replayed,work))
+                                    throw new IllegalStateException("Whole mixed prefix/native replay shape or dependencies differ");
+                                throw new IllegalArgumentException("Mixed quantifier prefixes require dependency-aware qualification");
+                            } catch (UnsupportedOperationException outsideObservationScope) {
+                                // Existing bundle preflight still refuses wider mixed shapes below.
+                            }
+                        }
                         ContextWitnessBundle.Bundle nativeBundle = ContextWitnessBundle.extract(source,nativeRule,mind,work);
                         ContextWitnessBundle.Bundle replayedBundle = ContextWitnessBundle.extract(source,reconstructed,replay,work);
                         if (!ContextWitnessBundle.equivalent(nativeBundle,replayedBundle,work)) throw new IllegalStateException("Origin/native whole witness sharing differs");

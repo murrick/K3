@@ -862,3 +862,4 @@ org.kanger.storage.dumb2.ContextRankBudgetPublicationRunner | CONTEXT_RANK_BUDGE
 org.kanger.storage.dumb2.ContextModelRefusalDiagnosticsRunner | CONTEXT_MODEL_REFUSAL_DIAGNOSTICS_PASS
 org.kanger.NativeUniversalUnitCollisionRunner | NATIVE_UNIVERSAL_UNIT_COLLISION_PASS
 org.kanger.NativeUniversalConstraintCollisionRunner | NATIVE_UNIVERSAL_CONSTRAINT_COLLISION_PASS
+org.kanger.NativePrenexUnitScopeRunner | NATIVE_PRENEX_UNIT_SCOPE_PASS
