@@ -863,3 +863,4 @@ org.kanger.storage.dumb2.ContextModelRefusalDiagnosticsRunner | CONTEXT_MODEL_RE
 org.kanger.NativeUniversalUnitCollisionRunner | NATIVE_UNIVERSAL_UNIT_COLLISION_PASS
 org.kanger.NativeUniversalConstraintCollisionRunner | NATIVE_UNIVERSAL_CONSTRAINT_COLLISION_PASS
 org.kanger.NativePrenexUnitScopeRunner | NATIVE_PRENEX_UNIT_SCOPE_PASS
+org.kanger.NativeDependentWitnessTermsRunner | NATIVE_DEPENDENT_WITNESS_TERMS_PASS
