@@ -143,6 +143,22 @@ public class Analyzer {
             }
         }
 
+        if (!result && (ordinaryUnitQualification || mind.getQueryPass() == org.kanger.enums.QueryPass.ACCEPT)) {
+            NativeUniversalConstraintCollision.Proof proof=NativeUniversalConstraintCollision.find(mind);
+            if (proof!=null) {
+                proof.verify(mind);
+                CollisionProofCapture.recordSymbolic(mind,proof);
+                StringBuilder premises=new StringBuilder();
+                for (Rule original:proof.originals()) if (original!=proof.constraint) {
+                    if (premises.length()>0) premises.append("\n");
+                    premises.append(diagnosticRule(original));
+                }
+                collisions.add(ContextQualification.witness(diagnosticRule(proof.constraint),premises.toString()));
+                result=true;
+                if (logging) log.add(LogMode.ANALYZER,"Symbolic universal constraint collision: "+diagnosticRule(proof.constraint));
+            }
+        }
+
         if (!result) {
 
             boolean occurs = false;

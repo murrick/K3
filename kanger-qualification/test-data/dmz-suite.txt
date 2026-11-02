@@ -861,3 +861,4 @@ org.kanger.ContextRankBudgetTopologyRunner | CONTEXT_RANK_BUDGET_TOPOLOGY_PASS
 org.kanger.storage.dumb2.ContextRankBudgetPublicationRunner | CONTEXT_RANK_BUDGET_PUBLICATION_PASS
 org.kanger.storage.dumb2.ContextModelRefusalDiagnosticsRunner | CONTEXT_MODEL_REFUSAL_DIAGNOSTICS_PASS
 org.kanger.NativeUniversalUnitCollisionRunner | NATIVE_UNIVERSAL_UNIT_COLLISION_PASS
+org.kanger.NativeUniversalConstraintCollisionRunner | NATIVE_UNIVERSAL_CONSTRAINT_COLLISION_PASS

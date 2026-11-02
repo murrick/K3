@@ -65,6 +65,15 @@ final class CollisionProofCapture implements AutoCloseable {
         }
     }
 
+    static final class SymbolicConflict {
+        final NativeUniversalConstraintCollision.Evidence evidence;
+        final List<Graph> roots;
+        private SymbolicConflict(NativeUniversalConstraintCollision.Evidence evidence,List<Graph> roots) {
+            this.evidence=evidence; this.roots=Collections.unmodifiableList(new ArrayList<>(roots));
+        }
+    }
+
+    private final List<SymbolicConflict> symbolic=new ArrayList<SymbolicConflict>();
     private final CollisionProofCapture previous;
     private final Thread owner;
     private final List<Conflict> conflicts = new ArrayList<Conflict>();
@@ -85,7 +94,19 @@ final class CollisionProofCapture implements AutoCloseable {
                 TerminalSupportCapture.collisionObservations(mind)));
     }
 
+    static void recordSymbolic(Mind mind,NativeUniversalConstraintCollision.Proof proof) throws Exception {
+        CollisionProofCapture capture=ACTIVE.get(); if (capture==null) return;
+        proof.verify(mind); List<Graph> roots=new ArrayList<>();
+        for (Rule root:proof.originals()) roots.add(build(mind,root));
+        capture.symbolic.add(new SymbolicConflict(proof.evidence(),roots));
+    }
+
+    List<SymbolicConflict> symbolicSnapshot() {
+        return Collections.unmodifiableList(new ArrayList<>(symbolic));
+    }
+
     List<Conflict> snapshot() {
+        if (!symbolic.isEmpty()) throw new IllegalStateException("Symbolic multi-root collision requires its complete evidence; legacy pair capture unsupported");
         return Collections.unmodifiableList(new ArrayList<Conflict>(conflicts));
     }
 

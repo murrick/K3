@@ -767,6 +767,7 @@ def main():
     if args.mode == 'reference': names += [['org.kanger.ContextRankBudgetPositiveRunner', 'CONTEXT_RANK_BUDGET_POSITIVE_PASS'], ['org.kanger.ContextRankBudgetIntegrityRunner', 'CONTEXT_RANK_BUDGET_INTEGRITY_PASS'], ['org.kanger.ContextRankBudgetTopologyRunner', 'CONTEXT_RANK_BUDGET_TOPOLOGY_PASS'], ['org.kanger.storage.dumb2.ContextRankBudgetPublicationRunner', 'CONTEXT_RANK_BUDGET_PUBLICATION_PASS']]
     if args.mode == 'reference': names += [['org.kanger.storage.dumb2.ContextModelRefusalDiagnosticsRunner', 'CONTEXT_MODEL_REFUSAL_DIAGNOSTICS_PASS']]
     if args.mode == 'reference': names += [['org.kanger.NativeUniversalUnitCollisionRunner', 'NATIVE_UNIVERSAL_UNIT_COLLISION_PASS']]
+    if args.mode == 'reference': names += [['org.kanger.NativeUniversalConstraintCollisionRunner', 'NATIVE_UNIVERSAL_CONSTRAINT_COLLISION_PASS']]
     drivers = [root / 'kanger-qualification/src' / (name.replace('.', '/') + '.java') for name, _ in names]
     if args.ordinary_integration_candidate:
         original = root / 'kanger-data-dumb2/src/org/kanger/storage/dumb2/DB.java'
