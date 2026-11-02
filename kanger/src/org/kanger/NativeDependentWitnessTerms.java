@@ -102,7 +102,7 @@ final class NativeDependentWitnessTerms {
         private void tick() { active(); if(--remaining<0)throw refuse("Dependent projection work limit"); }
         private void owned(Node node) { tick(); if(node==null||!id.equals(node.arena))throw refuse("Different dependent term arena"); }
         private void current() throws Exception {
-            active();
+            tick();
             try { for(Root root:roots.values())root.current(); }
             catch(Exception changed) { failed=true;throw changed; }
         }

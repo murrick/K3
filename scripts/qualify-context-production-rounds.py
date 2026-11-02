@@ -770,6 +770,7 @@ def main():
     if args.mode == 'reference': names += [['org.kanger.NativeUniversalConstraintCollisionRunner', 'NATIVE_UNIVERSAL_CONSTRAINT_COLLISION_PASS']]
     if args.mode == 'reference': names += [['org.kanger.NativePrenexUnitScopeRunner', 'NATIVE_PRENEX_UNIT_SCOPE_PASS']]
     if args.mode == 'reference': names += [['org.kanger.NativeDependentWitnessTermsRunner', 'NATIVE_DEPENDENT_WITNESS_TERMS_PASS']]
+    if args.mode == 'reference': names += [['org.kanger.NativeDependentMatchFrameRunner', 'NATIVE_DEPENDENT_MATCH_FRAME_PASS']]
     drivers = [root / 'kanger-qualification/src' / (name.replace('.', '/') + '.java') for name, _ in names]
     if args.ordinary_integration_candidate:
         original = root / 'kanger-data-dumb2/src/org/kanger/storage/dumb2/DB.java'
