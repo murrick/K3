@@ -140,15 +140,27 @@ final class NativeDependentReplayCapsule {
         Collections.sort(support);out.writeInt(support.size());for(int source:support)out.writeInt(source);out.flush();return buffer.toByteArray();
     }
     static Saved capture(NativeDependentMatchFrame frame,Match match,Limits limits)throws Exception {
-        ReplayPlan plan=frame.replayPlan(match);ContextProductionInventory inventory=plan.inventory;
-        // Replaying opaque initialization or dropping caches would silently change the effective view.
-        if(!inventory.initialization.isEmpty()||inventory.rows.size()!=inventory.primary.size())throw new IOException("Capsule requires primary-only inventory and empty initialization");
-        if(inventory.rows.size()>limits.rows||plan.steps.isEmpty()||plan.steps.size()>limits.steps)throw new IOException("Dependent capsule shape limit");
+        return captureProjected(frame,match,limits,null,null);
+    }
+    /** Metadata projection only, not provider authentication. Caller verifies every actual native row. */
+    static Saved captureProjected(NativeDependentMatchFrame frame,Match match,Limits limits,ContextProductionInventory original,Map<Long,Long> originalToReplay)throws Exception {
+        ReplayPlan plan=frame.replayPlan(match);ContextProductionInventory replay=plan.inventory;
+        ContextProductionInventory inventory=original==null?replay:original;
+        if(!inventory.initialization.isEmpty()||inventory.rows.size()!=inventory.primary.size()||!replay.initialization.isEmpty()||replay.rows.size()!=replay.primary.size())throw new IOException("Capsule requires primary-only inventory and empty initialization");
+        if(inventory.rows.size()!=replay.rows.size()||inventory.rows.size()>limits.rows||plan.steps.isEmpty()||plan.steps.size()>limits.steps)throw new IOException("Dependent capsule shape limit");
+        if(!inventory.context.equals(replay.context)||inventory.revision!=replay.revision||inventory.localX!=replay.localX)throw new IOException("Different projected context coordinate");
         Budget budget=new Budget(limits);BoundedBytes buffer=new BoundedBytes(limits.bytes);DataOutputStream out=new DataOutputStream(buffer);
         out.writeInt(MAGIC);out.writeInt(VERSION);out.writeLong(inventory.context.getMostSignificantBits());out.writeLong(inventory.context.getLeastSignificantBits());
         out.writeLong(inventory.revision);out.writeBoolean(inventory.localX);text(out,"inventory:"+inventory.fingerprint,limits,budget);
+        Map<Long,ContextProductionInventory.Row> replayRows=new LinkedHashMap<>();for(ContextProductionInventory.Row row:replay.rows){budget.spend(1);replayRows.put(row.nativeRule,row);}
         Map<Long,Integer> rows=new LinkedHashMap<>();out.writeInt(inventory.rows.size());
-        for(ContextProductionInventory.Row row:inventory.rows){budget.spend(1);rows.put(row.nativeRule,rows.size());out.writeLong(row.nativeRule);text(out,row.origin,limits,budget);}
+        if(original!=null&&(originalToReplay==null||originalToReplay.size()!=inventory.rows.size()))throw new IOException("Complete Source projection required");
+        for(ContextProductionInventory.Row row:inventory.rows) {
+            budget.spend(1);Long id=original==null?Long.valueOf(row.nativeRule):originalToReplay.get(row.nativeRule);
+            ContextProductionInventory.Row copy=replayRows.get(id);
+            if(copy==null||!Objects.equals(row.origin,copy.origin)||rows.put(id,rows.size())!=null)throw new IOException("Non-bijective whole original projection");
+            out.writeLong(row.nativeRule);text(out,row.origin,limits,budget);
+        }
         out.writeInt(ordinal(rows,plan.receiver));out.writeInt(plan.branch);out.writeInt(plan.steps.size());
         for(ReplayStep step:plan.steps){budget.spend(1);out.writeInt(ordinal(rows,step.producer));out.writeInt(step.pivot);}
         bytes(out,transcript(plan.materialization,rows,limits,budget),budget);out.flush();frame.verify(plan.materialization);return new Saved(buffer.toByteArray());

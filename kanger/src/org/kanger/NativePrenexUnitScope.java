@@ -39,8 +39,17 @@ final class NativePrenexUnitScope {
         this.slots=Collections.unmodifiableList(new ArrayList<>(slots));
     }
     static NativePrenexUnitScope observe(Rule rule,Mind mind,Runnable work) throws Exception {
+        return observe(rule,mind,work,true);
+    }
+    /** Fetch internally: storage may rehydrate a new Java object for the same actual factory row. */
+    static NativePrenexUnitScope observeFactoryRow(long id,Mind mind,Runnable work) throws Exception {
+        work.run();Rule rule=(Rule)mind.getRules().get(id);
+        if(rule==null||rule.getId()!=id)throw new IllegalStateException("Missing actual prenex factory row");
+        return observe(rule,mind,work,false);
+    }
+    private static NativePrenexUnitScope observe(Rule rule,Mind mind,Runnable work,boolean identity) throws Exception {
         work.run();
-        if (mind.getRules().get(rule.getId())!=rule) throw new IllegalStateException("Different native prenex observation owner");
+        if (identity&&mind.getRules().get(rule.getId())!=rule) throw new IllegalStateException("Different native prenex observation owner");
         if (rule.isQuery()||rule.isGenerated()||rule.isDeleted(mind)||rule.getTree().size()!=1||rule.getTree().get(0).size()!=1)
             throw new UnsupportedOperationException("Positive primary prenex unit required");
         String origin=rule.getOrigin(); if (origin==null) throw new UnsupportedOperationException("Whole origin required");

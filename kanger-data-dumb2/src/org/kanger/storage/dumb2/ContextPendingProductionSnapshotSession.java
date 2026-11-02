@@ -125,6 +125,18 @@ final class ContextPendingProductionSnapshotSession implements AutoCloseable {
         }
         if(!routed.equals(expected.keySet()))throw new IllegalStateException("Incomplete qualified native runtime mapping");
     }
+    /** Read-only dependent proof of this actual local child, not family qualification or writer authority.
+     * All existing parent/retained/physical-member guards remain strict. Arena substitutions do not mutate the child. */
+    ContextDependentReplayInspection.Result inspectDependentLocal(ContextDependentReplayInspection.Request request) throws Exception {
+        synchronized(provider) {
+            requireCurrent();
+            if(request==null||request.policy.rows!=rows)throw new IllegalArgumentException("Dependent diagnostic rows must match owning lease");
+            try {
+                provider.productionExecutionTopology();
+                return ContextDependentReplayInspection.inspect(child,childInventory,request);
+            } finally {requireCurrent();}
+        }
+    }
     /** Read-only ACTUAL prepared child, including whole batches; never stage/append it again. */
     ContextNativeBranchInspection.Result inspectNative(ContextNativeCandidateInspection.Limits limits) throws Exception {
         synchronized(provider) {

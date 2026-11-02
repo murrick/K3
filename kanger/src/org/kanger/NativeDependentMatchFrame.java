@@ -146,21 +146,22 @@ final class NativeDependentMatchFrame implements AutoCloseable {
     }
     private void owned(Entry entry){tick();if(entry==null||entry.frame!=this||entries.get(entry.source.rule)!=entry)throw refuse("Different matching entry frame");}
     private void owned(Instance instance){tick();if(instance==null||instance.frame!=this)throw refuse("Different matching instance frame");owned(instance.receiver);}
-    private List<Clause> headless(Rule rule,Mind in) throws Exception {
-        tick();if(rule==null||rule.isQuery()||rule.isGenerated()||rule.isDeleted(in)||rule.getTree().isEmpty())throw refuse("Whole live primary matching row required");
+    private List<Clause> headless(Rule rule,Mind in) throws Exception {return headlessShape(rule,in,this::tick);}
+    static List<Clause> headlessShape(Rule rule,Mind in,Runnable work) throws Exception {
+        work.run();if(rule==null||rule.isQuery()||rule.isGenerated()||rule.isDeleted(in)||rule.getTree().isEmpty())throw new IllegalStateException("Whole live primary matching row required");
         List<Clause> clauses=new ArrayList<>();
         for(List<Domain> branch:rule.getTree()) {
-            tick();if(branch.isEmpty())throw refuse("Empty native receiver branch");
+            work.run();if(branch.isEmpty())throw new IllegalStateException("Empty native receiver branch");
             for(Domain domain:branch) {
-                tick();if(domain.isAntc())return null;
-                if(domain.isSystem(in)||domain.isCalculated(in))throw refuse("Ordinary receiver required");
+                work.run();if(domain.isAntc())return null;
+                if(domain.isSystem(in)||domain.isCalculated(in))throw new IllegalStateException("Ordinary receiver required");
                 for(IArgument argument:domain.getArguments()) {
-                    tick();if(argument.getType()==ArgumentType.TVARIABLE) {
-                        if(((TVariable)argument.getObject(in)).getRuleId()!=rule.getId())throw refuse("Different receiver variable owner");
-                    }else if(argument.getType()!=ArgumentType.TERM||!SemanticTermSnapshot.isOrdinaryValue(argument.getValue(in)))throw refuse("Ordinary universal receiver slot required");
+                    work.run();if(argument.getType()==ArgumentType.TVARIABLE) {
+                        if(((TVariable)argument.getObject(in)).getRuleId()!=rule.getId())throw new IllegalStateException("Different receiver variable owner");
+                    }else if(argument.getType()!=ArgumentType.TERM||!SemanticTermSnapshot.isOrdinaryValue(argument.getValue(in)))throw new IllegalStateException("Ordinary universal receiver slot required");
                 }
             }
-            Clause clause=Clause.shapeOf(branch,in);if(clause==null)throw refuse("Unsupported whole receiver clause");clauses.add(clause);
+            Clause clause=Clause.shapeOf(branch,in);if(clause==null)throw new IllegalStateException("Unsupported whole receiver clause");clauses.add(clause);
         }
         return clauses;
     }
