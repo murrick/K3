@@ -72,6 +72,27 @@ final class NativeDependentMatchFrame implements AutoCloseable {
             receiverSource=proof.before.receiver.source;receiverBranch=proof.before.branch;
         }
     }
+    static final class ReplayStep {
+        final long producer;
+        final int pivot;
+        private ReplayStep(Match step){producer=step.producer.source.rule;pivot=step.pivot;}
+    }
+    static final class ReplayPlan {
+        final ContextProductionInventory inventory;
+        final long receiver;
+        final int branch;
+        final List<ReplayStep> steps;
+        final Materialization materialization;
+        private ReplayPlan(ContextProductionInventory inventory,Match last,List<Match> chain,Materialization materialization) {
+            this.inventory=inventory;receiver=last.before.receiver.source.rule;branch=last.before.branch;
+            List<ReplayStep> steps=new ArrayList<>();for(Match step:chain)steps.add(new ReplayStep(step));
+            this.steps=Collections.unmodifiableList(steps);this.materialization=materialization;
+        }
+    }
+    ReplayPlan replayPlan(Match last) throws Exception {
+        Materialization materialization=materialize(last);
+        ReplayPlan plan=new ReplayPlan(inventory,last,chain(last),materialization);current();return plan;
+    }
     private Mind mind;
     private final UUID context;
     private final long revision;

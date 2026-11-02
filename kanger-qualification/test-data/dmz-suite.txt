@@ -867,3 +867,5 @@ org.kanger.NativeDependentWitnessTermsRunner | NATIVE_DEPENDENT_WITNESS_TERMS_PA
 org.kanger.NativeDependentMatchFrameRunner | NATIVE_DEPENDENT_MATCH_FRAME_PASS
 
 org.kanger.NativeDependentMaterializationRunner | NATIVE_DEPENDENT_MATERIALIZATION_PASS
+
+org.kanger.NativeDependentReplayCapsuleRunner | NATIVE_DEPENDENT_REPLAY_CAPSULE_PASS
