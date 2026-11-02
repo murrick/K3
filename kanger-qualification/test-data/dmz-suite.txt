@@ -865,3 +865,5 @@ org.kanger.NativeUniversalConstraintCollisionRunner | NATIVE_UNIVERSAL_CONSTRAIN
 org.kanger.NativePrenexUnitScopeRunner | NATIVE_PRENEX_UNIT_SCOPE_PASS
 org.kanger.NativeDependentWitnessTermsRunner | NATIVE_DEPENDENT_WITNESS_TERMS_PASS
 org.kanger.NativeDependentMatchFrameRunner | NATIVE_DEPENDENT_MATCH_FRAME_PASS
+
+org.kanger.NativeDependentMaterializationRunner | NATIVE_DEPENDENT_MATERIALIZATION_PASS

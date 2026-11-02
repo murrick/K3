@@ -53,6 +53,25 @@ final class NativeDependentMatchFrame implements AutoCloseable {
             after=new Instance(frame,before.receiver,before.branch,residual,new Support(sources,before.support.depth+1),this);
         }
     }
+    /** Checked in-memory handoff only. Nodes and symbols remain frame-local, never durable Term IDs. */
+    static final class Materialization {
+        final List<NativeDependentWitnessTerms.Atom> producers;
+        final List<Negative> receiver,remaining;
+        final Support support;
+        final List<Source> producerSources;
+        final Source receiverSource;
+        final int receiverBranch;
+        private final NativeDependentMatchFrame frame;
+        private final Match proof;
+        private Materialization(NativeDependentMatchFrame frame,Match proof,List<NativeDependentWitnessTerms.Atom> producers,List<Negative> receiver,List<Source> producerSources) {
+            this.frame=frame;this.proof=proof;
+            this.producers=Collections.unmodifiableList(new ArrayList<>(producers));
+            this.receiver=Collections.unmodifiableList(new ArrayList<>(receiver));
+            remaining=proof.after.remaining;support=proof.after.support;
+            this.producerSources=Collections.unmodifiableList(new ArrayList<>(producerSources));
+            receiverSource=proof.before.receiver.source;receiverBranch=proof.before.branch;
+        }
+    }
     private Mind mind;
     private final UUID context;
     private final long revision;
@@ -202,6 +221,47 @@ final class NativeDependentMatchFrame implements AutoCloseable {
             for(int i=0;i<expected.size();i++){tick();Negative a=expected.get(i),b=step.after.remaining.get(i);if(!a.predicate.equals(b.predicate)||a.originalLiteral!=b.originalLiteral||!a.arguments.equals(b.arguments))throw refuse("Different matching residual");}
             Set<Source> support=new LinkedHashSet<>(step.before.support.sources);support.add(step.producer.source);
             if(step.after.support.depth!=step.before.support.depth+1||!step.after.support.sources.equals(support))throw refuse("Different matching Source union/grade");previous=step.after;
+        }
+        current();
+    }
+    private List<Match> chain(Match last) {
+        List<Match> chain=new ArrayList<>();
+        for(Match step=last;step!=null;step=step.before.parent){tick();chain.add(step);if(chain.size()>maximumSteps)throw refuse("Materialization proof depth limit");}
+        Collections.reverse(chain);return chain;
+    }
+    private Materialization projectMaterialization(Match last) throws Exception {
+        List<Match> chain=chain(last);List<NativeDependentWitnessTerms.Atom> producers=new ArrayList<>();
+        for(int i=0;i<chain.size();i++) {
+            NativeDependentWitnessTerms.Atom atom=chain.get(i).application;
+            // Later pivots can refine variables inside an EARLIER dependent application.
+            for(int j=i;j<chain.size();j++){tick();atom=arena.apply(atom,chain.get(j).substitution);}
+            producers.add(atom);
+        }
+        List<Negative> receiver=new ArrayList<>();
+        for(Negative old:chain.get(0).before.remaining) {
+            List<Node> arguments=old.arguments;
+            for(Match step:chain){tick();arguments=arena.apply(arguments,step.substitution);}
+            receiver.add(new Negative(old.predicate,old.originalLiteral,arguments));
+        }
+        List<Source> sources=new ArrayList<>();for(Match step:chain){tick();sources.add(step.producer.source);}
+        return new Materialization(this,last,producers,receiver,sources);
+    }
+    Materialization materialize(Match last) throws Exception {
+        verify(last);Materialization result=projectMaterialization(last);current();return result;
+    }
+    void verify(Materialization materialization) throws Exception {
+        current();if(materialization==null||materialization.frame!=this)throw refuse("Different materialization frame");
+        verify(materialization.proof);Materialization expected=projectMaterialization(materialization.proof);
+        if(materialization.producers.size()!=expected.producers.size()||materialization.receiver.size()!=expected.receiver.size()
+                ||materialization.remaining!=expected.remaining||materialization.support!=expected.support
+                ||!materialization.producerSources.equals(expected.producerSources)||!materialization.receiverSource.equals(expected.receiverSource)||materialization.receiverBranch!=expected.receiverBranch)throw refuse("Different materialization lineage");
+        for(int i=0;i<expected.producers.size();i++) {
+            tick();NativeDependentWitnessTerms.Atom a=expected.producers.get(i),b=materialization.producers.get(i);
+            if(a.nativeRule!=b.nativeRule||!a.arena.equals(b.arena)||!a.predicate.equals(b.predicate)||!a.arguments.equals(b.arguments)||!a.binders.equals(b.binders))throw refuse("Different materialized producer");
+        }
+        for(int i=0;i<expected.receiver.size();i++) {
+            tick();Negative a=expected.receiver.get(i),b=materialization.receiver.get(i);
+            if(!a.predicate.equals(b.predicate)||a.originalLiteral!=b.originalLiteral||!a.arguments.equals(b.arguments))throw refuse("Different materialized receiver");
         }
         current();
     }
