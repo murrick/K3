@@ -36,15 +36,19 @@ public final class ContextDependentRoundInspection {
     public static final class Barrier {
         public final Map<String,ContextDependentProductionInspection.Result> cuts;
         public final Set<Ticket> common;
-        private Barrier(Map<String,ContextDependentProductionInspection.Result> cuts,Set<Ticket> common){this.cuts=Collections.unmodifiableMap(new LinkedHashMap<>(cuts));this.common=Collections.unmodifiableSet(new LinkedHashSet<>(common));}
+        final Map<Ticket,ContextDependentProductionInspection.Row> observed;
+        final Map<UUID,String> basis;final Map<String,Set<UUID>> scopes;
+        private Barrier(Map<String,ContextDependentProductionInspection.Result> cuts,Set<Ticket> common,Map<Ticket,ContextDependentProductionInspection.Row> observed,List<Member> members,Map<String,Set<UUID>> scopes){
+            this.cuts=Collections.unmodifiableMap(new LinkedHashMap<>(cuts));this.common=Collections.unmodifiableSet(new LinkedHashSet<>(common));this.observed=Collections.unmodifiableMap(new LinkedHashMap<>(observed));Map<UUID,String> basis=new LinkedHashMap<>();for(Member member:members){ContextProductionInventory i=member.inventory;basis.put(i.context,i.revision+":"+i.localX+":"+i.fingerprint);}this.basis=Collections.unmodifiableMap(basis);Map<String,Set<UUID>> copy=new LinkedHashMap<>();for(Map.Entry<String,Set<UUID>> e:scopes.entrySet())copy.put(e.getKey(),Collections.unmodifiableSet(new LinkedHashSet<>(e.getValue())));this.scopes=Collections.unmodifiableMap(copy);
+        }
     }
     public static final class Result {
         public final List<Barrier> barriers;
         private Result(List<Barrier> barriers){this.barriers=Collections.unmodifiableList(new ArrayList<>(barriers));}
     }
     public static final class Discovery {
-        public final Round next;public final Result checked;public final int matchedRecipes;
-        private Discovery(Round next,Result checked){this.next=next;this.checked=checked;int count=0;for(List<Step> steps:next.recipes.values())count+=steps.size();matchedRecipes=count;}
+        public final Round next;public final Result checked;public final int matchedRecipes;public final ContextDependentFrontierInspection.Snapshot frontier;
+        private Discovery(Round next,Result checked,int work,int capacity){this.frontier=ContextDependentFrontierInspection.inspect(checked.barriers.get(checked.barriers.size()-1),work,capacity);this.next=next;this.checked=checked;int count=0;for(List<Step> steps:next.recipes.values())count+=steps.size();matchedRecipes=count;}
     }
     private static final class Outcome {
         final Result result;final Discovery discovery;
@@ -64,7 +68,7 @@ public final class ContextDependentRoundInspection {
         for(Map.Entry<String,Set<UUID>> scope:scopes.entrySet()){Set<Long> ids=new LinkedHashSet<>();for(Map.Entry<Ref,Long> row:keys.entrySet())if(scope.getValue().contains(row.getKey().context))ids.add(row.getValue());active.put(scope.getKey(),ids);}
         current(members,request.policy);
         try {
-            List<ContextDependentProductionInspection.Step> history=new ArrayList<>();Map<Ticket,Integer> indices=new LinkedHashMap<>();Set<Ticket> common=new LinkedHashSet<>();List<Barrier> barriers=new ArrayList<>();Runnable work=ContextGroundProductionRounds.budget(request.policy.work);
+            List<ContextDependentProductionInspection.Step> history=new ArrayList<>();Map<Ticket,Integer> indices=new LinkedHashMap<>();Set<Ticket> common=new LinkedHashSet<>();List<Barrier> barriers=new ArrayList<>();Map<Ticket,ContextDependentProductionInspection.Row> observed=new LinkedHashMap<>();Runnable work=ContextGroundProductionRounds.budget(request.policy.work);
             for(int r=0;r<request.rounds.size();r++) {
                 Round round=request.rounds.get(r);if(!round.recipes.keySet().equals(scopes.keySet()))throw new IllegalArgumentException("Every barrier needs every exact cut");
                 Map<String,Set<Integer>> visible=new LinkedHashMap<>();Map<String,List<Ticket>> created=new LinkedHashMap<>();
@@ -82,9 +86,9 @@ public final class ContextDependentRoundInspection {
                     work.run();ContextDependentProductionInspection.Request recipe=new ContextDependentProductionInspection.Request(request.policy,request.capacity,history,true);
                     ContextDependentProductionInspection.Result checked=ContextDependentProductionInspection.inspectTransport(project(members,request.policy),project(members,request.policy),"round:"+r+":"+cut,recipe,active.get(cut),visible.get(cut));results.put(cut,checked);
                     List<Integer> order=new ArrayList<>(visible.get(cut));Collections.sort(order);
-                    for(Ticket ticket:created.get(cut)){int at=Collections.binarySearch(order,indices.get(ticket));if(checked.products.get(at).sources.stream().anyMatch(source->source.localX))exports.add(ticket);}
+                    for(Ticket ticket:created.get(cut)){int at=Collections.binarySearch(order,indices.get(ticket));ContextDependentProductionInspection.Row row=checked.products.get(at);observed.put(ticket,row);if(row.sources.stream().anyMatch(source->source.localX))exports.add(ticket);}
                 }
-                common=exports;barriers.add(new Barrier(results,common));current(members,request.policy);
+                common=exports;barriers.add(new Barrier(results,common,observed,members,scopes));current(members,request.policy);
             }
             if(discover){
                 if(request.rounds.size()==request.policy.steps)throw new IllegalStateException("No room for complete next barrier");Map<Long,Ref> originals=new LinkedHashMap<>();for(Map.Entry<Ref,Long> e:keys.entrySet())originals.put(e.getValue(),e.getKey());Map<Integer,Ticket> tickets=new LinkedHashMap<>();for(Map.Entry<Ticket,Integer> e:indices.entrySet())tickets.put(e.getValue(),e.getKey());Map<String,List<Step>> recipes=new LinkedHashMap<>();long total=history.size();
@@ -94,7 +98,7 @@ public final class ContextDependentRoundInspection {
                     List<ContextDependentProductionInspection.Step> found=ContextDependentProductionInspection.discoverTransport(project(members,request.policy),project(members,request.policy),"discovery:"+request.rounds.size()+":"+cut,input,active.get(cut),pool);total+=found.size();if(total>request.policy.steps)throw new IllegalStateException("Whole next barrier recipe limit");List<Step> steps=new ArrayList<>();
                     for(ContextDependentProductionInspection.Step step:found){List<Donor> donors=new ArrayList<>();for(ContextDependentProductionInspection.Donor d:step.donors)donors.add(d.original?Donor.original(originals.get(d.reference)):Donor.carried(tickets.get((int)d.reference)));steps.add(new Step(originals.get(step.rule),step.retainedLiteral,donors));}recipes.put(cut,steps);
                 }
-                Round nextRound=new Round(recipes);List<Round> complete=new ArrayList<>(request.rounds);complete.add(nextRound);Result checked=inspect(x,supplied,new Request(request.policy,request.capacity,complete));return new Outcome(null,new Discovery(nextRound,checked));
+                Round nextRound=new Round(recipes);List<Round> complete=new ArrayList<>(request.rounds);complete.add(nextRound);Result checked=inspect(x,supplied,new Request(request.policy,request.capacity,complete));return new Outcome(null,new Discovery(nextRound,checked,request.policy.work,request.capacity));
             }
             return new Outcome(new Result(barriers),null);
         }finally{current(members,request.policy);}
