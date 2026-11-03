@@ -891,3 +891,5 @@ org.kanger.storage.dumb2.ContextDependentIterationRunner | CONTEXT_DEPENDENT_ITE
 org.kanger.ContextDependentModelRunner | CONTEXT_DEPENDENT_MODEL_PASS
 
 org.kanger.storage.dumb2.ContextDependentCandidateRunner | CONTEXT_DEPENDENT_CANDIDATE_PASS
+
+org.kanger.storage.dumb2.ContextDependentCandidateModelRunner | CONTEXT_DEPENDENT_CANDIDATE_MODEL_PASS

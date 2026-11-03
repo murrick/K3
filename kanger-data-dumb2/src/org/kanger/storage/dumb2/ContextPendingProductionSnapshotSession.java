@@ -213,6 +213,18 @@ final class ContextPendingProductionSnapshotSession implements AutoCloseable {
             }finally{requireCurrent();}
         }
     }
+    /** One fresh actual append with separate base/proposed original and frozen-final model audits. */
+    ContextDependentCandidateModelInspection.Result inspectDependentCandidateModels(ContextDependentCandidateModelInspection.Request request) throws Exception {
+        synchronized(provider) {
+            requireCurrent();if(request==null||request.append.iteration.policy.rows!=rows)throw new IllegalArgumentException("Cut diagnostic rows must match owning lease");
+            try {
+                provider.productionExecutionTopology();List<ContextDependentCutInspection.Cut> cuts=new ArrayList<>();Map<String,List<ContextDependentCutInspection.Member>> groups=new LinkedHashMap<>();
+                for(int i=0;i<topology.size();i++){ContextConnection connection=topology.get(i);ContextDependentCutInspection.Member member=new ContextDependentCutInspection.Member(connection.layer(),foreign.get(i));String group=connection.getTrustGroup();if(group==null)cuts.add(new ContextDependentCutInspection.Cut(null,Collections.singletonList(member)));else groups.computeIfAbsent(group,k->new ArrayList<>()).add(member);}
+                for(Map.Entry<String,List<ContextDependentCutInspection.Member>> group:groups.entrySet())cuts.add(new ContextDependentCutInspection.Cut(group.getKey(),group.getValue()));
+                return ContextDependentCandidateModelInspection.inspect(new ContextDependentCutInspection.Member(parent,parentInventory),new ContextDependentCutInspection.Member(child,childInventory),cuts,request);
+            }finally{requireCurrent();}
+        }
+    }
     /** Supplied all-value model audit over fresh original and actual frozen-carrier state. */
     ContextDependentModelInspection.Result inspectDependentModels(ContextDependentModelInspection.Request request) throws Exception {
         synchronized(provider) {

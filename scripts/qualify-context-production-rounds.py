@@ -784,6 +784,7 @@ def main():
     if args.mode == 'reference': names += [['org.kanger.storage.dumb2.ContextDependentIterationRunner', 'CONTEXT_DEPENDENT_ITERATION_PASS']]
     if args.mode == 'reference': names += [['org.kanger.ContextDependentModelRunner', 'CONTEXT_DEPENDENT_MODEL_PASS']]
     if args.mode == 'reference': names += [['org.kanger.storage.dumb2.ContextDependentCandidateRunner', 'CONTEXT_DEPENDENT_CANDIDATE_PASS']]
+    if args.mode == 'reference': names += [['org.kanger.storage.dumb2.ContextDependentCandidateModelRunner', 'CONTEXT_DEPENDENT_CANDIDATE_MODEL_PASS']]
     drivers = [root / 'kanger-qualification/src' / (name.replace('.', '/') + '.java') for name, _ in names]
     if args.ordinary_integration_candidate:
         original = root / 'kanger-data-dumb2/src/org/kanger/storage/dumb2/DB.java'
