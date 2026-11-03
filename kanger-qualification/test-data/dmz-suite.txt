@@ -895,3 +895,5 @@ org.kanger.storage.dumb2.ContextDependentCandidateRunner | CONTEXT_DEPENDENT_CAN
 org.kanger.storage.dumb2.ContextDependentCandidateModelRunner | CONTEXT_DEPENDENT_CANDIDATE_MODEL_PASS
 
 org.kanger.storage.dumb2.ContextDependentRuntimeRunner | CONTEXT_DEPENDENT_RUNTIME_PASS
+
+org.kanger.storage.dumb2.ContextDependentRuntimeModelRunner | CONTEXT_DEPENDENT_RUNTIME_MODEL_PASS

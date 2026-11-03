@@ -36,6 +36,7 @@ final class ContextPendingProductionSnapshotSession implements AutoCloseable {
     private final List<ContextProductionInventory> foreign;
     private boolean closed;
     private ContextDependentRuntimeInspection.Frame dependentRuntime;
+    private ContextDependentRuntimeModelInspection.Result dependentRuntimeModels;
     static ContextPendingProductionSnapshotSession open(DB db,Mind proposed,int rows) throws Exception {
         synchronized(db) {return new ContextPendingProductionSnapshotSession(db,proposed,rows);}
     }
@@ -229,7 +230,7 @@ final class ContextPendingProductionSnapshotSession implements AutoCloseable {
     /** Prepare a provider-owned typed product overlay; never publish model guesses or native Terms. */
     ContextDependentRuntimeInspection.Result prepareDependentRuntime(ContextDependentRuntimeInspection.Request request) throws Exception {
         synchronized(provider) {
-            requireOwner();dependentRuntime=null;requireCurrent();if(request==null||request.qualification.append.iteration.policy.rows!=rows)throw new IllegalArgumentException("Cut diagnostic rows must match owning lease");
+            requireOwner();dependentRuntime=null;dependentRuntimeModels=null;requireCurrent();if(request==null||request.qualification.append.iteration.policy.rows!=rows)throw new IllegalArgumentException("Cut diagnostic rows must match owning lease");
             try {
                 provider.productionExecutionTopology();List<ContextDependentCutInspection.Cut> cuts=new ArrayList<>();Map<String,List<ContextDependentCutInspection.Member>> groups=new LinkedHashMap<>();
                 for(int i=0;i<topology.size();i++){ContextConnection connection=topology.get(i);ContextDependentCutInspection.Member member=new ContextDependentCutInspection.Member(connection.layer(),foreign.get(i));String group=connection.getTrustGroup();if(group==null)cuts.add(new ContextDependentCutInspection.Cut(null,Collections.singletonList(member)));else groups.computeIfAbsent(group,k->new ArrayList<>()).add(member);}
@@ -238,6 +239,23 @@ final class ContextPendingProductionSnapshotSession implements AutoCloseable {
                 requireCurrent();dependentRuntime=result.frame;return result;
             } catch(Exception failure){dependentRuntime=null;throw failure;}
         }
+    }
+    /** Fresh projection and direct indexed-runtime truth audit, under this actual owning lease. */
+    ContextDependentRuntimeModelInspection.Result prepareDependentRuntimeModels(ContextDependentRuntimeModelInspection.Request request) throws Exception {
+        synchronized(provider) {
+            requireOwner();dependentRuntime=null;dependentRuntimeModels=null;requireCurrent();if(request==null||request.projection.qualification.append.iteration.policy.rows!=rows)throw new IllegalArgumentException("Cut diagnostic rows must match owning lease");
+            try {
+                provider.productionExecutionTopology();List<ContextDependentCutInspection.Cut> cuts=new ArrayList<>();Map<String,List<ContextDependentCutInspection.Member>> groups=new LinkedHashMap<>();
+                for(int i=0;i<topology.size();i++){ContextConnection connection=topology.get(i);ContextDependentCutInspection.Member member=new ContextDependentCutInspection.Member(connection.layer(),foreign.get(i));String group=connection.getTrustGroup();if(group==null)cuts.add(new ContextDependentCutInspection.Cut(null,Collections.singletonList(member)));else groups.computeIfAbsent(group,k->new ArrayList<>()).add(member);}
+                for(Map.Entry<String,List<ContextDependentCutInspection.Member>> group:groups.entrySet())cuts.add(new ContextDependentCutInspection.Cut(group.getKey(),group.getValue()));
+                ContextDependentRuntimeModelInspection.Result result=ContextDependentRuntimeModelInspection.inspect(new ContextDependentCutInspection.Member(parent,parentInventory),new ContextDependentCutInspection.Member(child,childInventory),cuts,request);
+                requireCurrent();dependentRuntime=result.frame;if(result.status==ContextDependentRuntimeModelInspection.Status.RUNTIME_MODELLED_PENDING)dependentRuntimeModels=result;return result;
+            } catch(Exception failure){dependentRuntime=null;dependentRuntimeModels=null;throw failure;}
+        }
+    }
+    /** Only a fresh successful runtime truth preparation supplies this live audit. */
+    ContextDependentRuntimeModelInspection.Result dependentRuntimeModels(UUID id)throws Exception{
+        synchronized(provider){requireCurrent();if(dependentRuntimeModels==null||dependentRuntimeModels.frame!=dependentRuntime||id==null||!dependentRuntime.id.equals(id))throw new IllegalStateException("Exact current model-audited owning runtime required");return dependentRuntimeModels;}
     }
     /** Current owned frame only; detached frame ids are not reusable after replacement/close/mutation. */
     ContextDependentRuntimeInspection.Frame dependentRuntime(UUID id)throws Exception {
@@ -438,5 +456,5 @@ final class ContextPendingProductionSnapshotSession implements AutoCloseable {
             } finally {requireCurrent();}
         }
     }
-    @Override public void close() {synchronized(provider) {dependentRuntime=null;closed=true;}}
+    @Override public void close() {synchronized(provider) {dependentRuntime=null;dependentRuntimeModels=null;closed=true;}}
 }
