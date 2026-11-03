@@ -97,21 +97,47 @@ public final class ContextDependentProductionInspection {
         @Override public synchronized void write(int value){room(1);super.write(value);}
         @Override public synchronized void write(byte[] bytes,int offset,int length){room(length);super.write(bytes,offset,length);}
     }
+    /** Capture-time original occurrence manifest. It is historical data, not provider authority. */
+    static final class Originals {
+        final UUID context;final long revision;final boolean localX=true;final String fingerprint;final Map<Long,String> rows;
+        Originals(UUID context,long revision,String fingerprint,Map<Long,String> rows) {
+            if(context==null||revision<0||fingerprint==null||!fingerprint.matches("[0-9a-f]{64}")||rows==null)throw new IllegalArgumentException("Exact historical original manifest required");
+            long previous=-1;for(Map.Entry<Long,String> row:rows.entrySet()){if(row.getKey()==null||row.getKey()<=previous||row.getValue()==null||!row.getValue().startsWith("!"))throw new IllegalArgumentException("Ordered whole assertion occurrences required");previous=row.getKey();}
+            this.context=context;this.revision=revision;this.fingerprint=fingerprint;this.rows=Collections.unmodifiableMap(new LinkedHashMap<>(rows));
+        }
+        static Originals of(ContextProductionInventory inventory) {
+            if(inventory==null||!inventory.localX||!inventory.initialization.isEmpty()||inventory.rows.size()!=inventory.primary.size())throw new IllegalArgumentException("Whole primary-only original inventory required");
+            Map<Long,String> rows=new LinkedHashMap<>();for(ContextProductionInventory.Row row:inventory.rows)rows.put(row.nativeRule,row.origin);return new Originals(inventory.context,inventory.revision,inventory.fingerprint,rows);
+        }
+    }
+    private static Projection rebuild(Originals originals,Policy policy)throws Exception {
+        if(originals.rows.size()>policy.rows)throw new IllegalStateException("Original replay row limit");Runnable work=ContextGroundProductionRounds.budget(policy.work);User user=new User();Mind mind=new Mind(user);user.setCurrentMind(mind);Map<Long,Long> mapping=new LinkedHashMap<>();
+        for(Map.Entry<Long,String> row:originals.rows.entrySet()){work.run();if(row.getValue().length()>policy.bytes)throw new IllegalStateException("Original replay text limit");Rule copy=(Rule)mind.compileLine(row.getValue(),false,new LinkedList<org.kanger.interfaces.ITerm>());if(copy==null||!row.getValue().equals(copy.getOrigin()))throw new IllegalStateException("Missing exact whole rebuilt original");mapping.put(row.getKey(),copy.getId());}
+        return new Projection(mind,mapping);
+    }
+    static Result reconstruct(Originals originals,Request request)throws Exception {
+        if(originals==null||request==null)throw new IllegalArgumentException("Bounded historical production replay required");
+        try(Candidate candidate=new Candidate(rebuild(originals,request.policy),originals,request)) {
+            candidate.run();String digest=candidate.digest();
+            try(Candidate audit=new Candidate(rebuild(originals,request.policy),originals,request)){audit.run();if(!digest.equals(audit.digest()))throw new IllegalStateException("Different historical original-only reconstruction");}
+            candidate.current();return new Result(candidate,digest);
+        }
+    }
     private static final class Candidate implements AutoCloseable {
-        final Projection projection;final ContextProductionInventory inventory,original;final Request request;final Arena arena;final Runnable work;
+        final Projection projection;final ContextProductionInventory inventory;final Originals original;final Request request;final Arena arena;final Runnable work;
         final Map<Long,Entry> entries=new LinkedHashMap<>();final Map<Long,Source> sources=new LinkedHashMap<>();final Map<Long,Integer> ordinals=new LinkedHashMap<>();
         final List<Unit> products=new ArrayList<>();List<Conflict> originalConflicts,finalConflicts;
-        Candidate(Projection projection,ContextProductionInventory expected,Request request)throws Exception {
+        Candidate(Projection projection,Originals expected,Request request)throws Exception {
             this.projection=projection;this.original=expected;this.request=request;work=ContextGroundProductionRounds.budget(request.policy.work);
             inventory=ContextProductionInventory.inspect(projection.mind,expected.context,expected.revision,true,Collections.emptyList(),request.policy.rows);
             if(inventory.rows.size()!=expected.rows.size()||inventory.primary.size()!=inventory.rows.size())throw new IllegalStateException("Different whole production projection, including auxiliary rows");
             arena=new Arena(projection.mind,request.policy.work,request.policy.nodes);
             try {
-                for(ContextProductionInventory.Row row:expected.rows) {
-                    work.run();Long id=projection.mapping.get(row.nativeRule);if(id==null)throw new IllegalStateException("Missing original production mapping");Rule rule=(Rule)projection.mind.getRules().get(id);
-                    Source source=new Source(expected.context,expected.revision,row.nativeRule,true,"inventory:"+expected.fingerprint);sources.put(id,source);ordinals.put(id,ordinals.size());
+                for(Map.Entry<Long,String> row:expected.rows.entrySet()) {
+                    work.run();Long id=projection.mapping.get(row.getKey());if(id==null)throw new IllegalStateException("Missing original production mapping");Rule rule=(Rule)projection.mind.getRules().get(id);
+                    Source source=new Source(expected.context,expected.revision,row.getKey(),true,"inventory:"+expected.fingerprint);sources.put(id,source);ordinals.put(id,ordinals.size());
                     Root root=null;Clause clause=null;if(NativeDependentProductionRows.unit(rule))root=arena.capture(rule);else clause=NativeDependentProductionRows.ordinary(rule,projection.mind,work);
-                    entries.put(row.nativeRule,new Entry(rule,source,root,clause));
+                    entries.put(row.getKey(),new Entry(rule,source,root,clause));
                 }
                 current();
             }catch(Exception failure){arena.close();throw failure;}
@@ -183,11 +209,11 @@ public final class ContextDependentProductionInspection {
         Policy policy=request.policy;ContextDependentReplayInspection.current(actual,expected,policy);
         try {
             Projection first=ContextDependentReplayInspection.project(actual,expected,policy,true);
-            try(Candidate candidate=new Candidate(first,expected,request)) {
+            try(Candidate candidate=new Candidate(first,Originals.of(expected),request)) {
                 candidate.run();String digest=candidate.digest();
                 // Re-fetch and recompile ALL actual originals; no generated atom is accepted as a fresh axiom.
                 Projection second=ContextDependentReplayInspection.project(actual,expected,policy,true);
-                try(Candidate audit=new Candidate(second,expected,request)){audit.run();if(!digest.equals(audit.digest()))throw new IllegalStateException("Different independently reconstructed production/constraint graph");}
+                try(Candidate audit=new Candidate(second,Originals.of(expected),request)){audit.run();if(!digest.equals(audit.digest()))throw new IllegalStateException("Different independently reconstructed production/constraint graph");}
                 candidate.current();return new Result(candidate,digest);
             }
         }finally{ContextDependentReplayInspection.current(actual,expected,policy);}

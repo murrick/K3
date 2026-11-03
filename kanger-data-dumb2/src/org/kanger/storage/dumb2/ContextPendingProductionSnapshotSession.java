@@ -145,6 +145,14 @@ final class ContextPendingProductionSnapshotSession implements AutoCloseable {
             finally {requireCurrent();}
         }
     }
+    /** Capture only original knowledge plus a checked recipe; generated units are rebuilt after reopen. */
+    ContextDependentProductionReplay.Saved captureDependentProductions(ContextDependentProductionInspection.Request request) throws Exception {
+        synchronized(provider) {
+            requireCurrent();if(request==null||request.policy.rows!=rows)throw new IllegalArgumentException("Production replay rows must match owning lease");
+            try {provider.productionExecutionTopology();return ContextDependentProductionReplay.capture(child,childInventory,request);}
+            finally {requireCurrent();}
+        }
+    }
     /** Read-only ACTUAL prepared child, including whole batches; never stage/append it again. */
     ContextNativeBranchInspection.Result inspectNative(ContextNativeCandidateInspection.Limits limits) throws Exception {
         synchronized(provider) {
