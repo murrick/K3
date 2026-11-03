@@ -1,0 +1,81 @@
+/* MIT License. Copyright (c) 2026 Dmitry G. Quznetsov. */
+package org.kanger;
+import java.util.*;
+import org.kanger.ContextDependentCutInspection.*;
+import org.kanger.ContextDependentReplayInspection.Policy;
+import org.kanger.ContextDependentProductionInspection.CutPart;
+
+/** Explicit synchronous proof recipes. Historical diagnostics only; no coverage or admission authority. */
+public final class ContextDependentRoundInspection {
+    private ContextDependentRoundInspection(){}
+    public static final class Ticket {
+        public final int round,product;public final String cut;
+        public Ticket(int round,String cut,int product){if(round<0||cut==null||product<0)throw new IllegalArgumentException("Exact round product required");this.round=round;this.cut=cut;this.product=product;}
+        @Override public boolean equals(Object o){return o instanceof Ticket&&round==((Ticket)o).round&&product==((Ticket)o).product&&cut.equals(((Ticket)o).cut);}
+        @Override public int hashCode(){return Objects.hash(round,cut,product);}
+    }
+    public static final class Donor {
+        public final Ref original;public final Ticket carried;public final int earlier;
+        private Donor(Ref original,Ticket carried,int earlier){this.original=original;this.carried=carried;this.earlier=earlier;}
+        public static Donor original(Ref ref){if(ref==null)throw new IllegalArgumentException("Physical original required");return new Donor(ref,null,-1);}
+        public static Donor carried(Ticket ticket){if(ticket==null)throw new IllegalArgumentException("Previous barrier ticket required");return new Donor(null,ticket,-1);}
+        public static Donor earlier(int index){if(index<0)throw new IllegalArgumentException("Earlier local step required");return new Donor(null,null,index);}
+    }
+    public static final class Step {
+        public final Ref rule;public final int retainedLiteral;public final List<Donor> donors;
+        public Step(Ref rule,int retainedLiteral,List<Donor> donors){if(rule==null||retainedLiteral< -1||donors==null||donors.contains(null))throw new IllegalArgumentException("Whole producer and exact donors required");this.rule=rule;this.retainedLiteral=retainedLiteral;this.donors=Collections.unmodifiableList(new ArrayList<>(donors));}
+    }
+    public static final class Round {
+        public final Map<String,List<Step>> recipes;
+        public Round(Map<String,List<Step>> recipes){if(recipes==null)throw new IllegalArgumentException("Whole barrier required");Map<String,List<Step>> copy=new LinkedHashMap<>();for(Map.Entry<String,List<Step>> e:recipes.entrySet()){if(e.getKey()==null||e.getValue()==null||e.getValue().contains(null))throw new IllegalArgumentException("Exact barrier recipe required");copy.put(e.getKey(),Collections.unmodifiableList(new ArrayList<>(e.getValue())));}this.recipes=Collections.unmodifiableMap(copy);}
+    }
+    public static final class Request {
+        public final Policy policy;public final int capacity;public final List<Round> rounds;
+        public Request(Policy policy,int capacity,List<Round> rounds){if(policy==null||capacity<1||capacity>100000||rounds==null||rounds.contains(null)||rounds.size()>policy.steps)throw new IllegalArgumentException("Bounded complete round recipes required");this.policy=policy;this.capacity=capacity;this.rounds=Collections.unmodifiableList(new ArrayList<>(rounds));}
+    }
+    public static final class Barrier {
+        public final Map<String,ContextDependentProductionInspection.Result> cuts;
+        public final Set<Ticket> common;
+        private Barrier(Map<String,ContextDependentProductionInspection.Result> cuts,Set<Ticket> common){this.cuts=Collections.unmodifiableMap(new LinkedHashMap<>(cuts));this.common=Collections.unmodifiableSet(new LinkedHashSet<>(common));}
+    }
+    public static final class Result {
+        public final List<Barrier> barriers;
+        private Result(List<Barrier> barriers){this.barriers=Collections.unmodifiableList(new ArrayList<>(barriers));}
+    }
+    private static List<CutPart> project(List<Member> members,Policy policy)throws Exception{List<CutPart> out=new ArrayList<>();for(Member m:members)out.add(new CutPart(ContextDependentReplayInspection.projectMember(m.actual,m.inventory,policy),m.inventory));return out;}
+    private static void current(List<Member> members,Policy policy)throws Exception{for(Member m:members)if(m.inventory.localX)ContextDependentReplayInspection.current(m.actual,m.inventory,policy);else ContextDependentReplayInspection.currentMember(m.actual,m.inventory,policy);}
+    public static Result inspect(Member x,List<Cut> supplied,Request request)throws Exception {
+        if(x==null||!x.inventory.localX||supplied==null||supplied.contains(null)||request==null)throw new IllegalArgumentException("Exact whole family required");
+        List<Cut> cuts=new ArrayList<>(supplied);cuts.sort(Comparator.comparing(c->c.key));Map<String,Set<UUID>> scopes=new LinkedHashMap<>();Set<UUID> local=Collections.singleton(x.inventory.context);scopes.put(ContextDependentCutInspection.local(x.inventory.context),local);List<Member> members=new ArrayList<>();members.add(x);Set<UUID> contexts=new HashSet<>(local);long rows=x.inventory.rows.size();
+        for(Cut cut:cuts){Set<UUID> scope=new LinkedHashSet<>(local);if(scopes.containsKey(cut.key))throw new IllegalArgumentException("Repeated/split logical cut");for(Member m:cut.members){if(!contexts.add(m.inventory.context))throw new IllegalArgumentException("Repeated physical member");scope.add(m.inventory.context);members.add(m);rows+=m.inventory.rows.size();}scopes.put(cut.key,scope);}
+        if(rows>request.policy.rows||scopes.size()>request.policy.steps||contexts.size()>request.policy.steps+1)throw new IllegalArgumentException("Bounded whole family required");
+        Map<Ref,Long> keys=new LinkedHashMap<>();Map<String,Set<Long>> active=new LinkedHashMap<>();long next=0;for(Member m:members)for(ContextProductionInventory.Row row:m.inventory.rows)keys.put(new Ref(m.inventory.context,row.nativeRule),next++);
+        for(Map.Entry<String,Set<UUID>> scope:scopes.entrySet()){Set<Long> ids=new LinkedHashSet<>();for(Map.Entry<Ref,Long> row:keys.entrySet())if(scope.getValue().contains(row.getKey().context))ids.add(row.getValue());active.put(scope.getKey(),ids);}
+        current(members,request.policy);
+        try {
+            List<ContextDependentProductionInspection.Step> history=new ArrayList<>();Map<Ticket,Integer> indices=new LinkedHashMap<>();Set<Ticket> common=new LinkedHashSet<>();List<Barrier> barriers=new ArrayList<>();Runnable work=ContextGroundProductionRounds.budget(request.policy.work);
+            for(int r=0;r<request.rounds.size();r++) {
+                Round round=request.rounds.get(r);if(!round.recipes.keySet().equals(scopes.keySet()))throw new IllegalArgumentException("Every barrier needs every exact cut");
+                Map<String,Set<Integer>> visible=new LinkedHashMap<>();Map<String,List<Ticket>> created=new LinkedHashMap<>();
+                for(String cut:scopes.keySet()) {
+                    Set<Integer> pool=new LinkedHashSet<>();for(Map.Entry<Ticket,Integer> old:indices.entrySet())if(old.getKey().round<r&&(common.contains(old.getKey())||old.getKey().cut.equals(cut)))pool.add(old.getValue());visible.put(cut,pool);List<Ticket> made=new ArrayList<>();created.put(cut,made);
+                    for(Step step:round.recipes.get(cut)) {
+                        work.run();Long producer=keys.get(step.rule);if(producer==null||!active.get(cut).contains(producer))throw new IllegalArgumentException("Producer is outside exact cut");List<ContextDependentProductionInspection.Donor> donors=new ArrayList<>();
+                        for(Donor donor:step.donors){work.run();if(donor.original!=null){Long id=keys.get(donor.original);if(id==null||!active.get(cut).contains(id))throw new IllegalArgumentException("Sibling original is not common knowledge");donors.add(ContextDependentProductionInspection.Donor.original(id));}else{Integer id;if(donor.carried!=null){id=indices.get(donor.carried);if(donor.carried.round>=r||id==null||!pool.contains(id))throw new IllegalArgumentException("Donor must be visible at previous barrier");}else{if(donor.earlier>=made.size())throw new IllegalArgumentException("Only earlier steps of this cut");id=indices.get(made.get(donor.earlier));}donors.add(ContextDependentProductionInspection.Donor.product(id));}}
+                        if(history.size()==request.policy.steps)throw new IllegalStateException("Whole transport proof history limit");int index=history.size();history.add(new ContextDependentProductionInspection.Step(producer,step.retainedLiteral,donors));Ticket ticket=new Ticket(r,cut,made.size());made.add(ticket);indices.put(ticket,index);pool.add(index);
+                    }
+                }
+                // All cuts receive the same PREVIOUS common barrier. Same-round sibling steps remain invisible.
+                Map<String,ContextDependentProductionInspection.Result> results=new LinkedHashMap<>();Set<Ticket> exports=new LinkedHashSet<>(common);
+                for(String cut:scopes.keySet()) {
+                    work.run();ContextDependentProductionInspection.Request recipe=new ContextDependentProductionInspection.Request(request.policy,request.capacity,history,true);
+                    ContextDependentProductionInspection.Result checked=ContextDependentProductionInspection.inspectTransport(project(members,request.policy),project(members,request.policy),"round:"+r+":"+cut,recipe,active.get(cut),visible.get(cut));results.put(cut,checked);
+                    List<Integer> order=new ArrayList<>(visible.get(cut));Collections.sort(order);
+                    for(Ticket ticket:created.get(cut)){int at=Collections.binarySearch(order,indices.get(ticket));if(checked.products.get(at).sources.stream().anyMatch(source->source.localX))exports.add(ticket);}
+                }
+                common=exports;barriers.add(new Barrier(results,common));current(members,request.policy);
+            }
+            return new Result(barriers);
+        }finally{current(members,request.policy);}
+    }
+}

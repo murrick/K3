@@ -64,7 +64,7 @@ public final class ContextDependentProductionInspection {
         public final String auditDigest;public final boolean signed;
         private Result(Candidate candidate,String digest)throws Exception {
             signed=candidate.request.signed;
-            Views views=new Views(candidate);List<Row> rows=new ArrayList<>();for(Unit unit:candidate.products)rows.add(new Row(unit,views));products=Collections.unmodifiableList(rows);
+            Views views=new Views(candidate);List<Row> rows=new ArrayList<>();for(int i=0;i<candidate.products.size();i++)if(candidate.visibleProducts==null||candidate.visibleProducts.contains(i))rows.add(new Row(candidate.products.get(i),views));products=Collections.unmodifiableList(rows);
             originalUnitRefutations=refutations(candidate.originalConflicts);finalUnitRefutations=refutations(candidate.finalConflicts);originals=Collections.unmodifiableSet(new LinkedHashSet<>(candidate.sources.values()));auditDigest=digest;
         }
         private static List<Refutation> refutations(List<Conflict> conflicts){List<Refutation> out=new ArrayList<>();for(Conflict conflict:conflicts)out.add(new Refutation(conflict));return Collections.unmodifiableList(out);}
@@ -143,9 +143,17 @@ public final class ContextDependentProductionInspection {
             candidate.current();return new Result(candidate,digest);
         }
     }
+    /** Rebuild all proof ancestors, but qualify only exact receiving originals and visible units. */
+    static Result inspectTransport(List<CutPart> first,List<CutPart> second,String cut,Request history,Set<Long> active,Set<Integer> visible)throws Exception {
+        try(Candidate candidate=new Candidate(first,cut,history)) {
+            candidate.transport(active,visible);String digest=candidate.digest();
+            try(Candidate audit=new Candidate(second,cut,history)){audit.transport(active,visible);if(!digest.equals(audit.digest()))throw new IllegalStateException("Different independently rebuilt round transport");}
+            candidate.current();return new Result(candidate,digest);
+        }
+    }
     private static final class Candidate implements AutoCloseable {
         final Projection projection;final ContextProductionInventory inventory;final Originals original;final Request request;final Arena arena;final Runnable work;
-        final List<CutPart> parts=new ArrayList<>();final List<ContextProductionInventory> guards=new ArrayList<>();String cutIdentity;
+        final List<CutPart> parts=new ArrayList<>();final List<ContextProductionInventory> guards=new ArrayList<>();String cutIdentity;Set<Long> activeOriginals;Set<Integer> visibleProducts;
         final Map<Long,Entry> entries=new LinkedHashMap<>();final Map<Long,Source> sources=new LinkedHashMap<>();final Map<Long,Integer> ordinals=new LinkedHashMap<>();
         final List<Unit> products=new ArrayList<>();List<Conflict> originalConflicts,finalConflicts;
         Candidate(Projection projection,Originals expected,Request request)throws Exception {
@@ -245,8 +253,9 @@ public final class ContextDependentProductionInspection {
         }
         boolean positive(Donor ref){if(!ref.original)return products.get((int)ref.reference).positive;Entry entry=entries.get(ref.reference);return entry.root!=null||entry.clause.literals.get(0).positive;}
         List<Conflict> signedConstraints(boolean finalPool)throws Exception {
-            List<Donor> pool=new ArrayList<>();for(Map.Entry<Long,Entry> e:entries.entrySet())if(e.getValue().root!=null||e.getValue().clause.literals.size()==1)pool.add(Donor.original(e.getKey()));if(finalPool)for(int i=0;i<products.size();i++)pool.add(Donor.product(i));List<Conflict> conflicts=new ArrayList<>();int states=0;
+            List<Donor> pool=new ArrayList<>();for(Map.Entry<Long,Entry> e:entries.entrySet())if((activeOriginals==null||activeOriginals.contains(e.getKey()))&&(e.getValue().root!=null||e.getValue().clause.literals.size()==1))pool.add(Donor.original(e.getKey()));if(finalPool)for(int i=0;i<products.size();i++)if(visibleProducts==null||visibleProducts.contains(i))pool.add(Donor.product(i));List<Conflict> conflicts=new ArrayList<>();int states=0;
             for(Entry entry:entries.values()) {
+                if(activeOriginals!=null&&!activeOriginals.contains(entry.atomKey))continue;
                 Deque<State> pending=new ArrayDeque<>();pending.push(new State(all(entry),Collections.emptyList(),Collections.singleton(entry.source),0));
                 while(!pending.isEmpty()) {
                     work.run();if(++states>request.capacity)throw new IllegalStateException("Signed qualification state limit");State state=pending.pop();
@@ -257,14 +266,21 @@ public final class ContextDependentProductionInspection {
                     }
                 }
             }
+            // Two imported consequences can oppose without either producer clause being in this cut.
+            if(finalPool&&visibleProducts!=null)for(int i:visibleProducts)for(int j:visibleProducts)if(i<j){work.run();Unit a=products.get(i),b=donor(Donor.product(j));if(a.positive==b.positive)continue;if(!a.atom.predicate.equals(b.atom.predicate)||a.atom.arguments.size()!=b.atom.arguments.size())continue;Substitution match=arena.unify(a.atom.arguments,b.atom.arguments);if(match==null)continue;int depth=Math.max(a.depth,b.depth);if(conflicts.size()==request.capacity||depth>=request.policy.steps)throw new IllegalStateException("Transport opposition proof/depth limit");Set<Source> support=new LinkedHashSet<>(a.sources);support.addAll(b.sources);conflicts.add(new Conflict(a.rule,support,depth+1,Arrays.asList(arena.apply(a.atom,match),arena.apply(b.atom,match)),Arrays.asList(a.positive,b.positive)));}
             current();return conflicts;
+        }
+        void transport(Set<Long> active,Set<Integer> visible)throws Exception {
+            if(!request.signed||active==null||visible==null||!entries.keySet().containsAll(active))throw new IllegalArgumentException("Exact signed receiving scope required");activeOriginals=new LinkedHashSet<>(active);visibleProducts=new LinkedHashSet<>(visible);
+            for(int index:visibleProducts)if(index<0||index>=request.steps.size())throw new IllegalArgumentException("Missing transported proof");
+            originalConflicts=constraints(false);for(Step step:request.steps)produce(step);finalConflicts=constraints(true);current();
         }
         DomainDescriptor descriptor(Entry entry)throws Exception{return new DomainDescriptor(entry.rule.getDomain().getPredicate(entry.owner).getName(entry.owner),entry.rule.getDomain().getRange());}
         void run()throws Exception{originalConflicts=constraints(false);for(Step step:request.steps)produce(step);finalConflicts=constraints(true);current();}
         private long sourceKey(Source source){if(cutIdentity==null)return source.rule;for(Map.Entry<Long,Source> entry:sources.entrySet())if(entry.getValue().equals(source))return entry.getKey();throw new IllegalStateException("Missing qualified Source");}
         private void support(DataOutputStream out,Set<Source> support)throws Exception{List<Long> ids=new ArrayList<>();for(Source source:support){work.run();ids.add(sourceKey(source));}Collections.sort(ids);out.writeInt(ids.size());for(long id:ids)out.writeLong(id);}
         String digest()throws Exception {
-            List<Atom> atoms=new ArrayList<>();AuditBytes header=new AuditBytes(request.policy.bytes);DataOutputStream out=new DataOutputStream(header);out.writeInt(request.signed?3:1);out.writeLong(original.context.getMostSignificantBits());out.writeLong(original.context.getLeastSignificantBits());out.writeLong(original.revision);out.writeBoolean(original.localX);out.writeUTF(original.fingerprint);if(cutIdentity!=null){out.writeInt(2);out.writeUTF(cutIdentity);out.writeInt(parts.size());for(CutPart part:parts){ContextProductionInventory member=part.original;out.writeUTF(member.context.toString());out.writeLong(member.revision);out.writeBoolean(member.localX);out.writeUTF(member.fingerprint);}}out.writeInt(products.size());
+            List<Atom> atoms=new ArrayList<>();AuditBytes header=new AuditBytes(request.policy.bytes);DataOutputStream out=new DataOutputStream(header);out.writeInt(request.signed?3:1);out.writeLong(original.context.getMostSignificantBits());out.writeLong(original.context.getLeastSignificantBits());out.writeLong(original.revision);out.writeBoolean(original.localX);out.writeUTF(original.fingerprint);if(cutIdentity!=null){out.writeInt(2);out.writeUTF(cutIdentity);out.writeInt(parts.size());for(CutPart part:parts){ContextProductionInventory member=part.original;out.writeUTF(member.context.toString());out.writeLong(member.revision);out.writeBoolean(member.localX);out.writeUTF(member.fingerprint);}}if(activeOriginals!=null){out.writeInt(4);out.writeInt(activeOriginals.size());for(long key:activeOriginals)out.writeLong(key);out.writeInt(visibleProducts.size());for(int index:visibleProducts)out.writeInt(index);}out.writeInt(products.size());
             for(Unit product:products){work.run();atoms.add(product.atom);atoms.addAll(product.donors);out.writeLong(sourceKey(product.rule));out.writeInt(product.depth);out.writeInt(product.donors.size());if(request.signed){out.writeBoolean(product.positive);out.writeInt(product.retained);for(boolean sign:product.signs)out.writeBoolean(sign);}support(out,product.sources);}
             for(List<Conflict> list:Arrays.asList(originalConflicts,finalConflicts)){out.writeInt(list.size());for(Conflict conflict:list){work.run();out.writeLong(sourceKey(conflict.constraint));out.writeInt(conflict.depth);out.writeInt(conflict.donors.size());if(request.signed)for(boolean sign:conflict.signs)out.writeBoolean(sign);support(out,conflict.sources);atoms.addAll(conflict.donors);}}
             out.flush();Policy p=request.policy;byte[] graph=NativeDependentReplayCapsule.atomGraph(atoms,ordinals,new NativeDependentReplayCapsule.Limits(p.bytes,p.rows,p.steps,p.work,p.nodes));if(graph.length>p.bytes-header.size())throw new IllegalStateException("Complete production audit byte limit");MessageDigest digest=MessageDigest.getInstance("SHA-256");digest.update(header.toByteArray());digest.update(graph);StringBuilder hex=new StringBuilder();for(byte b:digest.digest())hex.append(String.format(Locale.ROOT,"%02x",b&255));return hex.toString();
