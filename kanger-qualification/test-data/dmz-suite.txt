@@ -887,3 +887,5 @@ org.kanger.storage.dumb2.ContextDependentDiscoveryRunner | CONTEXT_DEPENDENT_DIS
 org.kanger.storage.dumb2.ContextDependentFrontierRunner | CONTEXT_DEPENDENT_FRONTIER_PASS
 
 org.kanger.storage.dumb2.ContextDependentIterationRunner | CONTEXT_DEPENDENT_ITERATION_PASS
+
+org.kanger.ContextDependentModelRunner | CONTEXT_DEPENDENT_MODEL_PASS
