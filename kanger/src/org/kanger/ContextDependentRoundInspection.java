@@ -42,9 +42,20 @@ public final class ContextDependentRoundInspection {
         public final List<Barrier> barriers;
         private Result(List<Barrier> barriers){this.barriers=Collections.unmodifiableList(new ArrayList<>(barriers));}
     }
+    public static final class Discovery {
+        public final Round next;public final Result checked;public final int matchedRecipes;
+        private Discovery(Round next,Result checked){this.next=next;this.checked=checked;int count=0;for(List<Step> steps:next.recipes.values())count+=steps.size();matchedRecipes=count;}
+    }
+    private static final class Outcome {
+        final Result result;final Discovery discovery;
+        Outcome(Result result,Discovery discovery){this.result=result;this.discovery=discovery;}
+    }
+    /** Complete supported residual-unit applications over the previous finite barrier, not saturation. */
+    public static Discovery discoverNext(Member x,List<Cut> supplied,Request previous)throws Exception{return run(x,supplied,previous,true).discovery;}
     private static List<CutPart> project(List<Member> members,Policy policy)throws Exception{List<CutPart> out=new ArrayList<>();for(Member m:members)out.add(new CutPart(ContextDependentReplayInspection.projectMember(m.actual,m.inventory,policy),m.inventory));return out;}
     private static void current(List<Member> members,Policy policy)throws Exception{for(Member m:members)if(m.inventory.localX)ContextDependentReplayInspection.current(m.actual,m.inventory,policy);else ContextDependentReplayInspection.currentMember(m.actual,m.inventory,policy);}
-    public static Result inspect(Member x,List<Cut> supplied,Request request)throws Exception {
+    public static Result inspect(Member x,List<Cut> supplied,Request request)throws Exception{return run(x,supplied,request,false).result;}
+    private static Outcome run(Member x,List<Cut> supplied,Request request,boolean discover)throws Exception {
         if(x==null||!x.inventory.localX||supplied==null||supplied.contains(null)||request==null)throw new IllegalArgumentException("Exact whole family required");
         List<Cut> cuts=new ArrayList<>(supplied);cuts.sort(Comparator.comparing(c->c.key));Map<String,Set<UUID>> scopes=new LinkedHashMap<>();Set<UUID> local=Collections.singleton(x.inventory.context);scopes.put(ContextDependentCutInspection.local(x.inventory.context),local);List<Member> members=new ArrayList<>();members.add(x);Set<UUID> contexts=new HashSet<>(local);long rows=x.inventory.rows.size();
         for(Cut cut:cuts){Set<UUID> scope=new LinkedHashSet<>(local);if(scopes.containsKey(cut.key))throw new IllegalArgumentException("Repeated/split logical cut");for(Member m:cut.members){if(!contexts.add(m.inventory.context))throw new IllegalArgumentException("Repeated physical member");scope.add(m.inventory.context);members.add(m);rows+=m.inventory.rows.size();}scopes.put(cut.key,scope);}
@@ -75,7 +86,17 @@ public final class ContextDependentRoundInspection {
                 }
                 common=exports;barriers.add(new Barrier(results,common));current(members,request.policy);
             }
-            return new Result(barriers);
+            if(discover){
+                if(request.rounds.size()==request.policy.steps)throw new IllegalStateException("No room for complete next barrier");Map<Long,Ref> originals=new LinkedHashMap<>();for(Map.Entry<Ref,Long> e:keys.entrySet())originals.put(e.getValue(),e.getKey());Map<Integer,Ticket> tickets=new LinkedHashMap<>();for(Map.Entry<Ticket,Integer> e:indices.entrySet())tickets.put(e.getValue(),e.getKey());Map<String,List<Step>> recipes=new LinkedHashMap<>();long total=history.size();
+                for(String cut:scopes.keySet()){
+                    work.run();Set<Integer> pool=new LinkedHashSet<>();for(Map.Entry<Ticket,Integer> old:indices.entrySet())if(common.contains(old.getKey())||old.getKey().cut.equals(cut))pool.add(old.getValue());
+                    ContextDependentProductionInspection.Request input=new ContextDependentProductionInspection.Request(request.policy,request.capacity,history,true);
+                    List<ContextDependentProductionInspection.Step> found=ContextDependentProductionInspection.discoverTransport(project(members,request.policy),project(members,request.policy),"discovery:"+request.rounds.size()+":"+cut,input,active.get(cut),pool);total+=found.size();if(total>request.policy.steps)throw new IllegalStateException("Whole next barrier recipe limit");List<Step> steps=new ArrayList<>();
+                    for(ContextDependentProductionInspection.Step step:found){List<Donor> donors=new ArrayList<>();for(ContextDependentProductionInspection.Donor d:step.donors)donors.add(d.original?Donor.original(originals.get(d.reference)):Donor.carried(tickets.get((int)d.reference)));steps.add(new Step(originals.get(step.rule),step.retainedLiteral,donors));}recipes.put(cut,steps);
+                }
+                Round nextRound=new Round(recipes);List<Round> complete=new ArrayList<>(request.rounds);complete.add(nextRound);Result checked=inspect(x,supplied,new Request(request.policy,request.capacity,complete));return new Outcome(null,new Discovery(nextRound,checked));
+            }
+            return new Outcome(new Result(barriers),null);
         }finally{current(members,request.policy);}
     }
 }

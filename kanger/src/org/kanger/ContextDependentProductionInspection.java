@@ -151,6 +151,18 @@ public final class ContextDependentProductionInspection {
             candidate.current();return new Result(candidate,digest);
         }
     }
+    static List<Step> discoverTransport(List<CutPart> first,List<CutPart> second,String cut,Request history,Set<Long> active,Set<Integer> visible)throws Exception {
+        try(Candidate candidate=new Candidate(first,cut,history)) {
+            List<Step> found=candidate.discover(active,visible);String digest=candidate.digest();
+            try(Candidate audit=new Candidate(second,cut,history)){List<Step> other=audit.discover(active,visible);if(!sameSteps(found,other)||!digest.equals(audit.digest()))throw new IllegalStateException("Different independent finite-pool coverage");}
+            candidate.current();return Collections.unmodifiableList(found);
+        }
+    }
+    private static boolean sameSteps(List<Step> a,List<Step> b){if(a.size()!=b.size())return false;for(int i=0;i<a.size();i++){Step x=a.get(i),y=b.get(i);if(x.rule!=y.rule||x.retainedLiteral!=y.retainedLiteral||x.donors.size()!=y.donors.size())return false;for(int j=0;j<x.donors.size();j++){Donor p=x.donors.get(j),q=y.donors.get(j);if(p.original!=q.original||p.reference!=q.reference)return false;}}return true;}
+    private static final class Search {
+        final List<Pattern> body;final List<Donor> selected;
+        Search(List<Pattern> body,List<Donor> selected){this.body=body;this.selected=selected;}
+    }
     private static final class Candidate implements AutoCloseable {
         final Projection projection;final ContextProductionInventory inventory;final Originals original;final Request request;final Arena arena;final Runnable work;
         final List<CutPart> parts=new ArrayList<>();final List<ContextProductionInventory> guards=new ArrayList<>();String cutIdentity;Set<Long> activeOriginals;Set<Integer> visibleProducts;
@@ -269,6 +281,27 @@ public final class ContextDependentProductionInspection {
             // Two imported consequences can oppose without either producer clause being in this cut.
             if(finalPool&&visibleProducts!=null)for(int i:visibleProducts)for(int j:visibleProducts)if(i<j){work.run();Unit a=products.get(i),b=donor(Donor.product(j));if(a.positive==b.positive)continue;if(!a.atom.predicate.equals(b.atom.predicate)||a.atom.arguments.size()!=b.atom.arguments.size())continue;Substitution match=arena.unify(a.atom.arguments,b.atom.arguments);if(match==null)continue;int depth=Math.max(a.depth,b.depth);if(conflicts.size()==request.capacity||depth>=request.policy.steps)throw new IllegalStateException("Transport opposition proof/depth limit");Set<Source> support=new LinkedHashSet<>(a.sources);support.addAll(b.sources);conflicts.add(new Conflict(a.rule,support,depth+1,Arrays.asList(arena.apply(a.atom,match),arena.apply(b.atom,match)),Arrays.asList(a.positive,b.positive)));}
             current();return conflicts;
+        }
+        List<Step> discover(Set<Long> active,Set<Integer> visible)throws Exception {
+            if(!request.signed||active==null||visible==null||!entries.keySet().containsAll(active))throw new IllegalArgumentException("Exact signed discovery scope required");activeOriginals=new LinkedHashSet<>(active);visibleProducts=new LinkedHashSet<>(visible);
+            for(int i:visibleProducts)if(i<0||i>=request.steps.size())throw new IllegalArgumentException("Missing input proof");for(Step step:request.steps)produce(step);
+            List<Donor> pool=new ArrayList<>();for(long key:activeOriginals){Entry e=entries.get(key);if(e.root!=null||e.clause.literals.size()==1)pool.add(Donor.original(key));}for(int i:visibleProducts)pool.add(Donor.product(i));
+            List<Step> found=new ArrayList<>();int states=0;
+            for(long key:activeOriginals){Entry e=entries.get(key);if(e.clause==null||e.clause.literals.size()<2)continue;
+                for(int retained=0;retained<e.clause.literals.size();retained++){
+                    List<Pattern> body=new ArrayList<>(all(e));body.remove(retained);Deque<Search> pending=new ArrayDeque<>();pending.push(new Search(body,Collections.emptyList()));
+                    while(!pending.isEmpty()){
+                        work.run();if(++states>request.capacity)throw new IllegalStateException("Discovery state limit");Search state=pending.pop();
+                        if(state.body.isEmpty()){if(found.size()==request.capacity||request.steps.size()+found.size()>=request.policy.steps)throw new IllegalStateException("Complete discovery recipe limit");found.add(new Step(key,retained,state.selected));continue;}
+                        Pattern first=state.body.get(0);
+                        for(Donor reference:pool){work.run();if(positive(reference)==first.positive)continue;String predicate;int arity;if(reference.original){DomainDescriptor d=descriptor(entries.get(reference.reference));predicate=d.predicate;arity=d.arity;}else{Atom atom=products.get((int)reference.reference).atom;predicate=atom.predicate;arity=atom.arguments.size();}if(!predicate.equals(first.predicate)||arity!=first.arguments.size())continue;
+                            Unit unit=donor(reference);Substitution substitution=opposite(unit,first);if(substitution==null)continue;List<Donor> selected=new ArrayList<>(state.selected);selected.add(reference);if(pending.size()==request.capacity)throw new IllegalStateException("Discovery frontier limit");pending.push(new Search(apply(state.body,1,substitution),selected));
+                        }
+                    }
+                }
+            }
+            // Replay every discovered whole recipe, independently of the search's partial substitutions.
+            for(Step step:found)produce(step);originalConflicts=Collections.emptyList();finalConflicts=Collections.emptyList();current();return found;
         }
         void transport(Set<Long> active,Set<Integer> visible)throws Exception {
             if(!request.signed||active==null||visible==null||!entries.keySet().containsAll(active))throw new IllegalArgumentException("Exact signed receiving scope required");activeOriginals=new LinkedHashSet<>(active);visibleProducts=new LinkedHashSet<>(visible);
