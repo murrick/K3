@@ -65,8 +65,11 @@ public final class ContextDependentReplayInspection {
         }
     }
     static void current(Mind mind,ContextProductionInventory expected,Policy policy)throws Exception {
-        if(expected==null||!expected.localX)throw new IllegalArgumentException("Actual local-X inventory required");
-        ContextProductionInventory now=ContextProductionInventory.inspect(mind,expected.context,expected.revision,true,expected.initialization,policy.rows);
+        if(expected==null||!expected.localX)throw new IllegalArgumentException("Actual local-X inventory required");currentMember(mind,expected,policy);
+    }
+    static void currentMember(Mind mind,ContextProductionInventory expected,Policy policy)throws Exception {
+        if(expected==null)throw new IllegalArgumentException("Actual physical member inventory required");
+        ContextProductionInventory now=ContextProductionInventory.inspect(mind,expected.context,expected.revision,expected.localX,expected.initialization,policy.rows);
         if(!expected.fingerprint.equals(now.fingerprint))throw new IllegalStateException("Changed local-X replay diagnostic inventory");
     }
     static final class Projection {
@@ -76,8 +79,14 @@ public final class ContextDependentReplayInspection {
     static Projection project(Mind actual,ContextProductionInventory expected,Policy policy,boolean horn)throws Exception {
         return project(actual,expected,policy,horn,ContextGroundProductionRounds.budget(policy.work));
     }
+    static Projection projectMember(Mind actual,ContextProductionInventory expected,Policy policy)throws Exception {
+        return project(actual,expected,policy,true,ContextGroundProductionRounds.budget(policy.work),false);
+    }
     private static Projection project(Mind actual,ContextProductionInventory expected,Policy policy,boolean horn,Runnable work)throws Exception {
-        current(actual,expected,policy);
+        return project(actual,expected,policy,horn,work,true);
+    }
+    private static Projection project(Mind actual,ContextProductionInventory expected,Policy policy,boolean horn,Runnable work,boolean local)throws Exception {
+        if(local)current(actual,expected,policy);else currentMember(actual,expected,policy);
         if(!expected.initialization.isEmpty()||expected.rows.size()!=expected.primary.size())throw new IllegalStateException("Whole primary-only local-X diagnostic required");
         User user=new User();Mind isolated=new Mind(user);user.setCurrentMind(isolated);Map<Long,Long> mapping=new LinkedHashMap<>();
         try {
@@ -99,7 +108,7 @@ public final class ContextDependentReplayInspection {
                 mapping.put(row.nativeRule,copy.getId());
             }
             return new Projection(isolated,mapping);
-        }finally{current(actual,expected,policy);}
+        }finally{if(local)current(actual,expected,policy);else currentMember(actual,expected,policy);}
     }
     public static Result inspect(Mind actual,ContextProductionInventory expected,Request request)throws Exception {
         if(actual==null||request==null)throw new IllegalArgumentException("Actual local-X and exact replay request required");

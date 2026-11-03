@@ -47,21 +47,23 @@ final class NativeDependentWitnessTerms {
     static final class Root {
         private final Arena arena;
         private final Rule original;
+        private final Mind source;
+        private final long key;
         private final String origin;
         private final NativePrenexUnitScope scope;
         private final Symbol[] symbols;
-        private Root(Arena arena,Rule original,String origin,NativePrenexUnitScope scope) {
-            this.arena=arena; this.original=original; this.origin=origin; this.scope=scope;
+        private Root(Arena arena,Mind source,Rule original,long key,String origin,NativePrenexUnitScope scope) {
+            this.arena=arena;this.source=source;this.key=key; this.original=original; this.origin=origin; this.scope=scope;
             symbols=new Symbol[scope.binders.size()];
             for (int i=0;i<symbols.length;i++) {
-                arena.tick(); if (!scope.binders.get(i).universal) symbols[i]=new Symbol(arena.id,original.getId(),i);
+                arena.tick(); if (!scope.binders.get(i).universal) symbols[i]=new Symbol(arena.id,key,i);
             }
         }
         private void current() throws Exception {
             arena.tick();
-            if (arena.mind.getRules().get(original.getId())!=original||!Objects.equals(origin,original.getOrigin()))
+            if (source.getRules().get(original.getId())!=original||!Objects.equals(origin,original.getOrigin()))
                 throw arena.refuse("Changed dependent projection original");
-            NativePrenexUnitScope now=NativePrenexUnitScope.observe(original,arena.mind,arena::tick);
+            NativePrenexUnitScope now=NativePrenexUnitScope.observe(original,source,arena::tick);
             if (!NativePrenexUnitScope.same(scope,now,arena::tick)) throw arena.refuse("Changed dependent projection native shape");
             for(int i=0;i<scope.binders.size();i++) {
                 arena.tick(); if(scope.binders.get(i).nativeId!=now.binders.get(i).nativeId)
@@ -110,17 +112,18 @@ final class NativeDependentWitnessTerms {
             tick(); if(nodes==maximumNodes)throw refuse("Dependent projection node limit");nodes++;
             return new Node(id,kind,variable,value,symbol,arguments);
         }
-        Root capture(Rule original) throws Exception {
-            current(); Root existing=roots.get(original.getId());
-            if(existing!=null) { if(existing.original!=original)throw refuse("Different projection original object");return existing; }
+        Root capture(Rule original) throws Exception {return captureFrom(mind,original,original.getId());}
+        /** Independent canonical owners share one term arena, with unique source-qualified keys. */
+        Root captureFrom(Mind source,Rule original,long key) throws Exception {
+            current();if(source==null||original==null||key<0)throw refuse("Exact source-qualified projection owner required");Root existing=roots.get(key);
+            if(existing!=null){if(existing.source!=source||existing.original!=original)throw refuse("Different projection original object");return existing;}
             try {
-                NativePrenexUnitScope nativeScope=NativePrenexUnitScope.observe(original,mind,this::tick);
+                NativePrenexUnitScope nativeScope=NativePrenexUnitScope.observe(original,source,this::tick);
                 String origin=original.getOrigin();User user=new User();Mind replay=new Mind(user);user.setCurrentMind(replay);
                 Rule rule=(Rule)replay.compileLine(origin,false,new LinkedList<ITerm>());
-                if(rule==null||!NativePrenexUnitScope.same(nativeScope,NativePrenexUnitScope.observe(rule,replay,this::tick),this::tick))
-                    throw refuse("Dependent projection whole origin/native replay mismatch");
-                Root root=new Root(this,original,origin,nativeScope);root.current();roots.put(original.getId(),root);return root;
-            } catch(Exception failure) { failed=true;throw failure; }
+                if(rule==null||!NativePrenexUnitScope.same(nativeScope,NativePrenexUnitScope.observe(rule,replay,this::tick),this::tick))throw refuse("Dependent projection whole origin/native replay mismatch");
+                Root root=new Root(this,source,original,key,origin,nativeScope);root.current();roots.put(key,root);return root;
+            }catch(Exception failure){failed=true;throw failure;}
         }
         private Node variableNode() { return node(Kind.VARIABLE,variables++,null,null,Collections.emptyList()); }
         Node variable() throws Exception { current();return variableNode(); }
@@ -138,7 +141,7 @@ final class NativeDependentWitnessTerms {
             return result;
         }
         Atom project(Root root) throws Exception {
-            current();if(root==null||root.arena!=this||roots.get(root.original.getId())!=root)throw refuse("Different dependent projection root");
+            current();if(root==null||root.arena!=this||roots.get(root.key)!=root)throw refuse("Different dependent projection root");
             List<Node> binders=new ArrayList<>();
             for(int i=0;i<root.scope.binders.size();i++) {
                 tick();NativePrenexUnitScope.Binder binder=root.scope.binders.get(i);
@@ -151,13 +154,17 @@ final class NativeDependentWitnessTerms {
             }
             List<Node> arguments=new ArrayList<>();
             for(NativePrenexUnitScope.Slot slot:root.scope.slots) { tick();arguments.add(slot.binder<0?valueNode(slot.value):binders.get(slot.binder)); }
-            return new Atom(id,root.original.getId(),root.scope.predicate,arguments,binders);
+            return new Atom(id,root.key,root.scope.predicate,arguments,binders);
         }
         /** Owned symbolic atom shape only; this method grants no inference or Source authority. */
         Atom shape(long nativeRule,String predicate,List<Node> arguments) throws Exception {
             current();if(mind.getRules().get(nativeRule)==null||predicate==null)throw refuse("Actual symbolic atom owner required");
             for(Node argument:arguments)owned(argument);
             return new Atom(id,nativeRule,predicate,arguments,Collections.emptyList());
+        }
+        Atom shapeFrom(Mind source,Rule original,long key,String predicate,List<Node> arguments) throws Exception {
+            current();if(source==null||original==null||key<0||source.getRules().get(original.getId())!=original||predicate==null)throw refuse("Actual qualified symbolic atom owner required");
+            for(Node argument:arguments)owned(argument);return new Atom(id,key,predicate,arguments,Collections.emptyList());
         }
         private Node dereference(Node node,Map<Integer,Node> bindings) {
             int depth=0;

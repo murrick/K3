@@ -72,8 +72,8 @@ public final class ContextDependentProductionInspection {
         Unit(Source rule,Atom atom,Collection<Source> sources,int depth,List<Atom> donors){this.rule=rule;this.atom=atom;this.sources=frozen(sources);this.depth=depth;this.donors=Collections.unmodifiableList(new ArrayList<>(donors));}
     }
     private static final class Entry {
-        final Rule rule;final Source source;final Root root;final Clause clause;
-        Entry(Rule rule,Source source,Root root,Clause clause){this.rule=rule;this.source=source;this.root=root;this.clause=clause;}
+        final Rule rule;final Mind owner;final long atomKey;final Source source;final Root root;final Clause clause;
+        Entry(Rule rule,Mind owner,long atomKey,Source source,Root root,Clause clause){this.rule=rule;this.owner=owner;this.atomKey=atomKey;this.source=source;this.root=root;this.clause=clause;}
     }
     private static final class Pattern {
         final String predicate;final List<Node> arguments;
@@ -123,8 +123,21 @@ public final class ContextDependentProductionInspection {
             candidate.current();return new Result(candidate,digest);
         }
     }
+    static final class CutPart {
+        final Projection projection;final ContextProductionInventory original;
+        CutPart(Projection projection,ContextProductionInventory original){this.projection=projection;this.original=original;}
+    }
+    static Result inspectCut(List<CutPart> first,List<CutPart> second,String cut,Request request)throws Exception {
+        if(first==null||second==null||first.isEmpty()||first.size()!=second.size()||cut==null)throw new IllegalArgumentException("Complete cut projections required");
+        try(Candidate candidate=new Candidate(first,cut,request)) {
+            candidate.run();String digest=candidate.digest();
+            try(Candidate audit=new Candidate(second,cut,request)){audit.run();if(!digest.equals(audit.digest()))throw new IllegalStateException("Different independently reconstructed physical cut");}
+            candidate.current();return new Result(candidate,digest);
+        }
+    }
     private static final class Candidate implements AutoCloseable {
         final Projection projection;final ContextProductionInventory inventory;final Originals original;final Request request;final Arena arena;final Runnable work;
+        final List<CutPart> parts=new ArrayList<>();final List<ContextProductionInventory> guards=new ArrayList<>();String cutIdentity;
         final Map<Long,Entry> entries=new LinkedHashMap<>();final Map<Long,Source> sources=new LinkedHashMap<>();final Map<Long,Integer> ordinals=new LinkedHashMap<>();
         final List<Unit> products=new ArrayList<>();List<Conflict> originalConflicts,finalConflicts;
         Candidate(Projection projection,Originals expected,Request request)throws Exception {
@@ -137,12 +150,32 @@ public final class ContextDependentProductionInspection {
                     work.run();Long id=projection.mapping.get(row.getKey());if(id==null)throw new IllegalStateException("Missing original production mapping");Rule rule=(Rule)projection.mind.getRules().get(id);
                     Source source=new Source(expected.context,expected.revision,row.getKey(),true,"inventory:"+expected.fingerprint);sources.put(id,source);ordinals.put(id,ordinals.size());
                     Root root=null;Clause clause=null;if(NativeDependentProductionRows.unit(rule))root=arena.capture(rule);else clause=NativeDependentProductionRows.ordinary(rule,projection.mind,work);
-                    entries.put(row.getKey(),new Entry(rule,source,root,clause));
+                    entries.put(row.getKey(),new Entry(rule,projection.mind,rule.getId(),source,root,clause));
                 }
                 current();
             }catch(Exception failure){arena.close();throw failure;}
         }
-        void current()throws Exception{work.run();ContextProductionInventory now=ContextProductionInventory.inspect(projection.mind,inventory.context,inventory.revision,true,Collections.emptyList(),request.policy.rows);if(!inventory.fingerprint.equals(now.fingerprint))throw new IllegalStateException("Changed private production originals");}
+        Candidate(List<CutPart> parts,String cut,Request request)throws Exception {
+            this.projection=parts.get(0).projection;this.original=Originals.of(parts.get(0).original);this.request=request;work=ContextGroundProductionRounds.budget(request.policy.work);cutIdentity=cut;
+            this.parts.addAll(parts);inventory=ContextProductionInventory.inspect(projection.mind,original.context,original.revision,true,Collections.emptyList(),request.policy.rows);arena=new Arena(projection.mind,request.policy.work,request.policy.nodes);
+            try {
+                long key=0;Set<Source> distinct=new HashSet<>();
+                for(CutPart part:parts) {
+                    work.run();ContextProductionInventory nativeView=ContextProductionInventory.inspect(part.projection.mind,part.original.context,part.original.revision,part.original.localX,Collections.emptyList(),request.policy.rows);
+                    if(nativeView.rows.size()!=part.original.rows.size()||nativeView.primary.size()!=nativeView.rows.size())throw new IllegalStateException("Different complete physical cut projection");guards.add(nativeView);
+                    for(ContextProductionInventory.Row row:part.original.rows){work.run();Long id=part.projection.mapping.get(row.nativeRule);if(id==null)throw new IllegalStateException("Missing physical original mapping");Rule rule=(Rule)part.projection.mind.getRules().get(id);
+                        Source source=new Source(part.original.context,part.original.revision,row.nativeRule,part.original.localX,"inventory:"+part.original.fingerprint);if(!distinct.add(source))throw new IllegalStateException("Repeated physical original");
+                        sources.put(key,source);ordinals.put(key,ordinals.size());Root root=null;Clause clause=null;if(NativeDependentProductionRows.unit(rule))root=arena.captureFrom(part.projection.mind,rule,key);else clause=NativeDependentProductionRows.ordinary(rule,part.projection.mind,work);
+                        entries.put(key,new Entry(rule,part.projection.mind,key,source,root,clause));key++;
+                    }
+                }
+                current();
+            }catch(Exception failure){arena.close();throw failure;}
+        }
+        void current()throws Exception {
+            work.run();if(cutIdentity==null){ContextProductionInventory now=ContextProductionInventory.inspect(projection.mind,inventory.context,inventory.revision,true,Collections.emptyList(),request.policy.rows);if(!inventory.fingerprint.equals(now.fingerprint))throw new IllegalStateException("Changed private production originals");}
+            else for(int i=0;i<parts.size();i++){work.run();ContextProductionInventory old=guards.get(i),now=ContextProductionInventory.inspect(parts.get(i).projection.mind,old.context,old.revision,old.localX,Collections.emptyList(),request.policy.rows);if(!old.fingerprint.equals(now.fingerprint))throw new IllegalStateException("Changed private physical cut originals");}
+        }
         Instance instantiate(Entry entry)throws Exception {
             if(entry.clause==null)throw new IllegalStateException("Ordinary Horn or headless receiver required");Map<Integer,Node> variables=new HashMap<>();Pattern head=null;List<Pattern> body=new ArrayList<>();
             for(ContextProductionCapture.Atom atom:entry.clause.literals){work.run();List<Node> args=new ArrayList<>();for(Slot slot:atom.arguments){work.run();Node value;if(slot.variable<0)value=arena.value(slot.value);else{value=variables.get(slot.variable);if(value==null){value=arena.variable();variables.put(slot.variable,value);}}args.add(value);}Pattern pattern=new Pattern(atom.predicate,args);if(atom.positive){if(head!=null)throw new IllegalStateException("Multiple Horn heads");head=pattern;}else body.add(pattern);}
@@ -166,7 +199,7 @@ public final class ContextDependentProductionInspection {
             if(instance.head==null||instance.body.isEmpty()||instance.body.size()!=step.donors.size())throw new IllegalStateException("Exact complete Horn body required");
             Pattern head=instance.head;List<Pattern> body=instance.body;List<Atom> used=new ArrayList<>();Set<Source> support=new LinkedHashSet<>();support.add(entry.source);int depth=0;
             for(Donor reference:step.donors){work.run();Unit donor=donor(reference);Substitution substitution=match(donor.atom,body.get(0));if(substitution==null)throw new IllegalStateException("Supplied Horn body donor does not unify");used=appliedDonors(used,donor.atom,substitution);head=apply(head,substitution);body=apply(body,1,substitution);support.addAll(donor.sources);depth=Math.max(depth,donor.depth);}
-            if(depth>=request.policy.steps)throw new IllegalStateException("Production depth limit");Unit result=new Unit(entry.source,arena.shape(entry.rule.getId(),head.predicate,head.arguments),support,depth+1,used);current();products.add(result);
+            if(depth>=request.policy.steps)throw new IllegalStateException("Production depth limit");Unit result=new Unit(entry.source,arena.shapeFrom(entry.owner,entry.rule,entry.atomKey,head.predicate,head.arguments),support,depth+1,used);current();products.add(result);
         }
         List<Conflict> constraints(boolean finalPool)throws Exception {
             List<Donor> pool=new ArrayList<>();for(Map.Entry<Long,Entry> entry:entries.entrySet())if(entry.getValue().root!=null)pool.add(Donor.original(entry.getKey()));if(finalPool)for(int i=0;i<products.size();i++)pool.add(Donor.product(i));
@@ -176,7 +209,7 @@ public final class ContextDependentProductionInspection {
                     work.run();if(++states>request.capacity)throw new IllegalStateException("Complete constraint search state limit");State state=pending.pop();
                     if(state.body.isEmpty()){if(conflicts.size()==request.capacity)throw new IllegalStateException("Constraint proof capacity");if(state.depth>=request.policy.steps)throw new IllegalStateException("Refutation depth limit");conflicts.add(new Conflict(constraint.source,state.sources,state.depth+1,state.donors));continue;}
                     Pattern first=state.body.get(0);
-                    for(Donor reference:pool){work.run();String predicate;int arity;if(reference.original){Entry e=entries.get(reference.reference);predicate=e.rule.getDomain().getPredicate(projection.mind).getName(projection.mind);arity=e.rule.getDomain().getRange();}else{Atom a=products.get((int)reference.reference).atom;predicate=a.predicate;arity=a.arguments.size();}if(!predicate.equals(first.predicate)||arity!=first.arguments.size())continue;
+                    for(Donor reference:pool){work.run();String predicate;int arity;if(reference.original){Entry e=entries.get(reference.reference);predicate=e.rule.getDomain().getPredicate(e.owner).getName(e.owner);arity=e.rule.getDomain().getRange();}else{Atom a=products.get((int)reference.reference).atom;predicate=a.predicate;arity=a.arguments.size();}if(!predicate.equals(first.predicate)||arity!=first.arguments.size())continue;
                         Unit unit=donor(reference);Substitution substitution=match(unit.atom,first);if(substitution==null)continue;Set<Source> support=new LinkedHashSet<>(state.sources);support.addAll(unit.sources);
                         if(pending.size()==request.capacity)throw new IllegalStateException("Constraint frontier limit");pending.push(new State(apply(state.body,1,substitution),appliedDonors(state.donors,unit.atom,substitution),support,Math.max(state.depth,unit.depth)));
                     }
@@ -185,11 +218,12 @@ public final class ContextDependentProductionInspection {
             current();return conflicts;
         }
         void run()throws Exception{originalConflicts=constraints(false);for(Step step:request.steps)produce(step);finalConflicts=constraints(true);current();}
-        private void support(DataOutputStream out,Set<Source> support)throws Exception{List<Long> ids=new ArrayList<>();for(Source source:support){work.run();ids.add(source.rule);}Collections.sort(ids);out.writeInt(ids.size());for(long id:ids)out.writeLong(id);}
+        private long sourceKey(Source source){if(cutIdentity==null)return source.rule;for(Map.Entry<Long,Source> entry:sources.entrySet())if(entry.getValue().equals(source))return entry.getKey();throw new IllegalStateException("Missing qualified Source");}
+        private void support(DataOutputStream out,Set<Source> support)throws Exception{List<Long> ids=new ArrayList<>();for(Source source:support){work.run();ids.add(sourceKey(source));}Collections.sort(ids);out.writeInt(ids.size());for(long id:ids)out.writeLong(id);}
         String digest()throws Exception {
-            List<Atom> atoms=new ArrayList<>();AuditBytes header=new AuditBytes(request.policy.bytes);DataOutputStream out=new DataOutputStream(header);out.writeInt(1);out.writeLong(original.context.getMostSignificantBits());out.writeLong(original.context.getLeastSignificantBits());out.writeLong(original.revision);out.writeBoolean(original.localX);out.writeUTF(original.fingerprint);out.writeInt(products.size());
-            for(Unit product:products){work.run();atoms.add(product.atom);atoms.addAll(product.donors);out.writeLong(product.rule.rule);out.writeInt(product.depth);out.writeInt(product.donors.size());support(out,product.sources);}
-            for(List<Conflict> list:Arrays.asList(originalConflicts,finalConflicts)){out.writeInt(list.size());for(Conflict conflict:list){work.run();out.writeLong(conflict.constraint.rule);out.writeInt(conflict.depth);out.writeInt(conflict.donors.size());support(out,conflict.sources);atoms.addAll(conflict.donors);}}
+            List<Atom> atoms=new ArrayList<>();AuditBytes header=new AuditBytes(request.policy.bytes);DataOutputStream out=new DataOutputStream(header);out.writeInt(1);out.writeLong(original.context.getMostSignificantBits());out.writeLong(original.context.getLeastSignificantBits());out.writeLong(original.revision);out.writeBoolean(original.localX);out.writeUTF(original.fingerprint);if(cutIdentity!=null){out.writeInt(2);out.writeUTF(cutIdentity);out.writeInt(parts.size());for(CutPart part:parts){ContextProductionInventory member=part.original;out.writeUTF(member.context.toString());out.writeLong(member.revision);out.writeBoolean(member.localX);out.writeUTF(member.fingerprint);}}out.writeInt(products.size());
+            for(Unit product:products){work.run();atoms.add(product.atom);atoms.addAll(product.donors);out.writeLong(sourceKey(product.rule));out.writeInt(product.depth);out.writeInt(product.donors.size());support(out,product.sources);}
+            for(List<Conflict> list:Arrays.asList(originalConflicts,finalConflicts)){out.writeInt(list.size());for(Conflict conflict:list){work.run();out.writeLong(sourceKey(conflict.constraint));out.writeInt(conflict.depth);out.writeInt(conflict.donors.size());support(out,conflict.sources);atoms.addAll(conflict.donors);}}
             out.flush();Policy p=request.policy;byte[] graph=NativeDependentReplayCapsule.atomGraph(atoms,ordinals,new NativeDependentReplayCapsule.Limits(p.bytes,p.rows,p.steps,p.work,p.nodes));if(graph.length>p.bytes-header.size())throw new IllegalStateException("Complete production audit byte limit");MessageDigest digest=MessageDigest.getInstance("SHA-256");digest.update(header.toByteArray());digest.update(graph);StringBuilder hex=new StringBuilder();for(byte b:digest.digest())hex.append(String.format(Locale.ROOT,"%02x",b&255));return hex.toString();
         }
         @Override public void close(){arena.close();}
