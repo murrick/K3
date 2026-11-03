@@ -22,15 +22,17 @@ public final class ContextDependentProductionInspection {
         public static Donor product(int index){return new Donor(false,index);}
     }
     public static final class Step {
-        public final long rule;
+        public final long rule;public final int retainedLiteral;
         public final List<Donor> donors;
-        public Step(long rule,List<Donor> donors){if(rule<0||donors==null)throw new IllegalArgumentException("Whole Horn source and body donors required");List<Donor> copy=new ArrayList<>(donors);if(copy.contains(null))throw new IllegalArgumentException("Exact body donors required");this.rule=rule;this.donors=Collections.unmodifiableList(copy);}
+        public Step(long rule,List<Donor> donors){this(rule,-1,donors);}
+        public Step(long rule,int retainedLiteral,List<Donor> donors){if(rule<0||retainedLiteral< -1||donors==null)throw new IllegalArgumentException("Whole clause and exact retained literal required");List<Donor> copy=new ArrayList<>(donors);if(copy.contains(null))throw new IllegalArgumentException("Exact body donors required");this.rule=rule;this.retainedLiteral=retainedLiteral;this.donors=Collections.unmodifiableList(copy);}
     }
     public static final class Request {
         public final Policy policy;
         public final int capacity;
-        public final List<Step> steps;
-        public Request(Policy policy,int capacity,List<Step> steps){if(policy==null||capacity<1||capacity>100000||steps==null)throw new IllegalArgumentException("Bounded production candidate required");List<Step> copy=new ArrayList<>(steps);if(copy.size()>policy.steps||copy.contains(null))throw new IllegalArgumentException("Bounded complete production recipe required");this.policy=policy;this.capacity=capacity;this.steps=Collections.unmodifiableList(copy);}
+        public final List<Step> steps;public final boolean signed;
+        public Request(Policy policy,int capacity,List<Step> steps){this(policy,capacity,steps,false);}
+        public Request(Policy policy,int capacity,List<Step> steps,boolean signed){if(policy==null||capacity<1||capacity>100000||steps==null)throw new IllegalArgumentException("Bounded production candidate required");List<Step> copy=new ArrayList<>(steps);if(copy.size()>policy.steps||copy.contains(null))throw new IllegalArgumentException("Bounded complete production recipe required");this.policy=policy;this.capacity=capacity;this.steps=Collections.unmodifiableList(copy);boolean mode=signed;for(Step step:copy)mode|=step.retainedLiteral>=0;this.signed=mode;}
     }
     public enum Kind {VARIABLE,VALUE,APPLICATION}
     public static final class TermView {
@@ -46,8 +48,8 @@ public final class ContextDependentProductionInspection {
         public final String predicate;
         public final List<TermView> arguments;
         public final Set<Source> sources;
-        public final int depth;
-        private Row(Unit unit,Views views)throws Exception{rule=unit.rule;predicate=unit.atom.predicate;List<TermView> args=new ArrayList<>();for(Node node:unit.atom.arguments)args.add(views.take(node));arguments=Collections.unmodifiableList(args);sources=unit.sources;depth=unit.depth;}
+        public final int depth,retainedLiteral;public final boolean positive;
+        private Row(Unit unit,Views views)throws Exception{positive=unit.positive;retainedLiteral=unit.retained;rule=unit.rule;predicate=unit.atom.predicate;List<TermView> args=new ArrayList<>();for(Node node:unit.atom.arguments)args.add(views.take(node));arguments=Collections.unmodifiableList(args);sources=unit.sources;depth=unit.depth;}
     }
     public static final class Refutation {
         public final Source constraint;
@@ -59,8 +61,9 @@ public final class ContextDependentProductionInspection {
         public final List<Row> products;
         public final List<Refutation> originalUnitRefutations,finalUnitRefutations;
         public final Set<Source> originals;
-        public final String auditDigest;
+        public final String auditDigest;public final boolean signed;
         private Result(Candidate candidate,String digest)throws Exception {
+            signed=candidate.request.signed;
             Views views=new Views(candidate);List<Row> rows=new ArrayList<>();for(Unit unit:candidate.products)rows.add(new Row(unit,views));products=Collections.unmodifiableList(rows);
             originalUnitRefutations=refutations(candidate.originalConflicts);finalUnitRefutations=refutations(candidate.finalConflicts);originals=Collections.unmodifiableSet(new LinkedHashSet<>(candidate.sources.values()));auditDigest=digest;
         }
@@ -68,28 +71,33 @@ public final class ContextDependentProductionInspection {
     }
     private static Set<Source> frozen(Collection<Source> sources){return Collections.unmodifiableSet(new LinkedHashSet<>(sources));}
     private static final class Unit {
-        final Source rule;final Atom atom;final Set<Source> sources;final int depth;final List<Atom> donors;
-        Unit(Source rule,Atom atom,Collection<Source> sources,int depth,List<Atom> donors){this.rule=rule;this.atom=atom;this.sources=frozen(sources);this.depth=depth;this.donors=Collections.unmodifiableList(new ArrayList<>(donors));}
+        final Source rule;final Atom atom;final Set<Source> sources;final int depth,retained;final List<Atom> donors;final boolean positive;final List<Boolean> signs;
+        Unit(Source rule,Atom atom,Collection<Source> sources,int depth,List<Atom> donors){this(rule,atom,sources,depth,donors,true,-1,Collections.nCopies(donors.size(),true));}
+        Unit(Source rule,Atom atom,Collection<Source> sources,int depth,List<Atom> donors,boolean positive,int retained,List<Boolean> signs){this.rule=rule;this.atom=atom;this.sources=frozen(sources);this.depth=depth;this.positive=positive;this.retained=retained;this.donors=Collections.unmodifiableList(new ArrayList<>(donors));this.signs=Collections.unmodifiableList(new ArrayList<>(signs));}
     }
     private static final class Entry {
         final Rule rule;final Mind owner;final long atomKey;final Source source;final Root root;final Clause clause;
         Entry(Rule rule,Mind owner,long atomKey,Source source,Root root,Clause clause){this.rule=rule;this.owner=owner;this.atomKey=atomKey;this.source=source;this.root=root;this.clause=clause;}
     }
     private static final class Pattern {
-        final String predicate;final List<Node> arguments;
-        Pattern(String predicate,List<Node> arguments){this.predicate=predicate;this.arguments=arguments;}
+        final String predicate;final List<Node> arguments;final boolean positive;
+        Pattern(String predicate,List<Node> arguments){this(predicate,arguments,false);}
+        Pattern(String predicate,List<Node> arguments,boolean positive){this.predicate=predicate;this.arguments=arguments;this.positive=positive;}
     }
+    private static final class DomainDescriptor {final String predicate;final int arity;DomainDescriptor(String predicate,int arity){this.predicate=predicate;this.arity=arity;}}
     private static final class Instance {
         final Pattern head;final List<Pattern> body;
         Instance(Pattern head,List<Pattern> body){this.head=head;this.body=body;}
     }
     private static final class Conflict {
-        final Source constraint;final Set<Source> sources;final int depth;final List<Atom> donors;
-        Conflict(Source constraint,Collection<Source> sources,int depth,List<Atom> donors){this.constraint=constraint;this.sources=frozen(sources);this.depth=depth;this.donors=Collections.unmodifiableList(new ArrayList<>(donors));}
+        final Source constraint;final Set<Source> sources;final int depth;final List<Atom> donors;final List<Boolean> signs;
+        Conflict(Source constraint,Collection<Source> sources,int depth,List<Atom> donors){this(constraint,sources,depth,donors,Collections.nCopies(donors.size(),true));}
+        Conflict(Source constraint,Collection<Source> sources,int depth,List<Atom> donors,List<Boolean> signs){this.constraint=constraint;this.sources=frozen(sources);this.depth=depth;this.donors=Collections.unmodifiableList(new ArrayList<>(donors));this.signs=Collections.unmodifiableList(new ArrayList<>(signs));}
     }
     private static final class State {
-        final List<Pattern> body;final List<Atom> donors;final Set<Source> sources;final int depth;
-        State(List<Pattern> body,List<Atom> donors,Collection<Source> sources,int depth){this.body=body;this.donors=donors;this.sources=frozen(sources);this.depth=depth;}
+        final List<Pattern> body;final List<Atom> donors;final Set<Source> sources;final int depth;final List<Boolean> signs;
+        State(List<Pattern> body,List<Atom> donors,Collection<Source> sources,int depth){this(body,donors,sources,depth,Collections.nCopies(donors.size(),true));}
+        State(List<Pattern> body,List<Atom> donors,Collection<Source> sources,int depth,List<Boolean> signs){this.body=body;this.donors=donors;this.sources=frozen(sources);this.depth=depth;this.signs=signs;}
     }
     private static final class AuditBytes extends ByteArrayOutputStream {
         final int maximum;AuditBytes(int maximum){super(Math.min(1024,maximum));this.maximum=maximum;}
@@ -178,7 +186,7 @@ public final class ContextDependentProductionInspection {
         }
         Instance instantiate(Entry entry)throws Exception {
             if(entry.clause==null)throw new IllegalStateException("Ordinary Horn or headless receiver required");Map<Integer,Node> variables=new HashMap<>();Pattern head=null;List<Pattern> body=new ArrayList<>();
-            for(ContextProductionCapture.Atom atom:entry.clause.literals){work.run();List<Node> args=new ArrayList<>();for(Slot slot:atom.arguments){work.run();Node value;if(slot.variable<0)value=arena.value(slot.value);else{value=variables.get(slot.variable);if(value==null){value=arena.variable();variables.put(slot.variable,value);}}args.add(value);}Pattern pattern=new Pattern(atom.predicate,args);if(atom.positive){if(head!=null)throw new IllegalStateException("Multiple Horn heads");head=pattern;}else body.add(pattern);}
+            for(ContextProductionCapture.Atom atom:entry.clause.literals){work.run();List<Node> args=new ArrayList<>();for(Slot slot:atom.arguments){work.run();Node value;if(slot.variable<0)value=arena.value(slot.value);else{value=variables.get(slot.variable);if(value==null){value=arena.variable();variables.put(slot.variable,value);}}args.add(value);}Pattern pattern=new Pattern(atom.predicate,args,atom.positive);if(atom.positive){if(head!=null)throw new IllegalStateException("Multiple Horn heads");head=pattern;}else body.add(pattern);}
             if(body.size()>request.policy.steps)throw new IllegalStateException("Constraint/body step limit");return new Instance(head,body);
         }
         Atom fresh(Atom atom)throws Exception {
@@ -187,21 +195,24 @@ public final class ContextDependentProductionInspection {
             Substitution rename=arena.unify(from,to);if(rename==null)throw new IllegalStateException("Unit standardization failed");return arena.apply(atom,rename);
         }
         Unit donor(Donor donor)throws Exception {
-            work.run();if(donor.original){Entry entry=entries.get(donor.reference);if(entry==null||entry.root==null)throw new IllegalStateException("Original positive unit donor required");return new Unit(entry.source,arena.project(entry.root),Collections.singleton(entry.source),0,Collections.emptyList());}
-            if(donor.reference>=products.size())throw new IllegalStateException("Only earlier products may be donors");Unit old=products.get((int)donor.reference);return new Unit(old.rule,fresh(old.atom),old.sources,old.depth,Collections.emptyList());
+            work.run();if(donor.original){Entry entry=entries.get(donor.reference);if(entry==null)throw new IllegalStateException("Original unit donor required");if(entry.root!=null)return new Unit(entry.source,arena.project(entry.root),Collections.singleton(entry.source),0,Collections.emptyList());
+                if(!request.signed||entry.clause.literals.size()!=1)throw new IllegalStateException("Original positive unit donor required");Pattern pattern=all(entry).get(0);return new Unit(entry.source,arena.shapeFrom(entry.owner,entry.rule,entry.atomKey,pattern.predicate,pattern.arguments),Collections.singleton(entry.source),0,Collections.emptyList(),pattern.positive,0,Collections.emptyList());}
+            if(donor.reference>=products.size())throw new IllegalStateException("Only earlier products may be donors");Unit old=products.get((int)donor.reference);return new Unit(old.rule,fresh(old.atom),old.sources,old.depth,Collections.emptyList(),old.positive,old.retained,Collections.emptyList());
         }
-        Pattern apply(Pattern pattern,Substitution substitution)throws Exception{return pattern==null?null:new Pattern(pattern.predicate,arena.apply(pattern.arguments,substitution));}
+        Pattern apply(Pattern pattern,Substitution substitution)throws Exception{return pattern==null?null:new Pattern(pattern.predicate,arena.apply(pattern.arguments,substitution),pattern.positive);}
         List<Pattern> apply(List<Pattern> patterns,int start,Substitution substitution)throws Exception{List<Pattern> out=new ArrayList<>();for(int i=start;i<patterns.size();i++){work.run();out.add(apply(patterns.get(i),substitution));}return out;}
         List<Atom> appliedDonors(List<Atom> donors,Atom next,Substitution substitution)throws Exception{List<Atom> out=new ArrayList<>();for(Atom atom:donors){work.run();out.add(arena.apply(atom,substitution));}out.add(arena.apply(next,substitution));return out;}
         Substitution match(Atom donor,Pattern pattern)throws Exception{if(!donor.predicate.equals(pattern.predicate)||donor.arguments.size()!=pattern.arguments.size())return null;return arena.unify(donor.arguments,pattern.arguments);}
         void produce(Step step)throws Exception {
+            if(step.retainedLiteral>=0){produceResidual(step);return;}
             current();Entry entry=entries.get(step.rule);if(entry==null||entry.clause==null)throw new IllegalStateException("Whole ordinary Horn producer required");Instance instance=instantiate(entry);
             if(instance.head==null||instance.body.isEmpty()||instance.body.size()!=step.donors.size())throw new IllegalStateException("Exact complete Horn body required");
             Pattern head=instance.head;List<Pattern> body=instance.body;List<Atom> used=new ArrayList<>();Set<Source> support=new LinkedHashSet<>();support.add(entry.source);int depth=0;
-            for(Donor reference:step.donors){work.run();Unit donor=donor(reference);Substitution substitution=match(donor.atom,body.get(0));if(substitution==null)throw new IllegalStateException("Supplied Horn body donor does not unify");used=appliedDonors(used,donor.atom,substitution);head=apply(head,substitution);body=apply(body,1,substitution);support.addAll(donor.sources);depth=Math.max(depth,donor.depth);}
+            for(Donor reference:step.donors){work.run();Unit donor=donor(reference);if(!donor.positive)throw new IllegalStateException("Positive Horn body donor required");Substitution substitution=match(donor.atom,body.get(0));if(substitution==null)throw new IllegalStateException("Supplied Horn body donor does not unify");used=appliedDonors(used,donor.atom,substitution);head=apply(head,substitution);body=apply(body,1,substitution);support.addAll(donor.sources);depth=Math.max(depth,donor.depth);}
             if(depth>=request.policy.steps)throw new IllegalStateException("Production depth limit");Unit result=new Unit(entry.source,arena.shapeFrom(entry.owner,entry.rule,entry.atomKey,head.predicate,head.arguments),support,depth+1,used);current();products.add(result);
         }
         List<Conflict> constraints(boolean finalPool)throws Exception {
+            if(request.signed)return signedConstraints(finalPool);
             List<Donor> pool=new ArrayList<>();for(Map.Entry<Long,Entry> entry:entries.entrySet())if(entry.getValue().root!=null)pool.add(Donor.original(entry.getKey()));if(finalPool)for(int i=0;i<products.size();i++)pool.add(Donor.product(i));
             List<Conflict> conflicts=new ArrayList<>();int states=0;
             for(Entry constraint:entries.values())if(constraint.clause!=null){Instance instance=instantiate(constraint);if(instance.head!=null)continue;Deque<State> pending=new ArrayDeque<>();pending.push(new State(instance.body,Collections.emptyList(),Collections.singleton(constraint.source),0));
@@ -217,13 +228,45 @@ public final class ContextDependentProductionInspection {
             }
             current();return conflicts;
         }
+        List<Pattern> all(Entry entry)throws Exception {
+            if(entry.root!=null){Atom atom=arena.project(entry.root);return Collections.singletonList(new Pattern(atom.predicate,atom.arguments,true));}
+            Map<Integer,Node> variables=new HashMap<>();List<Pattern> out=new ArrayList<>();
+            for(ContextProductionCapture.Atom atom:entry.clause.literals){work.run();List<Node> args=new ArrayList<>();for(Slot slot:atom.arguments){work.run();Node node;if(slot.variable<0)node=arena.value(slot.value);else{node=variables.get(slot.variable);if(node==null){node=arena.variable();variables.put(slot.variable,node);}}args.add(node);}out.add(new Pattern(atom.predicate,args,atom.positive));}
+            if(out.size()>request.policy.steps)throw new IllegalStateException("Signed clause width limit");return out;
+        }
+        List<Boolean> signs(List<Boolean> previous,boolean next){List<Boolean> out=new ArrayList<>(previous);out.add(next);return out;}
+        Substitution opposite(Unit unit,Pattern literal)throws Exception{return unit.positive==literal.positive?null:match(unit.atom,literal);}
+        void produceResidual(Step step)throws Exception {
+            current();Entry entry=entries.get(step.rule);if(entry==null||entry.clause==null)throw new IllegalStateException("Whole ordinary clause required for residual production");List<Pattern> clause=all(entry);
+            if(step.retainedLiteral>=clause.size()||step.donors.size()!=clause.size()-1)throw new IllegalStateException("Exact retained literal and all other pivots required");Pattern head=clause.get(step.retainedLiteral);List<Pattern> body=new ArrayList<>(clause);body.remove(step.retainedLiteral);
+            Set<Source> support=new LinkedHashSet<>();support.add(entry.source);List<Atom> used=new ArrayList<>();List<Boolean> signs=new ArrayList<>();int depth=0;
+            for(Donor reference:step.donors){work.run();Unit unit=donor(reference);Substitution substitution=opposite(unit,body.get(0));if(substitution==null)throw new IllegalStateException("Residual donor must match opposite polarity");head=apply(head,substitution);body=apply(body,1,substitution);used=appliedDonors(used,unit.atom,substitution);signs.add(unit.positive);support.addAll(unit.sources);depth=Math.max(depth,unit.depth);}
+            if(depth>=request.policy.steps)throw new IllegalStateException("Signed production depth limit");Unit result=new Unit(entry.source,arena.shapeFrom(entry.owner,entry.rule,entry.atomKey,head.predicate,head.arguments),support,depth+1,used,head.positive,step.retainedLiteral,signs);current();products.add(result);
+        }
+        boolean positive(Donor ref){if(!ref.original)return products.get((int)ref.reference).positive;Entry entry=entries.get(ref.reference);return entry.root!=null||entry.clause.literals.get(0).positive;}
+        List<Conflict> signedConstraints(boolean finalPool)throws Exception {
+            List<Donor> pool=new ArrayList<>();for(Map.Entry<Long,Entry> e:entries.entrySet())if(e.getValue().root!=null||e.getValue().clause.literals.size()==1)pool.add(Donor.original(e.getKey()));if(finalPool)for(int i=0;i<products.size();i++)pool.add(Donor.product(i));List<Conflict> conflicts=new ArrayList<>();int states=0;
+            for(Entry entry:entries.values()) {
+                Deque<State> pending=new ArrayDeque<>();pending.push(new State(all(entry),Collections.emptyList(),Collections.singleton(entry.source),0));
+                while(!pending.isEmpty()) {
+                    work.run();if(++states>request.capacity)throw new IllegalStateException("Signed qualification state limit");State state=pending.pop();
+                    if(state.body.isEmpty()){if(conflicts.size()==request.capacity||state.depth>=request.policy.steps)throw new IllegalStateException("Signed qualification proof/depth limit");conflicts.add(new Conflict(entry.source,state.sources,state.depth+1,state.donors,state.signs));continue;}
+                    Pattern first=state.body.get(0);
+                    for(Donor ref:pool){work.run();if(positive(ref)==first.positive)continue;String predicate;int arity;if(ref.original){Entry e=entries.get(ref.reference);DomainDescriptor descriptor=descriptor(e);predicate=descriptor.predicate;arity=descriptor.arity;}else{Atom atom=products.get((int)ref.reference).atom;predicate=atom.predicate;arity=atom.arguments.size();}if(!predicate.equals(first.predicate)||arity!=first.arguments.size())continue;
+                        Unit unit=donor(ref);Substitution substitution=opposite(unit,first);if(substitution==null)continue;Set<Source> support=new LinkedHashSet<>(state.sources);support.addAll(unit.sources);if(pending.size()==request.capacity)throw new IllegalStateException("Signed qualification frontier limit");pending.push(new State(apply(state.body,1,substitution),appliedDonors(state.donors,unit.atom,substitution),support,Math.max(state.depth,unit.depth),signs(state.signs,unit.positive)));
+                    }
+                }
+            }
+            current();return conflicts;
+        }
+        DomainDescriptor descriptor(Entry entry)throws Exception{return new DomainDescriptor(entry.rule.getDomain().getPredicate(entry.owner).getName(entry.owner),entry.rule.getDomain().getRange());}
         void run()throws Exception{originalConflicts=constraints(false);for(Step step:request.steps)produce(step);finalConflicts=constraints(true);current();}
         private long sourceKey(Source source){if(cutIdentity==null)return source.rule;for(Map.Entry<Long,Source> entry:sources.entrySet())if(entry.getValue().equals(source))return entry.getKey();throw new IllegalStateException("Missing qualified Source");}
         private void support(DataOutputStream out,Set<Source> support)throws Exception{List<Long> ids=new ArrayList<>();for(Source source:support){work.run();ids.add(sourceKey(source));}Collections.sort(ids);out.writeInt(ids.size());for(long id:ids)out.writeLong(id);}
         String digest()throws Exception {
-            List<Atom> atoms=new ArrayList<>();AuditBytes header=new AuditBytes(request.policy.bytes);DataOutputStream out=new DataOutputStream(header);out.writeInt(1);out.writeLong(original.context.getMostSignificantBits());out.writeLong(original.context.getLeastSignificantBits());out.writeLong(original.revision);out.writeBoolean(original.localX);out.writeUTF(original.fingerprint);if(cutIdentity!=null){out.writeInt(2);out.writeUTF(cutIdentity);out.writeInt(parts.size());for(CutPart part:parts){ContextProductionInventory member=part.original;out.writeUTF(member.context.toString());out.writeLong(member.revision);out.writeBoolean(member.localX);out.writeUTF(member.fingerprint);}}out.writeInt(products.size());
-            for(Unit product:products){work.run();atoms.add(product.atom);atoms.addAll(product.donors);out.writeLong(sourceKey(product.rule));out.writeInt(product.depth);out.writeInt(product.donors.size());support(out,product.sources);}
-            for(List<Conflict> list:Arrays.asList(originalConflicts,finalConflicts)){out.writeInt(list.size());for(Conflict conflict:list){work.run();out.writeLong(sourceKey(conflict.constraint));out.writeInt(conflict.depth);out.writeInt(conflict.donors.size());support(out,conflict.sources);atoms.addAll(conflict.donors);}}
+            List<Atom> atoms=new ArrayList<>();AuditBytes header=new AuditBytes(request.policy.bytes);DataOutputStream out=new DataOutputStream(header);out.writeInt(request.signed?3:1);out.writeLong(original.context.getMostSignificantBits());out.writeLong(original.context.getLeastSignificantBits());out.writeLong(original.revision);out.writeBoolean(original.localX);out.writeUTF(original.fingerprint);if(cutIdentity!=null){out.writeInt(2);out.writeUTF(cutIdentity);out.writeInt(parts.size());for(CutPart part:parts){ContextProductionInventory member=part.original;out.writeUTF(member.context.toString());out.writeLong(member.revision);out.writeBoolean(member.localX);out.writeUTF(member.fingerprint);}}out.writeInt(products.size());
+            for(Unit product:products){work.run();atoms.add(product.atom);atoms.addAll(product.donors);out.writeLong(sourceKey(product.rule));out.writeInt(product.depth);out.writeInt(product.donors.size());if(request.signed){out.writeBoolean(product.positive);out.writeInt(product.retained);for(boolean sign:product.signs)out.writeBoolean(sign);}support(out,product.sources);}
+            for(List<Conflict> list:Arrays.asList(originalConflicts,finalConflicts)){out.writeInt(list.size());for(Conflict conflict:list){work.run();out.writeLong(sourceKey(conflict.constraint));out.writeInt(conflict.depth);out.writeInt(conflict.donors.size());if(request.signed)for(boolean sign:conflict.signs)out.writeBoolean(sign);support(out,conflict.sources);atoms.addAll(conflict.donors);}}
             out.flush();Policy p=request.policy;byte[] graph=NativeDependentReplayCapsule.atomGraph(atoms,ordinals,new NativeDependentReplayCapsule.Limits(p.bytes,p.rows,p.steps,p.work,p.nodes));if(graph.length>p.bytes-header.size())throw new IllegalStateException("Complete production audit byte limit");MessageDigest digest=MessageDigest.getInstance("SHA-256");digest.update(header.toByteArray());digest.update(graph);StringBuilder hex=new StringBuilder();for(byte b:digest.digest())hex.append(String.format(Locale.ROOT,"%02x",b&255));return hex.toString();
         }
         @Override public void close(){arena.close();}

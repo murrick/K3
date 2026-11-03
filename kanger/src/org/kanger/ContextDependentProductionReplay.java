@@ -40,7 +40,7 @@ public final class ContextDependentProductionReplay {
     }
     private static int count(DataInputStream in,int maximum)throws Exception {int count=in.readInt();if(count<0||count>maximum)throw new IOException("Original-only count limit");return count;}
     public static Saved capture(Mind actual,ContextProductionInventory expected,Request request)throws Exception {
-        if(actual==null||request==null)throw new IllegalArgumentException("Actual original inventory and complete production recipe required");Policy policy=request.policy;ContextDependentReplayInspection.current(actual,expected,policy);
+        if(actual==null||request==null)throw new IllegalArgumentException("Actual original inventory and complete production recipe required");if(request.signed)throw new IllegalArgumentException("K3HP/v1 has no signed residual recipe encoding");Policy policy=request.policy;ContextDependentReplayInspection.current(actual,expected,policy);
         try {
             Result evidence=ContextDependentProductionInspection.inspect(actual,expected,request);ContextDependentProductionInspection.Originals originals=ContextDependentProductionInspection.Originals.of(expected);
             Budget budget=new Budget(policy);Buffer buffer=new Buffer(policy.bytes);DataOutputStream out=new DataOutputStream(buffer);out.writeInt(MAGIC);out.writeInt(VERSION);out.writeLong(originals.context.getMostSignificantBits());out.writeLong(originals.context.getLeastSignificantBits());out.writeLong(originals.revision);text(out,originals.fingerprint,policy,budget);

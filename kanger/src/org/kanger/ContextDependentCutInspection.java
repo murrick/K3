@@ -35,15 +35,17 @@ public final class ContextDependentCutInspection {
         public static Donor product(int index){if(index<0)throw new IllegalArgumentException("Earlier product index required");return new Donor(null,index);}
     }
     public static final class Step {
-        public final Ref rule;public final List<Donor> donors;
-        public Step(Ref rule,List<Donor> donors){if(rule==null||donors==null)throw new IllegalArgumentException("Whole physical Horn source required");List<Donor> copy=new ArrayList<>(donors);if(copy.contains(null))throw new IllegalArgumentException("Exact donors required");this.rule=rule;this.donors=Collections.unmodifiableList(copy);}
+        public final Ref rule;public final List<Donor> donors;public final int retainedLiteral;
+        public Step(Ref rule,List<Donor> donors){this(rule,-1,donors);}
+        public Step(Ref rule,int retainedLiteral,List<Donor> donors){if(rule==null||retainedLiteral< -1||donors==null)throw new IllegalArgumentException("Whole physical clause required");List<Donor> copy=new ArrayList<>(donors);if(copy.contains(null))throw new IllegalArgumentException("Exact donors required");this.rule=rule;this.retainedLiteral=retainedLiteral;this.donors=Collections.unmodifiableList(copy);}
     }
     public static final class Request {
-        public final Policy policy;public final int capacity;public final Map<String,List<Step>> recipes;
-        public Request(Policy policy,int capacity,Map<String,List<Step>> recipes) {
+        public final Policy policy;public final int capacity;public final Map<String,List<Step>> recipes;public final boolean signed;
+        public Request(Policy policy,int capacity,Map<String,List<Step>> recipes){this(policy,capacity,recipes,false);}
+        public Request(Policy policy,int capacity,Map<String,List<Step>> recipes,boolean signed) {
             if(policy==null||capacity<1||capacity>100000||recipes==null)throw new IllegalArgumentException("Bounded exact cut recipes required");Map<String,List<Step>> copy=new LinkedHashMap<>();
             for(Map.Entry<String,List<Step>> e:recipes.entrySet()){if(e.getKey()==null||e.getValue()==null)throw new IllegalArgumentException("Exact cut recipe required");List<Step> steps=new ArrayList<>(e.getValue());if(steps.contains(null)||steps.size()>policy.steps)throw new IllegalArgumentException("Bounded complete cut recipe required");copy.put(e.getKey(),Collections.unmodifiableList(steps));}
-            this.policy=policy;this.capacity=capacity;this.recipes=Collections.unmodifiableMap(copy);
+            this.policy=policy;this.capacity=capacity;this.recipes=Collections.unmodifiableMap(copy);boolean mode=signed;for(List<Step> steps:copy.values())for(Step step:steps)mode|=step.retainedLiteral>=0;this.signed=mode;
         }
     }
     public static final class Result {
@@ -57,8 +59,8 @@ public final class ContextDependentCutInspection {
     private static ContextDependentProductionInspection.Result inspectOne(Member x,List<Member> foreign,String identity,List<Step> supplied,Request request)throws Exception {
         List<Member> members=new ArrayList<>();members.add(x);members.addAll(foreign);Map<Ref,Long> keys=new LinkedHashMap<>();long next=0;
         for(Member member:members)for(ContextProductionInventory.Row row:member.inventory.rows)keys.put(new Ref(member.inventory.context,row.nativeRule),next++);
-        List<ContextDependentProductionInspection.Step> steps=new ArrayList<>();for(Step step:supplied){List<ContextDependentProductionInspection.Donor> donors=new ArrayList<>();for(Donor donor:step.donors)donors.add(donor.original==null?ContextDependentProductionInspection.Donor.product(donor.product):ContextDependentProductionInspection.Donor.original(key(keys,donor.original)));steps.add(new ContextDependentProductionInspection.Step(key(keys,step.rule),donors));}
-        ContextDependentProductionInspection.Request recipe=new ContextDependentProductionInspection.Request(request.policy,request.capacity,steps);
+        List<ContextDependentProductionInspection.Step> steps=new ArrayList<>();for(Step step:supplied){List<ContextDependentProductionInspection.Donor> donors=new ArrayList<>();for(Donor donor:step.donors)donors.add(donor.original==null?ContextDependentProductionInspection.Donor.product(donor.product):ContextDependentProductionInspection.Donor.original(key(keys,donor.original)));steps.add(new ContextDependentProductionInspection.Step(key(keys,step.rule),step.retainedLiteral,donors));}
+        ContextDependentProductionInspection.Request recipe=new ContextDependentProductionInspection.Request(request.policy,request.capacity,steps,request.signed);
         return ContextDependentProductionInspection.inspectCut(project(members,request.policy),project(members,request.policy),identity,recipe);
     }
     public static Result inspect(Member x,List<Cut> supplied,Request request)throws Exception {

@@ -877,3 +877,5 @@ org.kanger.storage.dumb2.ContextDependentProductionRunner | CONTEXT_DEPENDENT_PR
 org.kanger.storage.dumb2.ContextDependentProductionReplayRunner | CONTEXT_DEPENDENT_PRODUCTION_REPLAY_PASS
 
 org.kanger.storage.dumb2.ContextDependentCutRunner | CONTEXT_DEPENDENT_CUT_PASS
+
+org.kanger.storage.dumb2.ContextDependentSignedResidualRunner | CONTEXT_DEPENDENT_SIGNED_RESIDUAL_PASS
