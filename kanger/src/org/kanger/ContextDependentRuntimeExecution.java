@@ -81,7 +81,7 @@ public final class ContextDependentRuntimeExecution {
         T(Kind kind,int variable,SemanticTermSnapshot value,Source function,int binder,List<T> args){this.kind=kind;this.variable=variable;this.value=value;this.function=function;this.binder=binder;this.args=args;}
     }
     private static final class Pair {final T a,b;Pair(T a,T b){this.a=a;this.b=b;}}
-    private static final class NoMatch extends Exception {NoMatch(String why){super(why);}}
+    static final class NoMatch extends Exception {NoMatch(String why){super(why);}}
     private static final class Engine {
         final Member child;final List<Cut> cuts;final ContextDependentRuntimeInspection.Frame frame;final Request request;final Runnable work;int variables,nodes;
         Engine(Member child,List<Cut> cuts,ContextDependentRuntimeInspection.Frame frame,Request request){this.child=child;this.cuts=cuts;this.frame=frame;this.request=request;work=ContextGroundProductionRounds.budget(request.work);}
@@ -110,11 +110,15 @@ public final class ContextDependentRuntimeExecution {
         List<Integer> roots(List<T> roots){List<Integer> out=new ArrayList<>();for(T t:roots){engine.work.run();out.add(take(t));}return out;}
         Map<Integer,Integer> bindings(Map<Integer,T> input){Map<Integer,Integer> out=new LinkedHashMap<>();for(Map.Entry<Integer,T> e:input.entrySet()){engine.work.run();out.put(e.getKey(),take(e.getValue()));}return out;}
     }
+    /** Package-internal consumer; public APIs obtain and qualify their input frame afresh. */
+    static List<Output> executeFrame(Member child,List<Cut> cuts,ContextDependentRuntimeInspection.Frame frame,Request request)throws Exception{
+        Engine engine=new Engine(child,cuts,frame,request);List<Output> outputs=new ArrayList<>();for(Step step:request.steps){interrupt();outputs.add(engine.step(step,outputs));}new ContextDependentRuntimeExecutionAudit(child,cuts,frame,request).check(outputs);interrupt();return Collections.unmodifiableList(outputs);
+    }
     private static void current(Member base,Member child,List<Cut> cuts,Request r)throws Exception{ContextDependentReplayInspection.current(base.actual,base.inventory,r.preparation.projection.qualification.append.iteration.policy);ContextDependentReplayInspection.current(child.actual,child.inventory,r.preparation.projection.qualification.append.iteration.policy);for(Cut c:cuts)for(Member m:c.members)ContextDependentReplayInspection.currentMember(m.actual,m.inventory,r.preparation.projection.qualification.append.iteration.policy);}
     public static Result inspect(Member base,Member child,List<Cut> supplied,Request request)throws Exception{
         if(base==null||child==null||supplied==null||supplied.contains(null)||request==null)throw new IllegalArgumentException("Actual parent/child/cuts required");List<Cut> cuts=new ArrayList<>(supplied);interrupt();current(base,child,cuts,request);
         try{ContextDependentRuntimeModelInspection.Result prepared=ContextDependentRuntimeModelInspection.inspect(base,child,cuts,request.preparation);if(prepared.status==ContextDependentRuntimeModelInspection.Status.BASE_REFUTED)return new Result(Status.BASE_REFUTED,prepared.reason,Collections.emptyList(),prepared);if(prepared.status==ContextDependentRuntimeModelInspection.Status.CANDIDATE_REFUTED)return new Result(Status.CANDIDATE_REFUTED,prepared.reason,Collections.emptyList(),prepared);if(prepared.status!=ContextDependentRuntimeModelInspection.Status.RUNTIME_MODELLED_PENDING)return new Result(Status.INCOMPLETE,prepared.phase+": "+prepared.reason,Collections.emptyList(),null);
-            try{Engine engine=new Engine(child,cuts,prepared.frame,request);List<Output> outputs=new ArrayList<>();for(Step step:request.steps){interrupt();outputs.add(engine.step(step,outputs));}new ContextDependentRuntimeExecutionAudit(child,cuts,prepared.frame,request).check(outputs);interrupt();return new Result(Status.EXECUTED_PENDING,"Explicit native residual steps checked against actual runtime graphs; receiving-barrier/default admission unknown",outputs,prepared);}catch(NoMatch missing){interrupt();return new Result(Status.NO_MATCH,missing.getMessage(),Collections.emptyList(),null);}catch(InterruptedException interrupted){Thread.currentThread().interrupt();throw interrupted;}catch(Exception failure){interrupt();return new Result(Status.INCOMPLETE,failure.getMessage(),Collections.emptyList(),null);}
+            try{List<Output> outputs=executeFrame(child,cuts,prepared.frame,request);interrupt();return new Result(Status.EXECUTED_PENDING,"Explicit native residual steps checked against actual runtime graphs; receiving-barrier/default admission unknown",outputs,prepared);}catch(NoMatch missing){interrupt();return new Result(Status.NO_MATCH,missing.getMessage(),Collections.emptyList(),null);}catch(InterruptedException interrupted){Thread.currentThread().interrupt();throw interrupted;}catch(Exception failure){interrupt();return new Result(Status.INCOMPLETE,failure.getMessage(),Collections.emptyList(),null);}
         }finally{current(base,child,cuts,request);}
     }
 }

@@ -69,6 +69,15 @@ public final class ContextDependentRuntimeInspection {
             for(int i=0;i<t.arguments.size();i++){work.run();int a=n.arguments.get(i);need(a>=0&&a<id,"Runtime graph must be topological");terms.push(t.arguments.get(i));ids.push(a);}
         }need(seen.size()==p.nodes.size(),"No extra unproved runtime graph nodes");
     }
+    /** Internal lossless projection of checked history. Bounds are not a supplied preparation receipt. */
+    static Frame project(Member child,ContextDependentRoundInspection.Result checked,Request request)throws Exception{
+                need(checked!=null&&!checked.barriers.isEmpty(),"Whole checked receiving history required");ContextDependentRoundInspection.Barrier b=checked.barriers.get(checked.barriers.size()-1);need((child.inventory.revision+":"+child.inventory.localX+":"+child.inventory.fingerprint).equals(b.basis.get(child.inventory.context)),"Runtime projection must bind the exact checked child basis");Runnable work=ContextGroundProductionRounds.budget(request.copyWork);Map<String,List<Product>> projected=new LinkedHashMap<>();int[] total={0,0};
+                for(String cut:b.cuts.keySet()){work.run();List<Product> products=new ArrayList<>();int occurrence=0;for(ContextDependentRoundInspection.Ticket ticket:b.common)products.add(copy(cut,Role.COMMON,occurrence++,b.observed.get(ticket),request,work,total));occurrence=0;for(Row row:b.cuts.get(cut).products)products.add(copy(cut,Role.VISIBLE,occurrence++,row,request,work,total));projected.put(cut,products);}
+                Frame frame=new Frame(child,projected);work=ContextGroundProductionRounds.budget(request.auditWork);
+                need(frame.cuts.keySet().equals(b.cuts.keySet()),"Exact runtime cut coverage required");
+                for(String cut:b.cuts.keySet()){work.run();List<Product> ps=frame.cuts.get(cut);need(ps.size()==b.common.size()+b.cuts.get(cut).products.size(),"All common/private raw occurrences required");int at=0,occurrence=0;for(ContextDependentRoundInspection.Ticket ticket:b.common)audit(ps.get(at++),cut,Role.COMMON,occurrence++,b.observed.get(ticket),work);occurrence=0;for(Row row:b.cuts.get(cut).products)audit(ps.get(at++),cut,Role.VISIBLE,occurrence++,row,work);}
+        interrupt();return frame;
+    }
     private static void current(Member base,Member child,List<Cut> cuts,Request r)throws Exception{ContextDependentReplayInspection.current(base.actual,base.inventory,r.qualification.append.iteration.policy);ContextDependentReplayInspection.current(child.actual,child.inventory,r.qualification.append.iteration.policy);for(Cut c:cuts)for(Member m:c.members)ContextDependentReplayInspection.currentMember(m.actual,m.inventory,r.qualification.append.iteration.policy);}
     public static Result inspect(Member base,Member child,List<Cut> supplied,Request request)throws Exception{
         if(base==null||child==null||supplied==null||supplied.contains(null)||request==null)throw new IllegalArgumentException("Actual native parent/child/cuts and fresh qualification required");List<Cut> cuts=new ArrayList<>(supplied);interrupt();current(base,child,cuts,request);
@@ -78,11 +87,7 @@ public final class ContextDependentRuntimeInspection {
             if(q.status==ContextDependentCandidateModelInspection.Status.CANDIDATE_REFUTED)return new Result(Status.CANDIDATE_REFUTED,q.reason,null,q);
             if(q.status!=ContextDependentCandidateModelInspection.Status.MODELLED_PENDING)return new Result(Status.INCOMPLETE,q.phase+": "+q.reason,null,null);
             try{
-                ContextDependentRoundInspection.Barrier b=last(q);Runnable work=ContextGroundProductionRounds.budget(request.copyWork);Map<String,List<Product>> projected=new LinkedHashMap<>();int[] total={0,0};
-                for(String cut:b.cuts.keySet()){work.run();List<Product> products=new ArrayList<>();int occurrence=0;for(ContextDependentRoundInspection.Ticket ticket:b.common)products.add(copy(cut,Role.COMMON,occurrence++,b.observed.get(ticket),request,work,total));occurrence=0;for(Row row:b.cuts.get(cut).products)products.add(copy(cut,Role.VISIBLE,occurrence++,row,request,work,total));projected.put(cut,products);}
-                Frame frame=new Frame(child,projected);work=ContextGroundProductionRounds.budget(request.auditWork);
-                need(frame.cuts.keySet().equals(b.cuts.keySet()),"Exact runtime cut coverage required");
-                for(String cut:b.cuts.keySet()){work.run();List<Product> ps=frame.cuts.get(cut);need(ps.size()==b.common.size()+b.cuts.get(cut).products.size(),"All common/private raw occurrences required");int at=0,occurrence=0;for(ContextDependentRoundInspection.Ticket ticket:b.common)audit(ps.get(at++),cut,Role.COMMON,occurrence++,b.observed.get(ticket),work);occurrence=0;for(Row row:b.cuts.get(cut).products)audit(ps.get(at++),cut,Role.VISIBLE,occurrence++,row,work);}
+                Frame frame=project(child,q.candidate.proposed.checked,request);
                 interrupt();return new Result(Status.PROJECTED_PENDING,"Fresh proof products copied and independently checked; ordinary native query/write admission unknown",frame,q);
             }catch(InterruptedException e){Thread.currentThread().interrupt();throw e;}catch(Exception e){return new Result(Status.INCOMPLETE,"Runtime projection/audit: "+e.getMessage(),null,null);}
         }finally{current(base,child,cuts,request);}

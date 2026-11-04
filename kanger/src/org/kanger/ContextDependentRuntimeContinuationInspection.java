@@ -1,0 +1,55 @@
+/* MIT License. Copyright (c) 2026 Dmitry G. Quznetsov. */
+package org.kanger;
+import java.util.*;
+import org.kanger.ContextDependentCutInspection.*;
+import org.kanger.ContextDependentModelInspection.Model;
+import org.kanger.ContextDependentRuntimeBarrierInspection.Opposition;
+import org.kanger.ContextDependentRoundInspection.Round;
+import org.kanger.ContextDependentRoundInspection.Ticket;
+import org.kanger.ContextDependentRuntimeInspection.Frame;
+
+/** Received-family projection, direct indexed truth and a second scoped frozen execution/receiving cycle. */
+public final class ContextDependentRuntimeContinuationInspection {
+    private ContextDependentRuntimeContinuationInspection(){}
+    public enum Status {BASE_REFUTED,CANDIDATE_REFUTED,NO_MATCH,ROUND_REFUTED,CONTINUED_PENDING,INCOMPLETE}
+    public static final class Projection {
+        public final int products,nodes,copyWork,auditWork,shapeWork,truthWork;
+        public Projection(int products,int nodes,int copyWork,int auditWork,int shapeWork,int truthWork){if(products<1||nodes<1||copyWork<1||auditWork<1||shapeWork<1||truthWork<1)throw new IllegalArgumentException("Separate positive received projection/shape/truth bounds required");this.products=products;this.nodes=nodes;this.copyWork=copyWork;this.auditWork=auditWork;this.shapeWork=shapeWork;this.truthWork=truthWork;}
+    }
+    public static final class Plan {
+        public final List<ContextDependentRuntimeExecution.Step> steps;public final Map<String,Model> receivingOriginalModels;public final int work,auditWork,nodes,bridgeWork,originalWork,finalWork;
+        public Plan(List<ContextDependentRuntimeExecution.Step> steps,Map<String,Model> receivingOriginalModels,int work,int auditWork,int nodes,int bridgeWork,int originalWork,int finalWork){if(steps==null||steps.isEmpty()||steps.contains(null)||receivingOriginalModels==null||receivingOriginalModels.containsKey(null)||receivingOriginalModels.containsValue(null)||work<1||auditWork<1||nodes<1||bridgeWork<1||originalWork<1||finalWork<1)throw new IllegalArgumentException("Whole next plan/interpretations and positive execution/bridge/truth bounds required");this.steps=Collections.unmodifiableList(new ArrayList<>(steps));this.receivingOriginalModels=Collections.unmodifiableMap(new LinkedHashMap<>(receivingOriginalModels));this.work=work;this.auditWork=auditWork;this.nodes=nodes;this.bridgeWork=bridgeWork;this.originalWork=originalWork;this.finalWork=finalWork;}
+    }
+    public static final class Request {
+        public final ContextDependentRuntimeBarrierInspection.Request first,next;public final Projection projection;
+        public Request(ContextDependentRuntimeBarrierInspection.Request first,Projection projection,Plan plan){if(first==null||projection==null||plan==null)throw new IllegalArgumentException("Fresh first barrier and bounded continuation required");this.first=first;this.projection=projection;next=new ContextDependentRuntimeBarrierInspection.Request(new ContextDependentRuntimeExecution.Request(first.execution.preparation,plan.steps,plan.work,plan.auditWork,plan.nodes),plan.receivingOriginalModels,plan.bridgeWork,plan.originalWork,plan.finalWork);}
+    }
+    public static final class Result {
+        public final Status status;public final String phase,reason;public final UUID epoch;
+        public final ContextDependentRuntimeBarrierInspection.Result first;public final Frame input;
+        public final List<ContextDependentRuntimeExecution.Output> outputs;public final ContextDependentRoundInspection.Result checked;public final List<Round> history;
+        public final Map<String,List<Ticket>> runtimeTickets;public final List<Ticket> outputTickets;public final List<Opposition> oppositions;
+        public final int inputObligations,receivingOriginalRows,receivingFinalObligations;
+        private Result(Status status,String phase,String reason,ContextDependentRuntimeBarrierInspection.Result first,Frame input,List<ContextDependentRuntimeExecution.Output> outputs,ContextDependentRuntimeBarrierInspection.Replay replay,int in,int originals,int finals,List<Opposition> oppositions){this.status=status;this.phase=phase;this.reason=reason;this.first=first;this.input=input;this.outputs=Collections.unmodifiableList(new ArrayList<>(outputs));checked=replay==null?null:replay.checked;history=replay==null?Collections.emptyList():replay.history;runtimeTickets=replay==null?Collections.emptyMap():replay.runtime;outputTickets=replay==null?Collections.emptyList():replay.outputs;this.oppositions=Collections.unmodifiableList(new ArrayList<>(oppositions));inputObligations=in;receivingOriginalRows=originals;receivingFinalObligations=finals;epoch=status==Status.CONTINUED_PENDING?UUID.randomUUID():null;}
+        private static Result incomplete(String phase,String why){return new Result(Status.INCOMPLETE,phase,why,null,null,Collections.emptyList(),null,0,0,0,Collections.emptyList());}
+    }
+    private static void need(boolean b,String why){if(!b)throw new IllegalStateException(why);}
+    private static void interrupt()throws InterruptedException{if(Thread.currentThread().isInterrupted())throw new InterruptedException("Received runtime continuation interrupted");}
+    private static void current(Member base,Member child,List<Cut> cuts,Request r)throws Exception{ContextDependentReplayInspection.Policy p=r.first.execution.preparation.projection.qualification.append.iteration.policy;ContextDependentReplayInspection.current(base.actual,base.inventory,p);ContextDependentReplayInspection.current(child.actual,child.inventory,p);for(Cut cut:cuts)for(Member member:cut.members)ContextDependentReplayInspection.currentMember(member.actual,member.inventory,p);}
+    public static Result inspect(Member base,Member child,List<Cut> supplied,Request request)throws Exception{
+        if(base==null||child==null||supplied==null||supplied.contains(null)||request==null)throw new IllegalArgumentException("Actual parent/child and complete physical cuts required");List<Cut> cuts=new ArrayList<>(supplied);interrupt();current(base,child,cuts,request);
+        try{ContextDependentRuntimeBarrierInspection.Result first=ContextDependentRuntimeBarrierInspection.inspect(base,child,cuts,request.first);
+            if(first.status!=ContextDependentRuntimeBarrierInspection.Status.RECEIVED_PENDING){if(first.status==ContextDependentRuntimeBarrierInspection.Status.INCOMPLETE)return Result.incomplete("first-barrier",first.phase+": "+first.reason);Status status=Status.valueOf(first.status.name());return new Result(status,"first-barrier",first.reason,(status==Status.BASE_REFUTED||status==Status.CANDIDATE_REFUTED)?first:null,null,Collections.emptyList(),null,0,0,0,first.oppositions);}
+            String phase="received-projection";try{
+                ContextDependentCandidateModelInspection.Request q=request.first.execution.preparation.projection.qualification;Projection p=request.projection;ContextDependentRuntimeInspection.Request bounds=new ContextDependentRuntimeInspection.Request(q,p.products,p.nodes,p.copyWork,p.auditWork);Frame frame=ContextDependentRuntimeInspection.project(child,first.checked,bounds);
+                phase="received-runtime-shape";Runnable shape=ContextGroundProductionRounds.budget(p.shapeWork);ContextDependentCandidateInspection.Result candidate=first.execution.preparation.projection.qualification.candidate;Map<String,Model> models=ContextDependentRuntimeBarrierInspection.models(request.first,candidate,shape);ContextDependentRuntimeModelInspection.Request modelBounds=new ContextDependentRuntimeModelInspection.Request(bounds,p.shapeWork,p.truthWork);ContextDependentRuntimeModelAudit audit=new ContextDependentRuntimeModelAudit(child,cuts,frame,models,modelBounds,shape);
+                phase="received-runtime-truth";int count=audit.truth();need(count==first.receivingFinalObligations,"Every actual received raw occurrence must survive runtime projection and truth audit");
+                phase="continued-execution";List<ContextDependentRuntimeExecution.Output> outputs=ContextDependentRuntimeExecution.executeFrame(child,cuts,frame,request.next.execution);
+                phase="continued-frozen-bridge";ContextDependentIterationInspection.Request policy=q.append.iteration;ContextDependentRuntimeBarrierInspection.Replay replay=ContextDependentRuntimeBarrierInspection.replay(child,cuts,new ContextDependentRoundInspection.Request(policy.policy,policy.capacity,first.history),first.checked,frame,request.next.execution.steps,outputs,request.next.bridgeWork);Runnable work=ContextGroundProductionRounds.budget(request.next.bridgeWork);
+                phase="continued-producing";List<Opposition> refusals=ContextDependentRuntimeBarrierInspection.oppositions(replay.checked.barriers.get(replay.produced),candidate,work);if(refusals.isEmpty()){phase="continued-receiving";refusals=ContextDependentRuntimeBarrierInspection.oppositions(replay.checked.barriers.get(replay.received),candidate,work);}if(!refusals.isEmpty())return new Result(Status.ROUND_REFUTED,phase,"Actual sourced continuation refutation; incoming subset recorded explicitly",null,null,Collections.emptyList(),null,0,0,0,refusals);
+                phase="continued-model-rebase";models=ContextDependentRuntimeBarrierInspection.models(request.next,candidate,work);phase="continued-model-preflight";ContextDependentModelAudit finalAudit=new ContextDependentModelAudit(child,cuts,replay.checked,new ContextDependentModelInspection.Request(policy,models,q.points,q.cells,request.next.originalWork,request.next.finalWork));phase="continued-original";int originals=finalAudit.original();interrupt();phase="continued-final";int finals=finalAudit.finalModel();interrupt();
+                return new Result(Status.CONTINUED_PENDING,"second-frozen-receiving-audited","Actual received runtime consumed by next explicit plan and complete receiving pass; not automatic saturation/default admission",first,frame,outputs,replay,count,originals,finals,Collections.emptyList());
+            }catch(ContextDependentRuntimeExecution.NoMatch missing){interrupt();return new Result(Status.NO_MATCH,phase,missing.getMessage(),null,null,Collections.emptyList(),null,0,0,0,Collections.emptyList());}catch(InterruptedException interrupted){Thread.currentThread().interrupt();throw interrupted;}catch(Exception failure){interrupt();return Result.incomplete(phase,failure.getMessage());}
+        }finally{current(base,child,cuts,request);}
+    }
+}

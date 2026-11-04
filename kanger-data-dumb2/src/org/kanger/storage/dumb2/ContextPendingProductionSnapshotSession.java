@@ -39,6 +39,7 @@ final class ContextPendingProductionSnapshotSession implements AutoCloseable {
     private ContextDependentRuntimeModelInspection.Result dependentRuntimeModels;
     private ContextDependentRuntimeExecution.Result dependentRuntimeExecution;
     private ContextDependentRuntimeBarrierInspection.Result dependentRuntimeBarrier;
+    private ContextDependentRuntimeContinuationInspection.Result dependentRuntimeContinuation;
     static ContextPendingProductionSnapshotSession open(DB db,Mind proposed,int rows) throws Exception {
         synchronized(db) {return new ContextPendingProductionSnapshotSession(db,proposed,rows);}
     }
@@ -232,7 +233,7 @@ final class ContextPendingProductionSnapshotSession implements AutoCloseable {
     /** Prepare a provider-owned typed product overlay; never publish model guesses or native Terms. */
     ContextDependentRuntimeInspection.Result prepareDependentRuntime(ContextDependentRuntimeInspection.Request request) throws Exception {
         synchronized(provider) {
-            requireOwner();dependentRuntime=null;dependentRuntimeModels=null;dependentRuntimeExecution=null;dependentRuntimeBarrier=null;requireCurrent();if(request==null||request.qualification.append.iteration.policy.rows!=rows)throw new IllegalArgumentException("Cut diagnostic rows must match owning lease");
+            requireOwner();dependentRuntime=null;dependentRuntimeModels=null;dependentRuntimeExecution=null;dependentRuntimeBarrier=null;dependentRuntimeContinuation=null;requireCurrent();if(request==null||request.qualification.append.iteration.policy.rows!=rows)throw new IllegalArgumentException("Cut diagnostic rows must match owning lease");
             try {
                 provider.productionExecutionTopology();List<ContextDependentCutInspection.Cut> cuts=new ArrayList<>();Map<String,List<ContextDependentCutInspection.Member>> groups=new LinkedHashMap<>();
                 for(int i=0;i<topology.size();i++){ContextConnection connection=topology.get(i);ContextDependentCutInspection.Member member=new ContextDependentCutInspection.Member(connection.layer(),foreign.get(i));String group=connection.getTrustGroup();if(group==null)cuts.add(new ContextDependentCutInspection.Cut(null,Collections.singletonList(member)));else groups.computeIfAbsent(group,k->new ArrayList<>()).add(member);}
@@ -245,41 +246,57 @@ final class ContextPendingProductionSnapshotSession implements AutoCloseable {
     /** Fresh projection and direct indexed-runtime truth audit, under this actual owning lease. */
     ContextDependentRuntimeModelInspection.Result prepareDependentRuntimeModels(ContextDependentRuntimeModelInspection.Request request) throws Exception {
         synchronized(provider) {
-            requireOwner();dependentRuntime=null;dependentRuntimeModels=null;dependentRuntimeExecution=null;dependentRuntimeBarrier=null;requireCurrent();if(request==null||request.projection.qualification.append.iteration.policy.rows!=rows)throw new IllegalArgumentException("Cut diagnostic rows must match owning lease");
+            requireOwner();dependentRuntime=null;dependentRuntimeModels=null;dependentRuntimeExecution=null;dependentRuntimeBarrier=null;dependentRuntimeContinuation=null;requireCurrent();if(request==null||request.projection.qualification.append.iteration.policy.rows!=rows)throw new IllegalArgumentException("Cut diagnostic rows must match owning lease");
             try {
                 provider.productionExecutionTopology();List<ContextDependentCutInspection.Cut> cuts=new ArrayList<>();Map<String,List<ContextDependentCutInspection.Member>> groups=new LinkedHashMap<>();
                 for(int i=0;i<topology.size();i++){ContextConnection connection=topology.get(i);ContextDependentCutInspection.Member member=new ContextDependentCutInspection.Member(connection.layer(),foreign.get(i));String group=connection.getTrustGroup();if(group==null)cuts.add(new ContextDependentCutInspection.Cut(null,Collections.singletonList(member)));else groups.computeIfAbsent(group,k->new ArrayList<>()).add(member);}
                 for(Map.Entry<String,List<ContextDependentCutInspection.Member>> group:groups.entrySet())cuts.add(new ContextDependentCutInspection.Cut(group.getKey(),group.getValue()));
                 ContextDependentRuntimeModelInspection.Result result=ContextDependentRuntimeModelInspection.inspect(new ContextDependentCutInspection.Member(parent,parentInventory),new ContextDependentCutInspection.Member(child,childInventory),cuts,request);
                 requireCurrent();dependentRuntime=result.frame;if(result.status==ContextDependentRuntimeModelInspection.Status.RUNTIME_MODELLED_PENDING)dependentRuntimeModels=result;return result;
-            } catch(Exception failure){dependentRuntime=null;dependentRuntimeModels=null;dependentRuntimeExecution=null;dependentRuntimeBarrier=null;throw failure;}
+            } catch(Exception failure){dependentRuntime=null;dependentRuntimeModels=null;dependentRuntimeExecution=null;dependentRuntimeBarrier=null;dependentRuntimeContinuation=null;throw failure;}
         }
     }
     /** Fresh checked runtime plus explicit native residual execution; outputs remain local proof data. */
     ContextDependentRuntimeExecution.Result prepareDependentRuntimeExecution(ContextDependentRuntimeExecution.Request request) throws Exception {
         synchronized(provider) {
-            requireOwner();dependentRuntime=null;dependentRuntimeModels=null;dependentRuntimeExecution=null;dependentRuntimeBarrier=null;requireCurrent();if(request==null||request.preparation.projection.qualification.append.iteration.policy.rows!=rows)throw new IllegalArgumentException("Cut diagnostic rows must match owning lease");
+            requireOwner();dependentRuntime=null;dependentRuntimeModels=null;dependentRuntimeExecution=null;dependentRuntimeBarrier=null;dependentRuntimeContinuation=null;requireCurrent();if(request==null||request.preparation.projection.qualification.append.iteration.policy.rows!=rows)throw new IllegalArgumentException("Cut diagnostic rows must match owning lease");
             try {
                 provider.productionExecutionTopology();List<ContextDependentCutInspection.Cut> cuts=new ArrayList<>();Map<String,List<ContextDependentCutInspection.Member>> groups=new LinkedHashMap<>();
                 for(int i=0;i<topology.size();i++){ContextConnection connection=topology.get(i);ContextDependentCutInspection.Member member=new ContextDependentCutInspection.Member(connection.layer(),foreign.get(i));String group=connection.getTrustGroup();if(group==null)cuts.add(new ContextDependentCutInspection.Cut(null,Collections.singletonList(member)));else groups.computeIfAbsent(group,k->new ArrayList<>()).add(member);}
                 for(Map.Entry<String,List<ContextDependentCutInspection.Member>> group:groups.entrySet())cuts.add(new ContextDependentCutInspection.Cut(group.getKey(),group.getValue()));
                 ContextDependentRuntimeExecution.Result result=ContextDependentRuntimeExecution.inspect(new ContextDependentCutInspection.Member(parent,parentInventory),new ContextDependentCutInspection.Member(child,childInventory),cuts,request);
                 requireCurrent();if(result.status==ContextDependentRuntimeExecution.Status.EXECUTED_PENDING){dependentRuntimeExecution=result;dependentRuntimeModels=result.preparation;dependentRuntime=result.preparation.frame;}return result;
-            } catch(Exception failure){dependentRuntime=null;dependentRuntimeModels=null;dependentRuntimeExecution=null;dependentRuntimeBarrier=null;throw failure;}
+            } catch(Exception failure){dependentRuntime=null;dependentRuntimeModels=null;dependentRuntimeExecution=null;dependentRuntimeBarrier=null;dependentRuntimeContinuation=null;throw failure;}
         }
     }
     /** Complete fresh execution plus producing/receiving replay and receiving model audits. */
     ContextDependentRuntimeBarrierInspection.Result prepareDependentRuntimeBarrier(ContextDependentRuntimeBarrierInspection.Request request) throws Exception {
         synchronized(provider) {
-            requireOwner();dependentRuntime=null;dependentRuntimeModels=null;dependentRuntimeExecution=null;dependentRuntimeBarrier=null;requireCurrent();if(request==null||request.execution.preparation.projection.qualification.append.iteration.policy.rows!=rows)throw new IllegalArgumentException("Cut diagnostic rows must match owning lease");
+            requireOwner();dependentRuntime=null;dependentRuntimeModels=null;dependentRuntimeExecution=null;dependentRuntimeBarrier=null;dependentRuntimeContinuation=null;requireCurrent();if(request==null||request.execution.preparation.projection.qualification.append.iteration.policy.rows!=rows)throw new IllegalArgumentException("Cut diagnostic rows must match owning lease");
             try {
                 provider.productionExecutionTopology();List<ContextDependentCutInspection.Cut> cuts=new ArrayList<>();Map<String,List<ContextDependentCutInspection.Member>> groups=new LinkedHashMap<>();
                 for(int i=0;i<topology.size();i++){ContextConnection connection=topology.get(i);ContextDependentCutInspection.Member member=new ContextDependentCutInspection.Member(connection.layer(),foreign.get(i));String group=connection.getTrustGroup();if(group==null)cuts.add(new ContextDependentCutInspection.Cut(null,Collections.singletonList(member)));else groups.computeIfAbsent(group,k->new ArrayList<>()).add(member);}
                 for(Map.Entry<String,List<ContextDependentCutInspection.Member>> group:groups.entrySet())cuts.add(new ContextDependentCutInspection.Cut(group.getKey(),group.getValue()));
                 ContextDependentRuntimeBarrierInspection.Result result=ContextDependentRuntimeBarrierInspection.inspect(new ContextDependentCutInspection.Member(parent,parentInventory),new ContextDependentCutInspection.Member(child,childInventory),cuts,request);
                 requireCurrent();if(result.status==ContextDependentRuntimeBarrierInspection.Status.RECEIVED_PENDING)dependentRuntimeBarrier=result;return result;
-            } catch(Exception failure){dependentRuntime=null;dependentRuntimeModels=null;dependentRuntimeExecution=null;dependentRuntimeBarrier=null;throw failure;}
+            } catch(Exception failure){dependentRuntime=null;dependentRuntimeModels=null;dependentRuntimeExecution=null;dependentRuntimeBarrier=null;dependentRuntimeContinuation=null;throw failure;}
         }
+    }
+    /** Fresh received-family runtime plus a second complete producing/receiving execution cycle. */
+    ContextDependentRuntimeContinuationInspection.Result prepareDependentRuntimeContinuation(ContextDependentRuntimeContinuationInspection.Request request) throws Exception {
+        synchronized(provider) {
+            requireOwner();dependentRuntime=null;dependentRuntimeModels=null;dependentRuntimeExecution=null;dependentRuntimeBarrier=null;dependentRuntimeContinuation=null;requireCurrent();if(request==null||request.first.execution.preparation.projection.qualification.append.iteration.policy.rows!=rows)throw new IllegalArgumentException("Cut diagnostic rows must match owning lease");
+            try {
+                provider.productionExecutionTopology();List<ContextDependentCutInspection.Cut> cuts=new ArrayList<>();Map<String,List<ContextDependentCutInspection.Member>> groups=new LinkedHashMap<>();
+                for(int i=0;i<topology.size();i++){ContextConnection connection=topology.get(i);ContextDependentCutInspection.Member member=new ContextDependentCutInspection.Member(connection.layer(),foreign.get(i));String group=connection.getTrustGroup();if(group==null)cuts.add(new ContextDependentCutInspection.Cut(null,Collections.singletonList(member)));else groups.computeIfAbsent(group,k->new ArrayList<>()).add(member);}
+                for(Map.Entry<String,List<ContextDependentCutInspection.Member>> group:groups.entrySet())cuts.add(new ContextDependentCutInspection.Cut(group.getKey(),group.getValue()));
+                ContextDependentRuntimeContinuationInspection.Result result=ContextDependentRuntimeContinuationInspection.inspect(new ContextDependentCutInspection.Member(parent,parentInventory),new ContextDependentCutInspection.Member(child,childInventory),cuts,request);
+                requireCurrent();if(result.status==ContextDependentRuntimeContinuationInspection.Status.CONTINUED_PENDING)dependentRuntimeContinuation=result;return result;
+            } catch(Exception failure){dependentRuntime=null;dependentRuntimeModels=null;dependentRuntimeExecution=null;dependentRuntimeBarrier=null;dependentRuntimeContinuation=null;throw failure;}
+        }
+    }
+    ContextDependentRuntimeContinuationInspection.Result dependentRuntimeContinuation(UUID epoch)throws Exception{
+        synchronized(provider){requireCurrent();if(dependentRuntimeContinuation==null||epoch==null||!epoch.equals(dependentRuntimeContinuation.epoch))throw new IllegalStateException("Exact current owned continuation epoch required");return dependentRuntimeContinuation;}
     }
     ContextDependentRuntimeBarrierInspection.Result dependentRuntimeBarrier(UUID epoch)throws Exception{
         synchronized(provider){requireCurrent();if(dependentRuntimeBarrier==null||epoch==null||!epoch.equals(dependentRuntimeBarrier.epoch))throw new IllegalStateException("Exact current owned receiving-barrier epoch required");return dependentRuntimeBarrier;}
@@ -490,5 +507,5 @@ final class ContextPendingProductionSnapshotSession implements AutoCloseable {
             } finally {requireCurrent();}
         }
     }
-    @Override public void close() {synchronized(provider) {dependentRuntime=null;dependentRuntimeModels=null;dependentRuntimeExecution=null;dependentRuntimeBarrier=null;closed=true;}}
+    @Override public void close() {synchronized(provider) {dependentRuntime=null;dependentRuntimeModels=null;dependentRuntimeExecution=null;dependentRuntimeBarrier=null;dependentRuntimeContinuation=null;closed=true;}}
 }
