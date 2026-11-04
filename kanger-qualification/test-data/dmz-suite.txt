@@ -905,3 +905,9 @@ org.kanger.storage.dumb2.ContextDependentRuntimeNativeUnitRunner | CONTEXT_DEPEN
 org.kanger.storage.dumb2.ContextDependentRuntimeBarrierRunner | CONTEXT_DEPENDENT_RUNTIME_BARRIER_PASS
 
 org.kanger.storage.dumb2.ContextDependentRuntimeContinuationRunner | CONTEXT_DEPENDENT_RUNTIME_CONTINUATION_PASS
+
+org.kanger.storage.dumb2.ContextDependentRuntimeDiscoveryRunner | CONTEXT_DEPENDENT_RUNTIME_DISCOVERY_PASS
+
+org.kanger.storage.dumb2.ContextDependentRuntimeDiscoveryScopeRunner | CONTEXT_DEPENDENT_RUNTIME_DISCOVERY_SCOPE_PASS
+
+org.kanger.storage.dumb2.ContextDependentRuntimeDiscoveryOwnershipRunner | CONTEXT_DEPENDENT_RUNTIME_DISCOVERY_OWNERSHIP_PASS

@@ -23,7 +23,8 @@ public final class ContextDependentRuntimeExecution {
     }
     public static final class Request {
         public final ContextDependentRuntimeModelInspection.Request preparation;public final List<Step> steps;public final int work,auditWork,nodes;
-        public Request(ContextDependentRuntimeModelInspection.Request preparation,List<Step> steps,int work,int auditWork,int nodes){if(preparation==null||steps==null||steps.isEmpty()||steps.contains(null)||steps.size()>preparation.projection.qualification.append.iteration.policy.steps||work<1||auditWork<1||nodes<1)throw new IllegalArgumentException("Bounded explicit whole execution plan required");this.preparation=preparation;this.steps=Collections.unmodifiableList(new ArrayList<>(steps));this.work=work;this.auditWork=auditWork;this.nodes=nodes;}
+        public Request(ContextDependentRuntimeModelInspection.Request preparation,List<Step> steps,int work,int auditWork,int nodes){this(preparation,steps,work,auditWork,nodes,false);}
+        Request(ContextDependentRuntimeModelInspection.Request preparation,List<Step> steps,int work,int auditWork,int nodes,boolean allowEmpty){if(preparation==null||steps==null||!allowEmpty&&steps.isEmpty()||steps.contains(null)||steps.size()>preparation.projection.qualification.append.iteration.policy.steps||work<1||auditWork<1||nodes<1)throw new IllegalArgumentException("Bounded explicit whole execution plan required");this.preparation=preparation;this.steps=Collections.unmodifiableList(new ArrayList<>(steps));this.work=work;this.auditWork=auditWork;this.nodes=nodes;}
     }
     public static final class Node {
         public final Kind kind;public final int variable,binder;public final SemanticTermSnapshot value;public final Source function;public final List<Integer> arguments;
@@ -82,7 +83,7 @@ public final class ContextDependentRuntimeExecution {
     }
     private static final class Pair {final T a,b;Pair(T a,T b){this.a=a;this.b=b;}}
     static final class NoMatch extends Exception {NoMatch(String why){super(why);}}
-    private static final class Engine {
+    static final class Engine {
         final Member child;final List<Cut> cuts;final ContextDependentRuntimeInspection.Frame frame;final Request request;final Runnable work;int variables,nodes;
         Engine(Member child,List<Cut> cuts,ContextDependentRuntimeInspection.Frame frame,Request request){this.child=child;this.cuts=cuts;this.frame=frame;this.request=request;work=ContextGroundProductionRounds.budget(request.work);}
         void allocate(){work.run();need(++nodes<=request.nodes,"Whole execution term/certificate node bound");}
