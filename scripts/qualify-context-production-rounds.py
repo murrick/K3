@@ -794,6 +794,13 @@ def main():
     if args.mode == 'reference': names += [('org.kanger.storage.dumb2.ContextDependentRuntimeDiscoveryRunner', 'CONTEXT_DEPENDENT_RUNTIME_DISCOVERY_PASS')]
     if args.mode == 'reference': names += [('org.kanger.storage.dumb2.ContextDependentRuntimeDiscoveryScopeRunner', 'CONTEXT_DEPENDENT_RUNTIME_DISCOVERY_SCOPE_PASS')]
     if args.mode == 'reference': names += [('org.kanger.storage.dumb2.ContextDependentRuntimeDiscoveryOwnershipRunner', 'CONTEXT_DEPENDENT_RUNTIME_DISCOVERY_OWNERSHIP_PASS')]
+    if args.mode == 'reference': names += [('org.kanger.storage.dumb2.ContextDependentRuntimeIterationRunner', 'CONTEXT_DEPENDENT_RUNTIME_ITERATION_PASS')]
+    if args.mode == 'reference': names += [('org.kanger.storage.dumb2.ContextDependentRuntimeIterationBoundsRunner', 'CONTEXT_DEPENDENT_RUNTIME_ITERATION_BOUNDS_PASS')]
+    if args.mode == 'reference': names += [('org.kanger.storage.dumb2.ContextDependentRuntimeIterationModelRunner', 'CONTEXT_DEPENDENT_RUNTIME_ITERATION_MODEL_PASS')]
+    if args.mode == 'reference': names += [('org.kanger.storage.dumb2.ContextDependentRuntimeIterationCollisionRunner', 'CONTEXT_DEPENDENT_RUNTIME_ITERATION_COLLISION_PASS')]
+    if args.mode == 'reference': names += [('org.kanger.storage.dumb2.ContextDependentRuntimeIterationOwnershipRunner', 'CONTEXT_DEPENDENT_RUNTIME_ITERATION_OWNERSHIP_PASS')]
+    if args.mode == 'reference': names += [('org.kanger.storage.dumb2.ContextDependentRuntimeIterationFunctionRunner', 'CONTEXT_DEPENDENT_RUNTIME_ITERATION_FUNCTION_PASS')]
+    if args.mode == 'reference': names += [('org.kanger.storage.dumb2.ContextDependentRuntimeIterationScopeRunner', 'CONTEXT_DEPENDENT_RUNTIME_ITERATION_SCOPE_PASS')]
     drivers = [root / 'kanger-qualification/src' / (name.replace('.', '/') + '.java') for name, _ in names]
     if args.ordinary_integration_candidate:
         original = root / 'kanger-data-dumb2/src/org/kanger/storage/dumb2/DB.java'
