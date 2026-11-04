@@ -298,7 +298,7 @@ final class ContextPendingProductionSnapshotSession implements AutoCloseable {
     }
     ContextDependentRuntimeIterationInspection.Result prepareDependentRuntimeIteration(ContextDependentRuntimeIterationInspection.Request request) throws Exception {
         synchronized(provider) {
-            requireOwner();dependentRuntime=null;dependentRuntimeModels=null;dependentRuntimeExecution=null;dependentRuntimeBarrier=null;dependentRuntimeContinuation=null;dependentRuntimeIteration=null;requireCurrent();if(request==null||request.first.execution.preparation.projection.qualification.append.iteration.policy.rows!=rows)throw new IllegalArgumentException("Cut diagnostic rows must match owning lease");
+            requireOwner();dependentRuntime=null;dependentRuntimeModels=null;dependentRuntimeExecution=null;dependentRuntimeBarrier=null;dependentRuntimeContinuation=null;dependentRuntimeIteration=null;requireCurrent();if(request==null||request.preparation.projection.qualification.append.iteration.policy.rows!=rows)throw new IllegalArgumentException("Cut diagnostic rows must match owning lease");
             try {
                 provider.productionExecutionTopology();List<ContextDependentCutInspection.Cut> cuts=new ArrayList<>();Map<String,List<ContextDependentCutInspection.Member>> groups=new LinkedHashMap<>();
                 for(int i=0;i<topology.size();i++){ContextConnection connection=topology.get(i);ContextDependentCutInspection.Member member=new ContextDependentCutInspection.Member(connection.layer(),foreign.get(i));String group=connection.getTrustGroup();if(group==null)cuts.add(new ContextDependentCutInspection.Cut(null,Collections.singletonList(member)));else groups.computeIfAbsent(group,k->new ArrayList<>()).add(member);}
