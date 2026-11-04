@@ -18,6 +18,8 @@ public final class ContextDependentRuntimeInspection {
             if(qualification==null||products<1||nodes<1||copyWork<1||auditWork<1)throw new IllegalArgumentException("Fresh qualification and separate bounded projection/audit required");
             this.qualification=qualification;this.products=products;this.nodes=nodes;this.copyWork=copyWork;this.auditWork=auditWork;
         }
+        /** Internal numeric bounds for independently qualified checked-history consumers. */
+        Request(int products,int nodes,int copyWork,int auditWork){if(products<1||nodes<1||copyWork<1||auditWork<1)throw new IllegalArgumentException("Positive projection bounds required");qualification=null;this.products=products;this.nodes=nodes;this.copyWork=copyWork;this.auditWork=auditWork;}
     }
     /** Per-occurrence topological DAG. APPLICATION children are ordered indices, never scalar Cvars. */
     public static final class Node {
@@ -80,7 +82,7 @@ public final class ContextDependentRuntimeInspection {
     }
     private static void current(Member base,Member child,List<Cut> cuts,Request r)throws Exception{ContextDependentReplayInspection.current(base.actual,base.inventory,r.qualification.append.iteration.policy);ContextDependentReplayInspection.current(child.actual,child.inventory,r.qualification.append.iteration.policy);for(Cut c:cuts)for(Member m:c.members)ContextDependentReplayInspection.currentMember(m.actual,m.inventory,r.qualification.append.iteration.policy);}
     public static Result inspect(Member base,Member child,List<Cut> supplied,Request request)throws Exception{
-        if(base==null||child==null||supplied==null||supplied.contains(null)||request==null)throw new IllegalArgumentException("Actual native parent/child/cuts and fresh qualification required");List<Cut> cuts=new ArrayList<>(supplied);interrupt();current(base,child,cuts,request);
+        if(base==null||child==null||supplied==null||supplied.contains(null)||request==null||request.qualification==null)throw new IllegalArgumentException("Actual native parent/child/cuts and fresh qualification required");List<Cut> cuts=new ArrayList<>(supplied);interrupt();current(base,child,cuts,request);
         try{
             ContextDependentCandidateModelInspection.Result q=ContextDependentCandidateModelInspection.inspect(base,child,cuts,request.qualification);
             if(q.status==ContextDependentCandidateModelInspection.Status.BASE_REFUTED)return new Result(Status.BASE_REFUTED,q.reason,null,q);
