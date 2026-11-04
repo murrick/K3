@@ -351,6 +351,17 @@ final class ContextPendingProductionSnapshotSession implements AutoCloseable {
             }finally{requireCurrent();}
         }
     }
+    ContextDependentConstructedStartupInspection.Result inspectDependentConstructedStartup(ContextDependentConstructedStartupInspection.Request request) throws Exception {
+        synchronized(provider) {
+            requireCurrent();if(request==null||request.append.iteration.policy.rows!=rows)throw new IllegalArgumentException("Cut diagnostic rows must match owning lease");
+            try {
+                provider.productionExecutionTopology();List<ContextDependentCutInspection.Cut> cuts=new ArrayList<>();Map<String,List<ContextDependentCutInspection.Member>> groups=new LinkedHashMap<>();
+                for(int i=0;i<topology.size();i++){ContextConnection connection=topology.get(i);ContextDependentCutInspection.Member member=new ContextDependentCutInspection.Member(connection.layer(),foreign.get(i));String group=connection.getTrustGroup();if(group==null)cuts.add(new ContextDependentCutInspection.Cut(null,Collections.singletonList(member)));else groups.computeIfAbsent(group,k->new ArrayList<>()).add(member);}
+                for(Map.Entry<String,List<ContextDependentCutInspection.Member>> group:groups.entrySet())cuts.add(new ContextDependentCutInspection.Cut(group.getKey(),group.getValue()));
+                return ContextDependentConstructedStartupInspection.inspect(new ContextDependentCutInspection.Member(parent,parentInventory),new ContextDependentCutInspection.Member(child,childInventory),cuts,request);
+            }finally{requireCurrent();}
+        }
+    }
     /** Read-only ACTUAL prepared child, including whole batches; never stage/append it again. */
     ContextNativeBranchInspection.Result inspectNative(ContextNativeCandidateInspection.Limits limits) throws Exception {
         synchronized(provider) {

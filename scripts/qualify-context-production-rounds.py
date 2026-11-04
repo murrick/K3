@@ -812,6 +812,8 @@ def main():
     if args.mode == 'reference': names += [('org.kanger.storage.dumb2.ContextDependentModelSearchBoundsRunner', 'CONTEXT_DEPENDENT_MODEL_SEARCH_BOUNDS_PASS')]
     if args.mode == 'reference': names += [('org.kanger.storage.dumb2.ContextDependentModelSearchOracleRunner', 'CONTEXT_DEPENDENT_MODEL_SEARCH_ORACLE_PASS')]
     if args.mode == 'reference': names += [('org.kanger.storage.dumb2.ContextDependentModelSearchOwnershipRunner', 'CONTEXT_DEPENDENT_MODEL_SEARCH_OWNERSHIP_PASS')]
+    if args.mode == 'reference': names += [('org.kanger.storage.dumb2.ContextDependentConstructedStartupRunner', 'CONTEXT_DEPENDENT_CONSTRUCTED_STARTUP_PASS')]
+    if args.mode == 'reference': names += [('org.kanger.storage.dumb2.ContextDependentConstructedStartupOwnershipRunner', 'CONTEXT_DEPENDENT_CONSTRUCTED_STARTUP_OWNERSHIP_PASS')]
     drivers = [root / 'kanger-qualification/src' / (name.replace('.', '/') + '.java') for name, _ in names]
     if args.ordinary_integration_candidate:
         original = root / 'kanger-data-dumb2/src/org/kanger/storage/dumb2/DB.java'
