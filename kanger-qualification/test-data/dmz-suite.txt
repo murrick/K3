@@ -901,3 +901,5 @@ org.kanger.storage.dumb2.ContextDependentRuntimeModelRunner | CONTEXT_DEPENDENT_
 org.kanger.storage.dumb2.ContextDependentRuntimeExecutionRunner | CONTEXT_DEPENDENT_RUNTIME_EXECUTION_PASS
 
 org.kanger.storage.dumb2.ContextDependentRuntimeNativeUnitRunner | CONTEXT_DEPENDENT_RUNTIME_NATIVE_UNIT_PASS
+
+org.kanger.storage.dumb2.ContextDependentRuntimeBarrierRunner | CONTEXT_DEPENDENT_RUNTIME_BARRIER_PASS
