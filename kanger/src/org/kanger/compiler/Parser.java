@@ -197,10 +197,15 @@ public class Parser {
     }
 
     public static Token nextToken(String line, Token current, int sourceOffset) throws ParseErrorException {
+        return nextToken(line, current, sourceOffset, null);
+    }
+
+    private static Token nextToken(String line, Token current, int sourceOffset, Runnable chargeToken) throws ParseErrorException {
         if (sourceOffset < 0) {
             throw new IllegalArgumentException("source offset must be non-negative");
         }
         if (current == null) {
+            if (chargeToken != null) chargeToken.run();
             current = new Token();
         }
         if (current.getPos() + current.getLen() >= line.length()) {
@@ -303,10 +308,10 @@ public class Parser {
         }
     }
 
-    private static Leaf parse(String line, Token token, int sourceOffset, Runnable chargeNode) throws ParseErrorException {
+    private static Leaf parse(String line, Token token, int sourceOffset, Runnable chargeNode, Runnable chargeToken) throws ParseErrorException {
         Leaf current = null;
         Leaf root = null;
-        while ((token = nextToken(line, token, sourceOffset)) != null) {
+        while ((token = nextToken(line, token, sourceOffset, chargeToken)) != null) {
 
             if (token.getToken(line).startsWith("//") || token.getToken(line).startsWith("/*")) {
                 continue;
@@ -333,7 +338,7 @@ public class Parser {
             }
 
             if ("@".equals(leaf.getValue()) || "$".equals(leaf.getValue())) {
-                if ((token = nextToken(line, token, sourceOffset)) == null) {
+                if ((token = nextToken(line, token, sourceOffset, chargeToken)) == null) {
                     throw new ParseErrorException(leaf.getPos(), "No quantifier variable defined");
                 }
                 Leaf tmp = newLeaf(chargeNode);
@@ -348,13 +353,13 @@ public class Parser {
                 tmp.setRange(2);
                 tmp.setLeft(leaf);
                 leaf = tmp;
-                leaf.setRight(parse(line, token, sourceOffset, chargeNode));
+                leaf.setRight(parse(line, token, sourceOffset, chargeNode, chargeToken));
                 if (!"]".equals(token.getToken(line))) {
                     throw new ParseErrorException(leaf.getPos(), "Expected closing bracket");
                 }
             } else if ("(".equals(leaf.getValue())) {
                 leaf.setPriority(1);
-                leaf.setRight(parse(line, token, sourceOffset, chargeNode));
+                leaf.setRight(parse(line, token, sourceOffset, chargeNode, chargeToken));
                 if (!")".equals(token.getToken(line))) {
                     throw new ParseErrorException(leaf.getPos(), "Expected closing bracket");
                 }
@@ -489,11 +494,15 @@ public class Parser {
     }
 
     public static Leaf parse(String line, int sourceOffset) throws ParseErrorException {
-        return parse(line, sourceOffset, null);
+        return parse(line, sourceOffset, null, null);
     }
 
     public static Leaf parse(String line, int sourceOffset, Runnable chargeNode) throws ParseErrorException {
-        Leaf tree = parse(line, null, sourceOffset, chargeNode);
+        return parse(line, sourceOffset, chargeNode, null);
+    }
+
+    public static Leaf parse(String line, int sourceOffset, Runnable chargeNode, Runnable chargeToken) throws ParseErrorException {
+        Leaf tree = parse(line, null, sourceOffset, chargeNode, chargeToken);
         return squeeze(tree);
     }
 

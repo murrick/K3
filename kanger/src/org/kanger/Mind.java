@@ -221,14 +221,16 @@ public class Mind implements IMind {
 
     private final Runnable chargeCompilerEntry;
     private final Runnable chargeParserNode;
+    private final Runnable chargeParserToken;
 
     public Mind(IUser user) throws Exception {
-        this(user, null, null, null);
+        this(user, null, null, null, null);
     }
 
-    Mind(IUser user, Runnable chargeNewTerm, Runnable chargeCompilerEntry, Runnable chargeParserNode) throws Exception {
+    Mind(IUser user, Runnable chargeNewTerm, Runnable chargeCompilerEntry, Runnable chargeParserNode, Runnable chargeParserToken) throws Exception {
         this.chargeCompilerEntry = chargeCompilerEntry;
         this.chargeParserNode = chargeParserNode;
+        this.chargeParserToken = chargeParserToken;
         this.user = (User) user;
         this.user.nextId();
         init(chargeNewTerm);
@@ -300,6 +302,7 @@ public class Mind implements IMind {
         Mind parent = (Mind) root;
         chargeCompilerEntry = parent.chargeCompilerEntry;
         chargeParserNode = parent.chargeParserNode;
+        chargeParserToken = parent.chargeParserToken;
         init();
         connectionLayer = parent.connectionLayer;
         contextProvenance.inheritFrom(parent.contextProvenance);
@@ -1291,7 +1294,7 @@ public class Mind implements IMind {
         if (suc != null) {
             try (TechnicalMindTransaction tx = TechnicalMindTransaction.begin(this)) {
                 Mind x = tx.mind();
-                Leaf p = Parser.parse(line.substring(1), sourceOffset + 1, x.chargeParserNode);
+                Leaf p = Parser.parse(line.substring(1), sourceOffset + 1, x.chargeParserNode, x.chargeParserToken);
 
                 r = x.compiler.compileLine(p, suc, orig, query, externals);
                 x.setCompliedLine(compliedLine);
