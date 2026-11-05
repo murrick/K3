@@ -55,7 +55,7 @@ public final class ContextDependentRoundInspection {
         Outcome(Result result,Discovery discovery){this.result=result;this.discovery=discovery;}
     }
     /** Complete supported residual-unit applications over the previous finite barrier, not saturation. */
-    public static Discovery discoverNext(Member x,List<Cut> supplied,Request previous)throws Exception{return run(x,supplied,previous,true,()->{},Long.MAX_VALUE,Long.MAX_VALUE).discovery;}
+    public static Discovery discoverNext(Member x,List<Cut> supplied,Request previous)throws Exception{return run(x,supplied,previous,true,()->{},Long.MAX_VALUE,Long.MAX_VALUE,Long.MAX_VALUE).discovery;}
     private static List<CutPart> project(List<Member> members,Policy policy)throws Exception {
         return project(members,policy,()->{});
     }
@@ -70,16 +70,16 @@ public final class ContextDependentRoundInspection {
     private static void current(List<Member> members,Policy policy)throws Exception{for(Member m:members)if(m.inventory.localX)ContextDependentReplayInspection.current(m.actual,m.inventory,policy);else ContextDependentReplayInspection.currentMember(m.actual,m.inventory,policy);}
     public static Result inspect(Member x,List<Cut> supplied,Request request)throws Exception{return inspect(x,supplied,request,()->{});}
     static Result inspect(Member x,List<Cut> supplied,Request request,Runnable chargeWork)throws Exception {
-        return inspect(x,supplied,request,chargeWork,Long.MAX_VALUE,Long.MAX_VALUE);
+        return inspect(x,supplied,request,chargeWork,Long.MAX_VALUE,Long.MAX_VALUE,Long.MAX_VALUE);
     }
-    static Result inspect(Member x,List<Cut> supplied,Request request,Runnable chargeWork,long snapshotEntries,long scratchEntries)throws Exception {
-        return run(x,supplied,request,false,chargeWork,snapshotEntries,scratchEntries).result;
+    static Result inspect(Member x,List<Cut> supplied,Request request,Runnable chargeWork,long snapshotEntries,long scratchEntries,long projectionEntries)throws Exception {
+        return run(x,supplied,request,false,chargeWork,snapshotEntries,scratchEntries,projectionEntries).result;
     }
     private static long reserveScratch(long remaining, long entries) {
         if (entries > remaining) throw new IllegalStateException("Replay scratch entry limit");
         return remaining - entries;
     }
-    private static Outcome run(Member x,List<Cut> supplied,Request request,boolean discover,Runnable chargeWork,long snapshotEntries,long scratchEntries)throws Exception {
+    private static Outcome run(Member x,List<Cut> supplied,Request request,boolean discover,Runnable chargeWork,long snapshotEntries,long scratchEntries,long projectionEntries)throws Exception {
         if(x==null||!x.inventory.localX||supplied==null||supplied.contains(null)||request==null)throw new IllegalArgumentException("Exact whole family required");
         List<Cut> cuts=new ArrayList<>(supplied);cuts.sort(Comparator.comparing(c->c.key));Map<String,Set<UUID>> scopes=new LinkedHashMap<>();Set<UUID> local=Collections.singleton(x.inventory.context);scopes.put(ContextDependentCutInspection.local(x.inventory.context),local);List<Member> members=new ArrayList<>();members.add(x);Set<UUID> contexts=new HashSet<>(local);long rows=x.inventory.rows.size();
         for(Cut cut:cuts){Set<UUID> scope=new LinkedHashSet<>(local);if(scopes.containsKey(cut.key))throw new IllegalArgumentException("Repeated/split logical cut");for(Member m:cut.members){if(!contexts.add(m.inventory.context))throw new IllegalArgumentException("Repeated physical member");scope.add(m.inventory.context);members.add(m);rows+=m.inventory.rows.size();}scopes.put(cut.key,scope);}
@@ -117,6 +117,10 @@ public final class ContextDependentRoundInspection {
                 // All cuts receive the same PREVIOUS common barrier. Same-round sibling steps remain invisible.
                 Map<String,ContextDependentProductionInspection.Result> results=new LinkedHashMap<>();Set<Ticket> exports=new LinkedHashSet<>(common);
                 for(String cut:scopes.keySet()) {
+                    // Both independent projections are alive during the transport audit.
+                    if (2L * (rows + members.size()) > projectionEntries) {
+                        throw new IllegalStateException("Replay projection entry limit");
+                    }
                     work.run();ContextDependentProductionInspection.Request recipe=new ContextDependentProductionInspection.Request(request.policy,request.capacity,history,true);
                     ContextDependentProductionInspection.Result checked=ContextDependentProductionInspection.inspectTransport(project(members,request.policy,chargeWork),project(members,request.policy,chargeWork),"round:"+r+":"+cut,recipe,active.get(cut),visible.get(cut),chargeWork);results.put(cut,checked);
                     List<Integer> order=new ArrayList<>(visible.get(cut));Collections.sort(order);
