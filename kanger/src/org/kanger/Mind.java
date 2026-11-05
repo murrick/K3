@@ -219,11 +219,14 @@ public class Mind implements IMind {
      */
     private boolean includeAbstractiveHypothesis = false;
 
+    private final Runnable chargeCompilerEntry;
+
     public Mind(IUser user) throws Exception {
-        this(user, null);
+        this(user, null, null);
     }
 
-    Mind(IUser user, Runnable chargeNewTerm) throws Exception {
+    Mind(IUser user, Runnable chargeNewTerm, Runnable chargeCompilerEntry) throws Exception {
+        this.chargeCompilerEntry = chargeCompilerEntry;
         this.user = (User) user;
         this.user.nextId();
         init(chargeNewTerm);
@@ -292,9 +295,9 @@ public class Mind implements IMind {
         next = root;
         user = (User) root.getUser();
         id = user.nextId(); //root.getId() + 1;
-        init();
-
         Mind parent = (Mind) root;
+        chargeCompilerEntry = parent.chargeCompilerEntry;
+        init();
         connectionLayer = parent.connectionLayer;
         contextProvenance.inheritFrom(parent.contextProvenance);
         if (!isolateCanonicalFactories && user.getCurrentMind() == root) user.getContextOpinionSession().invalidate();
@@ -399,6 +402,21 @@ public class Mind implements IMind {
 
     Object getConnectionCheckpoint() { return connectionCheckpoint; }
     void setConnectionCheckpoint(Object checkpoint) { connectionCheckpoint = checkpoint; }
+
+    /** Charges registrations made in isolated compiler projections and their transactions. */
+    public void chargeCompilerFactoryEntry(String schema) {
+        if (chargeCompilerEntry == null) return;
+        switch (schema) {
+            case PredicateFactory.SCHEMA:
+            case DomainFactory.SCHEMA:
+            case TVariableFactory.SCHEMA:
+            case RuleFactory.SCHEMA:
+                chargeCompilerEntry.run();
+                break;
+            default:
+                break;
+        }
+    }
 
     private void init() throws Exception {
         init(null);

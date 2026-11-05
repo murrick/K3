@@ -251,6 +251,7 @@ public class Escalera implements ICache {
 
     @Override
     public void add(IUnit one) throws Exception {
+        mind.chargeCompilerFactoryEntry(schema);
         mutation++;
         ensureIndex();
         Step s = new Step();
