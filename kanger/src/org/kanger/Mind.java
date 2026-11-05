@@ -220,9 +220,13 @@ public class Mind implements IMind {
     private boolean includeAbstractiveHypothesis = false;
 
     public Mind(IUser user) throws Exception {
+        this(user, null);
+    }
+
+    Mind(IUser user, Runnable chargeNewTerm) throws Exception {
         this.user = (User) user;
         this.user.nextId();
-        init();
+        init(chargeNewTerm);
     }
 
     public Mind(IMind root) throws Exception {
@@ -397,7 +401,11 @@ public class Mind implements IMind {
     void setConnectionCheckpoint(Object checkpoint) { connectionCheckpoint = checkpoint; }
 
     private void init() throws Exception {
-        terms = new DictionaryFactory(this);                    // Словарь констант
+        init(null);
+    }
+
+    private void init(Runnable chargeNewTerm) throws Exception {
+        terms = new DictionaryFactory(this, chargeNewTerm);                    // Словарь констант
         predicates = new PredicateFactory(this);                 // Предикаты
         functions = new FunctionFactory(this);                    // Функции
         library = new LibraryFactory(this);                            // Пользовательсткая библиотека функций и предикатов

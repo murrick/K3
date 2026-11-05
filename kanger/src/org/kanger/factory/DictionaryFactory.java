@@ -123,6 +123,7 @@ public class DictionaryFactory implements IFactory<ITerm> {
     private IStep top = null;
     private IBase connection = null;
     private final Mind mind;
+    private Runnable chargeNewTerm;
     private int varIndex = 0;           // Счетчик C-переменных
 
     /*
@@ -138,7 +139,12 @@ public class DictionaryFactory implements IFactory<ITerm> {
     private boolean fullPackRequired = true;
 
     public DictionaryFactory(Mind mind) throws Exception {
+        this(mind, null);
+    }
+
+    public DictionaryFactory(Mind mind, Runnable chargeNewTerm) throws Exception {
         this.mind = mind;
+        this.chargeNewTerm = chargeNewTerm;
         transaction(null);
     }
 
@@ -151,6 +157,7 @@ public class DictionaryFactory implements IFactory<ITerm> {
         if (base != null) {
             synchronized (base) {
                 varIndex = base.varIndex;
+                chargeNewTerm = base.chargeNewTerm;
             }
             cache = new Escalera(mind, SCHEMA, base.cache);
         } else {
@@ -207,6 +214,7 @@ public class DictionaryFactory implements IFactory<ITerm> {
             }
             return p;
         } else {
+            if (chargeNewTerm != null) chargeNewTerm.run();
             if (p instanceof Term) {
                 ((Term) p).setMind(mind);
             } else {
@@ -271,6 +279,7 @@ public class DictionaryFactory implements IFactory<ITerm> {
             return existing;
         }
 
+        if (chargeNewTerm != null) chargeNewTerm.run();
         Term projected = new Term(mind);
         projected.setPersistentState(
                 foreign.getType(),

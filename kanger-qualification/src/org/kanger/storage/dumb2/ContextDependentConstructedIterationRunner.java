@@ -172,6 +172,17 @@ public final class ContextDependentConstructedIterationRunner {
                 q.frontierWork, q.frontierCapacity, exactAttempts, replayBarriers, 1000000, 1000000,
                 retainedProofEntries, largestReplay, 1000, 1000, 2, projectionPairEntries);
         stable(ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), projectionExact));
+        Request compilerTight = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
+                q.frontierWork, q.frontierCapacity, exactAttempts, replayBarriers, 1000000, 1000000,
+                retainedProofEntries, largestReplay, 1000, 1000, 2, projectionPairEntries, 1);
+        Result compilerExhausted = ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), compilerTight);
+        incomplete(compilerExhausted);
+        need(compilerExhausted.phase.equals("round-bridge")
+                && compilerExhausted.reason.contains("Replay compiler term limit"), "the projection pair shares its term allowance");
+        Request compilerRoom = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
+                q.frontierWork, q.frontierCapacity, exactAttempts, replayBarriers, 1000000, 1000000,
+                retainedProofEntries, largestReplay, 1000, 1000, 2, projectionPairEntries, 1000);
+        stable(ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), compilerRoom));
         Request startupTight = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
                 q.frontierWork, q.frontierCapacity, startupAttempts - 1);
         Result startupExhausted = ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), startupTight);

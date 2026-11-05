@@ -83,16 +83,20 @@ public final class ContextDependentReplayInspection {
         return projectMember(actual,expected,policy,()->{});
     }
     static Projection projectMember(Mind actual,ContextProductionInventory expected,Policy policy,Runnable chargeWork)throws Exception {
+        return projectMember(actual,expected,policy,chargeWork,null);
+    }
+    static Projection projectMember(Mind actual,ContextProductionInventory expected,Policy policy,
+                                    Runnable chargeWork,Runnable chargeNewTerm)throws Exception {
         Runnable localWork = ContextGroundProductionRounds.budget(policy.work);
-        return project(actual,expected,policy,true,()->{localWork.run();chargeWork.run();},false);
+        return project(actual,expected,policy,true,()->{localWork.run();chargeWork.run();},false,chargeNewTerm);
     }
     private static Projection project(Mind actual,ContextProductionInventory expected,Policy policy,boolean horn,Runnable work)throws Exception {
-        return project(actual,expected,policy,horn,work,true);
+        return project(actual,expected,policy,horn,work,true,null);
     }
-    private static Projection project(Mind actual,ContextProductionInventory expected,Policy policy,boolean horn,Runnable work,boolean local)throws Exception {
+    private static Projection project(Mind actual,ContextProductionInventory expected,Policy policy,boolean horn,Runnable work,boolean local,Runnable chargeNewTerm)throws Exception {
         if(local)current(actual,expected,policy);else currentMember(actual,expected,policy);
         if(!expected.initialization.isEmpty()||expected.rows.size()!=expected.primary.size())throw new IllegalStateException("Whole primary-only local-X diagnostic required");
-        User user=new User();Mind isolated=new Mind(user);user.setCurrentMind(isolated);Map<Long,Long> mapping=new LinkedHashMap<>();
+        User user=new User();Mind isolated=new Mind(user,chargeNewTerm);user.setCurrentMind(isolated);Map<Long,Long> mapping=new LinkedHashMap<>();
         try {
             for(ContextProductionInventory.Row row:expected.rows) {
                 work.run();Rule original=(Rule)actual.getRules().get(row.nativeRule),copy=(Rule)isolated.compileLine(row.origin,false,new LinkedList<org.kanger.interfaces.ITerm>());
