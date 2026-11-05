@@ -78,6 +78,15 @@ public final class ContextDependentConstructedIterationRunner {
         incomplete(replayExhausted);
         need(replayExhausted.phase.equals("round-bridge")
                 && replayExhausted.reason.contains("Whole-cycle replay barrier limit"), "replay charges the complete prefix before starting");
+        Request workTight = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
+                q.frontierWork, q.frontierCapacity, exactAttempts, replayBarriers, 1);
+        Result workExhausted = ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), workTight);
+        incomplete(workExhausted);
+        need(workExhausted.phase.equals("round-bridge")
+                && workExhausted.reason.contains("Whole-cycle replay work limit"), "replay work limit is independent of replay length");
+        Request workRoom = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
+                q.frontierWork, q.frontierCapacity, exactAttempts, replayBarriers, 1000000);
+        stable(ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), workRoom));
         Request startupTight = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
                 q.frontierWork, q.frontierCapacity, startupAttempts - 1);
         Result startupExhausted = ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), startupTight);

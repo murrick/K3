@@ -55,11 +55,24 @@ public final class ContextDependentRoundInspection {
         Outcome(Result result,Discovery discovery){this.result=result;this.discovery=discovery;}
     }
     /** Complete supported residual-unit applications over the previous finite barrier, not saturation. */
-    public static Discovery discoverNext(Member x,List<Cut> supplied,Request previous)throws Exception{return run(x,supplied,previous,true).discovery;}
-    private static List<CutPart> project(List<Member> members,Policy policy)throws Exception{List<CutPart> out=new ArrayList<>();for(Member m:members)out.add(new CutPart(ContextDependentReplayInspection.projectMember(m.actual,m.inventory,policy),m.inventory));return out;}
+    public static Discovery discoverNext(Member x,List<Cut> supplied,Request previous)throws Exception{return run(x,supplied,previous,true,()->{}).discovery;}
+    private static List<CutPart> project(List<Member> members,Policy policy)throws Exception {
+        return project(members,policy,()->{});
+    }
+    private static List<CutPart> project(List<Member> members,Policy policy,Runnable chargeWork)throws Exception {
+        List<CutPart> out = new ArrayList<>();
+        for (Member member : members) {
+            out.add(new CutPart(ContextDependentReplayInspection.projectMember(
+                    member.actual,member.inventory,policy,chargeWork),member.inventory));
+        }
+        return out;
+    }
     private static void current(List<Member> members,Policy policy)throws Exception{for(Member m:members)if(m.inventory.localX)ContextDependentReplayInspection.current(m.actual,m.inventory,policy);else ContextDependentReplayInspection.currentMember(m.actual,m.inventory,policy);}
-    public static Result inspect(Member x,List<Cut> supplied,Request request)throws Exception{return run(x,supplied,request,false).result;}
-    private static Outcome run(Member x,List<Cut> supplied,Request request,boolean discover)throws Exception {
+    public static Result inspect(Member x,List<Cut> supplied,Request request)throws Exception{return inspect(x,supplied,request,()->{});}
+    static Result inspect(Member x,List<Cut> supplied,Request request,Runnable chargeWork)throws Exception {
+        return run(x,supplied,request,false,chargeWork).result;
+    }
+    private static Outcome run(Member x,List<Cut> supplied,Request request,boolean discover,Runnable chargeWork)throws Exception {
         if(x==null||!x.inventory.localX||supplied==null||supplied.contains(null)||request==null)throw new IllegalArgumentException("Exact whole family required");
         List<Cut> cuts=new ArrayList<>(supplied);cuts.sort(Comparator.comparing(c->c.key));Map<String,Set<UUID>> scopes=new LinkedHashMap<>();Set<UUID> local=Collections.singleton(x.inventory.context);scopes.put(ContextDependentCutInspection.local(x.inventory.context),local);List<Member> members=new ArrayList<>();members.add(x);Set<UUID> contexts=new HashSet<>(local);long rows=x.inventory.rows.size();
         for(Cut cut:cuts){Set<UUID> scope=new LinkedHashSet<>(local);if(scopes.containsKey(cut.key))throw new IllegalArgumentException("Repeated/split logical cut");for(Member m:cut.members){if(!contexts.add(m.inventory.context))throw new IllegalArgumentException("Repeated physical member");scope.add(m.inventory.context);members.add(m);rows+=m.inventory.rows.size();}scopes.put(cut.key,scope);}
@@ -68,7 +81,8 @@ public final class ContextDependentRoundInspection {
         for(Map.Entry<String,Set<UUID>> scope:scopes.entrySet()){Set<Long> ids=new LinkedHashSet<>();for(Map.Entry<Ref,Long> row:keys.entrySet())if(scope.getValue().contains(row.getKey().context))ids.add(row.getValue());active.put(scope.getKey(),ids);}
         current(members,request.policy);
         try {
-            List<ContextDependentProductionInspection.Step> history=new ArrayList<>();Map<Ticket,Integer> indices=new LinkedHashMap<>();Set<Ticket> common=new LinkedHashSet<>();List<Barrier> barriers=new ArrayList<>();Map<Ticket,ContextDependentProductionInspection.Row> observed=new LinkedHashMap<>();Runnable work=ContextGroundProductionRounds.budget(request.policy.work);
+            List<ContextDependentProductionInspection.Step> history=new ArrayList<>();Map<Ticket,Integer> indices=new LinkedHashMap<>();Set<Ticket> common=new LinkedHashSet<>();List<Barrier> barriers=new ArrayList<>();Map<Ticket,ContextDependentProductionInspection.Row> observed=new LinkedHashMap<>();Runnable localWork=ContextGroundProductionRounds.budget(request.policy.work);
+            Runnable work=()->{localWork.run();chargeWork.run();};
             for(int r=0;r<request.rounds.size();r++) {
                 Round round=request.rounds.get(r);if(!round.recipes.keySet().equals(scopes.keySet()))throw new IllegalArgumentException("Every barrier needs every exact cut");
                 Map<String,Set<Integer>> visible=new LinkedHashMap<>();Map<String,List<Ticket>> created=new LinkedHashMap<>();
@@ -84,7 +98,7 @@ public final class ContextDependentRoundInspection {
                 Map<String,ContextDependentProductionInspection.Result> results=new LinkedHashMap<>();Set<Ticket> exports=new LinkedHashSet<>(common);
                 for(String cut:scopes.keySet()) {
                     work.run();ContextDependentProductionInspection.Request recipe=new ContextDependentProductionInspection.Request(request.policy,request.capacity,history,true);
-                    ContextDependentProductionInspection.Result checked=ContextDependentProductionInspection.inspectTransport(project(members,request.policy),project(members,request.policy),"round:"+r+":"+cut,recipe,active.get(cut),visible.get(cut));results.put(cut,checked);
+                    ContextDependentProductionInspection.Result checked=ContextDependentProductionInspection.inspectTransport(project(members,request.policy,chargeWork),project(members,request.policy,chargeWork),"round:"+r+":"+cut,recipe,active.get(cut),visible.get(cut),chargeWork);results.put(cut,checked);
                     List<Integer> order=new ArrayList<>(visible.get(cut));Collections.sort(order);
                     for(Ticket ticket:created.get(cut)){int at=Collections.binarySearch(order,indices.get(ticket));ContextDependentProductionInspection.Row row=checked.products.get(at);observed.put(ticket,row);if(row.sources.stream().anyMatch(source->source.localX))exports.add(ticket);}
                 }

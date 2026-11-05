@@ -80,7 +80,11 @@ public final class ContextDependentReplayInspection {
         return project(actual,expected,policy,horn,ContextGroundProductionRounds.budget(policy.work));
     }
     static Projection projectMember(Mind actual,ContextProductionInventory expected,Policy policy)throws Exception {
-        return project(actual,expected,policy,true,ContextGroundProductionRounds.budget(policy.work),false);
+        return projectMember(actual,expected,policy,()->{});
+    }
+    static Projection projectMember(Mind actual,ContextProductionInventory expected,Policy policy,Runnable chargeWork)throws Exception {
+        Runnable localWork = ContextGroundProductionRounds.budget(policy.work);
+        return project(actual,expected,policy,true,()->{localWork.run();chargeWork.run();},false);
     }
     private static Projection project(Mind actual,ContextProductionInventory expected,Policy policy,boolean horn,Runnable work)throws Exception {
         return project(actual,expected,policy,horn,work,true);

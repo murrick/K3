@@ -88,11 +88,16 @@ final class NativeDependentWitnessTerms {
         private Mind mind;
         private int remaining,nodes,variables;
         private final int maximumNodes;
+        private final Runnable chargeWork;
         private boolean failed,closed;
         private final Map<Long,Root> roots=new LinkedHashMap<>();
         private final List<Node> values=new ArrayList<>();
         private final Map<Call,Node> calls=new HashMap<>();
         Arena(Mind mind,int maximumWork,int maximumNodes) {
+            this(mind,maximumWork,maximumNodes,()->{});
+        }
+        Arena(Mind mind,int maximumWork,int maximumNodes,Runnable chargeWork) {
+            this.chargeWork=chargeWork;
             if(mind==null||maximumWork<1||maximumNodes<1)throw new IllegalArgumentException("Bounded projection arena required");
             this.mind=mind; remaining=maximumWork; this.maximumNodes=maximumNodes;
         }
@@ -101,7 +106,7 @@ final class NativeDependentWitnessTerms {
             if(failed||closed)throw new IllegalStateException("Dependent projection arena is failed or closed");
         }
         private IllegalStateException refuse(String why) { failed=true; return new IllegalStateException(why); }
-        private void tick() { active(); if(--remaining<0)throw refuse("Dependent projection work limit"); }
+        private void tick() { active(); if(--remaining<0)throw refuse("Dependent projection work limit"); chargeWork.run(); }
         private void owned(Node node) { tick(); if(node==null||!id.equals(node.arena))throw refuse("Different dependent term arena"); }
         private void current() throws Exception {
             tick();

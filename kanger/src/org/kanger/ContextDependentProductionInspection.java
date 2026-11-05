@@ -145,9 +145,12 @@ public final class ContextDependentProductionInspection {
     }
     /** Rebuild all proof ancestors, but qualify only exact receiving originals and visible units. */
     static Result inspectTransport(List<CutPart> first,List<CutPart> second,String cut,Request history,Set<Long> active,Set<Integer> visible)throws Exception {
-        try(Candidate candidate=new Candidate(first,cut,history)) {
+        return inspectTransport(first,second,cut,history,active,visible,()->{});
+    }
+    static Result inspectTransport(List<CutPart> first,List<CutPart> second,String cut,Request history,Set<Long> active,Set<Integer> visible,Runnable chargeWork)throws Exception {
+        try(Candidate candidate=new Candidate(first,cut,history,chargeWork)) {
             candidate.transport(active,visible);String digest=candidate.digest();
-            try(Candidate audit=new Candidate(second,cut,history)){audit.transport(active,visible);if(!digest.equals(audit.digest()))throw new IllegalStateException("Different independently rebuilt round transport");}
+            try(Candidate audit=new Candidate(second,cut,history,chargeWork)){audit.transport(active,visible);if(!digest.equals(audit.digest()))throw new IllegalStateException("Different independently rebuilt round transport");}
             candidate.current();return new Result(candidate,digest);
         }
     }
@@ -184,8 +187,12 @@ public final class ContextDependentProductionInspection {
             }catch(Exception failure){arena.close();throw failure;}
         }
         Candidate(List<CutPart> parts,String cut,Request request)throws Exception {
-            this.projection=parts.get(0).projection;this.original=Originals.of(parts.get(0).original);this.request=request;work=ContextGroundProductionRounds.budget(request.policy.work);cutIdentity=cut;
-            this.parts.addAll(parts);inventory=ContextProductionInventory.inspect(projection.mind,original.context,original.revision,true,Collections.emptyList(),request.policy.rows);arena=new Arena(projection.mind,request.policy.work,request.policy.nodes);
+            this(parts,cut,request,()->{});
+        }
+        Candidate(List<CutPart> parts,String cut,Request request,Runnable chargeWork)throws Exception {
+            this.projection=parts.get(0).projection;this.original=Originals.of(parts.get(0).original);this.request=request;Runnable localWork=ContextGroundProductionRounds.budget(request.policy.work);
+            work=()->{localWork.run();chargeWork.run();};cutIdentity=cut;
+            this.parts.addAll(parts);inventory=ContextProductionInventory.inspect(projection.mind,original.context,original.revision,true,Collections.emptyList(),request.policy.rows);arena=new Arena(projection.mind,request.policy.work,request.policy.nodes,chargeWork);
             try {
                 long key=0;Set<Source> distinct=new HashSet<>();
                 for(CutPart part:parts) {
