@@ -223,16 +223,18 @@ public class Mind implements IMind {
     private final Runnable chargeParserNode;
     private final Runnable chargeParserToken;
     private final long parserDepth;
+    private final java.util.function.IntConsumer chargeLexemeText;
 
     public Mind(IUser user) throws Exception {
-        this(user, null, null, null, null, Long.MAX_VALUE);
+        this(user, null, null, null, null, Long.MAX_VALUE, null);
     }
 
-    Mind(IUser user, Runnable chargeNewTerm, Runnable chargeCompilerEntry, Runnable chargeParserNode, Runnable chargeParserToken, long parserDepth) throws Exception {
+    Mind(IUser user, Runnable chargeNewTerm, Runnable chargeCompilerEntry, Runnable chargeParserNode, Runnable chargeParserToken, long parserDepth, java.util.function.IntConsumer chargeLexemeText) throws Exception {
         this.chargeCompilerEntry = chargeCompilerEntry;
         this.chargeParserNode = chargeParserNode;
         this.chargeParserToken = chargeParserToken;
         this.parserDepth = parserDepth;
+        this.chargeLexemeText = chargeLexemeText;
         this.user = (User) user;
         this.user.nextId();
         init(chargeNewTerm);
@@ -306,6 +308,7 @@ public class Mind implements IMind {
         chargeParserNode = parent.chargeParserNode;
         chargeParserToken = parent.chargeParserToken;
         parserDepth = parent.parserDepth;
+        chargeLexemeText = parent.chargeLexemeText;
         init();
         connectionLayer = parent.connectionLayer;
         contextProvenance.inheritFrom(parent.contextProvenance);
@@ -1297,7 +1300,7 @@ public class Mind implements IMind {
         if (suc != null) {
             try (TechnicalMindTransaction tx = TechnicalMindTransaction.begin(this)) {
                 Mind x = tx.mind();
-                Leaf p = Parser.parse(line.substring(1), sourceOffset + 1, x.chargeParserNode, x.chargeParserToken, x.parserDepth);
+                Leaf p = Parser.parse(line.substring(1), sourceOffset + 1, x.chargeParserNode, x.chargeParserToken, x.parserDepth, x.chargeLexemeText);
 
                 r = x.compiler.compileLine(p, suc, orig, query, externals);
                 x.setCompliedLine(compliedLine);

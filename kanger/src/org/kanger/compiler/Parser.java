@@ -308,24 +308,30 @@ public class Parser {
         }
     }
 
-    private static Leaf parse(String line, Token token, int sourceOffset, Runnable chargeNode, Runnable chargeToken, long maxDepth, int depth) throws ParseErrorException {
+    private static String tokenText(String line, Token token, java.util.function.IntConsumer chargeText) {
+        if (chargeText != null) chargeText.accept(token.getLen());
+        return token.getToken(line);
+    }
+
+    private static Leaf parse(String line, Token token, int sourceOffset, Runnable chargeNode, Runnable chargeToken, long maxDepth, int depth, java.util.function.IntConsumer chargeText) throws ParseErrorException {
         checkDepth(maxDepth, depth);
         Leaf current = null;
         Leaf root = null;
         while ((token = nextToken(line, token, sourceOffset, chargeToken)) != null) {
 
-            if (token.getToken(line).startsWith("//") || token.getToken(line).startsWith("/*")) {
+            String lexeme = tokenText(line, token, chargeText);
+            if (lexeme.startsWith("//") || lexeme.startsWith("/*")) {
                 continue;
             }
-            if (token.getToken(line).startsWith("{")) {
+            if (lexeme.startsWith("{")) {
                 throw new ParseErrorException(sourceOffset + token.getPos(), "Unexpected functional block");
             }
-            if (")".equals(token.getToken(line)) || "]".equals(token.getToken(line)) || ";".equals(token.getToken(line))) {
+            if (")".equals(lexeme) || "]".equals(lexeme) || ";".equals(lexeme)) {
                 break;
             }
 
             Leaf leaf = newLeaf(chargeNode);
-            leaf.setValue(token.getToken(line));
+            leaf.setValue(lexeme);
             leaf.setPos(sourceOffset + token.getPos());
 
             int range = (current == null || (current.getPriority() > 0 && !"(".equals(current.getValue()))) ? 1 : 2;
@@ -343,7 +349,7 @@ public class Parser {
                     throw new ParseErrorException(leaf.getPos(), "No quantifier variable defined");
                 }
                 Leaf tmp = newLeaf(chargeNode);
-                tmp.setValue(token.getToken(line));
+                tmp.setValue(tokenText(line, token, chargeText));
                 tmp.setPos(sourceOffset + token.getPos());
                 leaf.setLeft(tmp);
             } else if ("_set".equals(leaf.getValue())) {
@@ -354,14 +360,14 @@ public class Parser {
                 tmp.setRange(2);
                 tmp.setLeft(leaf);
                 leaf = tmp;
-                leaf.setRight(parse(line, token, sourceOffset, chargeNode, chargeToken, maxDepth, depth + 1));
-                if (!"]".equals(token.getToken(line))) {
+                leaf.setRight(parse(line, token, sourceOffset, chargeNode, chargeToken, maxDepth, depth + 1, chargeText));
+                if (!"]".equals(tokenText(line, token, chargeText))) {
                     throw new ParseErrorException(leaf.getPos(), "Expected closing bracket");
                 }
             } else if ("(".equals(leaf.getValue())) {
                 leaf.setPriority(1);
-                leaf.setRight(parse(line, token, sourceOffset, chargeNode, chargeToken, maxDepth, depth + 1));
-                if (!")".equals(token.getToken(line))) {
+                leaf.setRight(parse(line, token, sourceOffset, chargeNode, chargeToken, maxDepth, depth + 1, chargeText));
+                if (!")".equals(tokenText(line, token, chargeText))) {
                     throw new ParseErrorException(leaf.getPos(), "Expected closing bracket");
                 }
             }
@@ -514,7 +520,12 @@ public class Parser {
 
     public static Leaf parse(String line, int sourceOffset, Runnable chargeNode, Runnable chargeToken,
                              long maxDepth) throws ParseErrorException {
-        Leaf tree = parse(line, null, sourceOffset, chargeNode, chargeToken, maxDepth, 1);
+        return parse(line, sourceOffset, chargeNode, chargeToken, maxDepth, null);
+    }
+
+    public static Leaf parse(String line, int sourceOffset, Runnable chargeNode, Runnable chargeToken,
+                             long maxDepth, java.util.function.IntConsumer chargeText) throws ParseErrorException {
+        Leaf tree = parse(line, null, sourceOffset, chargeNode, chargeToken, maxDepth, 1, chargeText);
         return squeeze(tree, maxDepth, 1);
     }
 

@@ -228,6 +228,19 @@ public final class ContextDependentConstructedIterationRunner {
                 q.frontierWork, q.frontierCapacity, exactAttempts, replayBarriers, 1000000, 1000000,
                 retainedProofEntries, largestReplay, 1000, 1000, 2, projectionPairEntries, 1000, 1000, 1000, 4, 64);
         stable(ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), depthRoom));
+        Request textTight = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
+                q.frontierWork, q.frontierCapacity, exactAttempts, replayBarriers, 1000000, 1000000,
+                retainedProofEntries, largestReplay, 1000, 1000, 2, projectionPairEntries,
+                1000, 1000, 1000, 4, 64, 1);
+        Result textExhausted = ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), textTight);
+        incomplete(textExhausted);
+        need(textExhausted.phase.equals("round-bridge")
+                && textExhausted.reason.contains("Replay lexeme character limit"), "lexeme text has an independent limit");
+        Request textRoom = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
+                q.frontierWork, q.frontierCapacity, exactAttempts, replayBarriers, 1000000, 1000000,
+                retainedProofEntries, largestReplay, 1000, 1000, 2, projectionPairEntries,
+                1000, 1000, 1000, 4, 64, 1000);
+        stable(ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), textRoom));
         Request startupTight = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
                 q.frontierWork, q.frontierCapacity, startupAttempts - 1);
         Result startupExhausted = ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), startupTight);
