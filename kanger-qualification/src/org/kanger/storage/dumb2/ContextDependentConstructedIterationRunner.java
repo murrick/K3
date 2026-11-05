@@ -127,6 +127,17 @@ public final class ContextDependentConstructedIterationRunner {
                 q.frontierWork, q.frontierCapacity, exactAttempts, replayBarriers, 1000000, 1000000,
                 retainedProofEntries, largestReplay);
         stable(ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), snapshotExact));
+        Request scratchTight = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
+                q.frontierWork, q.frontierCapacity, exactAttempts, replayBarriers, 1000000, 1000000,
+                retainedProofEntries, largestReplay, 1);
+        Result scratchExhausted = ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), scratchTight);
+        incomplete(scratchExhausted);
+        need(scratchExhausted.phase.equals("round-bridge")
+                && scratchExhausted.reason.contains("Replay scratch entry limit"), "mutable replay entries have an independent limit");
+        Request scratchRoom = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
+                q.frontierWork, q.frontierCapacity, exactAttempts, replayBarriers, 1000000, 1000000,
+                retainedProofEntries, largestReplay, 1000);
+        stable(ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), scratchRoom));
         Request startupTight = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
                 q.frontierWork, q.frontierCapacity, startupAttempts - 1);
         Result startupExhausted = ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), startupTight);

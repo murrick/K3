@@ -55,7 +55,7 @@ public final class ContextDependentRoundInspection {
         Outcome(Result result,Discovery discovery){this.result=result;this.discovery=discovery;}
     }
     /** Complete supported residual-unit applications over the previous finite barrier, not saturation. */
-    public static Discovery discoverNext(Member x,List<Cut> supplied,Request previous)throws Exception{return run(x,supplied,previous,true,()->{},Long.MAX_VALUE).discovery;}
+    public static Discovery discoverNext(Member x,List<Cut> supplied,Request previous)throws Exception{return run(x,supplied,previous,true,()->{},Long.MAX_VALUE,Long.MAX_VALUE).discovery;}
     private static List<CutPart> project(List<Member> members,Policy policy)throws Exception {
         return project(members,policy,()->{});
     }
@@ -70,12 +70,16 @@ public final class ContextDependentRoundInspection {
     private static void current(List<Member> members,Policy policy)throws Exception{for(Member m:members)if(m.inventory.localX)ContextDependentReplayInspection.current(m.actual,m.inventory,policy);else ContextDependentReplayInspection.currentMember(m.actual,m.inventory,policy);}
     public static Result inspect(Member x,List<Cut> supplied,Request request)throws Exception{return inspect(x,supplied,request,()->{});}
     static Result inspect(Member x,List<Cut> supplied,Request request,Runnable chargeWork)throws Exception {
-        return inspect(x,supplied,request,chargeWork,Long.MAX_VALUE);
+        return inspect(x,supplied,request,chargeWork,Long.MAX_VALUE,Long.MAX_VALUE);
     }
-    static Result inspect(Member x,List<Cut> supplied,Request request,Runnable chargeWork,long snapshotEntries)throws Exception {
-        return run(x,supplied,request,false,chargeWork,snapshotEntries).result;
+    static Result inspect(Member x,List<Cut> supplied,Request request,Runnable chargeWork,long snapshotEntries,long scratchEntries)throws Exception {
+        return run(x,supplied,request,false,chargeWork,snapshotEntries,scratchEntries).result;
     }
-    private static Outcome run(Member x,List<Cut> supplied,Request request,boolean discover,Runnable chargeWork,long snapshotEntries)throws Exception {
+    private static long reserveScratch(long remaining, long entries) {
+        if (entries > remaining) throw new IllegalStateException("Replay scratch entry limit");
+        return remaining - entries;
+    }
+    private static Outcome run(Member x,List<Cut> supplied,Request request,boolean discover,Runnable chargeWork,long snapshotEntries,long scratchEntries)throws Exception {
         if(x==null||!x.inventory.localX||supplied==null||supplied.contains(null)||request==null)throw new IllegalArgumentException("Exact whole family required");
         List<Cut> cuts=new ArrayList<>(supplied);cuts.sort(Comparator.comparing(c->c.key));Map<String,Set<UUID>> scopes=new LinkedHashMap<>();Set<UUID> local=Collections.singleton(x.inventory.context);scopes.put(ContextDependentCutInspection.local(x.inventory.context),local);List<Member> members=new ArrayList<>();members.add(x);Set<UUID> contexts=new HashSet<>(local);long rows=x.inventory.rows.size();
         for(Cut cut:cuts){Set<UUID> scope=new LinkedHashSet<>(local);if(scopes.containsKey(cut.key))throw new IllegalArgumentException("Repeated/split logical cut");for(Member m:cut.members){if(!contexts.add(m.inventory.context))throw new IllegalArgumentException("Repeated physical member");scope.add(m.inventory.context);members.add(m);rows+=m.inventory.rows.size();}scopes.put(cut.key,scope);}
@@ -88,10 +92,23 @@ public final class ContextDependentRoundInspection {
             Runnable work=()->{localWork.run();chargeWork.run();};
             for(int r=0;r<request.rounds.size();r++) {
                 Round round=request.rounds.get(r);if(!round.recipes.keySet().equals(scopes.keySet()))throw new IllegalArgumentException("Every barrier needs every exact cut");
+                long remainingScratch = scratchEntries;
                 Map<String,Set<Integer>> visible=new LinkedHashMap<>();Map<String,List<Ticket>> created=new LinkedHashMap<>();
                 for(String cut:scopes.keySet()) {
-                    Set<Integer> pool=new LinkedHashSet<>();for(Map.Entry<Ticket,Integer> old:indices.entrySet())if(old.getKey().round<r&&(common.contains(old.getKey())||old.getKey().cut.equals(cut)))pool.add(old.getValue());visible.put(cut,pool);List<Ticket> made=new ArrayList<>();created.put(cut,made);
+                    Set<Integer> pool = new LinkedHashSet<>();
+                    for (Map.Entry<Ticket,Integer> old : indices.entrySet()) {
+                        Ticket ticket = old.getKey();
+                        if (ticket.round < r && (common.contains(ticket) || ticket.cut.equals(cut))) {
+                            remainingScratch = reserveScratch(remainingScratch, 1);
+                            pool.add(old.getValue());
+                        }
+                    }
+                    visible.put(cut,pool);
+                    List<Ticket> made = new ArrayList<>();
+                    created.put(cut,made);
                     for(Step step:round.recipes.get(cut)) {
+                        // The new proof adds one pool index and one reference per donor.
+                        remainingScratch = reserveScratch(remainingScratch, 1L + step.donors.size());
                         work.run();Long producer=keys.get(step.rule);if(producer==null||!active.get(cut).contains(producer))throw new IllegalArgumentException("Producer is outside exact cut");List<ContextDependentProductionInspection.Donor> donors=new ArrayList<>();
                         for(Donor donor:step.donors){work.run();if(donor.original!=null){Long id=keys.get(donor.original);if(id==null||!active.get(cut).contains(id))throw new IllegalArgumentException("Sibling original is not common knowledge");donors.add(ContextDependentProductionInspection.Donor.original(id));}else{Integer id;if(donor.carried!=null){id=indices.get(donor.carried);if(donor.carried.round>=r||id==null||!pool.contains(id))throw new IllegalArgumentException("Donor must be visible at previous barrier");}else{if(donor.earlier>=made.size())throw new IllegalArgumentException("Only earlier steps of this cut");id=indices.get(made.get(donor.earlier));}donors.add(ContextDependentProductionInspection.Donor.product(id));}}
                         if(history.size()==request.policy.steps)throw new IllegalStateException("Whole transport proof history limit");int index=history.size();history.add(new ContextDependentProductionInspection.Step(producer,step.retainedLiteral,donors));Ticket ticket=new Ticket(r,cut,made.size());made.add(ticket);indices.put(ticket,index);pool.add(index);
