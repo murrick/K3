@@ -62,24 +62,27 @@ public final class ContextDependentModelSearchInspection {
     }
     private static void current(Member x,List<Cut> cuts,Request r)throws Exception{ContextDependentReplayInspection.current(x.actual,x.inventory,r.iteration.policy);for(Cut cut:cuts)for(Member m:cut.members)ContextDependentReplayInspection.currentMember(m.actual,m.inventory,r.iteration.policy);}
     public static Result inspect(Member x,List<Cut> supplied,Request r)throws Exception{
+        return inspect(x,supplied,r,()->{});
+    }
+    static Result inspect(Member x,List<Cut> supplied,Request r,Runnable chargeCandidate)throws Exception{
         if(x==null||supplied==null||supplied.contains(null)||r==null)throw new IllegalArgumentException("Actual complete family required");List<Cut> cuts=new ArrayList<>(supplied);interrupt();current(x,cuts,r);String phase="family";int tried=0;
         try{try{
             ContextDependentIterationInspection.Result family=ContextDependentIterationInspection.inspect(x,cuts,r.iteration);interrupt();if(family.status==ContextDependentIterationInspection.Status.COLLISION)return new Result(Status.REFUTED,"sourced-refutation","Fresh actual sourced family refutation; not failed model search",Collections.emptyMap(),family,null,0,0,0,0);if(family.status!=ContextDependentIterationInspection.Status.FIXED_POINT)return Result.incomplete(phase,family.reason,0);
-            return construct(x,cuts,family.checked,r,family);
+            return construct(x,cuts,family.checked,r,family,chargeCandidate);
         }catch(InterruptedException interrupted){Thread.currentThread().interrupt();throw interrupted;}catch(Exception failure){interrupt();return Result.incomplete(phase,failure.getMessage(),tried);}}finally{current(x,cuts,r);}
     }
     /** Internal fresh replay boundary only; no public receipt-taking entrypoint. */
-    static Result received(Member x,List<Cut> cuts,ContextDependentRoundInspection.Result checked,Request r)throws Exception{
-        interrupt();current(x,cuts,r);try{return construct(x,cuts,checked,r,null);}finally{current(x,cuts,r);}
+    static Result received(Member x,List<Cut> cuts,ContextDependentRoundInspection.Result checked,Request r,Runnable chargeCandidate)throws Exception{
+        interrupt();current(x,cuts,r);try{return construct(x,cuts,checked,r,null,chargeCandidate);}finally{current(x,cuts,r);}
     }
-    private static Result construct(Member x,List<Cut> cuts,ContextDependentRoundInspection.Result checked,Request r,ContextDependentIterationInspection.Result family)throws Exception{
+    private static Result construct(Member x,List<Cut> cuts,ContextDependentRoundInspection.Result checked,Request r,ContextDependentIterationInspection.Result family,Runnable chargeCandidate)throws Exception{
         String phase="schema";int tried=0;try{
             phase="schema";Map<String,Schema> schemas=schema(x,cuts,checked,r);Runnable build=ContextGroundProductionRounds.budget(r.limits.searchWork),auditWork=ContextGroundProductionRounds.budget(r.limits.auditWork);phase="initial-models";Map<String,Model> models=new LinkedHashMap<>();for(Map.Entry<String,Schema> entry:schemas.entrySet())models.put(entry.getKey(),uniform(entry.getValue(),r,build));
             for(String cut:schemas.keySet()){
                 boolean found=false;Schema s=schemas.get(cut);
                 for(int pass=0;pass<2&&!found;pass++){
                     boolean dense=pass==1;if(dense&&s.points.isEmpty())break;phase=dense?"table-search":"uniform-search";List<Slot> choices=slots(s,dense,r,build);int[] digits=new int[choices.size()];boolean more=true;
-                    while(more){interrupt();build.run();need(tried<r.limits.candidates,"Whole-family candidate-attempt bound");tried++;models.put(cut,candidate(s,choices,digits,dense,r,build));ContextDependentModelInspection.Request bounds=new ContextDependentModelInspection.Request(r.iteration,models,r.limits.points,r.limits.cells,r.limits.originalWork,r.limits.finalWork);ContextDependentModelAudit nativeAudit=new ContextDependentModelAudit(x,cuts,checked,bounds,auditWork);
+                    while(more){interrupt();build.run();need(tried<r.limits.candidates,"Whole-family candidate-attempt bound");chargeCandidate.run();tried++;models.put(cut,candidate(s,choices,digits,dense,r,build));ContextDependentModelInspection.Request bounds=new ContextDependentModelInspection.Request(r.iteration,models,r.limits.points,r.limits.cells,r.limits.originalWork,r.limits.finalWork);ContextDependentModelAudit nativeAudit=new ContextDependentModelAudit(x,cuts,checked,bounds,auditWork);
                         try{nativeAudit.original(cut);nativeAudit.finalModel(cut);found=true;break;}catch(ContextDependentModelAudit.Rejected rejected){/* A false interpretation is only a failed guess. */}more=next(choices,digits,build);
                     }
                 }

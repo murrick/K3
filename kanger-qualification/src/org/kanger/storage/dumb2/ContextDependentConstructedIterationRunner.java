@@ -47,6 +47,29 @@ public final class ContextDependentConstructedIterationRunner {
     static void bounds()throws Exception{
         Mind p=memory();raw(p,"!seed(1);");Member b=member(p,5401,true);Mind c=new Mind(p);Rule out=raw(c,"!@x seed(x)->out(x);");Member child=member(c,5401,true);Request q=request(startup(Collections.singletonList(out.getOrigin())),2);ContextDependentModelSearchInspection.Limits l=q.receivingSearch.limits;for(int mode=0;mode<3;mode++){
             ContextDependentModelSearchInspection.Limits limited=new ContextDependentModelSearchInspection.Limits(l.points,l.cells,l.choiceCells,mode==0?1:l.candidates,mode==1?1:l.schemaWork,l.searchWork,mode==2?1:l.auditWork,l.originalWork,l.finalWork);ContextDependentModelSearchInspection.Request search=new ContextDependentModelSearchInspection.Request(q.startup.append.iteration,q.receivingSearch.extraPoints,q.receivingSearch.otherRepresentative,limited,q.receivingSearch.projection);Result no=ContextDependentConstructedIterationInspection.inspect(b,child,Collections.emptyList(),new Request(q.startup,search,q.rounds,q.initialWork,q.frontierWork,q.frontierCapacity));incomplete(no);need(no.phase.equals("round-model-construction"),"receiving search limits cannot reuse startup interpretation");}
+        Result unrestricted = ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), q);
+        stable(unrestricted);
+        long startupAttempts = (long) unrestricted.startup.baseTried + unrestricted.startup.proposedTried;
+        long exactAttempts = startupAttempts;
+        for (ContextDependentRuntimeIterationInspection.Cycle cycle : unrestricted.iteration.cycles) {
+            exactAttempts += cycle.modelAttempts;
+        }
+        Request exact = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
+                q.frontierWork, q.frontierCapacity, exactAttempts);
+        stable(ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), exact));
+        stable(ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), exact));
+        Request tight = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
+                q.frontierWork, q.frontierCapacity, exactAttempts - 1);
+        Result exhausted = ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), tight);
+        incomplete(exhausted);
+        need(exhausted.phase.equals("round-model-construction")
+                && exhausted.reason.contains("Whole-cycle candidate-attempt limit"), "startup and receiving share one allowance");
+        Request startupTight = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
+                q.frontierWork, q.frontierCapacity, startupAttempts - 1);
+        Result startupExhausted = ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), startupTight);
+        incomplete(startupExhausted);
+        need(startupExhausted.phase.equals("constructed-startup")
+                && startupExhausted.reason.contains("Whole-cycle candidate-attempt limit"), "base and proposed startup share one allowance");
         RoundLimits bad=new RoundLimits(round().discovery,8000000,8000000,1000000,8000000,8000000,1);Result late=ContextDependentConstructedIterationInspection.inspect(b,child,Collections.emptyList(),new Request(q.startup,q.receivingSearch,Collections.singletonList(bad),q.initialWork,q.frontierWork,q.frontierCapacity));incomplete(late);need(late.phase.equals("round-final"),"independent post-search final audit still mandatory");
         ContextDependentConstructedStartupInspection.Result start=ContextDependentConstructedStartupInspection.inspect(b,child,Collections.emptyList(),q.startup);ContextDependentRuntimeIterationInspection.Request kernel=kernel(start,q);ContextDependentRuntimeContinuationInspection.AutomaticPlan supplied=new ContextDependentRuntimeContinuationInspection.AutomaticPlan(round().discovery,start.preparation.projection.qualification.proposedOriginalModels,8000000,8000000,1000000,8000000,8000000,8000000);reject(()->ContextDependentRuntimeIterationInspection.constructedReceiving(start.preparation,q.receivingSearch.projection,Collections.singletonList(supplied),q.initialWork,q.frontierWork,q.frontierCapacity,q.receivingSearch),"constructed receiving cannot silently ignore supplied models");
         Thread.currentThread().interrupt();boolean interrupted=false;try{ContextDependentConstructedIterationInspection.inspect(b,child,Collections.emptyList(),q);}catch(InterruptedException expected){interrupted=Thread.currentThread().isInterrupted();}finally{Thread.interrupted();}need(interrupted,"interrupt propagated");raw(c,"!changed(2);");reject(()->ContextDependentConstructedIterationInspection.inspect(b,child,Collections.emptyList(),q),"stale native basis refused");p.release(c);
