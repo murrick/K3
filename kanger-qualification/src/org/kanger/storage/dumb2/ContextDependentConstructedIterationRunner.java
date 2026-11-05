@@ -113,6 +113,20 @@ public final class ContextDependentConstructedIterationRunner {
                 q.frontierWork, q.frontierCapacity, exactAttempts, replayBarriers, 1000000, 1000000,
                 retainedProofEntries);
         stable(ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), historyExact));
+        long largestReplay = unrestricted.iteration.cycles.stream()
+                .mapToLong(cycle -> ContextDependentRuntimeIterationProbe.proofEntries(cycle.checked))
+                .max().getAsLong();
+        Request snapshotTight = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
+                q.frontierWork, q.frontierCapacity, exactAttempts, replayBarriers, 1000000, 1000000,
+                retainedProofEntries, largestReplay - 1);
+        Result snapshotExhausted = ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), snapshotTight);
+        incomplete(snapshotExhausted);
+        need(snapshotExhausted.phase.equals("round-bridge")
+                && snapshotExhausted.reason.contains("Replay snapshot entry limit"), "replay enforces the snapshot limit before retention");
+        Request snapshotExact = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
+                q.frontierWork, q.frontierCapacity, exactAttempts, replayBarriers, 1000000, 1000000,
+                retainedProofEntries, largestReplay);
+        stable(ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), snapshotExact));
         Request startupTight = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
                 q.frontierWork, q.frontierCapacity, startupAttempts - 1);
         Result startupExhausted = ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), startupTight);

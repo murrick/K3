@@ -55,7 +55,7 @@ public final class ContextDependentRoundInspection {
         Outcome(Result result,Discovery discovery){this.result=result;this.discovery=discovery;}
     }
     /** Complete supported residual-unit applications over the previous finite barrier, not saturation. */
-    public static Discovery discoverNext(Member x,List<Cut> supplied,Request previous)throws Exception{return run(x,supplied,previous,true,()->{}).discovery;}
+    public static Discovery discoverNext(Member x,List<Cut> supplied,Request previous)throws Exception{return run(x,supplied,previous,true,()->{},Long.MAX_VALUE).discovery;}
     private static List<CutPart> project(List<Member> members,Policy policy)throws Exception {
         return project(members,policy,()->{});
     }
@@ -70,9 +70,12 @@ public final class ContextDependentRoundInspection {
     private static void current(List<Member> members,Policy policy)throws Exception{for(Member m:members)if(m.inventory.localX)ContextDependentReplayInspection.current(m.actual,m.inventory,policy);else ContextDependentReplayInspection.currentMember(m.actual,m.inventory,policy);}
     public static Result inspect(Member x,List<Cut> supplied,Request request)throws Exception{return inspect(x,supplied,request,()->{});}
     static Result inspect(Member x,List<Cut> supplied,Request request,Runnable chargeWork)throws Exception {
-        return run(x,supplied,request,false,chargeWork).result;
+        return inspect(x,supplied,request,chargeWork,Long.MAX_VALUE);
     }
-    private static Outcome run(Member x,List<Cut> supplied,Request request,boolean discover,Runnable chargeWork)throws Exception {
+    static Result inspect(Member x,List<Cut> supplied,Request request,Runnable chargeWork,long snapshotEntries)throws Exception {
+        return run(x,supplied,request,false,chargeWork,snapshotEntries).result;
+    }
+    private static Outcome run(Member x,List<Cut> supplied,Request request,boolean discover,Runnable chargeWork,long snapshotEntries)throws Exception {
         if(x==null||!x.inventory.localX||supplied==null||supplied.contains(null)||request==null)throw new IllegalArgumentException("Exact whole family required");
         List<Cut> cuts=new ArrayList<>(supplied);cuts.sort(Comparator.comparing(c->c.key));Map<String,Set<UUID>> scopes=new LinkedHashMap<>();Set<UUID> local=Collections.singleton(x.inventory.context);scopes.put(ContextDependentCutInspection.local(x.inventory.context),local);List<Member> members=new ArrayList<>();members.add(x);Set<UUID> contexts=new HashSet<>(local);long rows=x.inventory.rows.size();
         for(Cut cut:cuts){Set<UUID> scope=new LinkedHashSet<>(local);if(scopes.containsKey(cut.key))throw new IllegalArgumentException("Repeated/split logical cut");for(Member m:cut.members){if(!contexts.add(m.inventory.context))throw new IllegalArgumentException("Repeated physical member");scope.add(m.inventory.context);members.add(m);rows+=m.inventory.rows.size();}scopes.put(cut.key,scope);}
@@ -102,6 +105,9 @@ public final class ContextDependentRoundInspection {
                     List<Integer> order=new ArrayList<>(visible.get(cut));Collections.sort(order);
                     for(Ticket ticket:created.get(cut)){int at=Collections.binarySearch(order,indices.get(ticket));ContextDependentProductionInspection.Row row=checked.products.get(at);observed.put(ticket,row);if(row.sources.stream().anyMatch(source->source.localX))exports.add(ticket);}
                 }
+                long entries = 1L + observed.size();
+                if (entries > snapshotEntries) throw new IllegalStateException("Replay snapshot entry limit");
+                snapshotEntries -= entries;
                 common=exports;barriers.add(new Barrier(results,common,observed,members,scopes));current(members,request.policy);
             }
             if(discover){
