@@ -308,7 +308,8 @@ public class Parser {
         }
     }
 
-    private static Leaf parse(String line, Token token, int sourceOffset, Runnable chargeNode, Runnable chargeToken) throws ParseErrorException {
+    private static Leaf parse(String line, Token token, int sourceOffset, Runnable chargeNode, Runnable chargeToken, long maxDepth, int depth) throws ParseErrorException {
+        checkDepth(maxDepth, depth);
         Leaf current = null;
         Leaf root = null;
         while ((token = nextToken(line, token, sourceOffset, chargeToken)) != null) {
@@ -353,13 +354,13 @@ public class Parser {
                 tmp.setRange(2);
                 tmp.setLeft(leaf);
                 leaf = tmp;
-                leaf.setRight(parse(line, token, sourceOffset, chargeNode, chargeToken));
+                leaf.setRight(parse(line, token, sourceOffset, chargeNode, chargeToken, maxDepth, depth + 1));
                 if (!"]".equals(token.getToken(line))) {
                     throw new ParseErrorException(leaf.getPos(), "Expected closing bracket");
                 }
             } else if ("(".equals(leaf.getValue())) {
                 leaf.setPriority(1);
-                leaf.setRight(parse(line, token, sourceOffset, chargeNode, chargeToken));
+                leaf.setRight(parse(line, token, sourceOffset, chargeNode, chargeToken, maxDepth, depth + 1));
                 if (!")".equals(token.getToken(line))) {
                     throw new ParseErrorException(leaf.getPos(), "Expected closing bracket");
                 }
@@ -442,14 +443,19 @@ public class Parser {
         return null;
     }
 
-    private static int getRange(Leaf t) {
+    private static void checkDepth(long maxDepth, int depth) {
+        if (depth > maxDepth) throw new IllegalStateException("Replay parser depth limit");
+    }
+
+    private static int getRange(Leaf t, long maxDepth, int depth) {
+        checkDepth(maxDepth, depth);
         if (t == null) {
             return 0;
         } else {
             int counter = 0;
             if (",".equals(t.getValue())) {
-                counter += getRange(t.getLeft());
-                counter += getRange(t.getRight());
+                counter += getRange(t.getLeft(), maxDepth, depth + 1);
+                counter += getRange(t.getRight(), maxDepth, depth + 1);
             } else {
                 counter = 1;
             }
@@ -457,25 +463,26 @@ public class Parser {
         }
     }
 
-    private static Leaf squeeze(Leaf t) {
+    private static Leaf squeeze(Leaf t, long maxDepth, int depth) {
+        checkDepth(maxDepth, depth);
         if (t == null) {
             return null;
         }
-        t.setLeft(squeeze(t.getLeft()));
-        t.setRight(squeeze(t.getRight()));
+        t.setLeft(squeeze(t.getLeft(), maxDepth, depth + 1));
+        t.setRight(squeeze(t.getRight(), maxDepth, depth + 1));
         if ("(".equals(t.getValue())) {
             if (t.getLeft() == null) {
-                return squeeze(t.getRight());
+                return squeeze(t.getRight(), maxDepth, depth + 1);
             } else {
                 t.setValue(t.getLeft().getValue());
                 t.setRange(t.getLeft().getRange());
                 t.setPriority(t.getLeft().getPriority());
                 t.setLeft(null);
                 if (t.getRight() != null && ",".equals(t.getRight().getValue())) {
-                    t.setLeft(squeeze(t.getRight().getLeft()));
-                    t.setRight(squeeze(t.getRight().getRight()));
+                    t.setLeft(squeeze(t.getRight().getLeft(), maxDepth, depth + 1));
+                    t.setRight(squeeze(t.getRight().getRight(), maxDepth, depth + 1));
                 }
-                int range = getRange(t.getLeft()) + getRange(t.getRight());
+                int range = getRange(t.getLeft(), maxDepth, depth + 1) + getRange(t.getRight(), maxDepth, depth + 1);
                 t.setRange(range);
                 return t;
             }
@@ -502,8 +509,13 @@ public class Parser {
     }
 
     public static Leaf parse(String line, int sourceOffset, Runnable chargeNode, Runnable chargeToken) throws ParseErrorException {
-        Leaf tree = parse(line, null, sourceOffset, chargeNode, chargeToken);
-        return squeeze(tree);
+        return parse(line, sourceOffset, chargeNode, chargeToken, Long.MAX_VALUE);
+    }
+
+    public static Leaf parse(String line, int sourceOffset, Runnable chargeNode, Runnable chargeToken,
+                             long maxDepth) throws ParseErrorException {
+        Leaf tree = parse(line, null, sourceOffset, chargeNode, chargeToken, maxDepth, 1);
+        return squeeze(tree, maxDepth, 1);
     }
 
     public static Operation implement(String line, Mind mind, Token token) throws Exception {

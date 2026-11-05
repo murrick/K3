@@ -217,6 +217,17 @@ public final class ContextDependentConstructedIterationRunner {
                 q.frontierWork, q.frontierCapacity, exactAttempts, replayBarriers, 1000000, 1000000,
                 retainedProofEntries, largestReplay, 1000, 1000, 2, projectionPairEntries, 1000, 1000, 1000, 4);
         stable(ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), tokenExact));
+        Request depthTight = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
+                q.frontierWork, q.frontierCapacity, exactAttempts, replayBarriers, 1000000, 1000000,
+                retainedProofEntries, largestReplay, 1000, 1000, 2, projectionPairEntries, 1000, 1000, 1000, 4, 1);
+        Result depthExhausted = ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), depthTight);
+        incomplete(depthExhausted);
+        need(depthExhausted.phase.equals("round-bridge")
+                && depthExhausted.reason.contains("Replay parser depth limit"), "parser depth has an independent limit");
+        Request depthRoom = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
+                q.frontierWork, q.frontierCapacity, exactAttempts, replayBarriers, 1000000, 1000000,
+                retainedProofEntries, largestReplay, 1000, 1000, 2, projectionPairEntries, 1000, 1000, 1000, 4, 64);
+        stable(ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), depthRoom));
         Request startupTight = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
                 q.frontierWork, q.frontierCapacity, startupAttempts - 1);
         Result startupExhausted = ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), startupTight);

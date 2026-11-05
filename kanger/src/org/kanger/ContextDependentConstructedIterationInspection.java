@@ -20,7 +20,7 @@ public final class ContextDependentConstructedIterationInspection {
         public final ContextDependentConstructedStartupInspection.Request startup;
         public final ContextDependentModelSearchInspection.Request receivingSearch;
         public final List<RoundLimits> rounds;public final int initialWork,frontierWork,frontierCapacity;
-        public final long totalCandidateAttempts,totalReplayedBarriers,totalReplayWork,totalModelAuditWork,totalRetainedProofEntries,replaySnapshotEntries,replayScratchEntries,replayBridgeEntries,replayTermEntries,replayProjectionEntries,replayCompilerTerms,replayCompilerEntries,replayParserNodes,replayParserTokens;
+        public final long totalCandidateAttempts,totalReplayedBarriers,totalReplayWork,totalModelAuditWork,totalRetainedProofEntries,replaySnapshotEntries,replayScratchEntries,replayBridgeEntries,replayTermEntries,replayProjectionEntries,replayCompilerTerms,replayCompilerEntries,replayParserNodes,replayParserTokens,replayParserDepth;
         public Request(ContextDependentConstructedStartupInspection.Request startup,ContextDependentModelSearchInspection.Request receivingSearch,List<RoundLimits> rounds,int initialWork,int frontierWork,int frontierCapacity){
             this(startup,receivingSearch,rounds,initialWork,frontierWork,frontierCapacity,Long.MAX_VALUE);
         }
@@ -90,6 +90,15 @@ public final class ContextDependentConstructedIterationInspection {
                     replayParserNodes,Long.MAX_VALUE);
         }
         public Request(ContextDependentConstructedStartupInspection.Request startup,ContextDependentModelSearchInspection.Request receivingSearch,List<RoundLimits> rounds,int initialWork,int frontierWork,int frontierCapacity,long totalCandidateAttempts,long totalReplayedBarriers,long totalReplayWork,long totalModelAuditWork,long totalRetainedProofEntries,long replaySnapshotEntries,long replayScratchEntries,long replayBridgeEntries,long replayTermEntries,long replayProjectionEntries,long replayCompilerTerms,long replayCompilerEntries,long replayParserNodes,long replayParserTokens){
+            this(startup,receivingSearch,rounds,initialWork,frontierWork,frontierCapacity,
+                    totalCandidateAttempts,totalReplayedBarriers,totalReplayWork,totalModelAuditWork,
+                    totalRetainedProofEntries,replaySnapshotEntries,replayScratchEntries,replayBridgeEntries,
+                    replayTermEntries,replayProjectionEntries,replayCompilerTerms,replayCompilerEntries,
+                    replayParserNodes,replayParserTokens,Long.MAX_VALUE);
+        }
+        public Request(ContextDependentConstructedStartupInspection.Request startup,ContextDependentModelSearchInspection.Request receivingSearch,List<RoundLimits> rounds,int initialWork,int frontierWork,int frontierCapacity,long totalCandidateAttempts,long totalReplayedBarriers,long totalReplayWork,long totalModelAuditWork,long totalRetainedProofEntries,long replaySnapshotEntries,long replayScratchEntries,long replayBridgeEntries,long replayTermEntries,long replayProjectionEntries,long replayCompilerTerms,long replayCompilerEntries,long replayParserNodes,long replayParserTokens,long replayParserDepth){
+            if (replayParserDepth < 1) throw new IllegalArgumentException("Positive replay parser depth limit required");
+            this.replayParserDepth = replayParserDepth;
             if (replayParserTokens < 1) throw new IllegalArgumentException("Positive replay parser token limit required");
             this.replayParserTokens = replayParserTokens;
             if (replayParserNodes < 1) throw new IllegalArgumentException("Positive replay parser node limit required");
@@ -169,7 +178,7 @@ public final class ContextDependentConstructedIterationInspection {
             if(startup.status!=ContextDependentConstructedStartupInspection.Status.RUNTIME_MODELLED_PENDING)return new Result(Status.valueOf(startup.status.name()),phase,startup.reason,startup,null);
             List<ContextDependentRuntimeContinuationInspection.AutomaticPlan> schedule=new ArrayList<>();for(RoundLimits bounds:r.rounds)schedule.add(bounds.plan());
             phase="constructed-iteration";ContextDependentRuntimeIterationInspection.Request request=ContextDependentRuntimeIterationInspection.constructedReceiving(startup.preparation,r.receivingSearch.projection,schedule,r.initialWork,r.frontierWork,r.frontierCapacity,r.receivingSearch);
-            ContextDependentRuntimeIterationInspection.Result iteration=ContextDependentRuntimeIterationInspection.inspect(base,child,cuts,request,chargeCandidate,chargeReplay,chargeReplayWork,chargeAudit,r.totalRetainedProofEntries,r.replaySnapshotEntries,r.replayScratchEntries,r.replayBridgeEntries,r.replayTermEntries,r.replayProjectionEntries,r.replayCompilerTerms,r.replayCompilerEntries,r.replayParserNodes,r.replayParserTokens);ContextDependentRuntimeExecution.interrupt();
+            ContextDependentRuntimeIterationInspection.Result iteration=ContextDependentRuntimeIterationInspection.inspect(base,child,cuts,request,chargeCandidate,chargeReplay,chargeReplayWork,chargeAudit,r.totalRetainedProofEntries,r.replaySnapshotEntries,r.replayScratchEntries,r.replayBridgeEntries,r.replayTermEntries,r.replayProjectionEntries,r.replayCompilerTerms,r.replayCompilerEntries,r.replayParserNodes,r.replayParserTokens,r.replayParserDepth);ContextDependentRuntimeExecution.interrupt();
             if(iteration.status==ContextDependentRuntimeIterationInspection.Status.INCOMPLETE)return Result.incomplete(iteration.phase,iteration.reason);
             Status status=Status.valueOf(iteration.status.name());return new Result(status,iteration.phase,iteration.reason,status==Status.STABLE_PENDING?startup:null,iteration);
         }catch(InterruptedException interrupted){Thread.currentThread().interrupt();throw interrupted;}catch(Exception failure){ContextDependentRuntimeExecution.interrupt();return Result.incomplete(phase,failure.getMessage());}}finally{current(base,child,cuts,r);}
