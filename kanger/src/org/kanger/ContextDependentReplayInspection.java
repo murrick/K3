@@ -99,7 +99,7 @@ public final class ContextDependentReplayInspection {
         User user=new User();Mind isolated=new Mind(user,chargeNewTerm,chargeCompilerEntry,chargeParserNode,chargeParserToken,parserDepth,chargeLexemeText,chargeCompilerText);user.setCurrentMind(isolated);Map<Long,Long> mapping=new LinkedHashMap<>();
         try {
             for(ContextProductionInventory.Row row:expected.rows) {
-                work.run();Rule original=(Rule)actual.getRules().get(row.nativeRule),copy=(Rule)isolated.compileLine(row.origin,false,new LinkedList<org.kanger.interfaces.ITerm>());
+                work.run();Rule original=(Rule)actual.getRules().get(row.nativeRule),copy=(Rule)isolated.compileLineForReplay(row.origin);
                 if(original==null||copy==null)throw new IllegalStateException("Missing whole native original or replay");
                 if(horn&&!NativeDependentProductionRows.unit(original)) {
                     ContextProductionCapture.Clause left=NativeDependentProductionRows.ordinary(original,actual,work),right=NativeDependentProductionRows.ordinary(copy,isolated,work);

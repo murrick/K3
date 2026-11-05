@@ -1288,7 +1288,16 @@ public class Mind implements IMind {
         return compileLine(line, query, externals, 0);
     }
 
+    Object compileLineForReplay(String line) throws Exception {
+        return compileLine(line, false, new LinkedList<>(), 0, false);
+    }
+
     private Object compileLine(String line, boolean query, Queue<ITerm> externals, int sourceOffset) throws Exception {
+        return compileLine(line, query, externals, sourceOffset, true);
+    }
+
+    private Object compileLine(String line, boolean query, Queue<ITerm> externals, int sourceOffset,
+                               boolean renderDiagnostics) throws Exception {
         String orig = line.trim();
         compliedLine = orig;
         Object r = null;
@@ -1322,18 +1331,22 @@ public class Mind implements IMind {
                     DmzReplayProvenance.compiled(this, (Rule) r, true);
                     ContextProductionCapture.compiled(this, (Rule) r, true);
                     commandNoOp = line.charAt(0) == Enums.ANT || line.charAt(0) == Enums.INS;
-                    log.add(LogMode.ANALYZER, "WARNING: Rule is duplicated: " + r);
+                    if (renderDiagnostics) {
+                        log.add(LogMode.ANALYZER, "WARNING: Rule is duplicated: " + r);
+                    }
                     r = null;
                 } else if (r instanceof Rule) {
                     if (tx.commit()) {
                         DmzReplayProvenance.compiled(this, (Rule) r, false);
                         ContextProductionCapture.compiled(this, (Rule) r, false);
                     }
-                    log.add(LogMode.ANALYZER, "Compiled: " + ((Rule) r).getOrigin());
-                    log.add(LogMode.ANALYZER, (Rule) r);
-                    for (IRule rx : rules) {
-                        if (rx.getId() > ((Rule) r).getId() /*&& rx.isGenerated()*/) {
-                            log.add(LogMode.ANALYZER, "Extracted: " + rx.getOrigin());
+                    if (renderDiagnostics) {
+                        log.add(LogMode.ANALYZER, "Compiled: " + ((Rule) r).getOrigin());
+                        log.add(LogMode.ANALYZER, (Rule) r);
+                        for (IRule rx : rules) {
+                            if (rx.getId() > ((Rule) r).getId() /*&& rx.isGenerated()*/) {
+                                log.add(LogMode.ANALYZER, "Extracted: " + rx.getOrigin());
+                            }
                         }
                     }
                 } else {

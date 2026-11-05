@@ -47,6 +47,9 @@ public final class ContextDependentConstructedIterationRunner {
     static void bounds()throws Exception{
         Mind p=memory();raw(p,"!seed(1,1);");Member b=member(p,5401,true);Mind c=new Mind(p);Rule out=raw(c,"!@x seed(x,x)->out(x,x);");Member child=member(c,5401,true);Request q=request(startup(Collections.singletonList(out.getOrigin())),2);ContextDependentModelSearchInspection.Limits l=q.receivingSearch.limits;for(int mode=0;mode<3;mode++){
             ContextDependentModelSearchInspection.Limits limited=new ContextDependentModelSearchInspection.Limits(l.points,l.cells,l.choiceCells,mode==0?1:l.candidates,mode==1?1:l.schemaWork,l.searchWork,mode==2?1:l.auditWork,l.originalWork,l.finalWork);ContextDependentModelSearchInspection.Request search=new ContextDependentModelSearchInspection.Request(q.startup.append.iteration,q.receivingSearch.extraPoints,q.receivingSearch.otherRepresentative,limited,q.receivingSearch.projection);Result no=ContextDependentConstructedIterationInspection.inspect(b,child,Collections.emptyList(),new Request(q.startup,search,q.rounds,q.initialWork,q.frontierWork,q.frontierCapacity));incomplete(no);need(no.phase.equals("round-model-construction"),"receiving search limits cannot reuse startup interpretation");}
+        need(!c.getLog().isEmpty(), "ordinary compilation still records diagnostics");
+        need(ContextDependentRuntimeIterationProbe.replayProjectionIsQuiet(child, q.startup.append.iteration.policy),
+                "complete native replay projection does not render compiler diagnostics");
         Result unrestricted = ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), q);
         stable(unrestricted);
         long startupAttempts = (long) unrestricted.startup.baseTried + unrestricted.startup.proposedTried;
