@@ -87,6 +87,15 @@ public final class ContextDependentConstructedIterationRunner {
         Request workRoom = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
                 q.frontierWork, q.frontierCapacity, exactAttempts, replayBarriers, 1000000);
         stable(ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), workRoom));
+        Request auditTight = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
+                q.frontierWork, q.frontierCapacity, exactAttempts, replayBarriers, 1000000, 1);
+        Result auditExhausted = ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), auditTight);
+        incomplete(auditExhausted);
+        need(auditExhausted.phase.equals("constructed-startup")
+                && auditExhausted.reason.contains("Whole-cycle model audit work limit"), "audit allowance applies during startup search");
+        Request auditRoom = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
+                q.frontierWork, q.frontierCapacity, exactAttempts, replayBarriers, 1000000, 1000000);
+        stable(ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), auditRoom));
         Request startupTight = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
                 q.frontierWork, q.frontierCapacity, startupAttempts - 1);
         Result startupExhausted = ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), startupTight);

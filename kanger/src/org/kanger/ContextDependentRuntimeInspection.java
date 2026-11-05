@@ -82,9 +82,12 @@ public final class ContextDependentRuntimeInspection {
     }
     private static void current(Member base,Member child,List<Cut> cuts,Request r)throws Exception{ContextDependentReplayInspection.current(base.actual,base.inventory,r.qualification.append.iteration.policy);ContextDependentReplayInspection.current(child.actual,child.inventory,r.qualification.append.iteration.policy);for(Cut c:cuts)for(Member m:c.members)ContextDependentReplayInspection.currentMember(m.actual,m.inventory,r.qualification.append.iteration.policy);}
     public static Result inspect(Member base,Member child,List<Cut> supplied,Request request)throws Exception{
+        return inspect(base,child,supplied,request,()->{});
+    }
+    static Result inspect(Member base,Member child,List<Cut> supplied,Request request,Runnable chargeAudit)throws Exception{
         if(base==null||child==null||supplied==null||supplied.contains(null)||request==null||request.qualification==null)throw new IllegalArgumentException("Actual native parent/child/cuts and fresh qualification required");List<Cut> cuts=new ArrayList<>(supplied);interrupt();current(base,child,cuts,request);
         try{
-            ContextDependentCandidateModelInspection.Result q=ContextDependentCandidateModelInspection.inspect(base,child,cuts,request.qualification);
+            ContextDependentCandidateModelInspection.Result q=ContextDependentCandidateModelInspection.inspect(base,child,cuts,request.qualification,chargeAudit);
             if(q.status==ContextDependentCandidateModelInspection.Status.BASE_REFUTED)return new Result(Status.BASE_REFUTED,q.reason,null,q);
             if(q.status==ContextDependentCandidateModelInspection.Status.CANDIDATE_REFUTED)return new Result(Status.CANDIDATE_REFUTED,q.reason,null,q);
             if(q.status!=ContextDependentCandidateModelInspection.Status.MODELLED_PENDING)return new Result(Status.INCOMPLETE,q.phase+": "+q.reason,null,null);

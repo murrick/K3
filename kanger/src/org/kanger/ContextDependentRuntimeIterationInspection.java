@@ -64,23 +64,23 @@ public final class ContextDependentRuntimeIterationInspection {
     private static void interrupt()throws InterruptedException{ContextDependentRuntimeExecution.interrupt();}
     private static Barrier last(ContextDependentRoundInspection.Result checked){return checked.barriers.get(checked.barriers.size()-1);}
     private static void current(Member base,Member child,List<Cut> cuts,Request r)throws Exception{ContextDependentReplayInspection.Policy p=r.preparation.projection.qualification.append.iteration.policy;ContextDependentReplayInspection.current(base.actual,base.inventory,p);ContextDependentReplayInspection.current(child.actual,child.inventory,p);for(Cut cut:cuts)for(Member m:cut.members)ContextDependentReplayInspection.currentMember(m.actual,m.inventory,p);}
-    private static Frame received(Member child,List<Cut> cuts,Request r,ContextDependentCandidateInspection.Result candidate,ContextDependentRoundInspection.Result checked,ContextDependentRuntimeBarrierInspection.Request models,int expected)throws Exception{
+    private static Frame received(Member child,List<Cut> cuts,Request r,ContextDependentCandidateInspection.Result candidate,ContextDependentRoundInspection.Result checked,ContextDependentRuntimeBarrierInspection.Request models,int expected,Runnable chargeAudit)throws Exception{
         Projection p=r.projection;ContextDependentRuntimeInspection.Request bounds=new ContextDependentRuntimeInspection.Request(r.preparation.projection.qualification,p.products,p.nodes,p.copyWork,p.auditWork);Frame frame=ContextDependentRuntimeInspection.project(child,checked,bounds);Runnable shape=ContextGroundProductionRounds.budget(p.shapeWork);
-        Map<String,Model> rebased=ContextDependentRuntimeBarrierInspection.models(models,candidate,shape);ContextDependentRuntimeModelAudit audit=new ContextDependentRuntimeModelAudit(child,cuts,frame,rebased,new ContextDependentRuntimeModelInspection.Request(bounds,p.shapeWork,p.truthWork),shape);int count=audit.truth();need(count==expected,"Every actual received common/private occurrence must survive indexed projection/truth");return frame;
+        Map<String,Model> rebased=ContextDependentRuntimeBarrierInspection.models(models,candidate,shape);ContextDependentRuntimeModelAudit audit=new ContextDependentRuntimeModelAudit(child,cuts,frame,rebased,new ContextDependentRuntimeModelInspection.Request(bounds,p.shapeWork,p.truthWork),shape,chargeAudit);int count=audit.truth();need(count==expected,"Every actual received common/private occurrence must survive indexed projection/truth");return frame;
     }
     private static int obligations(Barrier barrier){int count=0;for(ContextDependentProductionInspection.Result cut:barrier.cuts.values())count=Math.addExact(count,Math.addExact(barrier.common.size(),cut.products.size()));return count;}
     /** Internal kernel: public entry obtains all inputs afresh; no caller-supplied receipt API. */
     static Result run(Member child,List<Cut> cuts,Request r,ContextDependentRuntimeBarrierInspection.Result first,ContextDependentCandidateInspection.Result candidate,ContextDependentRoundInspection.Result initial,List<Round> prefix)throws Exception{
-        return run(child,cuts,r,first,candidate,initial,prefix,null,()->{},barriers->{},()->{});
+        return run(child,cuts,r,first,candidate,initial,prefix,null,()->{},barriers->{},()->{},()->{});
     }
-    private static Result run(Member child,List<Cut> cuts,Request r,ContextDependentRuntimeBarrierInspection.Result first,ContextDependentCandidateInspection.Result candidate,ContextDependentRoundInspection.Result initial,List<Round> prefix,ContextDependentRuntimeModelInspection.Result startup,Runnable chargeCandidate,java.util.function.IntConsumer chargeReplay,Runnable chargeReplayWork)throws Exception{
+    private static Result run(Member child,List<Cut> cuts,Request r,ContextDependentRuntimeBarrierInspection.Result first,ContextDependentCandidateInspection.Result candidate,ContextDependentRoundInspection.Result initial,List<Round> prefix,ContextDependentRuntimeModelInspection.Result startup,Runnable chargeCandidate,java.util.function.IntConsumer chargeReplay,Runnable chargeReplayWork,Runnable chargeAudit)throws Exception{
         String phase="initial-receiving";
         try{
             ContextDependentCandidateModelInspection.Request q=r.preparation.projection.qualification;ContextDependentIterationInspection.Request policy=q.append.iteration;
             List<Opposition> refusals=ContextDependentRuntimeBarrierInspection.oppositions(last(initial),candidate,ContextGroundProductionRounds.budget(r.initial.bridgeWork));if(!refusals.isEmpty())return Result.refused(phase,refusals);
             need(first==null||first.receivingFinalObligations==obligations(last(initial)),"First receiving count must match every actual raw occurrence");
             need(startup==null||startup.runtimeObligations==obligations(last(initial)),"Automatic startup count must cover every actual raw occurrence");
-            phase="initial-runtime";Frame frame=received(child,cuts,r,candidate,initial,r.initial,obligations(last(initial)));
+            phase="initial-runtime";Frame frame=received(child,cuts,r,candidate,initial,r.initial,obligations(last(initial)),chargeAudit);
             phase="initial-frontier";ContextDependentFrontierInspection.Snapshot before=ContextDependentFrontierInspection.inspect(last(initial),r.frontierWork,r.frontierCapacity);
             ContextDependentRoundInspection.Result checked=initial;List<Round> history=prefix;List<Cycle> cycles=new ArrayList<>();
             for(AutomaticPlan plan:r.rounds){
@@ -92,16 +92,16 @@ public final class ContextDependentRuntimeIterationInspection {
                 phase="round-producing";refusals=ContextDependentRuntimeBarrierInspection.oppositions(replay.checked.barriers.get(replay.produced),candidate,work);if(refusals.isEmpty()){phase="round-receiving";refusals=ContextDependentRuntimeBarrierInspection.oppositions(replay.checked.barriers.get(replay.received),candidate,work);}if(!refusals.isEmpty())return Result.refused(phase,refusals);
                 ContextDependentModelSearchInspection.Result construction=null;Map<String,Model> models;int points=q.points,cells=q.cells;
                 if(r.receivingSearch==null){phase="round-model-rebase";models=ContextDependentRuntimeBarrierInspection.models(next,candidate,work);}else{
-                    phase="round-model-construction";construction=ContextDependentModelSearchInspection.received(child,cuts,replay.checked,r.receivingSearch,chargeCandidate);
+                    phase="round-model-construction";construction=ContextDependentModelSearchInspection.received(child,cuts,replay.checked,r.receivingSearch,chargeCandidate,chargeAudit);
                     if(construction.status!=ContextDependentModelSearchInspection.Status.MODELLED_PENDING)return Result.incomplete(phase,construction.phase+": "+construction.reason);
                     models=construction.models;points=r.receivingSearch.limits.points;cells=r.receivingSearch.limits.cells;
                 }
-                phase="round-model-preflight";ContextDependentModelAudit nativeAudit=new ContextDependentModelAudit(child,cuts,replay.checked,new ContextDependentModelInspection.Request(policy,models,points,cells,plan.originalWork,plan.finalWork));phase="round-original";int originals=nativeAudit.original();phase="round-final";int finals=nativeAudit.finalModel();interrupt();
+                phase="round-model-preflight";ContextDependentModelAudit nativeAudit=new ContextDependentModelAudit(child,cuts,replay.checked,new ContextDependentModelInspection.Request(policy,models,points,cells,plan.originalWork,plan.finalWork),chargeAudit);phase="round-original";int originals=nativeAudit.original();phase="round-final";int finals=nativeAudit.finalModel();interrupt();
                 if(construction!=null)need(construction.originalRows==originals&&construction.finalObligations==finals&&construction.runtimeObligations==finals,"Constructed and independent final receiving counts must agree");
                 phase="round-runtime";Frame after;
-                if(construction==null)after=received(child,cuts,r,candidate,replay.checked,next,finals);else{
+                if(construction==null)after=received(child,cuts,r,candidate,replay.checked,next,finals,chargeAudit);else{
                     Projection p=r.projection;after=ContextDependentRuntimeInspection.project(child,replay.checked,new ContextDependentRuntimeInspection.Request(p.products,p.nodes,p.copyWork,p.auditWork));
-                    ContextDependentRuntimeModelAudit indexed=new ContextDependentRuntimeModelAudit(child,cuts,after,models,points,cells,p.products,p.nodes,p.truthWork,ContextGroundProductionRounds.budget(p.shapeWork));need(indexed.truth()==finals,"Every constructed receiving raw occurrence must pass independent indexed truth");
+                    ContextDependentRuntimeModelAudit indexed=new ContextDependentRuntimeModelAudit(child,cuts,after,models,points,cells,p.products,p.nodes,p.truthWork,ContextGroundProductionRounds.budget(p.shapeWork),chargeAudit);need(indexed.truth()==finals,"Every constructed receiving raw occurrence must pass independent indexed truth");
                 }
                 phase="round-frontier";ContextDependentFrontierInspection.Snapshot frontier=ContextDependentFrontierInspection.inspect(last(replay.checked),r.frontierWork,r.frontierCapacity);ContextDependentFrontierInspection.Comparison comparison=ContextDependentFrontierInspection.compare(before,frontier,r.frontierWork);need(comparison.removedOrWorsened==0,"Complete receiving proof frontier must not lose support or worsen minimum depth");
                 cycles.add(new Cycle(frame,after,discovery,replay,originals,finals,comparison,construction));interrupt();
@@ -112,17 +112,17 @@ public final class ContextDependentRuntimeIterationInspection {
         }catch(InterruptedException interrupted){Thread.currentThread().interrupt();throw interrupted;}catch(Exception failure){interrupt();return Result.incomplete(phase,failure.getMessage());}
     }
     public static Result inspect(Member base,Member child,List<Cut> supplied,Request r)throws Exception{
-        return inspect(base,child,supplied,r,()->{},barriers->{},()->{});
+        return inspect(base,child,supplied,r,()->{},barriers->{},()->{},()->{});
     }
-    static Result inspect(Member base,Member child,List<Cut> supplied,Request r,Runnable chargeCandidate,java.util.function.IntConsumer chargeReplay,Runnable chargeReplayWork)throws Exception{
+    static Result inspect(Member base,Member child,List<Cut> supplied,Request r,Runnable chargeCandidate,java.util.function.IntConsumer chargeReplay,Runnable chargeReplayWork,Runnable chargeAudit)throws Exception{
         if(base==null||child==null||supplied==null||supplied.contains(null)||r==null)throw new IllegalArgumentException("Actual parent/child and complete cuts required");List<Cut> cuts=new ArrayList<>(supplied);interrupt();current(base,child,cuts,r);
         try{
             if(r.automatic){
-                ContextDependentRuntimeModelInspection.Result startup=ContextDependentRuntimeModelInspection.inspect(base,child,cuts,r.preparation);
+                ContextDependentRuntimeModelInspection.Result startup=ContextDependentRuntimeModelInspection.inspect(base,child,cuts,r.preparation,chargeAudit);
                 if(startup.status==ContextDependentRuntimeModelInspection.Status.INCOMPLETE)return Result.incomplete("automatic-preparation",startup.phase+": "+startup.reason);
                 if(startup.status!=ContextDependentRuntimeModelInspection.Status.RUNTIME_MODELLED_PENDING)return new Result(Status.valueOf(startup.status.name()),"automatic-preparation",startup.reason,null,Collections.emptyList(),null,Collections.emptyList(),startup);
                 ContextDependentCandidateInspection.Result candidate=startup.projection.qualification.candidate;
-                return run(child,cuts,r,null,candidate,candidate.proposed.checked,candidate.proposed.history,startup,chargeCandidate,chargeReplay,chargeReplayWork);
+                return run(child,cuts,r,null,candidate,candidate.proposed.checked,candidate.proposed.history,startup,chargeCandidate,chargeReplay,chargeReplayWork,chargeAudit);
             }
             ContextDependentRuntimeBarrierInspection.Result first=ContextDependentRuntimeBarrierInspection.inspect(base,child,cuts,r.first);
             if(first.status!=ContextDependentRuntimeBarrierInspection.Status.RECEIVED_PENDING){if(first.status==ContextDependentRuntimeBarrierInspection.Status.INCOMPLETE)return Result.incomplete("first-barrier",first.phase+": "+first.reason);Status status=Status.valueOf(first.status.name());return new Result(status,"first-barrier",first.reason,status==Status.BASE_REFUTED||status==Status.CANDIDATE_REFUTED?first:null,Collections.emptyList(),null,first.oppositions);}

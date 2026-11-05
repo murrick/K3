@@ -20,7 +20,7 @@ public final class ContextDependentConstructedIterationInspection {
         public final ContextDependentConstructedStartupInspection.Request startup;
         public final ContextDependentModelSearchInspection.Request receivingSearch;
         public final List<RoundLimits> rounds;public final int initialWork,frontierWork,frontierCapacity;
-        public final long totalCandidateAttempts,totalReplayedBarriers,totalReplayWork;
+        public final long totalCandidateAttempts,totalReplayedBarriers,totalReplayWork,totalModelAuditWork;
         public Request(ContextDependentConstructedStartupInspection.Request startup,ContextDependentModelSearchInspection.Request receivingSearch,List<RoundLimits> rounds,int initialWork,int frontierWork,int frontierCapacity){
             this(startup,receivingSearch,rounds,initialWork,frontierWork,frontierCapacity,Long.MAX_VALUE);
         }
@@ -31,6 +31,12 @@ public final class ContextDependentConstructedIterationInspection {
             this(startup,receivingSearch,rounds,initialWork,frontierWork,frontierCapacity,totalCandidateAttempts,totalReplayedBarriers,Long.MAX_VALUE);
         }
         public Request(ContextDependentConstructedStartupInspection.Request startup,ContextDependentModelSearchInspection.Request receivingSearch,List<RoundLimits> rounds,int initialWork,int frontierWork,int frontierCapacity,long totalCandidateAttempts,long totalReplayedBarriers,long totalReplayWork){
+            this(startup,receivingSearch,rounds,initialWork,frontierWork,frontierCapacity,
+                    totalCandidateAttempts,totalReplayedBarriers,totalReplayWork,Long.MAX_VALUE);
+        }
+        public Request(ContextDependentConstructedStartupInspection.Request startup,ContextDependentModelSearchInspection.Request receivingSearch,List<RoundLimits> rounds,int initialWork,int frontierWork,int frontierCapacity,long totalCandidateAttempts,long totalReplayedBarriers,long totalReplayWork,long totalModelAuditWork){
+            if (totalModelAuditWork < 1) throw new IllegalArgumentException("Positive whole-cycle model audit work limit required");
+            this.totalModelAuditWork = totalModelAuditWork;
             if(totalReplayWork<1)throw new IllegalArgumentException("Positive whole-cycle replay work limit required");
             this.totalReplayWork=totalReplayWork;
             if(totalReplayedBarriers<1)throw new IllegalArgumentException("Positive whole-cycle replay barrier limit required");
@@ -77,13 +83,18 @@ public final class ContextDependentConstructedIterationInspection {
             }
             remainingReplayWork[0]--;
         };
+        long[] remainingAuditWork = {r.totalModelAuditWork};
+        Runnable chargeAudit = () -> {
+            if (remainingAuditWork[0] == 0) throw new IllegalStateException("Whole-cycle model audit work limit");
+            remainingAuditWork[0]--;
+        };
         try{try{
-            ContextDependentConstructedStartupInspection.Result startup=ContextDependentConstructedStartupInspection.inspect(base,child,cuts,r.startup,chargeCandidate);
+            ContextDependentConstructedStartupInspection.Result startup=ContextDependentConstructedStartupInspection.inspect(base,child,cuts,r.startup,chargeCandidate,chargeAudit);
             if(startup.status==ContextDependentConstructedStartupInspection.Status.INCOMPLETE)return Result.incomplete(phase,startup.phase+": "+startup.reason);
             if(startup.status!=ContextDependentConstructedStartupInspection.Status.RUNTIME_MODELLED_PENDING)return new Result(Status.valueOf(startup.status.name()),phase,startup.reason,startup,null);
             List<ContextDependentRuntimeContinuationInspection.AutomaticPlan> schedule=new ArrayList<>();for(RoundLimits bounds:r.rounds)schedule.add(bounds.plan());
             phase="constructed-iteration";ContextDependentRuntimeIterationInspection.Request request=ContextDependentRuntimeIterationInspection.constructedReceiving(startup.preparation,r.receivingSearch.projection,schedule,r.initialWork,r.frontierWork,r.frontierCapacity,r.receivingSearch);
-            ContextDependentRuntimeIterationInspection.Result iteration=ContextDependentRuntimeIterationInspection.inspect(base,child,cuts,request,chargeCandidate,chargeReplay,chargeReplayWork);ContextDependentRuntimeExecution.interrupt();
+            ContextDependentRuntimeIterationInspection.Result iteration=ContextDependentRuntimeIterationInspection.inspect(base,child,cuts,request,chargeCandidate,chargeReplay,chargeReplayWork,chargeAudit);ContextDependentRuntimeExecution.interrupt();
             if(iteration.status==ContextDependentRuntimeIterationInspection.Status.INCOMPLETE)return Result.incomplete(iteration.phase,iteration.reason);
             Status status=Status.valueOf(iteration.status.name());return new Result(status,iteration.phase,iteration.reason,status==Status.STABLE_PENDING?startup:null,iteration);
         }catch(InterruptedException interrupted){Thread.currentThread().interrupt();throw interrupted;}catch(Exception failure){ContextDependentRuntimeExecution.interrupt();return Result.incomplete(phase,failure.getMessage());}}finally{current(base,child,cuts,r);}

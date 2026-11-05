@@ -33,7 +33,16 @@ final class ContextDependentRuntimeModelAudit {
     ContextDependentRuntimeModelAudit(Member child,List<Cut> cuts,Frame frame,Map<String,Model> models,ContextDependentRuntimeModelInspection.Request request,Runnable work)throws Exception{
         this(child,cuts,frame,models,request.projection.qualification.points,request.projection.qualification.cells,request.projection.products,request.projection.nodes,request.truthWork,work);
     }
+    ContextDependentRuntimeModelAudit(Member child,List<Cut> cuts,Frame frame,Map<String,Model> models,ContextDependentRuntimeModelInspection.Request request,Runnable work,Runnable chargeAudit)throws Exception{
+        this(child,cuts,frame,models,request.projection.qualification.points,request.projection.qualification.cells,request.projection.products,request.projection.nodes,request.truthWork,work,chargeAudit);
+    }
     ContextDependentRuntimeModelAudit(Member child,List<Cut> cuts,Frame frame,Map<String,Model> models,int pointLimit,int cellLimit,int productLimit,int nodeLimit,int truthWork,Runnable work)throws Exception{
+        this(child,cuts,frame,models,pointLimit,cellLimit,productLimit,nodeLimit,truthWork,work,()->{});
+    }
+    ContextDependentRuntimeModelAudit(Member child,List<Cut> cuts,Frame frame,Map<String,Model> models, int pointLimit,int cellLimit,int productLimit,int nodeLimit,int truthWork,Runnable localWork,Runnable chargeAudit)throws Exception{
+        this.chargeAudit=chargeAudit;
+        Runnable work=()->{localWork.run();chargeAudit.run();};
+
         need(pointLimit>0&&cellLimit>0&&productLimit>0&&nodeLimit>0&&truthWork>0,"Positive independent indexed model bounds required");this.frame=frame;this.models=models;this.pointLimit=pointLimit;this.cellLimit=cellLimit;this.productLimit=productLimit;this.nodeLimit=nodeLimit;this.truthWork=truthWork;
         need(frame!=null&&frame.context.equals(child.inventory.context)&&frame.revision==child.inventory.revision&&frame.fingerprint.equals(child.inventory.fingerprint),"Actual child-bound runtime frame required");
         Map<UUID,Shape> physical=new LinkedHashMap<>();physical.put(child.inventory.context,nativeShape(child,work));for(Cut cut:cuts)for(Member member:cut.members){work.run();need(!physical.containsKey(member.inventory.context),"Distinct runtime physical members required");physical.put(member.inventory.context,nativeShape(member,work));}
@@ -70,5 +79,6 @@ final class ContextDependentRuntimeModelAudit {
             level--;if(level>=0)digits[level]++;
         }
     }
-    int truth()throws Exception{Runnable work=ContextGroundProductionRounds.budget(truthWork);int obligations=0;for(Map.Entry<String,List<Product>> cut:frame.cuts.entrySet())for(Product product:cut.getValue()){interrupt();work.run();product(product,models.get(cut.getKey()),work);obligations++;}return obligations;}
+    private final Runnable chargeAudit;
+    int truth()throws Exception{Runnable localWork=ContextGroundProductionRounds.budget(truthWork);Runnable work=()->{localWork.run();chargeAudit.run();};int obligations=0;for(Map.Entry<String,List<Product>> cut:frame.cuts.entrySet())for(Product product:cut.getValue()){interrupt();work.run();product(product,models.get(cut.getKey()),work);obligations++;}return obligations;}
 }

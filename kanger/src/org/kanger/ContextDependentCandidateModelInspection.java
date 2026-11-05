@@ -32,6 +32,9 @@ public final class ContextDependentCandidateModelInspection {
     private static void interrupt()throws InterruptedException{if(Thread.currentThread().isInterrupted())throw new InterruptedException("Candidate/model composition interrupted");}
     private static void current(Member base,Member child,List<Cut> cuts,Request request)throws Exception{ContextDependentReplayInspection.current(base.actual,base.inventory,request.append.iteration.policy);ContextDependentReplayInspection.current(child.actual,child.inventory,request.append.iteration.policy);for(Cut cut:cuts)for(Member member:cut.members)ContextDependentReplayInspection.currentMember(member.actual,member.inventory,request.append.iteration.policy);}
     public static Result inspect(Member base,Member child,List<Cut> supplied,Request request)throws Exception{
+        return inspect(base,child,supplied,request,()->{});
+    }
+    static Result inspect(Member base,Member child,List<Cut> supplied,Request request,Runnable chargeAudit)throws Exception{
         if(base==null||child==null||supplied==null||supplied.contains(null)||request==null)throw new IllegalArgumentException("Actual parent/child and complete foreign cuts required");List<Cut> cuts=new ArrayList<>(supplied);interrupt();current(base,child,cuts,request);
         try {String phase="native-append-and-cycles";
             try {
@@ -40,7 +43,7 @@ public final class ContextDependentCandidateModelInspection {
                 if(candidate.verdict==ContextDependentCandidateInspection.Verdict.CANDIDATE_REFUTED)return new Result(Status.CANDIDATE_REFUTED,candidate.phase,candidate.reason,candidate,0,0,0,0,Collections.emptyMap());
                 if(candidate.verdict!=ContextDependentCandidateInspection.Verdict.STABLE_PENDING)return Result.incomplete(phase,candidate.phase+": "+candidate.reason);
                 // Internally fresh cycles only: no caller-supplied candidate/model diagnostic can skip an audit.
-                phase="base-model-preflight";ContextDependentModelAudit original=new ContextDependentModelAudit(base,cuts,candidate.base,new ContextDependentModelInspection.Request(request.append.iteration,request.baseModels,request.points,request.cells,request.baseOriginalWork,request.baseFinalWork));
+                phase="base-model-preflight";ContextDependentModelAudit original=new ContextDependentModelAudit(base,cuts,candidate.base.checked,new ContextDependentModelInspection.Request(request.append.iteration,request.baseModels,request.points,request.cells,request.baseOriginalWork,request.baseFinalWork),chargeAudit);
                 phase="base-original-audit";int bo=original.original();interrupt();phase="base-actual-final-audit";int bf=original.finalModel();interrupt();
                 phase="proposed-model-rebase";Runnable work=ContextGroundProductionRounds.budget(request.append.iteration.policy.work);Map<Source,Source> forward=new LinkedHashMap<>();for(Map.Entry<Source,Source> entry:candidate.originals.entrySet()){work.run();need(forward.put(entry.getValue(),entry.getKey())==null,"One-to-one actual original Source rebasing required");}
                 Map<String,Model> models=new LinkedHashMap<>();Map<String,Map<Function,Function>> rebindings=new LinkedHashMap<>();int entries=0;
@@ -49,7 +52,7 @@ public final class ContextDependentCandidateModelInspection {
                     for(Map.Entry<Function,Choice> entry:input.functions.entrySet()){work.run();need(++entries<=request.cells,"Whole supplied function rebasing bound");Function key=entry.getKey();Source actual=forward.get(key.source);need(actual!=null,"Proposed preserved functions require exact PARENT original Sources; candidates and foreign Sources stay exact");Function next=new Function(actual,key.binder);need(functions.put(next,entry.getValue())==null,"Aliased proposed function declaration after rebasing");renamed.put(key,next);}
                     models.put(cut.getKey(),new Model(input.points,input.otherRepresentative,input.relations,functions));rebindings.put(cut.getKey(),Collections.unmodifiableMap(renamed));
                 }
-                phase="proposed-model-preflight";ContextDependentModelAudit proposed=new ContextDependentModelAudit(child,cuts,candidate.proposed,new ContextDependentModelInspection.Request(request.append.iteration,models,request.points,request.cells,request.proposedOriginalWork,request.proposedFinalWork));
+                phase="proposed-model-preflight";ContextDependentModelAudit proposed=new ContextDependentModelAudit(child,cuts,candidate.proposed.checked,new ContextDependentModelInspection.Request(request.append.iteration,models,request.points,request.cells,request.proposedOriginalWork,request.proposedFinalWork),chargeAudit);
                 phase="proposed-original-audit";int po=proposed.original();interrupt();phase="proposed-actual-final-audit";int pf=proposed.finalModel();interrupt();
                 return new Result(Status.MODELLED_PENDING,"historical-native-append-modelled","Actual append, fresh base/proposed cycles and all four all-value model audits checked; native product/runtime/write admission unknown",candidate,bo,bf,po,pf,rebindings);
             }catch(InterruptedException interrupted){Thread.currentThread().interrupt();throw interrupted;}

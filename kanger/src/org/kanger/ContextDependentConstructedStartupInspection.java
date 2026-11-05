@@ -36,9 +36,9 @@ public final class ContextDependentConstructedStartupInspection {
         ContextDependentReplayInspection.current(base.actual,base.inventory,r.append.iteration.policy);ContextDependentReplayInspection.current(child.actual,child.inventory,r.append.iteration.policy);for(Cut cut:cuts)for(Member m:cut.members)ContextDependentReplayInspection.currentMember(m.actual,m.inventory,r.append.iteration.policy);
     }
     public static Result inspect(Member base,Member child,List<Cut> supplied,Request r)throws Exception{
-        return inspect(base,child,supplied,r,()->{});
+        return inspect(base,child,supplied,r,()->{},()->{});
     }
-    static Result inspect(Member base,Member child,List<Cut> supplied,Request r,Runnable chargeCandidate)throws Exception{
+    static Result inspect(Member base,Member child,List<Cut> supplied,Request r,Runnable chargeCandidate,Runnable chargeAudit)throws Exception{
         if(base==null||child==null||supplied==null||supplied.contains(null)||r==null)throw new IllegalArgumentException("Actual parent/child and complete foreign cuts required");
         List<Cut> cuts=new ArrayList<>(supplied);ContextDependentRuntimeExecution.interrupt();current(base,child,cuts,r);String phase="native-append";int bt=0,pt=0;
         try{try{
@@ -47,9 +47,9 @@ public final class ContextDependentConstructedStartupInspection {
             if(c.verdict==ContextDependentCandidateInspection.Verdict.BASE_REFUTED)return new Result(Status.BASE_REFUTED,c.phase,c.reason,c,null,null,0,0);
             if(c.verdict==ContextDependentCandidateInspection.Verdict.CANDIDATE_REFUTED)return new Result(Status.CANDIDATE_REFUTED,c.phase,c.reason,c,null,null,0,0);
             if(c.verdict!=ContextDependentCandidateInspection.Verdict.STABLE_PENDING)return Result.incomplete(phase,c.reason,0,0);
-            phase="base-construction";ContextDependentModelSearchInspection.Result b=ContextDependentModelSearchInspection.inspect(base,cuts,r.search,chargeCandidate);bt=b.tried;
+            phase="base-construction";ContextDependentModelSearchInspection.Result b=ContextDependentModelSearchInspection.inspect(base,cuts,r.search,chargeCandidate,chargeAudit);bt=b.tried;
             if(b.status!=ContextDependentModelSearchInspection.Status.MODELLED_PENDING)return Result.incomplete(phase,b.phase+": "+b.reason,bt,0);
-            phase="proposed-construction";ContextDependentModelSearchInspection.Result p=ContextDependentModelSearchInspection.inspect(child,cuts,r.search,chargeCandidate);pt=p.tried;
+            phase="proposed-construction";ContextDependentModelSearchInspection.Result p=ContextDependentModelSearchInspection.inspect(child,cuts,r.search,chargeCandidate,chargeAudit);pt=p.tried;
             if(p.status!=ContextDependentModelSearchInspection.Status.MODELLED_PENDING)return Result.incomplete(phase,p.phase+": "+p.reason,bt,pt);
             phase="parent-original-rebase";Runnable work=ContextGroundProductionRounds.budget(r.rebaseWork);Map<String,Model> originals=new LinkedHashMap<>();int entries=0;
             for(Map.Entry<String,Model> entry:p.models.entrySet()){
@@ -63,7 +63,7 @@ public final class ContextDependentConstructedStartupInspection {
             ContextDependentModelSearchInspection.Limits l=r.search.limits;ContextDependentRuntimeContinuationInspection.Projection q=r.search.projection;
             ContextDependentCandidateModelInspection.Request qualification=new ContextDependentCandidateModelInspection.Request(r.append,b.models,originals,l.points,l.cells,l.originalWork,l.finalWork,l.originalWork,l.finalWork);
             ContextDependentRuntimeModelInspection.Request preparation=new ContextDependentRuntimeModelInspection.Request(new ContextDependentRuntimeInspection.Request(qualification,q.products,q.nodes,q.copyWork,q.auditWork),q.shapeWork,q.truthWork);
-            phase="fresh-runtime-qualification";ContextDependentRuntimeModelInspection.Result startup=ContextDependentRuntimeModelInspection.inspect(base,child,cuts,preparation);ContextDependentRuntimeExecution.interrupt();
+            phase="fresh-runtime-qualification";ContextDependentRuntimeModelInspection.Result startup=ContextDependentRuntimeModelInspection.inspect(base,child,cuts,preparation,chargeAudit);ContextDependentRuntimeExecution.interrupt();
             if(startup.status!=ContextDependentRuntimeModelInspection.Status.RUNTIME_MODELLED_PENDING)return Result.incomplete(phase,startup.phase+": "+startup.reason,bt,pt);
             return new Result(Status.RUNTIME_MODELLED_PENDING,"constructed-startup-audited","Constructed base/proposed models freshly rechecked against actual append, native originals/finals and independent indexed truth; not write admission",startup.projection.qualification.candidate,startup,preparation,bt,pt);
         }catch(InterruptedException interrupted){Thread.currentThread().interrupt();throw interrupted;}catch(Exception failure){ContextDependentRuntimeExecution.interrupt();return Result.incomplete(phase,failure.getMessage(),bt,pt);}}finally{current(base,child,cuts,r);}
