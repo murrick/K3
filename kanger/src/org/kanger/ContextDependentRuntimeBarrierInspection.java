@@ -62,12 +62,15 @@ public final class ContextDependentRuntimeBarrierInspection {
         return replay(child,cuts,prefix,original,frame,steps,outputs,maximumWork,()->{});
     }
     static Replay replay(Member child,List<Cut> cuts,ContextDependentRoundInspection.Request prefix,ContextDependentRoundInspection.Result original,ContextDependentRuntimeInspection.Frame frame,List<ContextDependentRuntimeExecution.Step> steps,List<ContextDependentRuntimeExecution.Output> outputs,int maximumWork,Runnable chargeWork)throws Exception{
-        return replay(child,cuts,prefix,original,frame,steps,outputs,maximumWork,chargeWork,Long.MAX_VALUE,Long.MAX_VALUE);
+        return replay(child,cuts,prefix,original,frame,steps,outputs,maximumWork,chargeWork,Long.MAX_VALUE,Long.MAX_VALUE,Long.MAX_VALUE);
     }
-    static Replay replay(Member child,List<Cut> cuts,ContextDependentRoundInspection.Request prefix,ContextDependentRoundInspection.Result original,ContextDependentRuntimeInspection.Frame frame,List<ContextDependentRuntimeExecution.Step> steps,List<ContextDependentRuntimeExecution.Output> outputs,int maximumWork,Runnable chargeWork,long replaySnapshotEntries,long replayScratchEntries)throws Exception{
+    static Replay replay(Member child,List<Cut> cuts,ContextDependentRoundInspection.Request prefix,ContextDependentRoundInspection.Result original,ContextDependentRuntimeInspection.Frame frame,List<ContextDependentRuntimeExecution.Step> steps,List<ContextDependentRuntimeExecution.Output> outputs,int maximumWork,Runnable chargeWork,long replaySnapshotEntries,long replayScratchEntries,long replayBridgeEntries)throws Exception{
         Runnable localWork=ContextGroundProductionRounds.budget(maximumWork);
         Runnable work=()->{localWork.run();chargeWork.run();};need(!prefix.rounds.isEmpty()&&prefix.rounds.size()==original.barriers.size()&&steps.size()==outputs.size(),"Whole fresh execution/prefix required");int last=prefix.rounds.size()-1;Barrier barrier=original.barriers.get(last);need(frame.context.equals(child.inventory.context)&&frame.revision==child.inventory.revision&&frame.fingerprint.equals(child.inventory.fingerprint)&&frame.cuts.keySet().equals(barrier.cuts.keySet()),"Same exact child-bound runtime/cut basis required");
-        List<Ticket> all=new ArrayList<>();for(int r=0;r<prefix.rounds.size();r++){need(prefix.rounds.get(r).recipes.keySet().equals(barrier.cuts.keySet()),"Complete historical cut coverage");for(String cut:barrier.cuts.keySet())for(int i=0;i<prefix.rounds.get(r).recipes.get(cut).size();i++){work.run();all.add(new Ticket(r,cut,i));}}need(new LinkedHashSet<>(all).equals(barrier.observed.keySet()),"Exact whole historical proof-ticket manifest required");for(Ticket t:all){work.run();need(barrier.common.contains(t)==barrier.observed.get(t).sources.stream().anyMatch(s->s.localX),"Only and every local-X ancestry ticket may be common");}need(new HashSet<>(all).containsAll(barrier.common),"No invented common ticket");
+        if (replayBridgeEntries != Long.MAX_VALUE) {
+            checkBridgeEntries(prefix, barrier, frame, steps, replayBridgeEntries, work);
+        }
+        List<Ticket> all=new ArrayList<>();for(int r=0;r<prefix.rounds.size();r++){need(prefix.rounds.get(r).recipes.keySet().equals(barrier.cuts.keySet()),"Complete historical cut coverage");for(String cut:barrier.cuts.keySet())for(int i=0;i<prefix.rounds.get(r).recipes.get(cut).size();i++){work.run();all.add(new Ticket(r,cut,i));}}need(new LinkedHashSet<>(all).equals(barrier.observed.keySet()),"Exact whole historical proof-ticket manifest required");for(Ticket t:all){work.run();need(barrier.common.contains(t)==barrier.observed.get(t).sources.stream().anyMatch(s->s.localX),"Only and every local-X ancestry ticket may be common");}need(barrier.observed.keySet().containsAll(barrier.common),"No invented common ticket");
         Map<String,List<Ticket>> manifest=new LinkedHashMap<>();for(String cut:barrier.cuts.keySet()){
             work.run();List<Ticket> tickets=new ArrayList<>();List<ContextDependentRuntimeInspection.Product> ps=frame.cuts.get(cut);int at=0,ordinal=0;for(Ticket t:barrier.common){work.run();need(at<ps.size(),"Missing common runtime occurrence");ContextDependentRuntimeInspection.Product p=ps.get(at++);need(p.cut.equals(cut)&&p.role==ContextDependentRuntimeInspection.Role.COMMON&&p.occurrence==ordinal++,"Exact common role/ordinal required");runtime(p,barrier.observed.get(t),work);tickets.add(t);}ordinal=0;
             for(Ticket t:all)if(t.cut.equals(cut)||t.round<last&&barrier.common.contains(t)){work.run();need(at<ps.size()&&ordinal<barrier.cuts.get(cut).products.size(),"Missing visible runtime occurrence");ContextDependentRuntimeInspection.Product p=ps.get(at++);Row row=barrier.cuts.get(cut).products.get(ordinal);need(p.cut.equals(cut)&&p.role==ContextDependentRuntimeInspection.Role.VISIBLE&&p.occurrence==ordinal++,"Exact visible role/ordinal required");runtime(p,row,work);runtime(p,barrier.observed.get(t),work);tickets.add(t);}
@@ -79,6 +82,35 @@ public final class ContextDependentRuntimeBarrierInspection {
         for(int i=0;i<original.barriers.size();i++){work.run();Barrier before=original.barriers.get(i),after=checked.barriers.get(i);need(before.common.equals(after.common)&&before.basis.equals(after.basis)&&before.scopes.equals(after.scopes)&&before.cuts.keySet().equals(after.cuts.keySet()),"Historical basis/common/scopes changed during replay");for(String cut:before.cuts.keySet()){work.run();need(before.cuts.get(cut).auditDigest.equals(after.cuts.get(cut).auditDigest),"Independent native replay changed the frozen proof prefix");}}
         Barrier born=checked.barriers.get(produced);for(int i=0;i<outputs.size();i++)output(outputs.get(i),born.observed.get(made.get(i)),work);return new Replay(checked,manifest,made,produced,history);
     }
+    private static void checkBridgeEntries(ContextDependentRoundInspection.Request prefix, Barrier barrier,
+                                           ContextDependentRuntimeInspection.Frame frame,
+                                           List<ContextDependentRuntimeExecution.Step> steps,
+                                           long limit, Runnable work) {
+        long remaining = reserveBridgeEntries(limit, prefix.rounds.size() + 2L);
+        for (Round round : prefix.rounds) {
+            for (List<ContextDependentRoundInspection.Step> recipes : round.recipes.values()) {
+                work.run();
+                // Ordered ticket list and the verification set.
+                remaining = reserveBridgeEntries(remaining, 2L * recipes.size());
+            }
+        }
+        for (String cut : barrier.cuts.keySet()) {
+            work.run();
+            // Cut keys in the manifest and in the two new round maps.
+            remaining = reserveBridgeEntries(remaining, 3L + frame.cuts.get(cut).size());
+        }
+        for (ContextDependentRuntimeExecution.Step step : steps) {
+            work.run();
+            // Output ticket, translated recipe and donor references.
+            remaining = reserveBridgeEntries(remaining, 2L + step.donors.size());
+        }
+    }
+
+    private static long reserveBridgeEntries(long remaining, long entries) {
+        need(entries <= remaining, "Replay bridge entry limit");
+        return remaining - entries;
+    }
+
     static List<Opposition> oppositions(Barrier barrier,ContextDependentCandidateInspection.Result candidate,Runnable work){List<Opposition> out=new ArrayList<>();for(Map.Entry<String,ContextDependentProductionInspection.Result> cut:barrier.cuts.entrySet())for(List<ContextDependentProductionInspection.Refutation> list:Arrays.asList(cut.getValue().originalUnitRefutations,cut.getValue().finalUnitRefutations))for(ContextDependentProductionInspection.Refutation p:list){work.run();need(p.sources.contains(p.constraint),"Actual whole original constraint Source required");Set<Source> incoming=new LinkedHashSet<>(),originals=new LinkedHashSet<>();for(Source s:p.sources){work.run();Source original=candidate.originals.get(s);need(original!=null&&originals.add(original),"Exact unaliased original refutation Source mapping required");if(candidate.candidates.contains(s))incoming.add(s);}out.add(new Opposition(cut.getKey(),p,incoming,originals));}return out;}
     static Map<String,Model> models(Request request,ContextDependentCandidateInspection.Result candidate,Runnable work){Map<Source,Source> forward=new LinkedHashMap<>();for(Map.Entry<Source,Source> e:candidate.originals.entrySet()){work.run();need(forward.put(e.getValue(),e.getKey())==null,"One-to-one actual receiving Source rebase");}Map<String,Model> out=new LinkedHashMap<>();for(Map.Entry<String,Model> e:request.receivingOriginalModels.entrySet()){work.run();Map<Function,Choice> fs=new LinkedHashMap<>();for(Map.Entry<Function,Choice> f:e.getValue().functions.entrySet()){work.run();Source source=forward.get(f.getKey().source);need(source!=null,"Receiving models require parent-original preserved X function keys; candidate/foreign keys stay exact");need(fs.put(new Function(source,f.getKey().binder),f.getValue())==null,"Aliased receiving function declaration");}Model m=e.getValue();out.put(e.getKey(),new Model(m.points,m.otherRepresentative,m.relations,fs));}return out;}
     private static void current(Member base,Member child,List<Cut> cuts,Request r)throws Exception{ContextDependentReplayInspection.Policy p=r.execution.preparation.projection.qualification.append.iteration.policy;ContextDependentReplayInspection.current(base.actual,base.inventory,p);ContextDependentReplayInspection.current(child.actual,child.inventory,p);for(Cut cut:cuts)for(Member member:cut.members)ContextDependentReplayInspection.currentMember(member.actual,member.inventory,p);}

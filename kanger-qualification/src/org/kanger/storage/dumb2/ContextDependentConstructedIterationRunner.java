@@ -138,6 +138,17 @@ public final class ContextDependentConstructedIterationRunner {
                 q.frontierWork, q.frontierCapacity, exactAttempts, replayBarriers, 1000000, 1000000,
                 retainedProofEntries, largestReplay, 1000);
         stable(ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), scratchRoom));
+        Request bridgeTight = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
+                q.frontierWork, q.frontierCapacity, exactAttempts, replayBarriers, 1000000, 1000000,
+                retainedProofEntries, largestReplay, 1000, 1);
+        Result bridgeExhausted = ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), bridgeTight);
+        incomplete(bridgeExhausted);
+        need(bridgeExhausted.phase.equals("round-bridge")
+                && bridgeExhausted.reason.contains("Replay bridge entry limit"), "bridge entries have an independent limit");
+        Request bridgeRoom = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
+                q.frontierWork, q.frontierCapacity, exactAttempts, replayBarriers, 1000000, 1000000,
+                retainedProofEntries, largestReplay, 1000, 1000);
+        stable(ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), bridgeRoom));
         Request startupTight = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
                 q.frontierWork, q.frontierCapacity, startupAttempts - 1);
         Result startupExhausted = ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), startupTight);
