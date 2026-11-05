@@ -303,7 +303,7 @@ public class Parser {
         }
     }
 
-    private static Leaf parse(String line, Token token, int sourceOffset) throws ParseErrorException {
+    private static Leaf parse(String line, Token token, int sourceOffset, Runnable chargeNode) throws ParseErrorException {
         Leaf current = null;
         Leaf root = null;
         while ((token = nextToken(line, token, sourceOffset)) != null) {
@@ -318,7 +318,7 @@ public class Parser {
                 break;
             }
 
-            Leaf leaf = new Leaf();
+            Leaf leaf = newLeaf(chargeNode);
             leaf.setValue(token.getToken(line));
             leaf.setPos(sourceOffset + token.getPos());
 
@@ -336,25 +336,25 @@ public class Parser {
                 if ((token = nextToken(line, token, sourceOffset)) == null) {
                     throw new ParseErrorException(leaf.getPos(), "No quantifier variable defined");
                 }
-                Leaf tmp = new Leaf();
+                Leaf tmp = newLeaf(chargeNode);
                 tmp.setValue(token.getToken(line));
                 tmp.setPos(sourceOffset + token.getPos());
                 leaf.setLeft(tmp);
             } else if ("_set".equals(leaf.getValue())) {
-                Leaf tmp = new Leaf();
+                Leaf tmp = newLeaf(chargeNode);
                 tmp.setValue("(");
                 tmp.setPos(sourceOffset + token.getPos());
                 tmp.setPriority(1);
                 tmp.setRange(2);
                 tmp.setLeft(leaf);
                 leaf = tmp;
-                leaf.setRight(parse(line, token, sourceOffset));
+                leaf.setRight(parse(line, token, sourceOffset, chargeNode));
                 if (!"]".equals(token.getToken(line))) {
                     throw new ParseErrorException(leaf.getPos(), "Expected closing bracket");
                 }
             } else if ("(".equals(leaf.getValue())) {
                 leaf.setPriority(1);
-                leaf.setRight(parse(line, token, sourceOffset));
+                leaf.setRight(parse(line, token, sourceOffset, chargeNode));
                 if (!")".equals(token.getToken(line))) {
                     throw new ParseErrorException(leaf.getPos(), "Expected closing bracket");
                 }
@@ -406,7 +406,7 @@ public class Parser {
                     parentOp = getParent(root, parentOp);
                 }
                 if (parentOp != null && parentOp.getPriority() > 0) {
-                    Leaf tmp = new Leaf();
+                    Leaf tmp = newLeaf(chargeNode);
                     tmp.setValue(",");
                     tmp.setPos(sourceOffset + token.getPos());
                     tmp.setPriority(7);
@@ -479,12 +479,21 @@ public class Parser {
         }
     }
 
+    private static Leaf newLeaf(Runnable chargeNode) {
+        if (chargeNode != null) chargeNode.run();
+        return new Leaf();
+    }
+
     public static Leaf parse(String line) throws ParseErrorException {
         return parse(line, 0);
     }
 
     public static Leaf parse(String line, int sourceOffset) throws ParseErrorException {
-        Leaf tree = parse(line, null, sourceOffset);
+        return parse(line, sourceOffset, null);
+    }
+
+    public static Leaf parse(String line, int sourceOffset, Runnable chargeNode) throws ParseErrorException {
+        Leaf tree = parse(line, null, sourceOffset, chargeNode);
         return squeeze(tree);
     }
 

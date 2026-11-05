@@ -83,20 +83,20 @@ public final class ContextDependentReplayInspection {
         return projectMember(actual,expected,policy,()->{});
     }
     static Projection projectMember(Mind actual,ContextProductionInventory expected,Policy policy,Runnable chargeWork)throws Exception {
-        return projectMember(actual,expected,policy,chargeWork,null,null);
+        return projectMember(actual,expected,policy,chargeWork,null,null,null);
     }
     static Projection projectMember(Mind actual,ContextProductionInventory expected,Policy policy,
-                                    Runnable chargeWork,Runnable chargeNewTerm,Runnable chargeCompilerEntry)throws Exception {
+                                    Runnable chargeWork,Runnable chargeNewTerm,Runnable chargeCompilerEntry,Runnable chargeParserNode)throws Exception {
         Runnable localWork = ContextGroundProductionRounds.budget(policy.work);
-        return project(actual,expected,policy,true,()->{localWork.run();chargeWork.run();},false,chargeNewTerm,chargeCompilerEntry);
+        return project(actual,expected,policy,true,()->{localWork.run();chargeWork.run();},false,chargeNewTerm,chargeCompilerEntry,chargeParserNode);
     }
     private static Projection project(Mind actual,ContextProductionInventory expected,Policy policy,boolean horn,Runnable work)throws Exception {
-        return project(actual,expected,policy,horn,work,true,null,null);
+        return project(actual,expected,policy,horn,work,true,null,null,null);
     }
-    private static Projection project(Mind actual,ContextProductionInventory expected,Policy policy,boolean horn,Runnable work,boolean local,Runnable chargeNewTerm,Runnable chargeCompilerEntry)throws Exception {
+    private static Projection project(Mind actual,ContextProductionInventory expected,Policy policy,boolean horn,Runnable work,boolean local,Runnable chargeNewTerm,Runnable chargeCompilerEntry,Runnable chargeParserNode)throws Exception {
         if(local)current(actual,expected,policy);else currentMember(actual,expected,policy);
         if(!expected.initialization.isEmpty()||expected.rows.size()!=expected.primary.size())throw new IllegalStateException("Whole primary-only local-X diagnostic required");
-        User user=new User();Mind isolated=new Mind(user,chargeNewTerm,chargeCompilerEntry);user.setCurrentMind(isolated);Map<Long,Long> mapping=new LinkedHashMap<>();
+        User user=new User();Mind isolated=new Mind(user,chargeNewTerm,chargeCompilerEntry,chargeParserNode);user.setCurrentMind(isolated);Map<Long,Long> mapping=new LinkedHashMap<>();
         try {
             for(ContextProductionInventory.Row row:expected.rows) {
                 work.run();Rule original=(Rule)actual.getRules().get(row.nativeRule),copy=(Rule)isolated.compileLine(row.origin,false,new LinkedList<org.kanger.interfaces.ITerm>());

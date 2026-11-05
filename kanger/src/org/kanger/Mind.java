@@ -220,13 +220,15 @@ public class Mind implements IMind {
     private boolean includeAbstractiveHypothesis = false;
 
     private final Runnable chargeCompilerEntry;
+    private final Runnable chargeParserNode;
 
     public Mind(IUser user) throws Exception {
-        this(user, null, null);
+        this(user, null, null, null);
     }
 
-    Mind(IUser user, Runnable chargeNewTerm, Runnable chargeCompilerEntry) throws Exception {
+    Mind(IUser user, Runnable chargeNewTerm, Runnable chargeCompilerEntry, Runnable chargeParserNode) throws Exception {
         this.chargeCompilerEntry = chargeCompilerEntry;
+        this.chargeParserNode = chargeParserNode;
         this.user = (User) user;
         this.user.nextId();
         init(chargeNewTerm);
@@ -297,6 +299,7 @@ public class Mind implements IMind {
         id = user.nextId(); //root.getId() + 1;
         Mind parent = (Mind) root;
         chargeCompilerEntry = parent.chargeCompilerEntry;
+        chargeParserNode = parent.chargeParserNode;
         init();
         connectionLayer = parent.connectionLayer;
         contextProvenance.inheritFrom(parent.contextProvenance);
@@ -1288,7 +1291,7 @@ public class Mind implements IMind {
         if (suc != null) {
             try (TechnicalMindTransaction tx = TechnicalMindTransaction.begin(this)) {
                 Mind x = tx.mind();
-                Leaf p = Parser.parse(line.substring(1), sourceOffset + 1);
+                Leaf p = Parser.parse(line.substring(1), sourceOffset + 1, x.chargeParserNode);
 
                 r = x.compiler.compileLine(p, suc, orig, query, externals);
                 x.setCompliedLine(compliedLine);

@@ -195,6 +195,17 @@ public final class ContextDependentConstructedIterationRunner {
                 q.frontierWork, q.frontierCapacity, exactAttempts, replayBarriers, 1000000, 1000000,
                 retainedProofEntries, largestReplay, 1000, 1000, 2, projectionPairEntries, 1000, 1000);
         stable(ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), factoryRoom));
+        Request parserTight = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
+                q.frontierWork, q.frontierCapacity, exactAttempts, replayBarriers, 1000000, 1000000,
+                retainedProofEntries, largestReplay, 1000, 1000, 2, projectionPairEntries, 1000, 1000, 1);
+        Result parserExhausted = ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), parserTight);
+        incomplete(parserExhausted);
+        need(parserExhausted.phase.equals("round-bridge")
+                && parserExhausted.reason.contains("Replay parser node limit"), "parser nodes have an independent allowance");
+        Request parserRoom = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
+                q.frontierWork, q.frontierCapacity, exactAttempts, replayBarriers, 1000000, 1000000,
+                retainedProofEntries, largestReplay, 1000, 1000, 2, projectionPairEntries, 1000, 1000, 1000);
+        stable(ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), parserRoom));
         Request startupTight = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
                 q.frontierWork, q.frontierCapacity, startupAttempts - 1);
         Result startupExhausted = ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), startupTight);
