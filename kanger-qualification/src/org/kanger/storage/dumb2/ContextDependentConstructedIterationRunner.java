@@ -96,6 +96,23 @@ public final class ContextDependentConstructedIterationRunner {
         Request auditRoom = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
                 q.frontierWork, q.frontierCapacity, exactAttempts, replayBarriers, 1000000, 1000000);
         stable(ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), auditRoom));
+        long initialProofEntries = ContextDependentRuntimeIterationProbe.proofEntries(
+                unrestricted.iteration.startup.projection.qualification.candidate.proposed.checked);
+        long retainedProofEntries = initialProofEntries;
+        for (ContextDependentRuntimeIterationInspection.Cycle cycle : unrestricted.iteration.cycles) {
+            retainedProofEntries += ContextDependentRuntimeIterationProbe.proofEntries(cycle.checked);
+        }
+        Request historyTight = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
+                q.frontierWork, q.frontierCapacity, exactAttempts, replayBarriers, 1000000, 1000000,
+                retainedProofEntries - 1);
+        Result historyExhausted = ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), historyTight);
+        incomplete(historyExhausted);
+        need(historyExhausted.phase.equals("round-proof-history")
+                && historyExhausted.reason.contains("Retained proof history limit"), "the retained snapshots share a history limit");
+        Request historyExact = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
+                q.frontierWork, q.frontierCapacity, exactAttempts, replayBarriers, 1000000, 1000000,
+                retainedProofEntries);
+        stable(ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), historyExact));
         Request startupTight = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
                 q.frontierWork, q.frontierCapacity, startupAttempts - 1);
         Result startupExhausted = ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), startupTight);

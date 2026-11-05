@@ -4,6 +4,9 @@ import java.util.*;
 import org.kanger.ContextDependentCutInspection.*;
 /** QA-only actual-native minimal receiving prefix and replay challenges. Never packaged in production. */
 public final class ContextDependentRuntimeIterationProbe {
+    public static long proofEntries(ContextDependentRoundInspection.Result snapshot) {
+        return snapshot.barriers.stream().mapToLong(barrier -> 1L + barrier.observed.size()).sum();
+    }
     private static ContextDependentRoundInspection.Result initial(Member child,List<Cut> cuts,ContextDependentRuntimeIterationInspection.Request r)throws Exception{
         Map<String,List<ContextDependentRoundInspection.Step>> empty=new LinkedHashMap<>();empty.put(ContextDependentCutInspection.local(child.inventory.context),Collections.emptyList());for(Cut cut:cuts)empty.put(cut.key,Collections.emptyList());ContextDependentIterationInspection.Request p=r.preparation.projection.qualification.append.iteration;return ContextDependentRoundInspection.inspect(child,cuts,new ContextDependentRoundInspection.Request(p.policy,p.capacity,Collections.singletonList(new ContextDependentRoundInspection.Round(empty))));
     }
