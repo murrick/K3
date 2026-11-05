@@ -64,6 +64,20 @@ public final class ContextDependentConstructedIterationRunner {
         incomplete(exhausted);
         need(exhausted.phase.equals("round-model-construction")
                 && exhausted.reason.contains("Whole-cycle candidate-attempt limit"), "startup and receiving share one allowance");
+        long replayBarriers = 0;
+        for (ContextDependentRuntimeIterationInspection.Cycle cycle : unrestricted.iteration.cycles) {
+            replayBarriers += cycle.history.size();
+        }
+        Request replayExact = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
+                q.frontierWork, q.frontierCapacity, exactAttempts, replayBarriers);
+        stable(ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), replayExact));
+        stable(ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), replayExact));
+        Request replayTight = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
+                q.frontierWork, q.frontierCapacity, exactAttempts, replayBarriers - 1);
+        Result replayExhausted = ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), replayTight);
+        incomplete(replayExhausted);
+        need(replayExhausted.phase.equals("round-bridge")
+                && replayExhausted.reason.contains("Whole-cycle replay barrier limit"), "replay charges the complete prefix before starting");
         Request startupTight = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
                 q.frontierWork, q.frontierCapacity, startupAttempts - 1);
         Result startupExhausted = ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), startupTight);
