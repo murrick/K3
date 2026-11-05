@@ -110,6 +110,7 @@ public class Compiller {
     }
 
     private String functionSignature(Leaf root) {
+        mind.chargeCompilerText(String.valueOf(root.getValue()).length() + 2L, root.getRange());
         return root.getValue() + "(" + root.getRange() + ")";
     }
 

@@ -356,6 +356,7 @@ public class DictionaryFactory implements IFactory<ITerm> {
      */
     public ITerm createCVar(IRule r, ITerm name, ITerm parent) throws Exception {
         int i = nextVarIndex();
+        mind.chargeCompilerText(1, i);
         String temp = String.format("%c%d", parent == null ? '%' : '*', i);
         ITerm t = add(temp);
         ((Term) t).setRule(r);

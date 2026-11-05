@@ -224,17 +224,19 @@ public class Mind implements IMind {
     private final Runnable chargeParserToken;
     private final long parserDepth;
     private final java.util.function.IntConsumer chargeLexemeText;
+    private final java.util.function.LongConsumer chargeCompilerText;
 
     public Mind(IUser user) throws Exception {
-        this(user, null, null, null, null, Long.MAX_VALUE, null);
+        this(user, null, null, null, null, Long.MAX_VALUE, null, null);
     }
 
-    Mind(IUser user, Runnable chargeNewTerm, Runnable chargeCompilerEntry, Runnable chargeParserNode, Runnable chargeParserToken, long parserDepth, java.util.function.IntConsumer chargeLexemeText) throws Exception {
+    Mind(IUser user, Runnable chargeNewTerm, Runnable chargeCompilerEntry, Runnable chargeParserNode, Runnable chargeParserToken, long parserDepth, java.util.function.IntConsumer chargeLexemeText, java.util.function.LongConsumer chargeCompilerText) throws Exception {
         this.chargeCompilerEntry = chargeCompilerEntry;
         this.chargeParserNode = chargeParserNode;
         this.chargeParserToken = chargeParserToken;
         this.parserDepth = parserDepth;
         this.chargeLexemeText = chargeLexemeText;
+        this.chargeCompilerText = chargeCompilerText;
         this.user = (User) user;
         this.user.nextId();
         init(chargeNewTerm);
@@ -309,6 +311,7 @@ public class Mind implements IMind {
         chargeParserToken = parent.chargeParserToken;
         parserDepth = parent.parserDepth;
         chargeLexemeText = parent.chargeLexemeText;
+        chargeCompilerText = parent.chargeCompilerText;
         init();
         connectionLayer = parent.connectionLayer;
         contextProvenance.inheritFrom(parent.contextProvenance);
@@ -428,6 +431,16 @@ public class Mind implements IMind {
             default:
                 break;
         }
+    }
+
+    /** Reserves generated compiler text consisting of fixed characters and a decimal integer. */
+    public void chargeCompilerText(long fixedChars, int number) {
+        if (chargeCompilerText == null) return;
+        long length = fixedChars + (number < 0 ? 2 : 1);
+        for (int digits = number; digits >= 10 || digits <= -10; digits /= 10) {
+            length++;
+        }
+        chargeCompilerText.accept(length);
     }
 
     private void init() throws Exception {

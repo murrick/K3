@@ -255,6 +255,19 @@ public final class ContextDependentConstructedIterationRunner {
                 retainedProofEntries, largestReplay, 1000, 1000, 2, projectionPairEntries,
                 1000, 1000, 1000, 4, 64, 1000, sourcePairChars);
         stable(ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), sourceExact));
+        Request compilerTextTight = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
+                q.frontierWork, q.frontierCapacity, exactAttempts, replayBarriers, 1000000, 1000000,
+                retainedProofEntries, largestReplay, 1000, 1000, 2, projectionPairEntries,
+                1000, 1000, 1000, 4, 64, 1000, sourcePairChars, 1);
+        Result compilerTextExhausted = ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), compilerTextTight);
+        incomplete(compilerTextExhausted);
+        need(compilerTextExhausted.phase.equals("round-bridge")
+                && compilerTextExhausted.reason.contains("Replay compiler character limit"), "generated compiler text has an independent limit");
+        Request compilerTextRoom = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
+                q.frontierWork, q.frontierCapacity, exactAttempts, replayBarriers, 1000000, 1000000,
+                retainedProofEntries, largestReplay, 1000, 1000, 2, projectionPairEntries,
+                1000, 1000, 1000, 4, 64, 1000, sourcePairChars, 1000);
+        stable(ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), compilerTextRoom));
         Request startupTight = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
                 q.frontierWork, q.frontierCapacity, startupAttempts - 1);
         Result startupExhausted = ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), startupTight);
