@@ -19,26 +19,32 @@ public final class ContextDependentRuntimeIterationInspection {
         public final ContextDependentRuntimeBarrierInspection.Request first;
         public final ContextDependentRuntimeModelInspection.Request preparation;
         public final boolean automatic;
+        public final ContextDependentModelSearchInspection.Request receivingSearch;
         private final ContextDependentRuntimeBarrierInspection.Request initial;
         public final Projection projection;public final List<AutomaticPlan> rounds;
         public final int frontierWork,frontierCapacity;
         public Request(ContextDependentRuntimeBarrierInspection.Request first,Projection projection,List<AutomaticPlan> rounds,int frontierWork,int frontierCapacity){
-            this(first,first==null?null:first.execution.preparation,projection,rounds,first==null?0:first.bridgeWork,frontierWork,frontierCapacity,false);
+            this(first,first==null?null:first.execution.preparation,projection,rounds,first==null?0:first.bridgeWork,frontierWork,frontierCapacity,false,null);
         }
-        private Request(ContextDependentRuntimeBarrierInspection.Request first,ContextDependentRuntimeModelInspection.Request preparation,Projection projection,List<AutomaticPlan> rounds,int initialWork,int frontierWork,int frontierCapacity,boolean automatic){
+        private Request(ContextDependentRuntimeBarrierInspection.Request first,ContextDependentRuntimeModelInspection.Request preparation,Projection projection,List<AutomaticPlan> rounds,int initialWork,int frontierWork,int frontierCapacity,boolean automatic,ContextDependentModelSearchInspection.Request receivingSearch){
             if(preparation==null||(!automatic&&first==null)||projection==null||rounds==null||rounds.isEmpty()||rounds.contains(null)||rounds.size()>preparation.projection.qualification.append.iteration.policy.steps||initialWork<1||frontierWork<1||frontierCapacity<1||frontierCapacity>100000)throw new IllegalArgumentException("Fresh preparation, bounded whole round schedule and frontier bounds required");
+            this.receivingSearch=receivingSearch==null?null:new ContextDependentModelSearchInspection.Request(preparation.projection.qualification.append.iteration,receivingSearch.extraPoints,receivingSearch.otherRepresentative,receivingSearch.limits,projection);
+            if(this.receivingSearch!=null){if(!automatic)throw new IllegalArgumentException("Constructed receiving requires automatic startup");for(AutomaticPlan round:rounds)if(!round.receivingOriginalModels.isEmpty())throw new IllegalArgumentException("Constructed receiving accepts bounds only, not supplied model maps");}
             this.first=first;this.preparation=preparation;this.automatic=automatic;this.projection=projection;this.rounds=Collections.unmodifiableList(new ArrayList<>(rounds));this.frontierWork=frontierWork;this.frontierCapacity=frontierCapacity;
             if(automatic){AutomaticPlan bounds=this.rounds.get(0);ContextDependentCandidateModelInspection.Request q=preparation.projection.qualification;initial=new ContextDependentRuntimeBarrierInspection.Request(new ContextDependentRuntimeExecution.Request(preparation,Collections.emptyList(),bounds.work,bounds.auditWork,bounds.nodes,true),q.proposedOriginalModels,initialWork,q.proposedOriginalWork,q.proposedFinalWork);}else initial=first;
         }
         /** No caller plan, donor tuple, cached frame or qualification receipt. */
-        public static Request automatic(ContextDependentRuntimeModelInspection.Request preparation,Projection projection,List<AutomaticPlan> rounds,int initialWork,int frontierWork,int frontierCapacity){return new Request(null,preparation,projection,rounds,initialWork,frontierWork,frontierCapacity,true);}
+        public static Request automatic(ContextDependentRuntimeModelInspection.Request preparation,Projection projection,List<AutomaticPlan> rounds,int initialWork,int frontierWork,int frontierCapacity){return new Request(null,preparation,projection,rounds,initialWork,frontierWork,frontierCapacity,true,null);}
     }
+    /** Fresh construction on every internally replayed receiving state, including an empty plan. */
+    public static Request constructedReceiving(ContextDependentRuntimeModelInspection.Request preparation,Projection projection,List<AutomaticPlan> rounds,int initialWork,int frontierWork,int frontierCapacity,ContextDependentModelSearchInspection.Request search){if(search==null)throw new IllegalArgumentException("Receiving model construction required");return new Request(null,preparation,projection,rounds,initialWork,frontierWork,frontierCapacity,true,search);}
     public static final class Cycle {
         public final Frame input,received;public final ContextDependentRuntimeDiscovery.Result discovery;
         public final ContextDependentRoundInspection.Result checked;public final List<Round> history;
         public final Map<String,List<Ticket>> runtimeTickets;public final List<Ticket> outputTickets;
+        public final Map<String,Model> constructedModels;public final int modelAttempts;
         public final int originalRows,finalObligations;public final ContextDependentFrontierInspection.Comparison comparison;
-        private Cycle(Frame input,Frame received,ContextDependentRuntimeDiscovery.Result discovery,ContextDependentRuntimeBarrierInspection.Replay replay,int originals,int finals,ContextDependentFrontierInspection.Comparison comparison){this.input=input;this.received=received;this.discovery=discovery;checked=replay.checked;history=replay.history;runtimeTickets=replay.runtime;outputTickets=replay.outputs;originalRows=originals;finalObligations=finals;this.comparison=comparison;}
+        private Cycle(Frame input,Frame received,ContextDependentRuntimeDiscovery.Result discovery,ContextDependentRuntimeBarrierInspection.Replay replay,int originals,int finals,ContextDependentFrontierInspection.Comparison comparison,ContextDependentModelSearchInspection.Result construction){constructedModels=construction==null?Collections.emptyMap():construction.models;modelAttempts=construction==null?0:construction.tried;this.input=input;this.received=received;this.discovery=discovery;checked=replay.checked;history=replay.history;runtimeTickets=replay.runtime;outputTickets=replay.outputs;originalRows=originals;finalObligations=finals;this.comparison=comparison;}
     }
     public static final class Result {
         public final Status status;public final String phase,reason;public final UUID epoch;
@@ -82,10 +88,21 @@ public final class ContextDependentRuntimeIterationInspection {
                 ContextDependentRuntimeBarrierInspection.Request next=new ContextDependentRuntimeBarrierInspection.Request(new ContextDependentRuntimeExecution.Request(bounds.preparation,discovery.steps,plan.work,plan.auditWork,plan.nodes,true),plan.receivingOriginalModels,plan.bridgeWork,plan.originalWork,plan.finalWork);
                 phase="round-bridge";ContextDependentRuntimeBarrierInspection.Replay replay=ContextDependentRuntimeBarrierInspection.replay(child,cuts,new ContextDependentRoundInspection.Request(policy.policy,policy.capacity,history),checked,frame,discovery.steps,discovery.outputs,plan.bridgeWork);Runnable work=ContextGroundProductionRounds.budget(plan.bridgeWork);
                 phase="round-producing";refusals=ContextDependentRuntimeBarrierInspection.oppositions(replay.checked.barriers.get(replay.produced),candidate,work);if(refusals.isEmpty()){phase="round-receiving";refusals=ContextDependentRuntimeBarrierInspection.oppositions(replay.checked.barriers.get(replay.received),candidate,work);}if(!refusals.isEmpty())return Result.refused(phase,refusals);
-                phase="round-model-rebase";Map<String,Model> models=ContextDependentRuntimeBarrierInspection.models(next,candidate,work);phase="round-model-preflight";ContextDependentModelAudit nativeAudit=new ContextDependentModelAudit(child,cuts,replay.checked,new ContextDependentModelInspection.Request(policy,models,q.points,q.cells,plan.originalWork,plan.finalWork));phase="round-original";int originals=nativeAudit.original();phase="round-final";int finals=nativeAudit.finalModel();interrupt();
-                phase="round-runtime";Frame after=received(child,cuts,r,candidate,replay.checked,next,finals);
+                ContextDependentModelSearchInspection.Result construction=null;Map<String,Model> models;int points=q.points,cells=q.cells;
+                if(r.receivingSearch==null){phase="round-model-rebase";models=ContextDependentRuntimeBarrierInspection.models(next,candidate,work);}else{
+                    phase="round-model-construction";construction=ContextDependentModelSearchInspection.received(child,cuts,replay.checked,r.receivingSearch);
+                    if(construction.status!=ContextDependentModelSearchInspection.Status.MODELLED_PENDING)return Result.incomplete(phase,construction.phase+": "+construction.reason);
+                    models=construction.models;points=r.receivingSearch.limits.points;cells=r.receivingSearch.limits.cells;
+                }
+                phase="round-model-preflight";ContextDependentModelAudit nativeAudit=new ContextDependentModelAudit(child,cuts,replay.checked,new ContextDependentModelInspection.Request(policy,models,points,cells,plan.originalWork,plan.finalWork));phase="round-original";int originals=nativeAudit.original();phase="round-final";int finals=nativeAudit.finalModel();interrupt();
+                if(construction!=null)need(construction.originalRows==originals&&construction.finalObligations==finals&&construction.runtimeObligations==finals,"Constructed and independent final receiving counts must agree");
+                phase="round-runtime";Frame after;
+                if(construction==null)after=received(child,cuts,r,candidate,replay.checked,next,finals);else{
+                    Projection p=r.projection;after=ContextDependentRuntimeInspection.project(child,replay.checked,new ContextDependentRuntimeInspection.Request(p.products,p.nodes,p.copyWork,p.auditWork));
+                    ContextDependentRuntimeModelAudit indexed=new ContextDependentRuntimeModelAudit(child,cuts,after,models,points,cells,p.products,p.nodes,p.truthWork,ContextGroundProductionRounds.budget(p.shapeWork));need(indexed.truth()==finals,"Every constructed receiving raw occurrence must pass independent indexed truth");
+                }
                 phase="round-frontier";ContextDependentFrontierInspection.Snapshot frontier=ContextDependentFrontierInspection.inspect(last(replay.checked),r.frontierWork,r.frontierCapacity);ContextDependentFrontierInspection.Comparison comparison=ContextDependentFrontierInspection.compare(before,frontier,r.frontierWork);need(comparison.removedOrWorsened==0,"Complete receiving proof frontier must not lose support or worsen minimum depth");
-                cycles.add(new Cycle(frame,after,discovery,replay,originals,finals,comparison));interrupt();
+                cycles.add(new Cycle(frame,after,discovery,replay,originals,finals,comparison,construction));interrupt();
                 if(!comparison.changed)return new Result(Status.STABLE_PENDING,"received-frontier-stable","Unchanged supported signed typed/whole-Source/min-depth frontier AFTER complete receiving/native/indexed audits; full-language/default admission unknown",first,cycles,frontier,Collections.emptyList(),startup);
                 before=frontier;frame=after;checked=replay.checked;history=replay.history;
             }

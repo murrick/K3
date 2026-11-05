@@ -308,6 +308,18 @@ final class ContextPendingProductionSnapshotSession implements AutoCloseable {
             } catch(Exception failure){dependentRuntime=null;dependentRuntimeModels=null;dependentRuntimeExecution=null;dependentRuntimeBarrier=null;dependentRuntimeContinuation=null;dependentRuntimeIteration=null;throw failure;}
         }
     }
+    ContextDependentConstructedIterationInspection.Result prepareDependentConstructedIteration(ContextDependentConstructedIterationInspection.Request request) throws Exception {
+        synchronized(provider) {
+            requireOwner();dependentRuntime=null;dependentRuntimeModels=null;dependentRuntimeExecution=null;dependentRuntimeBarrier=null;dependentRuntimeContinuation=null;dependentRuntimeIteration=null;requireCurrent();if(request==null||request.startup.append.iteration.policy.rows!=rows)throw new IllegalArgumentException("Cut diagnostic rows must match owning lease");
+            try {
+                provider.productionExecutionTopology();List<ContextDependentCutInspection.Cut> cuts=new ArrayList<>();Map<String,List<ContextDependentCutInspection.Member>> groups=new LinkedHashMap<>();
+                for(int i=0;i<topology.size();i++){ContextConnection connection=topology.get(i);ContextDependentCutInspection.Member member=new ContextDependentCutInspection.Member(connection.layer(),foreign.get(i));String group=connection.getTrustGroup();if(group==null)cuts.add(new ContextDependentCutInspection.Cut(null,Collections.singletonList(member)));else groups.computeIfAbsent(group,k->new ArrayList<>()).add(member);}
+                for(Map.Entry<String,List<ContextDependentCutInspection.Member>> group:groups.entrySet())cuts.add(new ContextDependentCutInspection.Cut(group.getKey(),group.getValue()));
+                ContextDependentConstructedIterationInspection.Result result=ContextDependentConstructedIterationInspection.inspect(new ContextDependentCutInspection.Member(parent,parentInventory),new ContextDependentCutInspection.Member(child,childInventory),cuts,request);
+                requireCurrent();if(result.status==ContextDependentConstructedIterationInspection.Status.STABLE_PENDING)dependentRuntimeIteration=result.iteration;return result;
+            } catch(Exception failure){dependentRuntime=null;dependentRuntimeModels=null;dependentRuntimeExecution=null;dependentRuntimeBarrier=null;dependentRuntimeContinuation=null;dependentRuntimeIteration=null;throw failure;}
+        }
+    }
     ContextDependentRuntimeIterationInspection.Result dependentRuntimeIteration(UUID epoch)throws Exception{
         synchronized(provider){requireCurrent();if(dependentRuntimeIteration==null||epoch==null||!epoch.equals(dependentRuntimeIteration.epoch))throw new IllegalStateException("Exact current owned runtime iteration epoch required");return dependentRuntimeIteration;}
     }
