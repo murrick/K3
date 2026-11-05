@@ -47,12 +47,55 @@ public final class ContextDependentRuntimeBarrierInspection {
         public List<Integer> roots(){return p.arguments;}public Kind kind(int n){return p.nodes.get(n).kind;}public int variable(int n){return p.nodes.get(n).variable;}public SemanticTermSnapshot value(int n){return p.nodes.get(n).value;}public Source function(int n){return p.nodes.get(n).function;}public int binder(int n){return p.nodes.get(n).binder;}public List<Integer> args(int n){return p.nodes.get(n).arguments;}
     }
     private static final class Pair {final int index;final TermView term;Pair(int index,TermView term){this.index=index;this.term=term;}}
-    private static void graph(Graph graph,Row row,Runnable work){
-        need(graph.roots().size()==row.arguments.size(),"Exact typed replay conclusion rank required");Map<Integer,Integer> forward=new HashMap<>(),back=new HashMap<>();Deque<Pair> todo=new ArrayDeque<>();for(int i=0;i<row.arguments.size();i++){work.run();todo.push(new Pair(graph.roots().get(i),row.arguments.get(i)));}
-        while(!todo.isEmpty()){work.run();Pair pair=todo.pop();TermView t=pair.term;int n=pair.index;need(graph.kind(n)==t.kind,"Typed replay term kind differs");if(t.kind==Kind.VARIABLE){int variable=graph.variable(n);Integer a=forward.get(variable),b=back.get(t.variable);if(a==null&&b==null){forward.put(variable,t.variable);back.put(t.variable,variable);}else need(a!=null&&b!=null&&a==t.variable&&b==variable,"Replay must preserve bijective variable correlation");}else if(t.kind==Kind.VALUE)need(graph.value(n).semanticallyEquals(t.value),"Replay typed value differs");else{need(graph.binder(n)==t.binder&&graph.function(n).equals(t.symbolSource)&&graph.args(n).size()==t.arguments.size(),"Replay function Source/binder/dependency rank differs");for(int i=0;i<t.arguments.size();i++){work.run();todo.push(new Pair(graph.args(n).get(i),t.arguments.get(i)));}}}
+    private static void graph(Graph graph, Row row, Runnable work, long termEntries) {
+        List<Integer> roots = graph.roots();
+        need(roots.size() == row.arguments.size(), "Exact typed replay conclusion rank required");
+        checkTermEntries(roots.size(), termEntries);
+        Map<Integer,Integer> forward = new HashMap<>();
+        Map<Integer,Integer> back = new HashMap<>();
+        Deque<Pair> todo = new ArrayDeque<>();
+        for (int i = 0; i < roots.size(); i++) {
+            work.run();
+            todo.push(new Pair(roots.get(i), row.arguments.get(i)));
+        }
+        while (!todo.isEmpty()) {
+            work.run();
+            Pair pair = todo.pop();
+            TermView term = pair.term;
+            int node = pair.index;
+            need(graph.kind(node) == term.kind, "Typed replay term kind differs");
+            long liveEntries = todo.size() + 2L * forward.size();
+            if (term.kind == Kind.VARIABLE) {
+                int variable = graph.variable(node);
+                Integer a = forward.get(variable), b = back.get(term.variable);
+                if (a == null && b == null) {
+                    checkTermEntries(liveEntries + 2, termEntries);
+                    forward.put(variable, term.variable);
+                    back.put(term.variable, variable);
+                } else {
+                    need(a != null && b != null && a == term.variable && b == variable,
+                            "Replay must preserve bijective variable correlation");
+                }
+            } else if (term.kind == Kind.VALUE) {
+                need(graph.value(node).semanticallyEquals(term.value), "Replay typed value differs");
+            } else {
+                List<Integer> arguments = graph.args(node);
+                need(graph.binder(node) == term.binder && graph.function(node).equals(term.symbolSource)
+                        && arguments.size() == term.arguments.size(), "Replay function Source/binder/dependency rank differs");
+                checkTermEntries(liveEntries + arguments.size(), termEntries);
+                for (int i = 0; i < arguments.size(); i++) {
+                    work.run();
+                    todo.push(new Pair(arguments.get(i), term.arguments.get(i)));
+                }
+            }
+        }
     }
-    private static void runtime(ContextDependentRuntimeInspection.Product p,Row row,Runnable work){work.run();need(row!=null&&p.producer.equals(row.rule)&&p.sources.equals(row.sources)&&p.depth==row.depth&&p.retainedLiteral==row.retainedLiteral&&p.positive==row.positive&&p.predicate.equals(row.predicate),"Exact runtime proof occurrence must match its historical ticket");graph(new RuntimeGraph(p),row,work);}
-    private static void output(ContextDependentRuntimeExecution.Output p,Row row,Runnable work){work.run();need(row!=null&&p.producer.equals(row.rule)&&p.sources.equals(row.sources)&&p.depth==row.depth&&p.retainedLiteral==row.retainedLiteral&&p.positive==row.positive&&p.predicate.equals(row.predicate),"Exact executed proof ancestry/depth/head must match native replay");graph(new ExecutionGraph(p),row,work);}
+
+    private static void checkTermEntries(long required, long limit) {
+        need(required <= limit, "Replay term comparison entry limit");
+    }
+    private static void runtime(ContextDependentRuntimeInspection.Product p,Row row,Runnable work,long termEntries){work.run();need(row!=null&&p.producer.equals(row.rule)&&p.sources.equals(row.sources)&&p.depth==row.depth&&p.retainedLiteral==row.retainedLiteral&&p.positive==row.positive&&p.predicate.equals(row.predicate),"Exact runtime proof occurrence must match its historical ticket");graph(new RuntimeGraph(p),row,work,termEntries);}
+    private static void output(ContextDependentRuntimeExecution.Output p,Row row,Runnable work,long termEntries){work.run();need(row!=null&&p.producer.equals(row.rule)&&p.sources.equals(row.sources)&&p.depth==row.depth&&p.retainedLiteral==row.retainedLiteral&&p.positive==row.positive&&p.predicate.equals(row.predicate),"Exact executed proof ancestry/depth/head must match native replay");graph(new ExecutionGraph(p),row,work,termEntries);}
     static final class Replay {
         final ContextDependentRoundInspection.Result checked;final Map<String,List<Ticket>> runtime;final List<Ticket> outputs;final List<Round> history;final int produced,received;
         Replay(ContextDependentRoundInspection.Result checked,Map<String,List<Ticket>> runtime,List<Ticket> outputs,int produced,List<Round> history){this.checked=checked;this.history=Collections.unmodifiableList(new ArrayList<>(history));Map<String,List<Ticket>> copy=new LinkedHashMap<>();for(Map.Entry<String,List<Ticket>> e:runtime.entrySet())copy.put(e.getKey(),Collections.unmodifiableList(new ArrayList<>(e.getValue())));this.runtime=Collections.unmodifiableMap(copy);this.outputs=Collections.unmodifiableList(new ArrayList<>(outputs));this.produced=produced;received=produced+1;}
@@ -62,9 +105,9 @@ public final class ContextDependentRuntimeBarrierInspection {
         return replay(child,cuts,prefix,original,frame,steps,outputs,maximumWork,()->{});
     }
     static Replay replay(Member child,List<Cut> cuts,ContextDependentRoundInspection.Request prefix,ContextDependentRoundInspection.Result original,ContextDependentRuntimeInspection.Frame frame,List<ContextDependentRuntimeExecution.Step> steps,List<ContextDependentRuntimeExecution.Output> outputs,int maximumWork,Runnable chargeWork)throws Exception{
-        return replay(child,cuts,prefix,original,frame,steps,outputs,maximumWork,chargeWork,Long.MAX_VALUE,Long.MAX_VALUE,Long.MAX_VALUE);
+        return replay(child,cuts,prefix,original,frame,steps,outputs,maximumWork,chargeWork,Long.MAX_VALUE,Long.MAX_VALUE,Long.MAX_VALUE,Long.MAX_VALUE);
     }
-    static Replay replay(Member child,List<Cut> cuts,ContextDependentRoundInspection.Request prefix,ContextDependentRoundInspection.Result original,ContextDependentRuntimeInspection.Frame frame,List<ContextDependentRuntimeExecution.Step> steps,List<ContextDependentRuntimeExecution.Output> outputs,int maximumWork,Runnable chargeWork,long replaySnapshotEntries,long replayScratchEntries,long replayBridgeEntries)throws Exception{
+    static Replay replay(Member child,List<Cut> cuts,ContextDependentRoundInspection.Request prefix,ContextDependentRoundInspection.Result original,ContextDependentRuntimeInspection.Frame frame,List<ContextDependentRuntimeExecution.Step> steps,List<ContextDependentRuntimeExecution.Output> outputs,int maximumWork,Runnable chargeWork,long replaySnapshotEntries,long replayScratchEntries,long replayBridgeEntries,long replayTermEntries)throws Exception{
         Runnable localWork=ContextGroundProductionRounds.budget(maximumWork);
         Runnable work=()->{localWork.run();chargeWork.run();};need(!prefix.rounds.isEmpty()&&prefix.rounds.size()==original.barriers.size()&&steps.size()==outputs.size(),"Whole fresh execution/prefix required");int last=prefix.rounds.size()-1;Barrier barrier=original.barriers.get(last);need(frame.context.equals(child.inventory.context)&&frame.revision==child.inventory.revision&&frame.fingerprint.equals(child.inventory.fingerprint)&&frame.cuts.keySet().equals(barrier.cuts.keySet()),"Same exact child-bound runtime/cut basis required");
         if (replayBridgeEntries != Long.MAX_VALUE) {
@@ -72,15 +115,15 @@ public final class ContextDependentRuntimeBarrierInspection {
         }
         List<Ticket> all=new ArrayList<>();for(int r=0;r<prefix.rounds.size();r++){need(prefix.rounds.get(r).recipes.keySet().equals(barrier.cuts.keySet()),"Complete historical cut coverage");for(String cut:barrier.cuts.keySet())for(int i=0;i<prefix.rounds.get(r).recipes.get(cut).size();i++){work.run();all.add(new Ticket(r,cut,i));}}need(new LinkedHashSet<>(all).equals(barrier.observed.keySet()),"Exact whole historical proof-ticket manifest required");for(Ticket t:all){work.run();need(barrier.common.contains(t)==barrier.observed.get(t).sources.stream().anyMatch(s->s.localX),"Only and every local-X ancestry ticket may be common");}need(barrier.observed.keySet().containsAll(barrier.common),"No invented common ticket");
         Map<String,List<Ticket>> manifest=new LinkedHashMap<>();for(String cut:barrier.cuts.keySet()){
-            work.run();List<Ticket> tickets=new ArrayList<>();List<ContextDependentRuntimeInspection.Product> ps=frame.cuts.get(cut);int at=0,ordinal=0;for(Ticket t:barrier.common){work.run();need(at<ps.size(),"Missing common runtime occurrence");ContextDependentRuntimeInspection.Product p=ps.get(at++);need(p.cut.equals(cut)&&p.role==ContextDependentRuntimeInspection.Role.COMMON&&p.occurrence==ordinal++,"Exact common role/ordinal required");runtime(p,barrier.observed.get(t),work);tickets.add(t);}ordinal=0;
-            for(Ticket t:all)if(t.cut.equals(cut)||t.round<last&&barrier.common.contains(t)){work.run();need(at<ps.size()&&ordinal<barrier.cuts.get(cut).products.size(),"Missing visible runtime occurrence");ContextDependentRuntimeInspection.Product p=ps.get(at++);Row row=barrier.cuts.get(cut).products.get(ordinal);need(p.cut.equals(cut)&&p.role==ContextDependentRuntimeInspection.Role.VISIBLE&&p.occurrence==ordinal++,"Exact visible role/ordinal required");runtime(p,row,work);runtime(p,barrier.observed.get(t),work);tickets.add(t);}
+            work.run();List<Ticket> tickets=new ArrayList<>();List<ContextDependentRuntimeInspection.Product> ps=frame.cuts.get(cut);int at=0,ordinal=0;for(Ticket t:barrier.common){work.run();need(at<ps.size(),"Missing common runtime occurrence");ContextDependentRuntimeInspection.Product p=ps.get(at++);need(p.cut.equals(cut)&&p.role==ContextDependentRuntimeInspection.Role.COMMON&&p.occurrence==ordinal++,"Exact common role/ordinal required");runtime(p,barrier.observed.get(t),work,replayTermEntries);tickets.add(t);}ordinal=0;
+            for(Ticket t:all)if(t.cut.equals(cut)||t.round<last&&barrier.common.contains(t)){work.run();need(at<ps.size()&&ordinal<barrier.cuts.get(cut).products.size(),"Missing visible runtime occurrence");ContextDependentRuntimeInspection.Product p=ps.get(at++);Row row=barrier.cuts.get(cut).products.get(ordinal);need(p.cut.equals(cut)&&p.role==ContextDependentRuntimeInspection.Role.VISIBLE&&p.occurrence==ordinal++,"Exact visible role/ordinal required");runtime(p,row,work,replayTermEntries);runtime(p,barrier.observed.get(t),work,replayTermEntries);tickets.add(t);}
             need(at==ps.size()&&ordinal==barrier.cuts.get(cut).products.size(),"No missing/extra raw runtime occurrences");manifest.put(cut,tickets);
         }
         Map<String,List<ContextDependentRoundInspection.Step>> next=new LinkedHashMap<>(),empty=new LinkedHashMap<>();for(String cut:barrier.cuts.keySet()){next.put(cut,new ArrayList<>());empty.put(cut,Collections.emptyList());}List<Ticket> made=new ArrayList<>();int produced=prefix.rounds.size();need(produced+2<=prefix.policy.steps,"Room for producing and complete receiving barrier required");
         for(int i=0;i<steps.size();i++){interrupt();work.run();ContextDependentRuntimeExecution.Step step=steps.get(i);List<ContextDependentRoundInspection.Step> local=next.get(step.cut);need(local!=null&&outputs.get(i).cut.equals(step.cut),"Exact receiving execution cut required");List<ContextDependentRoundInspection.Donor> donors=new ArrayList<>();for(ContextDependentRuntimeExecution.Donor d:step.donors){work.run();if(d.original!=null)donors.add(ContextDependentRoundInspection.Donor.original(d.original));else if(d.earlier){need(d.index<i&&made.get(d.index).cut.equals(step.cut),"Only earlier outputs of the same frozen cut");donors.add(ContextDependentRoundInspection.Donor.earlier(made.get(d.index).product));}else{List<Ticket> pool=manifest.get(step.cut);need(d.index>=0&&d.index<pool.size(),"Exact frozen input occurrence index");donors.add(ContextDependentRoundInspection.Donor.carried(pool.get(d.index)));}}made.add(new Ticket(produced,step.cut,local.size()));local.add(new ContextDependentRoundInspection.Step(step.rule,step.retainedLiteral,donors));}
         List<Round> history=new ArrayList<>(prefix.rounds);history.add(new Round(next));history.add(new Round(empty));ContextDependentRoundInspection.Result checked=ContextDependentRoundInspection.inspect(child,cuts,new ContextDependentRoundInspection.Request(prefix.policy,prefix.capacity,history),chargeWork,replaySnapshotEntries,replayScratchEntries);
         for(int i=0;i<original.barriers.size();i++){work.run();Barrier before=original.barriers.get(i),after=checked.barriers.get(i);need(before.common.equals(after.common)&&before.basis.equals(after.basis)&&before.scopes.equals(after.scopes)&&before.cuts.keySet().equals(after.cuts.keySet()),"Historical basis/common/scopes changed during replay");for(String cut:before.cuts.keySet()){work.run();need(before.cuts.get(cut).auditDigest.equals(after.cuts.get(cut).auditDigest),"Independent native replay changed the frozen proof prefix");}}
-        Barrier born=checked.barriers.get(produced);for(int i=0;i<outputs.size();i++)output(outputs.get(i),born.observed.get(made.get(i)),work);return new Replay(checked,manifest,made,produced,history);
+        Barrier born=checked.barriers.get(produced);for(int i=0;i<outputs.size();i++)output(outputs.get(i),born.observed.get(made.get(i)),work,replayTermEntries);return new Replay(checked,manifest,made,produced,history);
     }
     private static void checkBridgeEntries(ContextDependentRoundInspection.Request prefix, Barrier barrier,
                                            ContextDependentRuntimeInspection.Frame frame,
