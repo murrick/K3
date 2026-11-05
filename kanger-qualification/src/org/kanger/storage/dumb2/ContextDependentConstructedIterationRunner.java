@@ -241,6 +241,20 @@ public final class ContextDependentConstructedIterationRunner {
                 retainedProofEntries, largestReplay, 1000, 1000, 2, projectionPairEntries,
                 1000, 1000, 1000, 4, 64, 1000);
         stable(ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), textRoom));
+        long sourcePairChars = 2L * child.inventory.rows.stream().mapToLong(row -> row.origin.length()).sum();
+        Request sourceTight = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
+                q.frontierWork, q.frontierCapacity, exactAttempts, replayBarriers, 1000000, 1000000,
+                retainedProofEntries, largestReplay, 1000, 1000, 2, projectionPairEntries,
+                1000, 1000, 1000, 4, 64, 1000, sourcePairChars - 1);
+        Result sourceExhausted = ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), sourceTight);
+        incomplete(sourceExhausted);
+        need(sourceExhausted.phase.equals("round-bridge")
+                && sourceExhausted.reason.contains("Replay source character limit"), "both projections count source characters");
+        Request sourceExact = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
+                q.frontierWork, q.frontierCapacity, exactAttempts, replayBarriers, 1000000, 1000000,
+                retainedProofEntries, largestReplay, 1000, 1000, 2, projectionPairEntries,
+                1000, 1000, 1000, 4, 64, 1000, sourcePairChars);
+        stable(ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), sourceExact));
         Request startupTight = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
                 q.frontierWork, q.frontierCapacity, startupAttempts - 1);
         Result startupExhausted = ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), startupTight);
