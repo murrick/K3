@@ -462,12 +462,17 @@ public class Term implements IUnit<Term>, ITerm {
     }
 
     private List<ITerm> expandedSetMembers() throws Exception {
+        return expandedSetMembers(null);
+    }
+
+    private List<ITerm> expandedSetMembers(Runnable chargeWork) throws Exception {
         if (mind != null) {
-            return mind.getCalculator().expand(this, null, false);
+            return mind.getCalculator().expand(this, null, false, chargeWork);
         }
         List<ITerm> members = new ArrayList<>();
         if (value instanceof Collection) {
             for (Object member : (Collection) value) {
+                if (chargeWork != null) chargeWork.run();
                 members.add((ITerm) member);
             }
         }
@@ -542,7 +547,7 @@ public class Term implements IUnit<Term>, ITerm {
         if (to == null || type != to.getType()) {
             return false;
         }
-        if (type == DataType.BLOB || type == DataType.STRING) {
+        if (chargeWork != null && (type == DataType.BLOB || type == DataType.STRING)) {
             int leftLength = scalarPayloadLength();
             int rightLength = to.scalarPayloadLength();
             if (hash == 0) {
@@ -558,9 +563,9 @@ public class Term implements IUnit<Term>, ITerm {
             if (value != to.value && leftLength == rightLength) {
                 chargePayload(leftLength, chargeWork);
             }
-            return equalsValue(to);
+            return equalsValue(to, chargeWork);
         }
-        return equalsTo(to);
+        return getHash() == to.getHash() && equalsValue(to, chargeWork);
     }
 
     private int scalarPayloadLength() {
@@ -575,20 +580,17 @@ public class Term implements IUnit<Term>, ITerm {
 
     @Override
     public boolean equalsTo(Term to) {
-        if (to == null || type != to.getType() || getHash() != to.getHash()) {
-            return false;
-        }
-        return equalsValue(to);
+        return equalsTo(to, null);
     }
 
-    private boolean equalsValue(Term to) {
+    private boolean equalsValue(Term to, Runnable chargeWork) {
         switch (type) {
             case BLOB:
                 return Arrays.equals((byte[]) value, (byte[]) to.getValue());
             case SET:
                 try {
-                    List<ITerm> left = expandedSetMembers();
-                    List<ITerm> right = to.expandedSetMembers();
+                    List<ITerm> left = expandedSetMembers(chargeWork);
+                    List<ITerm> right = to.expandedSetMembers(chargeWork);
                     if (left.size() != right.size()) {
                         return false;
                     }
@@ -596,7 +598,8 @@ public class Term implements IUnit<Term>, ITerm {
                     for (ITerm one : left) {
                         boolean found = false;
                         for (int i = 0; i < right.size(); ++i) {
-                            if (!matched[i] && one.equalsTo(right.get(i))) {
+                            if (chargeWork != null) chargeWork.run();
+                            if (!matched[i] && ((Term) one).equalsTo((Term) right.get(i), chargeWork)) {
                                 matched[i] = true;
                                 found = true;
                                 break;
@@ -608,15 +611,20 @@ public class Term implements IUnit<Term>, ITerm {
                     }
                     return true;
                 } catch (Exception e) {
+                    if (chargeWork != null && e instanceof RuntimeException) {
+                        throw (RuntimeException) e;
+                    }
                     System.err.println(new Date());
                     e.printStackTrace(System.err);
                     return false;
                 }
             case TERM:
-                return ((Term) value).equalsTo((Term) to.getValue());
+                if (chargeWork != null) chargeWork.run();
+                return ((Term) value).equalsTo((Term) to.getValue(), chargeWork);
             case INTERVAL:
-                return ((Term) ((List<ITerm>) value).get(0)).equalsTo((Term) ((List<ITerm>) to.getValue()).get(0))
-                        && ((Term) ((List<ITerm>) value).get(1)).equalsTo((Term) ((List<ITerm>) to.getValue()).get(1));
+                if (chargeWork != null) chargePayload(2, chargeWork);
+                return ((Term) ((List<ITerm>) value).get(0)).equalsTo((Term) ((List<ITerm>) to.getValue()).get(0), chargeWork)
+                        && ((Term) ((List<ITerm>) value).get(1)).equalsTo((Term) ((List<ITerm>) to.getValue()).get(1), chargeWork);
             case PERIOD:
                 return Tools.intervalToTime((String) value) == Tools.intervalToTime((String) to.getValue());
             default:

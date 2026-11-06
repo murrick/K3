@@ -123,6 +123,27 @@ public final class ContextDependentConstructedIterationRunner {
         need(word.equalsTo(sameWord, () -> wordTicks[0]++) && wordTicks[0] == 6,
                 "distinct equal strings reserve equality with cached Term hashes");
 
+        org.kanger.interfaces.ITerm[] interval = {
+                storageMind.getTerms().add(1), storageMind.getTerms().add(4)
+        };
+        Term intervalSet = new Term(new Object[]{interval}, storageMind);
+        Term reorderedSet = new Term(new Object[]{4, 2, 1, 3}, storageMind);
+        need(intervalSet.equalsTo(reorderedSet), "interval and explicit set have equal membership");
+        int[] intervalTicks = {3};
+        reject(() -> intervalSet.equalsTo(reorderedSet, () -> {
+            if (intervalTicks[0]-- == 0) throw new IllegalStateException("interval set allowance");
+        }), "equality propagates exhaustion inside interval expansion");
+
+        int[] membershipTicks = {0};
+        storageMind.getCalculator().expand(intervalSet, null, false, () -> membershipTicks[0]++);
+        storageMind.getCalculator().expand(reorderedSet, null, false, () -> membershipTicks[0]++);
+        int[] matchingTicks = {membershipTicks[0]};
+        reject(() -> intervalSet.equalsTo(reorderedSet, () -> {
+            if (matchingTicks[0]-- == 0) throw new IllegalStateException("set matching allowance");
+        }), "expanding both sets does not pay for pair matching");
+        need(intervalSet.equalsTo(reorderedSet, () -> {}),
+                "bounded comparison preserves unordered semantic equality");
+
         Result unrestricted = ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), q);
         stable(unrestricted);
         long startupAttempts = (long) unrestricted.startup.baseTried + unrestricted.startup.proposedTried;

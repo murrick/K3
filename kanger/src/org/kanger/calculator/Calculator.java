@@ -248,6 +248,11 @@ public class Calculator {
     }
 
     public List<ITerm> expand(ITerm source, ITerm step, boolean expandString) throws Exception {
+        return expand(source, step, expandString, null);
+    }
+
+    /** Charges SET traversal and INTERVAL steps during semantic comparison. */
+    public List<ITerm> expand(ITerm source, ITerm step, boolean expandString, Runnable chargeWork) throws Exception {
         List<ITerm> list = new ArrayList<>();
         Term top = null;
         if (source.getType() == DataType.INTERVAL) {
@@ -262,6 +267,7 @@ public class Calculator {
             Term cur = min;
             int rc = min.compareTo(max);
             while (true) {
+                if (chargeWork != null) chargeWork.run();
                 list.add(cur);
                 if (top == null) top = cur;
                 if (rc == 0) {
@@ -291,8 +297,13 @@ public class Calculator {
         } else if (source.getType() == DataType.SET) {
 
             for (Term t : (Collection<Term>) source.getValue()) {
+                if (chargeWork != null) chargeWork.run();
                 if (t.getType() == DataType.INTERVAL || t.getType() == DataType.SET) {
-                    list.addAll(expand(t, null, expandString));
+                    List<ITerm> members = expand(t, null, expandString, chargeWork);
+                    if (chargeWork != null) {
+                        for (int i = 0; i < members.size(); i++) chargeWork.run();
+                    }
+                    list.addAll(members);
                 } else {
                     list.add(t);
                 }
