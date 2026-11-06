@@ -226,12 +226,13 @@ public class Mind implements IMind {
     private final java.util.function.IntConsumer chargeLexemeText;
     private final java.util.function.LongConsumer chargeCompilerText;
     private final long compilerDepth;
+    private final Runnable chargeExpansion;
 
     public Mind(IUser user) throws Exception {
-        this(user, null, null, null, null, Long.MAX_VALUE, null, null, Long.MAX_VALUE);
+        this(user, null, null, null, null, Long.MAX_VALUE, null, null, Long.MAX_VALUE, () -> {});
     }
 
-    Mind(IUser user, Runnable chargeNewTerm, Runnable chargeCompilerEntry, Runnable chargeParserNode, Runnable chargeParserToken, long parserDepth, java.util.function.IntConsumer chargeLexemeText, java.util.function.LongConsumer chargeCompilerText, long compilerDepth) throws Exception {
+    Mind(IUser user, Runnable chargeNewTerm, Runnable chargeCompilerEntry, Runnable chargeParserNode, Runnable chargeParserToken, long parserDepth, java.util.function.IntConsumer chargeLexemeText, java.util.function.LongConsumer chargeCompilerText, long compilerDepth, Runnable chargeExpansion) throws Exception {
         this.chargeCompilerEntry = chargeCompilerEntry;
         this.chargeParserNode = chargeParserNode;
         this.chargeParserToken = chargeParserToken;
@@ -239,6 +240,7 @@ public class Mind implements IMind {
         this.chargeLexemeText = chargeLexemeText;
         this.chargeCompilerText = chargeCompilerText;
         this.compilerDepth = compilerDepth;
+        this.chargeExpansion = chargeExpansion;
         this.user = (User) user;
         this.user.nextId();
         init(chargeNewTerm);
@@ -315,6 +317,7 @@ public class Mind implements IMind {
         chargeLexemeText = parent.chargeLexemeText;
         chargeCompilerText = parent.chargeCompilerText;
         compilerDepth = parent.compilerDepth;
+        chargeExpansion = parent.chargeExpansion;
         init();
         connectionLayer = parent.connectionLayer;
         contextProvenance.inheritFrom(parent.contextProvenance);
@@ -473,7 +476,7 @@ public class Mind implements IMind {
         log = new LogStore(this);                                        // Протокол вывода
 
         calculator = new Calculator(this);                             // Калькулятор
-        compiler = new Compiller(this, compilerDepth);                                   // Компилятор
+        compiler = new Compiller(this, compilerDepth, chargeExpansion);                                   // Компилятор
         analyzer = new Analyzer(this);                                   // Анализатор
         linker = new Linker(this);                                         // Линкер
 

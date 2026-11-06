@@ -105,13 +105,19 @@ public class Compiller {
 
     private final Mind mind;
     private final long maxDepth;
+    private final Runnable chargeExpansion;
 
     public Compiller(Mind mind) {
         this(mind, Long.MAX_VALUE);
     }
 
     public Compiller(Mind mind, long maxDepth) {
+        this(mind, maxDepth, () -> {});
+    }
+
+    public Compiller(Mind mind, long maxDepth, Runnable chargeExpansion) {
         this.mind = mind;
+        this.chargeExpansion = chargeExpansion;
         this.maxDepth = maxDepth;
     }
 
@@ -149,12 +155,12 @@ public class Compiller {
 
         if (r.getId() == id) {
             ((Rule) r).setQuery(query);
-            mind.getRules().expand((Rule) r);
+            mind.getRules().expand((Rule) r, chargeExpansion);
         } else if (mind.getRules().isPromotedHere(r) || r.isRestored(mind)) {
             if (r.isRestored(mind)) {
                 // Rebind restored domains and register variable terminals in this
                 // transaction just as for a newly compiled declaration.
-                mind.getRules().expand((Rule) r);
+                mind.getRules().expand((Rule) r, chargeExpansion);
             }
             ((Rule) r).setSecond(false);
         } else {

@@ -286,6 +286,21 @@ public final class ContextDependentConstructedIterationRunner {
                 retainedProofEntries, largestReplay, 1000, 1000, 2, projectionPairEntries,
                 1000, 1000, 1000, 4, 64, 1000, sourcePairChars, 1000, 64);
         stable(ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), compilerDepthRoom));
+        Request expansionTight = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
+                q.frontierWork, q.frontierCapacity, exactAttempts, replayBarriers, 1000000, 1000000,
+                retainedProofEntries, largestReplay, 1000, 1000, 2, projectionPairEntries,
+                1000, 1000, 1000, 4, 64, 1000, sourcePairChars, 1000, 64, 1);
+        Result expansionExhausted = ContextDependentConstructedIterationInspection.inspect(
+                b, child, Collections.emptyList(), expansionTight);
+        incomplete(expansionExhausted);
+        need(expansionExhausted.phase.equals("round-bridge")
+                && expansionExhausted.reason.contains("Replay expansion work limit"),
+                "rule expansion has an independent allowance");
+        Request expansionRoom = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
+                q.frontierWork, q.frontierCapacity, exactAttempts, replayBarriers, 1000000, 1000000,
+                retainedProofEntries, largestReplay, 1000, 1000, 2, projectionPairEntries,
+                1000, 1000, 1000, 4, 64, 1000, sourcePairChars, 1000, 64, 1000);
+        stable(ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), expansionRoom));
         Request startupTight = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
                 q.frontierWork, q.frontierCapacity, startupAttempts - 1);
         Result startupExhausted = ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), startupTight);

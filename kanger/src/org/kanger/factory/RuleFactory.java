@@ -658,9 +658,14 @@ public class RuleFactory implements IFactory<IRule> {
     }
 
     public void expand(Rule r) throws Exception {
+        expand(r, () -> {});
+    }
+
+    public void expand(Rule r, Runnable chargeWork) throws Exception {
         for (List<Domain> tree : r.getTree()) {
+            chargeWork.run();
             if (tree.size() == 1) {
-                if (!tree.get(0).getArguments().getTVariables(mind).isEmpty()) {
+                if (!tree.get(0).getArguments().getTVariables(mind, false, chargeWork).isEmpty()) {
                     mind.getDomains().getWaiters().add(tree.get(0));
                 } else if (r.getTree().size() == 1) {
                     tree.get(0).setStored(mind);
@@ -669,6 +674,7 @@ public class RuleFactory implements IFactory<IRule> {
                 }
             }
             for (Domain d : tree) {
+                chargeWork.run();
                 d.setMind(mind);
             }
         }
