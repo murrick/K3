@@ -39,8 +39,11 @@ import org.kanger.units.Function;
 import org.kanger.units.Operation;
 import org.kanger.units.Term;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Deque;
+import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -295,17 +298,26 @@ public class Calculator {
                 }
             }
         } else if (source.getType() == DataType.SET) {
-
-            for (Term t : (Collection<Term>) source.getValue()) {
+            Deque<Iterator<Term>> pending = new ArrayDeque<>();
+            pending.push(((Collection<Term>) source.getValue()).iterator());
+            while (!pending.isEmpty()) {
+                Iterator<Term> members = pending.peek();
+                if (!members.hasNext()) {
+                    pending.pop();
+                    continue;
+                }
                 if (chargeWork != null) chargeWork.run();
-                if (t.getType() == DataType.INTERVAL || t.getType() == DataType.SET) {
-                    List<ITerm> members = expand(t, null, expandString, chargeWork);
+                Term term = members.next();
+                if (term.getType() == DataType.SET) {
+                    pending.push(((Collection<Term>) term.getValue()).iterator());
+                } else if (term.getType() == DataType.INTERVAL) {
+                    List<ITerm> interval = expand(term, null, expandString, chargeWork);
                     if (chargeWork != null) {
-                        for (int i = 0; i < members.size(); i++) chargeWork.run();
+                        for (int i = 0; i < interval.size(); i++) chargeWork.run();
                     }
-                    list.addAll(members);
+                    list.addAll(interval);
                 } else {
-                    list.add(t);
+                    list.add(term);
                 }
             }
         } else if (source.getType() == DataType.STRING) {

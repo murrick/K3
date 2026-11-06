@@ -184,6 +184,25 @@ public final class ContextDependentConstructedIterationRunner {
                 && exactPeriodTicks[0] == seconds.length() + minutes.length(),
                 "equivalent period spellings match with the exact allowance");
 
+        // Assemble the fixture directly so construction does not pre-expand each layer.
+        Term leaf = new Term(42, storageMind);
+        Term deepSet = leaf;
+        int depth = 10_000;
+        for (int i = 0; i < depth; i++) {
+            Term parentSet = new Term(new Object[0], storageMind);
+            ((List<org.kanger.interfaces.ITerm>) parentSet.getValue()).add(deepSet);
+            deepSet = parentSet;
+        }
+        Term rootSet = deepSet;
+        int[] deepTicks = {depth - 1};
+        reject(() -> storageMind.getCalculator().expand(rootSet, null, false, () -> {
+            if (deepTicks[0]-- == 0) throw new IllegalStateException("deep SET allowance");
+        }), "deep SET expansion exhausts work before reaching the leaf");
+        int[] exactDeepTicks = {0};
+        need(storageMind.getCalculator().expand(rootSet, null, false, () -> exactDeepTicks[0]++)
+                .equals(Collections.singletonList(leaf)) && exactDeepTicks[0] == depth,
+                "deep SET expansion reaches the leaf without recursive stack growth");
+
         Result unrestricted = ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), q);
         stable(unrestricted);
         long startupAttempts = (long) unrestricted.startup.baseTried + unrestricted.startup.proposedTried;
