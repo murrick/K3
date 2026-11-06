@@ -78,6 +78,13 @@ public final class ContextDependentConstructedIterationRunner {
         int[] storageTicks = {0};
         storageMind.getRules().expand(stored, () -> storageTicks[0]++);
         need(storageTicks[0] == 5, "ground expansion charges branch, two arguments, storage and domain binding");
+        int[] comparisonTicks = {1};
+        reject(() -> stored.equalsTo(stored.getDomain(), () -> {
+            if (comparisonTicks[0]-- == 0) throw new IllegalStateException("comparison test allowance");
+        }), "two-argument candidate cannot pass a one-argument allowance");
+        need(stored.equalsTo(stored.getDomain(), () -> {}),
+                "complete candidate comparison still recognizes the same stored fact");
+
         Result unrestricted = ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), q);
         stable(unrestricted);
         long startupAttempts = (long) unrestricted.startup.baseTried + unrestricted.startup.proposedTried;

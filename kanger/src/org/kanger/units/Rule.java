@@ -368,12 +368,16 @@ public class Rule implements IUnit<IRule>, IRule {
         }
     }
 
-    private boolean branchEquals(List<Domain> a, List<Domain> b) throws Exception {
+    private boolean branchEquals(List<Domain> a, List<Domain> b, Runnable chargeWork) throws Exception {
         List<Domain> tmp = new ArrayList<>();
-        tmp.addAll(b);
+        for (Domain domain : b) {
+            chargeWork.run();
+            tmp.add(domain);
+        }
         for (Domain d : a) {
             for (Domain x : tmp) {
-                if (d.equalsToStruct(x)) {
+                chargeWork.run();
+                if (d.equalsToStruct(x, chargeWork)) {
                     tmp.remove(x);
                     break;
                 }
@@ -384,12 +388,20 @@ public class Rule implements IUnit<IRule>, IRule {
 
     @Override
     public boolean equalsTo(IRule to) throws Exception {
+        return equalsTo(to, () -> {});
+    }
+
+    public boolean equalsTo(IRule to, Runnable chargeWork) throws Exception {
         if (getTree().size() == ((Rule) to).getTree().size()) {
             List<List<Domain>> tmp = new ArrayList<>();
-            tmp.addAll(((Rule) to).getTree());
+            for (List<Domain> branch : ((Rule) to).getTree()) {
+                chargeWork.run();
+                tmp.add(branch);
+            }
             for (List<Domain> a : tree) {
                 for (List<Domain> b : tmp) {
-                    if (branchEquals(a, b)) {
+                    chargeWork.run();
+                    if (branchEquals(a, b, chargeWork)) {
                         tmp.remove(b);
                         break;
                     }
@@ -429,12 +441,17 @@ public class Rule implements IUnit<IRule>, IRule {
     }
 
     public boolean equalsTo(Solve x) throws Exception {
+        return equalsTo(x, () -> {});
+    }
+
+    public boolean equalsTo(Solve x, Runnable chargeWork) throws Exception {
         Domain domain = getDomain();
         if (x.isAntc() == domain.isAntc()
                 && x.getPredicateId() == domain.getPredicateId()
                 && x.getRange() == domain.getRange()) {
             int i = 0;
             for (; i < domain.getRange(); ++i) {
+                chargeWork.run();
                 if (!x.getArguments().get(i).isEmpty(mind)
                         && !domain.getArguments().get(i).isEmpty(mind)
                         && x.getArguments().get(i).getValue(mind).getId() != domain.getArguments().get(i).getValue(mind).getId()) {

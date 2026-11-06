@@ -960,7 +960,7 @@ public class RuleFactory implements IFactory<IRule> {
         for (long id : Escalera.findCandidates(cache, domain.getHash(mind))) {
             chargeWork.run();
             IRule one = get(id);
-            if (((Rule) one).equalsTo(domain)) {
+            if (((Rule) one).equalsTo(domain, chargeWork)) {
                 if (shouldPromoteInsertResult(domain, one)) {
                     one = promotePrimary(one);
                 }
@@ -980,7 +980,7 @@ public class RuleFactory implements IFactory<IRule> {
         for (long id : Escalera.findCandidates(cache, ((Rule) rule).getHash())) {
             chargeWork.run();
             IRule one = get(id);
-            if (((Rule) one).equalsTo(rule)) {
+            if (((Rule) one).equalsTo(rule, chargeWork)) {
                 if (one.getId() != rule.getId()) {
                     return one;
                 }

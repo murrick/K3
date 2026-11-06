@@ -587,11 +587,16 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
     }
 
     public boolean equalsToStruct(Domain to) throws Exception {
+        return equalsToStruct(to, () -> {});
+    }
+
+    public boolean equalsToStruct(Domain to, Runnable chargeWork) throws Exception {
         if (to.isAntc() == antc
                 && to.getRange() == range
                 && to.getPredicateId() == predicateId) {
             int i = 0;
             for (; i < range; ++i) {
+                chargeWork.run();
                 if (arguments.get(i).getType() == to.getArguments().get(i).getType()) {
                     switch (arguments.get(i).getType()) {
                         case TVARIABLE:
@@ -620,7 +625,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
                             break;
                         case FUNCTION:
                             if (!((Function) arguments.get(i).getObject(mind))
-                                    .equalsToStruct((Function) to.getArguments().get(i).getObject(mind), getRule(), to.getRule())) {
+                                    .equalsToStruct((Function) to.getArguments().get(i).getObject(mind), getRule(), to.getRule(), chargeWork)) {
                                 return false;
                             }
                             break;

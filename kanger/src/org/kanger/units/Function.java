@@ -464,8 +464,13 @@ public class Function implements IUnit<Function> {
      * Compares two recursive function structures across Rule-local variable spaces.
      */
     public boolean equalsToStruct(Function f, IRule left, IRule rule) throws Exception {
+        return equalsToStruct(f, left, rule, () -> {});
+    }
+
+    public boolean equalsToStruct(Function f, IRule left, IRule rule, Runnable chargeWork) throws Exception {
         if (nameId == f.nameId && range == f.getRange() && binding == f.getBinding()) {
             for (int i = 0; i < range; ++i) {
+                chargeWork.run();
                 if (arguments.get(i).getType() == f.getArguments().get(i).getType()) {
                     switch (arguments.get(i).getType()) {
                         case TVARIABLE:
@@ -481,7 +486,7 @@ public class Function implements IUnit<Function> {
                             break;
                         case FUNCTION:
                             if (!((Function) arguments.get(i).getObject(mind))
-                                    .equalsToStruct(((Function) f.getArguments().get(i).getObject(mind)), left, rule)) {
+                                    .equalsToStruct(((Function) f.getArguments().get(i).getObject(mind)), left, rule, chargeWork)) {
                                 return false;
                             }
                             break;

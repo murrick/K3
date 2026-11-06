@@ -62,7 +62,7 @@ public final class GeneratedCVarMaterializer {
 
     public static IRule findAlphaEquivalent(RuleFactory factory, Domain source,
                                             Mind mind, Runnable chargeWork) throws Exception {
-        if (source.isQuery(mind) || !containsCVariable(source, mind)) {
+        if (source.isQuery(mind) || !containsCVariable(source, mind, chargeWork)) {
             return null;
         }
 
@@ -73,7 +73,7 @@ public final class GeneratedCVarMaterializer {
                 continue;
             }
             Domain candidate = ((Rule) rule).getDomain();
-            if (alphaEquivalent(source, candidate, mind)) {
+            if (alphaEquivalent(source, candidate, mind, chargeWork)) {
                 return rule;
             }
         }
@@ -126,8 +126,13 @@ public final class GeneratedCVarMaterializer {
 
     /** A closed primary conjunction has stable witnesses, with no universal dependency. */
     private static Term primaryOrigin(Term term,Mind mind) throws Exception {
+        return primaryOrigin(term, mind, () -> {});
+    }
+
+    private static Term primaryOrigin(Term term, Mind mind, Runnable chargeWork) throws Exception {
         Set<Long> seen = new HashSet<>();
         for (int depth=0;term.getParent(mind) != null;++depth) {
+            chargeWork.run();
             if (depth == 8 || !seen.add(term.getId())) return null;
             term = (Term)term.getParent(mind);
         }
@@ -137,11 +142,13 @@ public final class GeneratedCVarMaterializer {
         if (((Rule)source).getTree().isEmpty()) return null;
         boolean present = false;
         for (List<Domain> branch : ((Rule)source).getTree()) {
+            chargeWork.run();
             if (branch.size() != 1) return null;
             Domain domain = branch.get(0);
             if (!domain.isComplete() || domain.isSystem(mind) || domain.isCalculated(mind)
                     || "rule(1)".equals(domain.getPredicate(mind).toString(mind))) return null;
             for (IArgument argument : domain.getArguments()) {
+                chargeWork.run();
                 if (argument.getType() != ArgumentType.TERM) return null;
                 ITerm value = argument.getValue(mind);
                 if (value == null) return null;
@@ -164,7 +171,12 @@ public final class GeneratedCVarMaterializer {
     }
 
     private static boolean containsCVariable(Domain domain, Mind mind) throws Exception {
+        return containsCVariable(domain, mind, () -> {});
+    }
+
+    private static boolean containsCVariable(Domain domain, Mind mind, Runnable chargeWork) throws Exception {
         for (IArgument argument : domain.getArguments()) {
+            chargeWork.run();
             if (argument.isEmpty(mind)) {
                 continue;
             }
@@ -178,7 +190,7 @@ public final class GeneratedCVarMaterializer {
 
     private static boolean alphaEquivalent(Domain left,
                                            Domain right,
-                                           Mind mind) throws Exception {
+                                           Mind mind, Runnable chargeWork) throws Exception {
         if (left.isAntc() != right.isAntc()
                 || left.getPredicateId() != right.getPredicateId()
                 || left.getRange() != right.getRange()) {
@@ -189,6 +201,7 @@ public final class GeneratedCVarMaterializer {
         Map<Long, Long> reverse = new HashMap<>();
 
         for (int i = 0; i < left.getRange(); ++i) {
+            chargeWork.run();
             IArgument leftArgument = left.get(i);
             IArgument rightArgument = right.get(i);
             if (leftArgument.isEmpty(mind) || rightArgument.isEmpty(mind)) {
@@ -206,7 +219,7 @@ public final class GeneratedCVarMaterializer {
             if (leftCVar) {
                 Term leftTerm = (Term) leftValue;
                 Term rightTerm = (Term) rightValue;
-                Term leftAnchor = primaryOrigin(leftTerm,mind), rightAnchor = primaryOrigin(rightTerm,mind);
+                Term leftAnchor = primaryOrigin(leftTerm,mind,chargeWork), rightAnchor = primaryOrigin(rightTerm,mind,chargeWork);
                 if (leftAnchor != null || rightAnchor != null) {
                     if (leftAnchor == null || rightAnchor == null || leftAnchor.getId() != rightAnchor.getId()) return false;
                     continue;
