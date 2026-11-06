@@ -31,6 +31,9 @@ def main():
     if args.mode == 'ordinary-commit-contract':
         names = [('org.kanger.storage.dumb2.ContextOrdinaryProductionCommitRunner', 'CONTEXT_ORDINARY_PRODUCTION_COMMIT_PASS'),
                  ('org.kanger.storage.dumb2.ContextOrdinaryCommitCompatibilityRunner', 'CONTEXT_ORDINARY_COMMIT_COMPATIBILITY_PASS')]
+        if args.ordinary_integration_candidate:
+            names.append(('org.kanger.storage.dumb2.ContextProductionRoundsContractRunner',
+                          'CONTEXT_PRODUCTION_ROUNDS_CONTRACT_PASS'))
     if args.mode == 'private-witness-contract':
         names = [('org.kanger.storage.dumb2.ContextPrivateWitnessAdmissionContractRunner', 'CONTEXT_PRIVATE_WITNESS_ADMISSION_CONTRACT_PASS')]
     if args.mode == 'universal-unit-contract':
