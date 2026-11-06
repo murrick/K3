@@ -144,6 +144,22 @@ public final class ContextDependentConstructedIterationRunner {
         need(intervalSet.equalsTo(reorderedSet, () -> {}),
                 "bounded comparison preserves unordered semantic equality");
 
+        // The member hashes sum to 2^32 - 141, producing a zero SET hash.
+        Term zeroHashSet = new Term(new Object[]{
+                Double.longBitsToDouble(2147483577L), Double.longBitsToDouble(2147483578L)
+        }, storageMind);
+        need(zeroHashSet.getHash() == 0, "zero-hash SET fixture");
+        int[] hashSetTicks = {3};
+        reject(() -> zeroHashSet.getHash(() -> {
+            if (hashSetTicks[0]-- == 0) throw new IllegalStateException("SET hash allowance");
+        }), "hash budget exhaustion propagates after hashing the first member");
+        int[] retryTicks = {0};
+        need(zeroHashSet.getHash(() -> retryTicks[0]++) == 0 && retryTicks[0] == 4,
+                "retry recomputes the complete SET hash after exhaustion");
+        int[] cachedHashTicks = {0};
+        need(intervalSet.getHash(() -> cachedHashTicks[0]++) == reorderedSet.getHash()
+                && cachedHashTicks[0] == 0, "cached semantic hashes agree without a membership traversal");
+
         Result unrestricted = ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), q);
         stable(unrestricted);
         long startupAttempts = (long) unrestricted.startup.baseTried + unrestricted.startup.proposedTried;

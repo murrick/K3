@@ -489,54 +489,68 @@ public class Term implements IUnit<Term>, ITerm {
 
     @Override
     public int getHash() {
-        if (hash == 0) {
-            if (value == null) {
-                hash = 0;
-            } else {
-                hash = 3;
-                switch (type) {
-                    case PERIOD:
-                        long time = Tools.intervalToTime((String) value);
-                        hash = 47 * hash + (int) (time ^ (time >>> 32));
-                        break;
-                    case INTERVAL:
-                        hash = 47 * hash + ((Term) ((List<ITerm>) value).get(0)).getHash();
-                        hash = 47 * hash + ((Term) ((List<ITerm>) value).get(1)).getHash();
-                        break;
-                    case TERM:
-                        hash = 47 * hash + ((Term) value).getHash();
-                        break;
-                    case DATE:
-                        long date = ((Date) value).getTime();
-                        hash = 47 * hash + (int) (date ^ (date >>> 32));
-                        break;
-                    case SET:
-                        long sum = 0;
-                        try {
-                            for (ITerm t : expandedSetMembers()) {
-                                sum += ((Term) t).getHash();
-                            }
-                        } catch (Exception e) {
-                            System.err.println(new Date());
-                            e.printStackTrace(System.err);
-                            for (ITerm t : (List<ITerm>) value) {
-                                sum += ((Term) t).getHash();
-                            }
-                        }
-                        hash = 47 * hash + (int) (sum ^ (sum >>> 32));
-                        break;
-                    case BLOB:
-                        hash = Arrays.hashCode((byte[]) value);
-                        break;
-                    case STRING:
-                        hash = value.hashCode();
-                        break;
-                    case NUMERIC:
-                        hash = Double.hashCode((Double) value);
-                }
-            }
+        return getHash(null);
+    }
+
+    public int getHash(Runnable chargeWork) {
+        if (hash != 0 || value == null) {
+            return hash;
         }
+
+        int computed = 3;
+        switch (type) {
+            case PERIOD:
+                long time = Tools.intervalToTime((String) value);
+                computed = 47 * computed + (int) (time ^ (time >>> 32));
+                break;
+            case INTERVAL:
+                List<ITerm> ends = (List<ITerm>) value;
+                computed = 47 * computed + hashChild(ends.get(0), chargeWork);
+                computed = 47 * computed + hashChild(ends.get(1), chargeWork);
+                break;
+            case TERM:
+                computed = 47 * computed + hashChild((Term) value, chargeWork);
+                break;
+            case DATE:
+                long date = ((Date) value).getTime();
+                computed = 47 * computed + (int) (date ^ (date >>> 32));
+                break;
+            case SET:
+                long sum = 0;
+                try {
+                    for (ITerm t : expandedSetMembers(chargeWork)) {
+                        sum += hashChild(t, chargeWork);
+                    }
+                } catch (Exception e) {
+                    if (chargeWork != null && e instanceof RuntimeException) {
+                        throw (RuntimeException) e;
+                    }
+                    System.err.println(new Date());
+                    e.printStackTrace(System.err);
+                    for (ITerm t : (List<ITerm>) value) {
+                        sum += hashChild(t, chargeWork);
+                    }
+                }
+                computed = 47 * computed + (int) (sum ^ (sum >>> 32));
+                break;
+            case BLOB:
+                if (chargeWork != null) chargePayload(scalarPayloadLength(), chargeWork);
+                computed = Arrays.hashCode((byte[]) value);
+                break;
+            case STRING:
+                if (chargeWork != null) chargePayload(scalarPayloadLength(), chargeWork);
+                computed = value.hashCode();
+                break;
+            case NUMERIC:
+                computed = Double.hashCode((Double) value);
+        }
+        hash = computed;
         return hash;
+    }
+
+    private static int hashChild(ITerm term, Runnable chargeWork) {
+        if (chargeWork != null) chargeWork.run();
+        return ((Term) term).getHash(chargeWork);
     }
 
     /**
@@ -544,28 +558,16 @@ public class Term implements IUnit<Term>, ITerm {
      * Scalar payload scans are reserved before invoking the JDK operations.
      */
     public boolean equalsTo(Term to, Runnable chargeWork) {
-        if (to == null || type != to.getType()) {
+        if (to == null || type != to.getType() || getHash(chargeWork) != to.getHash(chargeWork)) {
             return false;
         }
-        if (chargeWork != null && (type == DataType.BLOB || type == DataType.STRING)) {
-            int leftLength = scalarPayloadLength();
-            int rightLength = to.scalarPayloadLength();
-            if (hash == 0) {
-                chargePayload(leftLength, chargeWork);
+        if (chargeWork != null && (type == DataType.BLOB || type == DataType.STRING) && value != to.value) {
+            int length = scalarPayloadLength();
+            if (length == to.scalarPayloadLength()) {
+                chargePayload(length, chargeWork);
             }
-            int leftHash = getHash();
-            if (to.hash == 0) {
-                chargePayload(rightLength, chargeWork);
-            }
-            if (leftHash != to.getHash()) {
-                return false;
-            }
-            if (value != to.value && leftLength == rightLength) {
-                chargePayload(leftLength, chargeWork);
-            }
-            return equalsValue(to, chargeWork);
         }
-        return getHash() == to.getHash() && equalsValue(to, chargeWork);
+        return equalsValue(to, chargeWork);
     }
 
     private int scalarPayloadLength() {
