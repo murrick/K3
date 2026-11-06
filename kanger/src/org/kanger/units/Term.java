@@ -500,7 +500,7 @@ public class Term implements IUnit<Term>, ITerm {
         int computed = 3;
         switch (type) {
             case PERIOD:
-                long time = Tools.intervalToTime((String) value);
+                long time = periodDuration(chargeWork);
                 computed = 47 * computed + (int) (time ^ (time >>> 32));
                 break;
             case INTERVAL:
@@ -570,6 +570,12 @@ public class Term implements IUnit<Term>, ITerm {
         return equalsValue(to, chargeWork);
     }
 
+    private long periodDuration(Runnable chargeWork) {
+        String period = (String) value;
+        if (chargeWork != null) chargePayload(period.length(), chargeWork);
+        return Tools.intervalToTime(period);
+    }
+
     private int scalarPayloadLength() {
         return type == DataType.BLOB ? ((byte[]) value).length : ((String) value).length();
     }
@@ -628,7 +634,7 @@ public class Term implements IUnit<Term>, ITerm {
                 return ((Term) ((List<ITerm>) value).get(0)).equalsTo((Term) ((List<ITerm>) to.getValue()).get(0), chargeWork)
                         && ((Term) ((List<ITerm>) value).get(1)).equalsTo((Term) ((List<ITerm>) to.getValue()).get(1), chargeWork);
             case PERIOD:
-                return Tools.intervalToTime((String) value) == Tools.intervalToTime((String) to.getValue());
+                return periodDuration(chargeWork) == to.periodDuration(chargeWork);
             default:
                 return value.equals(to.getValue());
         }

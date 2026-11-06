@@ -160,6 +160,30 @@ public final class ContextDependentConstructedIterationRunner {
         need(intervalSet.getHash(() -> cachedHashTicks[0]++) == reorderedSet.getHash()
                 && cachedHashTicks[0] == 0, "cached semantic hashes agree without a membership traversal");
 
+        String zeroPeriodText = "2147483647 milliseconds 2147483508 milliseconds";
+        Term zeroPeriod = new Term(zeroPeriodText, storageMind);
+        need(zeroPeriod.getHash() == 0, "zero-hash PERIOD fixture");
+        int[] periodHashTicks = {zeroPeriodText.length() - 1};
+        reject(() -> zeroPeriod.getHash(() -> {
+            if (periodHashTicks[0]-- == 0) throw new IllegalStateException("period hash allowance");
+        }), "uncached period hash reserves the full input before parsing");
+        int[] periodRetryTicks = {0};
+        need(zeroPeriod.getHash(() -> periodRetryTicks[0]++) == 0
+                && periodRetryTicks[0] == zeroPeriodText.length(), "period hash retry preserves the duration hash");
+
+        String seconds = "60 seconds";
+        String minutes = "1 minutes";
+        Term secondsPeriod = new Term(seconds, storageMind);
+        Term minutesPeriod = new Term(minutes, storageMind);
+        int[] periodMatchTicks = {seconds.length() + minutes.length() - 1};
+        reject(() -> secondsPeriod.equalsTo(minutesPeriod, () -> {
+            if (periodMatchTicks[0]-- == 0) throw new IllegalStateException("period comparison allowance");
+        }), "warm period hashes do not exempt duration comparison");
+        int[] exactPeriodTicks = {0};
+        need(secondsPeriod.equalsTo(minutesPeriod, () -> exactPeriodTicks[0]++)
+                && exactPeriodTicks[0] == seconds.length() + minutes.length(),
+                "equivalent period spellings match with the exact allowance");
+
         Result unrestricted = ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), q);
         stable(unrestricted);
         long startupAttempts = (long) unrestricted.startup.baseTried + unrestricted.startup.proposedTried;
