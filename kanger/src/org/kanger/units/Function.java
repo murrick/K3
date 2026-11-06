@@ -438,11 +438,16 @@ public class Function implements IUnit<Function> {
      * Computes a Rule-relative structural hash with normalized TVariable indexes.
      */
     public int getHashStruct(IRule r) throws Exception {
+        return getHashStruct(r, () -> {});
+    }
+
+    public int getHashStruct(IRule r, Runnable chargeWork) throws Exception {
         int hash = 3;
         hash = 47 * hash + (int) (nameId ^ (nameId >>> 32));
         hash = 47 * hash + range;
         hash = 47 * hash + binding.ordinal();
         for (int i = 0; i < range; ++i) {
+            chargeWork.run();
             hash = 47 * hash + (i + 1) * arguments.get(i).getType().ordinal();
             switch (arguments.get(i).getType()) {
                 case TVARIABLE:
@@ -453,7 +458,7 @@ public class Function implements IUnit<Function> {
                     hash = 47 * hash + (i + 1) * (int) (id ^ (id >>> 32));
                     break;
                 case FUNCTION:
-                    hash = 47 * hash + (i + 1) * ((Function) arguments.get(i).getObject(mind)).getHashStruct(r);
+                    hash = 47 * hash + (i + 1) * ((Function) arguments.get(i).getObject(mind)).getHashStruct(r, chargeWork);
                     break;
             }
         }

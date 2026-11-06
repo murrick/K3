@@ -83,16 +83,22 @@ public class ArgumentsList extends ArrayList<IArgument> implements IList {
     }
 
     public int getHash(Mind mind) {
+        return getHash(mind, () -> {});
+    }
+
+    public int getHash(Mind mind, Runnable chargeWork) {
         int hashCode = 1;
-        try {
-            for (IArgument a : this) {
+        for (IArgument a : this) {
+            chargeWork.run();
+            try {
                 if (!a.isEmpty(mind)) {
                     hashCode = 31 * hashCode + a.getValue(mind).hashCode();
                 }
+            } catch (Exception e) {
+                System.err.println(new Date());
+                e.printStackTrace(System.err);
+                break;
             }
-        } catch (Exception e) {
-            System.err.println(new Date());
-            e.printStackTrace(System.err);
         }
         return hashCode;
     }

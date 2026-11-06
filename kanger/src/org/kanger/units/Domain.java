@@ -513,10 +513,14 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
     }
 
     public int getHashBase(Mind mind) {
+        return getHashBase(mind, () -> {});
+    }
+
+    public int getHashBase(Mind mind, Runnable chargeWork) {
         int hash = 3;
         hash = 47 * hash + (antc ? 1 : 0);
         hash = 47 * hash + (int) (predicateId ^ (predicateId >>> 32));
-        hash = 47 * hash + arguments.getHash(mind);
+        hash = 47 * hash + arguments.getHash(mind, chargeWork);
         return hash;
     }
 
@@ -559,27 +563,32 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
     }
 
     public int getHashStruct() throws Exception {
+        return getHashStruct(() -> {});
+    }
+
+    public int getHashStruct(Runnable chargeWork) throws Exception {
         int hash = 3;
         hash = 47 * hash + (antc ? 1 : 0);
         hash = 47 * hash + (int) (predicateId ^ (predicateId >>> 32));
         hash = 47 * hash + range;
         for (int i = 0; i < range; ++i) {
+            chargeWork.run();
             hash = 47 * hash + (i + 1) * arguments.get(i).getType().ordinal();
             switch (arguments.get(i).getType()) {
                 case TVARIABLE:
-                    hash = 47 * hash + (i + 1) * getVarOrder(mind, i);
+                    hash = 47 * hash + (i + 1) * getVarOrder(mind, i, chargeWork);
                     break;
                 case TERM:
                     ITerm a = arguments.get(i).getValue(mind);
                     if (a.isCVariable()) {
-                        hash = 47 * hash + (i + 1) * getVarOrder(mind, i);
+                        hash = 47 * hash + (i + 1) * getVarOrder(mind, i, chargeWork);
                     } else {
                         long id = arguments.get(i).getValue(mind).getId();
                         hash = 47 * hash + (i + 1) * (int) (id ^ (id >>> 32));
                     }
                     break;
                 case FUNCTION:
-                    hash = 47 * hash + (i + 1) * ((Function) arguments.get(i).getObject(mind)).getHashStruct(getRule());
+                    hash = 47 * hash + (i + 1) * ((Function) arguments.get(i).getObject(mind)).getHashStruct(getRule(), chargeWork);
                     break;
             }
         }
@@ -603,7 +612,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
                             // Atom-local order alone loses sharing between literals:
                             // p(x)->q(x) must not equal p(x)->q(y). Match the
                             // Rule-relative binder position as recursive functions do.
-                            if (getVarOrder(mind, i) != to.getVarOrder(mind, i)
+                            if (getVarOrder(mind, i, chargeWork) != to.getVarOrder(mind, i, chargeWork)
                                     || ((TVariable) arguments.get(i).getObject(mind)).getIndex()
                                             - ((Rule) getRule()).getVarIndex()
                                     != ((TVariable) to.getArguments().get(i).getObject(mind)).getIndex()
@@ -616,7 +625,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
                             ITerm a = arguments.get(i).getValue(mind);
                             ITerm b = to.getArguments().get(i).getValue(mind);
                             if (a.isCVariable() && b.isCVariable()) {
-                                if (getVarOrder(mind, i) != to.getVarOrder(mind, i)) {
+                                if (getVarOrder(mind, i, chargeWork) != to.getVarOrder(mind, i, chargeWork)) {
                                     return false;
                                 }
                             } else if (a.getId() != b.getId()) {
@@ -676,11 +685,12 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
         return (int) (ruleId == domain.ruleId ? id - domain.id : ruleId - domain.ruleId);
     }
 
-    private void calcVarOrders(Mind mind) throws Exception {
+    private void calcVarOrders(Mind mind, Runnable chargeWork) throws Exception {
         List<Integer> list = new ArrayList<>();
         SortedMap<Integer, Integer> sort = new TreeMap<>();
         int plains = 0;
         for (int i = 0; i < arguments.size(); ++i) {
+            chargeWork.run();
             int ix = 0;
             if (arguments.get(i).getType() == ArgumentType.TVARIABLE) {
                 ix = ((TVariable) arguments.get(i).getObject(mind)).getIndex();
@@ -697,17 +707,22 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
         }
         int i = sort.firstKey() == 0 ? 0 : 1;
         for (Integer e : sort.keySet()) {
+            chargeWork.run();
             sort.put(e, i++);
         }
 
+        // Reserve the full write pass before publishing any cached orders.
+        for (int pos = 0; pos < getRange(); ++pos) {
+            chargeWork.run();
+        }
         for (int pos = 0; pos < getRange(); ++pos) {
             ((Argument) arguments.get(pos)).setVarOrder(plains != arguments.size() ? sort.get(list.get(pos)) + plains : 0);
         }
     }
 
-    private int getVarOrder(Mind mind, int pos) throws Exception {
+    private int getVarOrder(Mind mind, int pos, Runnable chargeWork) throws Exception {
         if (((Argument) arguments.get(pos)).getVarOrder() == -1) {
-            calcVarOrders(mind);
+            calcVarOrders(mind, chargeWork);
         }
         return ((Argument) arguments.get(pos)).getVarOrder();
     }

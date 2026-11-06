@@ -353,14 +353,20 @@ public class Rule implements IUnit<IRule>, IRule {
 
     @Override
     public int getHash() throws Exception {
+        return getHash(() -> {});
+    }
+
+    public int getHash(Runnable chargeWork) throws Exception {
         if (stored || (tree.size() == 1 && tree.get(0).size() == 1 && !getDomain().isSubstitutable())) {
-            return getDomain().getHashBase(mind);
+            return getDomain().getHashBase(mind, chargeWork);
         } else {
             int hash = 0;
             for (List<Domain> list : tree) {
+                chargeWork.run();
                 int sub = 0;
                 for (Domain d : list) {
-                    sub += d.getHashStruct();
+                    chargeWork.run();
+                    sub += d.getHashStruct(chargeWork);
                 }
                 hash += sub;
             }

@@ -85,6 +85,20 @@ public final class ContextDependentConstructedIterationRunner {
         need(stored.equalsTo(stored.getDomain(), () -> {}),
                 "complete candidate comparison still recognizes the same stored fact");
 
+        int[] hashTicks = {1};
+        reject(() -> stored.getDomain().getHash(storageMind, () -> {
+            if (hashTicks[0]-- == 0) throw new IllegalStateException("hash test allowance");
+        }), "lookup hash propagates exhaustion before the second argument");
+        need(stored.getDomain().getHash(storageMind, () -> {}) == stored.getHash(),
+                "lookup hash still selects the stored fact's bucket");
+
+        Mind structuralMind = memory();
+        Rule structural = raw(structuralMind, "!@x hash_input(x,x)->hash_output(x,x);");
+        int[] structuralTicks = {0};
+        int structuralHash = structural.getHash(() -> structuralTicks[0]++);
+        need(structuralTicks[0] > 2 && structuralHash == structural.getHash(),
+                "structural hash charges traversal and preserves the bucket");
+
         Result unrestricted = ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), q);
         stable(unrestricted);
         long startupAttempts = (long) unrestricted.startup.baseTried + unrestricted.startup.proposedTried;

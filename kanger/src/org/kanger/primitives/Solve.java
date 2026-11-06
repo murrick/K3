@@ -249,10 +249,14 @@ public class Solve {
     }
 
     public int getHash(IMind mind) {
+        return getHash(mind, () -> {});
+    }
+
+    public int getHash(IMind mind, Runnable chargeWork) {
         int hash = 3;
         hash = 47 * hash + (antc ? 1 : 0);
         hash = 47 * hash + (int) (predicateId ^ (predicateId >>> 32));
-        hash = 47 * hash + arguments.getHash((Mind) mind);
+        hash = 47 * hash + arguments.getHash((Mind) mind, chargeWork);
         return hash;
     }
 
