@@ -239,7 +239,7 @@ public final class GeneratedCVarMaterializer {
                         || reverseMapped.longValue() != leftValue.getId()) {
                     return false;
                 }
-            } else if (!((Term) leftValue).equalsTo((Term) rightValue)) {
+            } else if (!((Term) leftValue).equalsTo((Term) rightValue, chargeWork)) {
                 return false;
             }
         }

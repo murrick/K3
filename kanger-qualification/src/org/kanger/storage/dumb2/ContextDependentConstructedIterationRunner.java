@@ -99,6 +99,30 @@ public final class ContextDependentConstructedIterationRunner {
         need(structuralTicks[0] > 2 && structuralHash == structural.getHash(),
                 "structural hash charges traversal and preserves the bucket");
 
+        Term blob = new Term(new byte[]{1, 2, 3}, storageMind);
+        Term sameBlob = new Term(new byte[]{1, 2, 3}, storageMind);
+        // A zero hash is treated as uncached by Term even after construction.
+        Term zeroHashBlob = new Term(new byte[]{-31, 0, 0}, storageMind);
+        need(zeroHashBlob.getHash() == 0, "zero-hash BLOB fixture");
+        int[] coldBlobTicks = {2};
+        reject(() -> zeroHashBlob.equalsTo(sameBlob, () -> {
+            if (coldBlobTicks[0]-- == 0) throw new IllegalStateException("cold blob allowance");
+        }), "cold BLOB comparison reserves hashing before scanning the bytes");
+        need(blob.equalsTo(sameBlob), "ordinary equality still accepts the same BLOB payload");
+        int[] warmBlobTicks = {2};
+        reject(() -> blob.equalsTo(sameBlob, () -> {
+            if (warmBlobTicks[0]-- == 0) throw new IllegalStateException("warm blob allowance");
+        }), "cached hashes do not exempt BLOB equality from the allowance");
+        int[] exactBlobTicks = {0};
+        need(blob.equalsTo(sameBlob, () -> exactBlobTicks[0]++) && exactBlobTicks[0] == 3,
+                "cached hashes charge only the BLOB equality scan");
+
+        Term word = new Term(new String("budget"), storageMind);
+        Term sameWord = new Term(new String("budget"), storageMind);
+        int[] wordTicks = {0};
+        need(word.equalsTo(sameWord, () -> wordTicks[0]++) && wordTicks[0] == 6,
+                "distinct equal strings reserve equality with cached Term hashes");
+
         Result unrestricted = ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), q);
         stable(unrestricted);
         long startupAttempts = (long) unrestricted.startup.baseTried + unrestricted.startup.proposedTried;

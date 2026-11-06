@@ -534,11 +534,54 @@ public class Term implements IUnit<Term>, ITerm {
         return hash;
     }
 
+    /**
+     * Compares generated candidate values under the expansion allowance.
+     * Scalar payload scans are reserved before invoking the JDK operations.
+     */
+    public boolean equalsTo(Term to, Runnable chargeWork) {
+        if (to == null || type != to.getType()) {
+            return false;
+        }
+        if (type == DataType.BLOB || type == DataType.STRING) {
+            int leftLength = scalarPayloadLength();
+            int rightLength = to.scalarPayloadLength();
+            if (hash == 0) {
+                chargePayload(leftLength, chargeWork);
+            }
+            int leftHash = getHash();
+            if (to.hash == 0) {
+                chargePayload(rightLength, chargeWork);
+            }
+            if (leftHash != to.getHash()) {
+                return false;
+            }
+            if (value != to.value && leftLength == rightLength) {
+                chargePayload(leftLength, chargeWork);
+            }
+            return equalsValue(to);
+        }
+        return equalsTo(to);
+    }
+
+    private int scalarPayloadLength() {
+        return type == DataType.BLOB ? ((byte[]) value).length : ((String) value).length();
+    }
+
+    private static void chargePayload(int length, Runnable chargeWork) {
+        for (int i = 0; i < length; i++) {
+            chargeWork.run();
+        }
+    }
+
     @Override
     public boolean equalsTo(Term to) {
         if (to == null || type != to.getType() || getHash() != to.getHash()) {
             return false;
         }
+        return equalsValue(to);
+    }
+
+    private boolean equalsValue(Term to) {
         switch (type) {
             case BLOB:
                 return Arrays.equals((byte[]) value, (byte[]) to.getValue());
