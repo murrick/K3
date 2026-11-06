@@ -627,25 +627,117 @@ public class Term implements IUnit<Term>, ITerm {
      * Scalar payload scans are reserved before invoking the JDK operations.
      */
     public boolean equalsTo(Term to, Runnable chargeWork) {
-        Term left = this;
-        Term right = to;
-        while (right != null && left.type == right.getType()
-                && left.getHash(chargeWork) == right.getHash(chargeWork)) {
-            if (left.type != DataType.TERM) {
-                if (chargeWork != null && (left.type == DataType.BLOB || left.type == DataType.STRING)
-                        && left.value != right.value) {
-                    int length = left.scalarPayloadLength();
-                    if (length == right.scalarPayloadLength()) {
-                        chargePayload(length, chargeWork);
+        Deque<EqualityFrame> pending = new ArrayDeque<>();
+        pending.push(new EqualityFrame(this, to));
+        while (true) {
+            EqualityFrame frame = pending.peek();
+            try {
+                if (frame.result == null) {
+                    frame.advance(pending, chargeWork);
+                    continue;
+                }
+            } catch (Exception failure) {
+                if (chargeWork != null && failure instanceof RuntimeException) throw (RuntimeException) failure;
+                while (!pending.isEmpty() && !pending.peek().matchingSet) pending.pop();
+                if (pending.isEmpty()) {
+                    if (failure instanceof RuntimeException) throw (RuntimeException) failure;
+                    throw new IllegalStateException(failure);
+                }
+                System.err.println(new Date());
+                failure.printStackTrace(System.err);
+                frame = pending.peek();
+                frame.result = false;
+            }
+
+            pending.pop();
+            if (pending.isEmpty()) return frame.result;
+            pending.peek().accept(frame.result);
+        }
+    }
+
+    private static final class EqualityFrame {
+        final Term left;
+        final Term right;
+        Boolean result;
+        boolean started;
+        boolean matchingSet;
+        int next;
+        int candidate;
+        List<ITerm> leftMembers;
+        List<ITerm> rightMembers;
+        boolean[] matched;
+
+        EqualityFrame(Term left, Term right) {
+            this.left = left;
+            this.right = right;
+        }
+
+        void advance(Deque<EqualityFrame> pending, Runnable chargeWork) throws Exception {
+            if (!started) {
+                started = true;
+                if (right == null || left.type != right.getType()
+                        || left.getHash(chargeWork) != right.getHash(chargeWork)) {
+                    result = false;
+                    return;
+                }
+                switch (left.type) {
+                    case SET:
+                        matchingSet = true;
+                        leftMembers = left.expandedSetMembers(chargeWork);
+                        rightMembers = right.expandedSetMembers(chargeWork);
+                        if (leftMembers.size() != rightMembers.size()) {
+                            result = false;
+                            return;
+                        }
+                        matched = new boolean[rightMembers.size()];
+                        break;
+                    case TERM:
+                        if (chargeWork != null) chargeWork.run();
+                        pending.push(new EqualityFrame((Term) left.value, (Term) right.value));
+                        return;
+                    case INTERVAL:
+                        if (chargeWork != null) chargePayload(2, chargeWork);
+                        break;
+                    default:
+                        result = left.equalsScalar(right, chargeWork);
+                        return;
+                }
+            }
+
+            if (matchingSet) {
+                if (next == leftMembers.size()) {
+                    result = true;
+                    return;
+                }
+                while (candidate < matched.length) {
+                    if (chargeWork != null) chargeWork.run();
+                    int index = candidate++;
+                    if (!matched[index]) {
+                        pending.push(new EqualityFrame((Term) leftMembers.get(next), (Term) rightMembers.get(index)));
+                        return;
                     }
                 }
-                return left.equalsValue(right, chargeWork);
+                result = false;
+            } else if (next == 2) {
+                result = true;
+            } else {
+                int index = next++;
+                pending.push(new EqualityFrame((Term) ((List<ITerm>) left.value).get(index),
+                        (Term) ((List<ITerm>) right.value).get(index)));
             }
-            if (chargeWork != null) chargeWork.run();
-            left = (Term) left.value;
-            right = (Term) right.value;
         }
-        return false;
+
+        void accept(boolean equal) {
+            if (matchingSet) {
+                if (equal) {
+                    matched[candidate - 1] = true;
+                    next++;
+                    candidate = 0;
+                }
+            } else if (!equal || left.type == DataType.TERM) {
+                result = equal;
+            }
+        }
     }
 
     private long periodDuration(Runnable chargeWork) {
@@ -669,45 +761,14 @@ public class Term implements IUnit<Term>, ITerm {
         return equalsTo(to, null);
     }
 
-    private boolean equalsValue(Term to, Runnable chargeWork) {
+    private boolean equalsScalar(Term to, Runnable chargeWork) {
+        if (chargeWork != null && (type == DataType.BLOB || type == DataType.STRING) && value != to.value) {
+            int length = scalarPayloadLength();
+            if (length == to.scalarPayloadLength()) chargePayload(length, chargeWork);
+        }
         switch (type) {
             case BLOB:
                 return Arrays.equals((byte[]) value, (byte[]) to.getValue());
-            case SET:
-                try {
-                    List<ITerm> left = expandedSetMembers(chargeWork);
-                    List<ITerm> right = to.expandedSetMembers(chargeWork);
-                    if (left.size() != right.size()) {
-                        return false;
-                    }
-                    boolean[] matched = new boolean[right.size()];
-                    for (ITerm one : left) {
-                        boolean found = false;
-                        for (int i = 0; i < right.size(); ++i) {
-                            if (chargeWork != null) chargeWork.run();
-                            if (!matched[i] && ((Term) one).equalsTo((Term) right.get(i), chargeWork)) {
-                                matched[i] = true;
-                                found = true;
-                                break;
-                            }
-                        }
-                        if (!found) {
-                            return false;
-                        }
-                    }
-                    return true;
-                } catch (Exception e) {
-                    if (chargeWork != null && e instanceof RuntimeException) {
-                        throw (RuntimeException) e;
-                    }
-                    System.err.println(new Date());
-                    e.printStackTrace(System.err);
-                    return false;
-                }
-            case INTERVAL:
-                if (chargeWork != null) chargePayload(2, chargeWork);
-                return ((Term) ((List<ITerm>) value).get(0)).equalsTo((Term) ((List<ITerm>) to.getValue()).get(0), chargeWork)
-                        && ((Term) ((List<ITerm>) value).get(1)).equalsTo((Term) ((List<ITerm>) to.getValue()).get(1), chargeWork);
             case PERIOD:
                 return periodDuration(chargeWork) == to.periodDuration(chargeWork);
             default:

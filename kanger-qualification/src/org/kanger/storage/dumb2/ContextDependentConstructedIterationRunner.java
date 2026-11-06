@@ -270,28 +270,39 @@ public final class ContextDependentConstructedIterationRunner {
         need(wrappedRoot.equalsTo(otherWrappedRoot), "deep TERM chains compare equal");
 
         Term mixed = leaf;
+        Term otherMixed = new Term(42, storageMind);
+        int expectedComparisonWork = 0;
         int expectedMixedHash = leaf.getHash();
         int expectedMixedWork = 0;
         for (int i = 0; i < depth; i++) {
             Term outer = new Term(storageMind);
+            Term otherOuter = new Term(storageMind);
             if (i % 3 == 0) {
                 termType.set(outer, org.kanger.enums.DataType.INTERVAL);
                 termValue.set(outer, Arrays.asList(mixed, leaf));
+                termValue.set(otherOuter, Arrays.asList(otherMixed, leaf));
+                expectedComparisonWork += 2;
                 expectedMixedHash = 47 * (141 + expectedMixedHash) + leaf.getHash();
                 expectedMixedWork += 2;
             } else if (i % 3 == 1) {
                 termType.set(outer, org.kanger.enums.DataType.TERM);
                 termValue.set(outer, mixed);
+                termValue.set(otherOuter, otherMixed);
+                expectedComparisonWork++;
                 expectedMixedHash += 141;
                 expectedMixedWork++;
             } else {
                 termType.set(outer, org.kanger.enums.DataType.SET);
                 termValue.set(outer, Collections.singletonList(mixed));
+                termValue.set(otherOuter, Collections.singletonList(otherMixed));
+                expectedComparisonWork += 3;
                 long sum = expectedMixedHash;
                 expectedMixedHash = 141 + (int) (sum ^ (sum >>> 32));
                 expectedMixedWork += 2;
             }
+            termType.set(otherOuter, outer.getType());
             mixed = outer;
+            otherMixed = otherOuter;
         }
         Term mixedRoot = mixed;
         int[] mixedTicks = {depth - 1};
@@ -302,6 +313,17 @@ public final class ContextDependentConstructedIterationRunner {
         need(mixedRoot.getHash(() -> mixedRetryTicks[0]++) == expectedMixedHash
                 && mixedRetryTicks[0] == expectedMixedWork,
                 "mixed hash preserves ordered folding and SET membership charges on retry");
+
+        Term otherMixedRoot = otherMixed;
+        need(otherMixedRoot.getHash() == expectedMixedHash, "second mixed chain has the same cached hash");
+        int[] shortMixedComparison = {expectedComparisonWork - 1};
+        reject(() -> mixedRoot.equalsTo(otherMixedRoot, () -> {
+            if (shortMixedComparison[0]-- == 0) throw new IllegalStateException("mixed equality allowance");
+        }), "deep mixed comparison propagates budget exhaustion");
+        int[] mixedComparisonTicks = {0};
+        need(mixedRoot.equalsTo(otherMixedRoot, () -> mixedComparisonTicks[0]++)
+                && mixedComparisonTicks[0] == expectedComparisonWork,
+                "deep mixed comparison completes with the exact allowance");
 
         Result unrestricted = ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), q);
         stable(unrestricted);
