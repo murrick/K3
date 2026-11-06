@@ -505,28 +505,11 @@ public class Term implements IUnit<Term>, ITerm {
                 break;
             case INTERVAL:
             case TERM:
-                return hashOrderedChildren(chargeWork);
+            case SET:
+                return hashComposite(chargeWork);
             case DATE:
                 long date = ((Date) value).getTime();
                 computed = 47 * computed + (int) (date ^ (date >>> 32));
-                break;
-            case SET:
-                long sum = 0;
-                try {
-                    for (ITerm t : expandedSetMembers(chargeWork)) {
-                        sum += hashChild(t, chargeWork);
-                    }
-                } catch (Exception e) {
-                    if (chargeWork != null && e instanceof RuntimeException) {
-                        throw (RuntimeException) e;
-                    }
-                    System.err.println(new Date());
-                    e.printStackTrace(System.err);
-                    for (ITerm t : (List<ITerm>) value) {
-                        sum += hashChild(t, chargeWork);
-                    }
-                }
-                computed = 47 * computed + (int) (sum ^ (sum >>> 32));
                 break;
             case BLOB:
                 if (chargeWork != null) chargePayload(scalarPayloadLength(), chargeWork);
@@ -543,54 +526,100 @@ public class Term implements IUnit<Term>, ITerm {
         return hash;
     }
 
-    private int hashOrderedChildren(Runnable chargeWork) {
-        Deque<OrderedHashFrame> pending = new ArrayDeque<>();
-        pending.push(new OrderedHashFrame(this));
+    private int hashComposite(Runnable chargeWork) {
+        Deque<CompositeHashFrame> pending = new ArrayDeque<>();
+        pending.push(new CompositeHashFrame(this));
         while (true) {
-            OrderedHashFrame frame = pending.peek();
-            if (frame.next == frame.children) {
-                pending.pop();
-                frame.term.hash = frame.computed;
-                if (pending.isEmpty()) return frame.computed;
-                pending.peek().fold(frame.computed);
-                continue;
-            }
+            CompositeHashFrame frame = pending.peek();
+            try {
+                if (!frame.hasNext(chargeWork)) {
+                    pending.pop();
+                    int computed = frame.finish();
+                    frame.term.hash = computed;
+                    if (pending.isEmpty()) return computed;
+                    pending.peek().fold(computed);
+                    continue;
+                }
 
-            if (chargeWork != null) chargeWork.run();
-            Term child = frame.nextChild();
-            if (child.hash == 0 && child.value != null
-                    && (child.type == DataType.TERM || child.type == DataType.INTERVAL)) {
-                pending.push(new OrderedHashFrame(child));
-            } else {
-                frame.fold(child.getHash(chargeWork));
+                if (chargeWork != null) chargeWork.run();
+                Term child = frame.nextChild();
+                if (child.hash == 0 && child.value != null && child.isCompositeHash()) {
+                    pending.push(new CompositeHashFrame(child));
+                } else {
+                    frame.fold(child.getHash(chargeWork));
+                }
+            } catch (Exception failure) {
+                if (chargeWork != null && failure instanceof RuntimeException) {
+                    throw (RuntimeException) failure;
+                }
+                // Recover at the nearest SET still using semantic membership.
+                while (!pending.isEmpty() && !pending.peek().canFallBack()) {
+                    pending.pop();
+                }
+                if (pending.isEmpty()) {
+                    if (failure instanceof RuntimeException) throw (RuntimeException) failure;
+                    throw new IllegalStateException(failure);
+                }
+                System.err.println(new Date());
+                failure.printStackTrace(System.err);
+                CompositeHashFrame fallback = pending.peek();
+                fallback.rawMembers = true;
+                fallback.members = null;
             }
         }
     }
 
-    private static final class OrderedHashFrame {
-        final Term term;
-        final int children;
-        int next;
-        int computed = 3;
+    private boolean isCompositeHash() {
+        return type == DataType.TERM || type == DataType.INTERVAL || type == DataType.SET;
+    }
 
-        OrderedHashFrame(Term term) {
+    private static final class CompositeHashFrame {
+        final Term term;
+        int next;
+        int orderedHash = 3;
+        long sum;
+        Iterator<ITerm> members;
+        boolean rawMembers;
+
+        CompositeHashFrame(Term term) {
             this.term = term;
-            children = term.type == DataType.TERM ? 1 : 2;
+        }
+
+        boolean hasNext(Runnable chargeWork) throws Exception {
+            if (term.type != DataType.SET) {
+                return next < (term.type == DataType.TERM ? 1 : 2);
+            }
+            if (members == null) {
+                List<ITerm> source = rawMembers ? (List<ITerm>) term.value : term.expandedSetMembers(chargeWork);
+                members = source.iterator();
+            }
+            return members.hasNext();
         }
 
         Term nextChild() {
-            int index = next++;
-            return children == 1 ? (Term) term.value : (Term) ((List<ITerm>) term.value).get(index);
+            switch (term.type) {
+                case SET: return (Term) members.next();
+                case TERM: return (Term) term.value;
+                default: return (Term) ((List<ITerm>) term.value).get(next++);
+            }
         }
 
         void fold(int childHash) {
-            computed = 47 * computed + childHash;
+            if (term.type == DataType.SET) {
+                sum += childHash;
+            } else {
+                orderedHash = 47 * orderedHash + childHash;
+                if (term.type == DataType.TERM) next++;
+            }
         }
-    }
 
-    private static int hashChild(ITerm term, Runnable chargeWork) {
-        if (chargeWork != null) chargeWork.run();
-        return ((Term) term).getHash(chargeWork);
+        int finish() {
+            return term.type == DataType.SET ? 47 * 3 + (int) (sum ^ (sum >>> 32)) : orderedHash;
+        }
+
+        boolean canFallBack() {
+            return term.type == DataType.SET && !rawMembers;
+        }
     }
 
     /**

@@ -271,16 +271,25 @@ public final class ContextDependentConstructedIterationRunner {
 
         Term mixed = leaf;
         int expectedMixedHash = leaf.getHash();
+        int expectedMixedWork = 0;
         for (int i = 0; i < depth; i++) {
             Term outer = new Term(storageMind);
-            if (i % 2 == 0) {
+            if (i % 3 == 0) {
                 termType.set(outer, org.kanger.enums.DataType.INTERVAL);
                 termValue.set(outer, Arrays.asList(mixed, leaf));
                 expectedMixedHash = 47 * (141 + expectedMixedHash) + leaf.getHash();
-            } else {
+                expectedMixedWork += 2;
+            } else if (i % 3 == 1) {
                 termType.set(outer, org.kanger.enums.DataType.TERM);
                 termValue.set(outer, mixed);
                 expectedMixedHash += 141;
+                expectedMixedWork++;
+            } else {
+                termType.set(outer, org.kanger.enums.DataType.SET);
+                termValue.set(outer, Collections.singletonList(mixed));
+                long sum = expectedMixedHash;
+                expectedMixedHash = 141 + (int) (sum ^ (sum >>> 32));
+                expectedMixedWork += 2;
             }
             mixed = outer;
         }
@@ -291,8 +300,8 @@ public final class ContextDependentConstructedIterationRunner {
         }), "mixed chain stops before reaching the innermost endpoint");
         int[] mixedRetryTicks = {0};
         need(mixedRoot.getHash(() -> mixedRetryTicks[0]++) == expectedMixedHash
-                && mixedRetryTicks[0] == depth + depth / 2,
-                "mixed hash preserves endpoint order and charges all edges on retry");
+                && mixedRetryTicks[0] == expectedMixedWork,
+                "mixed hash preserves ordered folding and SET membership charges on retry");
 
         Result unrestricted = ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), q);
         stable(unrestricted);
