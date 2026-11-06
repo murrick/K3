@@ -504,12 +504,8 @@ public class Term implements IUnit<Term>, ITerm {
                 computed = 47 * computed + (int) (time ^ (time >>> 32));
                 break;
             case INTERVAL:
-                List<ITerm> ends = (List<ITerm>) value;
-                computed = 47 * computed + hashChild(ends.get(0), chargeWork);
-                computed = 47 * computed + hashChild(ends.get(1), chargeWork);
-                break;
             case TERM:
-                return hashWrappedTerms(chargeWork);
+                return hashOrderedChildren(chargeWork);
             case DATE:
                 long date = ((Date) value).getTime();
                 computed = 47 * computed + (int) (date ^ (date >>> 32));
@@ -547,21 +543,49 @@ public class Term implements IUnit<Term>, ITerm {
         return hash;
     }
 
-    private int hashWrappedTerms(Runnable chargeWork) {
-        Deque<Term> pending = new ArrayDeque<>();
-        Term current = this;
-        while (current.type == DataType.TERM && current.hash == 0 && current.value != null) {
+    private int hashOrderedChildren(Runnable chargeWork) {
+        Deque<OrderedHashFrame> pending = new ArrayDeque<>();
+        pending.push(new OrderedHashFrame(this));
+        while (true) {
+            OrderedHashFrame frame = pending.peek();
+            if (frame.next == frame.children) {
+                pending.pop();
+                frame.term.hash = frame.computed;
+                if (pending.isEmpty()) return frame.computed;
+                pending.peek().fold(frame.computed);
+                continue;
+            }
+
             if (chargeWork != null) chargeWork.run();
-            pending.push(current);
-            current = (Term) current.value;
+            Term child = frame.nextChild();
+            if (child.hash == 0 && child.value != null
+                    && (child.type == DataType.TERM || child.type == DataType.INTERVAL)) {
+                pending.push(new OrderedHashFrame(child));
+            } else {
+                frame.fold(child.getHash(chargeWork));
+            }
+        }
+    }
+
+    private static final class OrderedHashFrame {
+        final Term term;
+        final int children;
+        int next;
+        int computed = 3;
+
+        OrderedHashFrame(Term term) {
+            this.term = term;
+            children = term.type == DataType.TERM ? 1 : 2;
         }
 
-        int computed = current.getHash(chargeWork);
-        while (!pending.isEmpty()) {
-            computed = 47 * 3 + computed;
-            pending.pop().hash = computed;
+        Term nextChild() {
+            int index = next++;
+            return children == 1 ? (Term) term.value : (Term) ((List<ITerm>) term.value).get(index);
         }
-        return computed;
+
+        void fold(int childHash) {
+            computed = 47 * computed + childHash;
+        }
     }
 
     private static int hashChild(ITerm term, Runnable chargeWork) {

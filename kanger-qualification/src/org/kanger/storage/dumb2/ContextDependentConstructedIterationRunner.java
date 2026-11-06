@@ -269,6 +269,31 @@ public final class ContextDependentConstructedIterationRunner {
         }), "cached TERM chain comparison still charges each wrapper");
         need(wrappedRoot.equalsTo(otherWrappedRoot), "deep TERM chains compare equal");
 
+        Term mixed = leaf;
+        int expectedMixedHash = leaf.getHash();
+        for (int i = 0; i < depth; i++) {
+            Term outer = new Term(storageMind);
+            if (i % 2 == 0) {
+                termType.set(outer, org.kanger.enums.DataType.INTERVAL);
+                termValue.set(outer, Arrays.asList(mixed, leaf));
+                expectedMixedHash = 47 * (141 + expectedMixedHash) + leaf.getHash();
+            } else {
+                termType.set(outer, org.kanger.enums.DataType.TERM);
+                termValue.set(outer, mixed);
+                expectedMixedHash += 141;
+            }
+            mixed = outer;
+        }
+        Term mixedRoot = mixed;
+        int[] mixedTicks = {depth - 1};
+        reject(() -> mixedRoot.getHash(() -> {
+            if (mixedTicks[0]-- == 0) throw new IllegalStateException("mixed hash allowance");
+        }), "mixed chain stops before reaching the innermost endpoint");
+        int[] mixedRetryTicks = {0};
+        need(mixedRoot.getHash(() -> mixedRetryTicks[0]++) == expectedMixedHash
+                && mixedRetryTicks[0] == depth + depth / 2,
+                "mixed hash preserves endpoint order and charges all edges on retry");
+
         Result unrestricted = ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), q);
         stable(unrestricted);
         long startupAttempts = (long) unrestricted.startup.baseTried + unrestricted.startup.proposedTried;
