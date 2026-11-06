@@ -621,7 +621,11 @@ public class RuleFactory implements IFactory<IRule> {
     }
 
     public synchronized IRule add(IRule r, boolean primary) throws Exception {
-        IRule existing = find(r);
+        return add(r, primary, () -> {});
+    }
+
+    private synchronized IRule add(IRule r, boolean primary, Runnable chargeWork) throws Exception {
+        IRule existing = find(r, chargeWork);
         if (existing != null) {
             if (existing.getId() != r.getId()) {
                 ((Rule) r).setDeleted(true, mind);
@@ -665,12 +669,15 @@ public class RuleFactory implements IFactory<IRule> {
         for (List<Domain> tree : r.getTree()) {
             chargeWork.run();
             if (tree.size() == 1) {
-                if (!tree.get(0).getArguments().getTVariables(mind, false, chargeWork).isEmpty()) {
-                    mind.getDomains().getWaiters().add(tree.get(0));
+                Domain domain = tree.get(0);
+                boolean waiting = !domain.getArguments().getTVariables(mind, false, chargeWork).isEmpty();
+                chargeWork.run();
+                if (waiting) {
+                    mind.getDomains().getWaiters().add(domain);
                 } else if (r.getTree().size() == 1) {
-                    tree.get(0).setStored(mind);
+                    store(domain);
                 } else {
-                    tree.get(0).createStored(mind);
+                    add(domain, chargeWork);
                 }
             }
             for (Domain d : tree) {
@@ -858,9 +865,13 @@ public class RuleFactory implements IFactory<IRule> {
     }
 
     public synchronized IRule add(Domain domain) throws Exception {
-        IRule rule = find(domain);
+        return add(domain, () -> {});
+    }
+
+    private synchronized IRule add(Domain domain, Runnable chargeWork) throws Exception {
+        IRule rule = find(domain, chargeWork);
         if (rule == null) {
-            rule = GeneratedCVarMaterializer.findAlphaEquivalent(this, domain, mind);
+            rule = GeneratedCVarMaterializer.findAlphaEquivalent(this, domain, mind, chargeWork);
         }
         if (rule != null) {
             if (mind.getQueryPass() == QueryPass.INSERT && isGenerated(rule)) {
@@ -907,7 +918,7 @@ public class RuleFactory implements IFactory<IRule> {
             r.getTerms().addAll(d.getTerms(mind, true));
             r.getPredicates().add(d.getPredicateId());
 
-            IRule inserted = add(r);
+            IRule inserted = add(r, false, chargeWork);
             if (inserted == r) {
                 SemanticEffectTelemetry.recordGeneratedRule(r);
             }
@@ -941,7 +952,13 @@ public class RuleFactory implements IFactory<IRule> {
     }
 
     public IRule find(Solve domain) throws Exception {
+        return find(domain, () -> {});
+    }
+
+    private IRule find(Solve domain, Runnable chargeWork) throws Exception {
+
         for (long id : Escalera.findCandidates(cache, domain.getHash(mind))) {
+            chargeWork.run();
             IRule one = get(id);
             if (((Rule) one).equalsTo(domain)) {
                 if (shouldPromoteInsertResult(domain, one)) {
@@ -954,8 +971,14 @@ public class RuleFactory implements IFactory<IRule> {
     }
 
     public IRule find(IRule rule) throws Exception {
+        return find(rule, () -> {});
+    }
+
+    private IRule find(IRule rule, Runnable chargeWork) throws Exception {
+
         IRule self = null;
         for (long id : Escalera.findCandidates(cache, ((Rule) rule).getHash())) {
+            chargeWork.run();
             IRule one = get(id);
             if (((Rule) one).equalsTo(rule)) {
                 if (one.getId() != rule.getId()) {

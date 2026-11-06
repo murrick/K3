@@ -57,11 +57,17 @@ public final class GeneratedCVarMaterializer {
     public static IRule findAlphaEquivalent(RuleFactory factory,
                                             Domain source,
                                             Mind mind) throws Exception {
+        return findAlphaEquivalent(factory, source, mind, () -> {});
+    }
+
+    public static IRule findAlphaEquivalent(RuleFactory factory, Domain source,
+                                            Mind mind, Runnable chargeWork) throws Exception {
         if (source.isQuery(mind) || !containsCVariable(source, mind)) {
             return null;
         }
 
         for (Object value : factory) {
+            chargeWork.run();
             IRule rule = (IRule) value;
             if (!rule.isStored() || rule.isQuery()) {
                 continue;

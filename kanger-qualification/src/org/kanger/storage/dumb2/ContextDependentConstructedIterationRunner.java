@@ -73,6 +73,11 @@ public final class ContextDependentConstructedIterationRunner {
         need(!c.getLog().isEmpty(), "ordinary compilation still records diagnostics");
         need(ContextDependentRuntimeIterationProbe.replayProjectionIsQuiet(child, q.startup.append.iteration.policy),
                 "complete native replay projection does not render compiler diagnostics");
+        Mind storageMind = memory();
+        Rule stored = raw(storageMind, "!stored_probe(1,1);");
+        int[] storageTicks = {0};
+        storageMind.getRules().expand(stored, () -> storageTicks[0]++);
+        need(storageTicks[0] == 5, "ground expansion charges branch, two arguments, storage and domain binding");
         Result unrestricted = ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), q);
         stable(unrestricted);
         long startupAttempts = (long) unrestricted.startup.baseTried + unrestricted.startup.proposedTried;
