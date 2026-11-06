@@ -13,6 +13,13 @@ import org.kanger.units.Term;
 public final class ContextDependentConstructedIterationRunner {
     static int checks;
     interface Attempt{void run()throws Exception;}
+    private static org.kanger.units.Function wrapFunction(Mind mind, org.kanger.units.Function nested) {
+        org.kanger.units.Function function = new org.kanger.units.Function(mind);
+        function.setRange(1);
+        function.getArguments().add(new org.kanger.primitives.Argument(nested));
+        return function;
+    }
+
     static void need(boolean b,String why){checks++;if(!b)throw new AssertionError(why);}
     static void reject(Attempt a,String why)throws Exception{boolean no=false;try{a.run();}catch(Exception expected){no=true;}need(no,why);}
     static Mind memory()throws Exception{return ContextDependentConstructedStartupRunner.memory();}
@@ -202,6 +209,32 @@ public final class ContextDependentConstructedIterationRunner {
         need(storageMind.getCalculator().expand(rootSet, null, false, () -> exactDeepTicks[0]++)
                 .equals(Collections.singletonList(leaf)) && exactDeepTicks[0] == depth,
                 "deep SET expansion reaches the leaf without recursive stack growth");
+
+        org.kanger.units.Function function = new org.kanger.units.Function(storageMind);
+        org.kanger.units.Function otherLeaf = new org.kanger.units.Function(storageMind);
+        org.kanger.units.Function otherFunction = otherLeaf;
+        int expectedHash = (47 * 3 * 47) * 47;
+        int unaryHeader = (47 * 3 * 47 + 1) * 47;
+        for (int i = 0; i < depth; i++) {
+            function = wrapFunction(storageMind, function);
+            otherFunction = wrapFunction(storageMind, otherFunction);
+            expectedHash = 47 * (47 * unaryHeader + org.kanger.enums.ArgumentType.FUNCTION.ordinal()) + expectedHash;
+        }
+        org.kanger.units.Function functionRoot = function;
+        org.kanger.units.Function otherRoot = otherFunction;
+        int[] functionHashTicks = {depth - 1};
+        reject(() -> functionRoot.getHashStruct(stored, () -> {
+            if (functionHashTicks[0]-- == 0) throw new IllegalStateException("function hash allowance");
+        }), "deep function hashing stops before the last argument");
+        int[] functionMatchTicks = {depth - 1};
+        reject(() -> functionRoot.equalsToStruct(otherRoot, stored, stored, () -> {
+            if (functionMatchTicks[0]-- == 0) throw new IllegalStateException("function match allowance");
+        }), "deep function comparison stops before the last argument");
+        need(functionRoot.getHashStruct(stored) == expectedHash,
+                "deep function hash preserves recursive folding");
+        need(functionRoot.equalsToStruct(otherRoot, stored, stored), "deep equivalent functions match");
+        otherLeaf.setBinding(org.kanger.enums.FunctionBinding.UDF_DYNAMIC);
+        need(!functionRoot.equalsToStruct(otherRoot, stored, stored), "deep leaf binding mismatch is detected");
 
         Result unrestricted = ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), q);
         stable(unrestricted);

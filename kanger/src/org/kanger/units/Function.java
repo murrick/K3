@@ -40,8 +40,10 @@ import org.kanger.primitives.Argument;
 import org.kanger.primitives.ArgumentsList;
 import org.kanger.storage.ByteBuffer;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -442,27 +444,49 @@ public class Function implements IUnit<Function> {
     }
 
     public int getHashStruct(IRule r, Runnable chargeWork) throws Exception {
-        int hash = 3;
-        hash = 47 * hash + (int) (nameId ^ (nameId >>> 32));
-        hash = 47 * hash + range;
-        hash = 47 * hash + binding.ordinal();
-        for (int i = 0; i < range; ++i) {
+        Deque<HashFrame> pending = new ArrayDeque<>();
+        pending.push(new HashFrame(this));
+        while (true) {
+            HashFrame frame = pending.peek();
+            Function function = frame.function;
+            if (frame.next >= function.range) {
+                pending.pop();
+                if (pending.isEmpty()) return frame.hash;
+                HashFrame parent = pending.peek();
+                parent.hash = 47 * parent.hash + parent.next * frame.hash;
+                continue;
+            }
+
             chargeWork.run();
-            hash = 47 * hash + (i + 1) * arguments.get(i).getType().ordinal();
-            switch (arguments.get(i).getType()) {
+            IArgument argument = function.arguments.get(frame.next++);
+            frame.hash = 47 * frame.hash + frame.next * argument.getType().ordinal();
+            switch (argument.getType()) {
                 case TVARIABLE:
-                    hash = 47 * hash + (i + 1) * (((TVariable) arguments.get(i).getObject(mind)).getIndex() - ((Rule) r).getVarIndex());
+                    int index = ((TVariable) argument.getObject(function.mind)).getIndex() - ((Rule) r).getVarIndex();
+                    frame.hash = 47 * frame.hash + frame.next * index;
                     break;
                 case TERM:
-                    long id = arguments.get(i).getValue(mind).getId();
-                    hash = 47 * hash + (i + 1) * (int) (id ^ (id >>> 32));
+                    long id = argument.getValue(function.mind).getId();
+                    frame.hash = 47 * frame.hash + frame.next * (int) (id ^ (id >>> 32));
                     break;
                 case FUNCTION:
-                    hash = 47 * hash + (i + 1) * ((Function) arguments.get(i).getObject(mind)).getHashStruct(r, chargeWork);
+                    pending.push(new HashFrame((Function) argument.getObject(function.mind)));
                     break;
             }
         }
-        return hash;
+    }
+
+    private static final class HashFrame {
+        final Function function;
+        int hash;
+        int next;
+
+        HashFrame(Function function) {
+            this.function = function;
+            hash = 47 * 3 + (int) (function.nameId ^ (function.nameId >>> 32));
+            hash = 47 * hash + function.range;
+            hash = 47 * hash + function.binding.ordinal();
+        }
     }
 
     /**
@@ -473,36 +497,54 @@ public class Function implements IUnit<Function> {
     }
 
     public boolean equalsToStruct(Function f, IRule left, IRule rule, Runnable chargeWork) throws Exception {
-        if (nameId == f.nameId && range == f.getRange() && binding == f.getBinding()) {
-            for (int i = 0; i < range; ++i) {
-                chargeWork.run();
-                if (arguments.get(i).getType() == f.getArguments().get(i).getType()) {
-                    switch (arguments.get(i).getType()) {
-                        case TVARIABLE:
-                            if ((((TVariable) arguments.get(i).getObject(mind)).getIndex() - ((Rule) left).getVarIndex())
-                                    != (((TVariable) f.getArguments().get(i).getObject(mind)).getIndex() - ((Rule) rule).getVarIndex())) {
-                                return false;
-                            }
-                            break;
-                        case TERM:
-                            if (arguments.get(i).getValue(mind).getId() != f.getArguments().get(i).getValue(mind).getId()) {
-                                return false;
-                            }
-                            break;
-                        case FUNCTION:
-                            if (!((Function) arguments.get(i).getObject(mind))
-                                    .equalsToStruct(((Function) f.getArguments().get(i).getObject(mind)), left, rule, chargeWork)) {
-                                return false;
-                            }
-                            break;
-                    }
-                } else {
-                    return false;
-                }
+        if (!sameShape(f)) return false;
+
+        Deque<ComparisonFrame> pending = new ArrayDeque<>();
+        pending.push(new ComparisonFrame(this, f));
+        while (!pending.isEmpty()) {
+            ComparisonFrame frame = pending.peek();
+            if (frame.next >= frame.left.range) {
+                pending.pop();
+                continue;
             }
-            return true;
-        } else {
-            return false;
+
+            chargeWork.run();
+            int index = frame.next++;
+            Mind current = frame.left.mind;
+            IArgument a = frame.left.arguments.get(index);
+            IArgument b = frame.right.getArguments().get(index);
+            if (a.getType() != b.getType()) return false;
+            switch (a.getType()) {
+                case TVARIABLE:
+                    if (((TVariable) a.getObject(current)).getIndex() - ((Rule) left).getVarIndex()
+                            != ((TVariable) b.getObject(current)).getIndex() - ((Rule) rule).getVarIndex()) return false;
+                    break;
+                case TERM:
+                    if (a.getValue(current).getId() != b.getValue(current).getId()) return false;
+                    break;
+                case FUNCTION:
+                    Function child = (Function) a.getObject(current);
+                    Function other = (Function) b.getObject(current);
+                    if (!child.sameShape(other)) return false;
+                    pending.push(new ComparisonFrame(child, other));
+                    break;
+            }
+        }
+        return true;
+    }
+
+    private boolean sameShape(Function other) {
+        return nameId == other.nameId && range == other.getRange() && binding == other.getBinding();
+    }
+
+    private static final class ComparisonFrame {
+        final Function left;
+        final Function right;
+        int next;
+
+        ComparisonFrame(Function left, Function right) {
+            this.left = left;
+            this.right = right;
         }
     }
 
