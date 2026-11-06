@@ -271,6 +271,21 @@ public final class ContextDependentConstructedIterationRunner {
                 retainedProofEntries, largestReplay, 1000, 1000, 2, projectionPairEntries,
                 1000, 1000, 1000, 4, 64, 1000, sourcePairChars, 1000);
         stable(ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), compilerTextRoom));
+        Request compilerDepthTight = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
+                q.frontierWork, q.frontierCapacity, exactAttempts, replayBarriers, 1000000, 1000000,
+                retainedProofEntries, largestReplay, 1000, 1000, 2, projectionPairEntries,
+                1000, 1000, 1000, 4, 64, 1000, sourcePairChars, 1000, 1);
+        Result compilerDepthExhausted = ContextDependentConstructedIterationInspection.inspect(
+                b, child, Collections.emptyList(), compilerDepthTight);
+        incomplete(compilerDepthExhausted);
+        need(compilerDepthExhausted.phase.equals("round-bridge")
+                && compilerDepthExhausted.reason.contains("Replay compiler depth limit"),
+                "compiler recursion has an independent limit");
+        Request compilerDepthRoom = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
+                q.frontierWork, q.frontierCapacity, exactAttempts, replayBarriers, 1000000, 1000000,
+                retainedProofEntries, largestReplay, 1000, 1000, 2, projectionPairEntries,
+                1000, 1000, 1000, 4, 64, 1000, sourcePairChars, 1000, 64);
+        stable(ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), compilerDepthRoom));
         Request startupTight = new Request(q.startup, q.receivingSearch, q.rounds, q.initialWork,
                 q.frontierWork, q.frontierCapacity, startupAttempts - 1);
         Result startupExhausted = ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), startupTight);

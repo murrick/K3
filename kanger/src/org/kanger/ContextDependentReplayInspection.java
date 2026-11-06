@@ -83,20 +83,20 @@ public final class ContextDependentReplayInspection {
         return projectMember(actual,expected,policy,()->{});
     }
     static Projection projectMember(Mind actual,ContextProductionInventory expected,Policy policy,Runnable chargeWork)throws Exception {
-        return projectMember(actual,expected,policy,chargeWork,null,null,null,null,Long.MAX_VALUE,null,null);
+        return projectMember(actual,expected,policy,chargeWork,null,null,null,null,Long.MAX_VALUE,null,null,Long.MAX_VALUE);
     }
     static Projection projectMember(Mind actual,ContextProductionInventory expected,Policy policy,
-                                    Runnable chargeWork,Runnable chargeNewTerm,Runnable chargeCompilerEntry,Runnable chargeParserNode,Runnable chargeParserToken,long parserDepth,java.util.function.IntConsumer chargeLexemeText,java.util.function.LongConsumer chargeCompilerText)throws Exception {
+                                    Runnable chargeWork,Runnable chargeNewTerm,Runnable chargeCompilerEntry,Runnable chargeParserNode,Runnable chargeParserToken,long parserDepth,java.util.function.IntConsumer chargeLexemeText,java.util.function.LongConsumer chargeCompilerText,long compilerDepth)throws Exception {
         Runnable localWork = ContextGroundProductionRounds.budget(policy.work);
-        return project(actual,expected,policy,true,()->{localWork.run();chargeWork.run();},false,chargeNewTerm,chargeCompilerEntry,chargeParserNode,chargeParserToken,parserDepth,chargeLexemeText,chargeCompilerText);
+        return project(actual,expected,policy,true,()->{localWork.run();chargeWork.run();},false,chargeNewTerm,chargeCompilerEntry,chargeParserNode,chargeParserToken,parserDepth,chargeLexemeText,chargeCompilerText,compilerDepth);
     }
     private static Projection project(Mind actual,ContextProductionInventory expected,Policy policy,boolean horn,Runnable work)throws Exception {
-        return project(actual,expected,policy,horn,work,true,null,null,null,null,Long.MAX_VALUE,null,null);
+        return project(actual,expected,policy,horn,work,true,null,null,null,null,Long.MAX_VALUE,null,null,Long.MAX_VALUE);
     }
-    private static Projection project(Mind actual,ContextProductionInventory expected,Policy policy,boolean horn,Runnable work,boolean local,Runnable chargeNewTerm,Runnable chargeCompilerEntry,Runnable chargeParserNode,Runnable chargeParserToken,long parserDepth,java.util.function.IntConsumer chargeLexemeText,java.util.function.LongConsumer chargeCompilerText)throws Exception {
+    private static Projection project(Mind actual,ContextProductionInventory expected,Policy policy,boolean horn,Runnable work,boolean local,Runnable chargeNewTerm,Runnable chargeCompilerEntry,Runnable chargeParserNode,Runnable chargeParserToken,long parserDepth,java.util.function.IntConsumer chargeLexemeText,java.util.function.LongConsumer chargeCompilerText,long compilerDepth)throws Exception {
         if(local)current(actual,expected,policy);else currentMember(actual,expected,policy);
         if(!expected.initialization.isEmpty()||expected.rows.size()!=expected.primary.size())throw new IllegalStateException("Whole primary-only local-X diagnostic required");
-        User user=new User();Mind isolated=new Mind(user,chargeNewTerm,chargeCompilerEntry,chargeParserNode,chargeParserToken,parserDepth,chargeLexemeText,chargeCompilerText);user.setCurrentMind(isolated);Map<Long,Long> mapping=new LinkedHashMap<>();
+        User user=new User();Mind isolated=new Mind(user,chargeNewTerm,chargeCompilerEntry,chargeParserNode,chargeParserToken,parserDepth,chargeLexemeText,chargeCompilerText,compilerDepth);user.setCurrentMind(isolated);Map<Long,Long> mapping=new LinkedHashMap<>();
         try {
             for(ContextProductionInventory.Row row:expected.rows) {
                 work.run();Rule original=(Rule)actual.getRules().get(row.nativeRule),copy=(Rule)isolated.compileLineForReplay(row.origin);

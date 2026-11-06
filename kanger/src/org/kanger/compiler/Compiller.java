@@ -104,9 +104,19 @@ import java.util.Queue;
 public class Compiller {
 
     private final Mind mind;
+    private final long maxDepth;
 
     public Compiller(Mind mind) {
+        this(mind, Long.MAX_VALUE);
+    }
+
+    public Compiller(Mind mind, long maxDepth) {
         this.mind = mind;
+        this.maxDepth = maxDepth;
+    }
+
+    private void checkDepth(int depth) {
+        if (depth > maxDepth) throw new IllegalStateException("Replay compiler depth limit");
     }
 
     private String functionSignature(Leaf root) {
@@ -132,7 +142,7 @@ public class Compiller {
         IRule r = new Rule(mind);
         mind.getRules().register(r);
         ((Rule) r).setOrigin(mind.getTerms().add(orig));
-        construct((Rule) r, ((Rule) r).getTree().get(0), root, antc, new HashMap<String, Argument>(), externals);
+        construct((Rule) r, ((Rule) r).getTree().get(0), root, antc, new HashMap<String, Argument>(), externals, 1);
 
         long id = r.getId();
         r = mind.getRules().add(r, !query);
@@ -153,7 +163,8 @@ public class Compiller {
         return r;
     }
 
-    private List<List<Domain>> construct(Rule r, List<Domain> t, Leaf root, boolean antc, Map<String, Argument> replacements, Queue<ITerm> externals) throws Exception {
+    private List<List<Domain>> construct(Rule r, List<Domain> t, Leaf root, boolean antc, Map<String, Argument> replacements, Queue<ITerm> externals, int depth) throws Exception {
+        checkDepth(depth);
         List<List<Domain>> list = new ArrayList<>();
         Domain d;
         if (root == null) {
@@ -162,13 +173,13 @@ public class Compiller {
         switch (root.getValue()) {
             case "!":
             case "~":
-                list.addAll(construct(r, t, root.getRight(), !antc, replacements, externals));
+                list.addAll(construct(r, t, root.getRight(), !antc, replacements, externals, depth + 1));
                 break;
 
             case "@":
             case "$": {
                 antc = compileQuainter(r, root, antc, replacements);
-                list.addAll(construct(r, t, root.getRight(), antc, replacements, externals));
+                list.addAll(construct(r, t, root.getRight(), antc, replacements, externals, depth + 1));
             }
             break;
             case ",":
@@ -176,55 +187,55 @@ public class Compiller {
                 if (antc) {
                     List<Domain> x = r.cloneTree(t);
                     list.add(x);
-                    list.addAll(construct(r, t, root.getLeft(), antc, replacements, externals));
-                    list.addAll(construct(r, x, root.getRight(), antc, replacements, externals));
+                    list.addAll(construct(r, t, root.getLeft(), antc, replacements, externals, depth + 1));
+                    list.addAll(construct(r, x, root.getRight(), antc, replacements, externals, depth + 1));
                 } else {
-                    list.addAll(construct(r, t, root.getLeft(), antc, replacements, externals));
+                    list.addAll(construct(r, t, root.getLeft(), antc, replacements, externals, depth + 1));
                     int size = list.size();
                     for (int i = 0; i < size; ++i) {
-                        list.addAll(construct(r, list.get(i), root.getRight(), antc, replacements, externals));
+                        list.addAll(construct(r, list.get(i), root.getRight(), antc, replacements, externals, depth + 1));
                     }
-                    list.addAll(construct(r, t, root.getRight(), antc, replacements, externals));
+                    list.addAll(construct(r, t, root.getRight(), antc, replacements, externals, depth + 1));
                 }
             }
             break;
 
             case "|": {
                 if (antc) {
-                    list.addAll(construct(r, t, root.getLeft(), antc, replacements, externals));
+                    list.addAll(construct(r, t, root.getLeft(), antc, replacements, externals, depth + 1));
                     int size = list.size();
                     for (int i = 0; i < size; ++i) {
-                        list.addAll(construct(r, list.get(i), root.getRight(), antc, replacements, externals));
+                        list.addAll(construct(r, list.get(i), root.getRight(), antc, replacements, externals, depth + 1));
                     }
-                    list.addAll(construct(r, t, root.getRight(), antc, replacements, externals));
+                    list.addAll(construct(r, t, root.getRight(), antc, replacements, externals, depth + 1));
                 } else {
                     List<Domain> x = r.cloneTree(t);
                     list.add(x);
-                    list.addAll(construct(r, t, root.getLeft(), antc, replacements, externals));
-                    list.addAll(construct(r, x, root.getRight(), antc, replacements, externals));
+                    list.addAll(construct(r, t, root.getLeft(), antc, replacements, externals, depth + 1));
+                    list.addAll(construct(r, x, root.getRight(), antc, replacements, externals, depth + 1));
                 }
             }
             break;
 
             case "}": {
                 if (antc) {
-                    list.addAll(construct(r, t, root.getLeft(), !antc, replacements, externals));
+                    list.addAll(construct(r, t, root.getLeft(), !antc, replacements, externals, depth + 1));
                     int size = list.size();
                     for (int i = 0; i < size; ++i) {
-                        list.addAll(construct(r, list.get(i), root.getRight(), antc, replacements, externals));
+                        list.addAll(construct(r, list.get(i), root.getRight(), antc, replacements, externals, depth + 1));
                     }
-                    list.addAll(construct(r, t, root.getRight(), antc, replacements, externals));
+                    list.addAll(construct(r, t, root.getRight(), antc, replacements, externals, depth + 1));
                 } else {
                     List<Domain> x = r.cloneTree(t);
                     list.add(x);
-                    list.addAll(construct(r, t, root.getLeft(), !antc, replacements, externals));
-                    list.addAll(construct(r, x, root.getRight(), antc, replacements, externals));
+                    list.addAll(construct(r, t, root.getLeft(), !antc, replacements, externals, depth + 1));
+                    list.addAll(construct(r, x, root.getRight(), antc, replacements, externals, depth + 1));
                 }
             }
             break;
 
             default: {
-                d = compilePredicate(r, root, antc, replacements, externals);
+                d = compilePredicate(r, root, antc, replacements, externals, depth);
                 t.add(d);
             }
         }
@@ -259,12 +270,12 @@ public class Compiller {
         return antc;
     }
 
-    private Domain compilePredicate(Rule r, Leaf root, boolean antc, Map<String, Argument> replacements, Queue<ITerm> externals) throws Exception {
+    private Domain compilePredicate(Rule r, Leaf root, boolean antc, Map<String, Argument> replacements, Queue<ITerm> externals, int depth) throws Exception {
         Domain d = new Domain(mind);
         d.setRule(r);
         ArgumentsList arg = new ArgumentsList();
-        parseArgs(arg, root.getLeft(), 0, replacements, externals);
-        parseArgs(arg, root.getRight(), 0, replacements, externals);
+        parseArgs(arg, root.getLeft(), depth + 1, replacements, externals);
+        parseArgs(arg, root.getRight(), depth + 1, replacements, externals);
         org.kanger.units.Predicate pred = mind.getPredicates().add(mind.getTerms().add(root.getValue()), arg.size());
         d.setPredicate(pred);
         d.setAntc(antc);
@@ -274,6 +285,7 @@ public class Compiller {
     }
 
     private void parseArgs(ArgumentsList arg, Leaf root, int level, Map<String, Argument> replacements, Queue<ITerm> externals) throws Exception {
+        checkDepth(level);
         if (root == null) {
             return;
         } else if (isFunction(root) && !"_set".equals(root.getValue())) {
