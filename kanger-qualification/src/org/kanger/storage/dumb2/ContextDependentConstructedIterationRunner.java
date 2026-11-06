@@ -236,6 +236,39 @@ public final class ContextDependentConstructedIterationRunner {
         otherLeaf.setBinding(org.kanger.enums.FunctionBinding.UDF_DYNAMIC);
         need(!functionRoot.equalsToStruct(otherRoot, stored, stored), "deep leaf binding mismatch is detected");
 
+        // Build TERM wrappers directly, as deserialization can supply them without hashing.
+        java.lang.reflect.Field termType = Term.class.getDeclaredField("type");
+        java.lang.reflect.Field termValue = Term.class.getDeclaredField("value");
+        termType.setAccessible(true);
+        termValue.setAccessible(true);
+        Term wrapped = leaf;
+        Term otherWrapped = new Term(42, storageMind);
+        for (int i = 0; i < depth; i++) {
+            Term outer = new Term(storageMind);
+            Term otherOuter = new Term(storageMind);
+            termType.set(outer, org.kanger.enums.DataType.TERM);
+            termType.set(otherOuter, org.kanger.enums.DataType.TERM);
+            termValue.set(outer, wrapped);
+            termValue.set(otherOuter, otherWrapped);
+            wrapped = outer;
+            otherWrapped = otherOuter;
+        }
+        Term wrappedRoot = wrapped;
+        Term otherWrappedRoot = otherWrapped;
+        int[] wrapperTicks = {depth - 1};
+        reject(() -> wrappedRoot.getHash(() -> {
+            if (wrapperTicks[0]-- == 0) throw new IllegalStateException("wrapper hash allowance");
+        }), "TERM chain stops before hashing the leaf");
+        int[] retryWrapperTicks = {0};
+        need(wrappedRoot.getHash(() -> retryWrapperTicks[0]++) == leaf.getHash() + depth * 141
+                && retryWrapperTicks[0] == depth, "TERM chain retry preserves folding and charges every wrapper");
+        otherWrappedRoot.getHash();
+        int[] compareWrapperTicks = {depth - 1};
+        reject(() -> wrappedRoot.equalsTo(otherWrappedRoot, () -> {
+            if (compareWrapperTicks[0]-- == 0) throw new IllegalStateException("wrapper comparison allowance");
+        }), "cached TERM chain comparison still charges each wrapper");
+        need(wrappedRoot.equalsTo(otherWrappedRoot), "deep TERM chains compare equal");
+
         Result unrestricted = ContextDependentConstructedIterationInspection.inspect(b, child, Collections.emptyList(), q);
         stable(unrestricted);
         long startupAttempts = (long) unrestricted.startup.baseTried + unrestricted.startup.proposedTried;

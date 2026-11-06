@@ -509,8 +509,7 @@ public class Term implements IUnit<Term>, ITerm {
                 computed = 47 * computed + hashChild(ends.get(1), chargeWork);
                 break;
             case TERM:
-                computed = 47 * computed + hashChild((Term) value, chargeWork);
-                break;
+                return hashWrappedTerms(chargeWork);
             case DATE:
                 long date = ((Date) value).getTime();
                 computed = 47 * computed + (int) (date ^ (date >>> 32));
@@ -548,6 +547,23 @@ public class Term implements IUnit<Term>, ITerm {
         return hash;
     }
 
+    private int hashWrappedTerms(Runnable chargeWork) {
+        Deque<Term> pending = new ArrayDeque<>();
+        Term current = this;
+        while (current.type == DataType.TERM && current.hash == 0 && current.value != null) {
+            if (chargeWork != null) chargeWork.run();
+            pending.push(current);
+            current = (Term) current.value;
+        }
+
+        int computed = current.getHash(chargeWork);
+        while (!pending.isEmpty()) {
+            computed = 47 * 3 + computed;
+            pending.pop().hash = computed;
+        }
+        return computed;
+    }
+
     private static int hashChild(ITerm term, Runnable chargeWork) {
         if (chargeWork != null) chargeWork.run();
         return ((Term) term).getHash(chargeWork);
@@ -558,16 +574,25 @@ public class Term implements IUnit<Term>, ITerm {
      * Scalar payload scans are reserved before invoking the JDK operations.
      */
     public boolean equalsTo(Term to, Runnable chargeWork) {
-        if (to == null || type != to.getType() || getHash(chargeWork) != to.getHash(chargeWork)) {
-            return false;
-        }
-        if (chargeWork != null && (type == DataType.BLOB || type == DataType.STRING) && value != to.value) {
-            int length = scalarPayloadLength();
-            if (length == to.scalarPayloadLength()) {
-                chargePayload(length, chargeWork);
+        Term left = this;
+        Term right = to;
+        while (right != null && left.type == right.getType()
+                && left.getHash(chargeWork) == right.getHash(chargeWork)) {
+            if (left.type != DataType.TERM) {
+                if (chargeWork != null && (left.type == DataType.BLOB || left.type == DataType.STRING)
+                        && left.value != right.value) {
+                    int length = left.scalarPayloadLength();
+                    if (length == right.scalarPayloadLength()) {
+                        chargePayload(length, chargeWork);
+                    }
+                }
+                return left.equalsValue(right, chargeWork);
             }
+            if (chargeWork != null) chargeWork.run();
+            left = (Term) left.value;
+            right = (Term) right.value;
         }
-        return equalsValue(to, chargeWork);
+        return false;
     }
 
     private long periodDuration(Runnable chargeWork) {
@@ -626,9 +651,6 @@ public class Term implements IUnit<Term>, ITerm {
                     e.printStackTrace(System.err);
                     return false;
                 }
-            case TERM:
-                if (chargeWork != null) chargeWork.run();
-                return ((Term) value).equalsTo((Term) to.getValue(), chargeWork);
             case INTERVAL:
                 if (chargeWork != null) chargePayload(2, chargeWork);
                 return ((Term) ((List<ITerm>) value).get(0)).equalsTo((Term) ((List<ITerm>) to.getValue()).get(0), chargeWork)
