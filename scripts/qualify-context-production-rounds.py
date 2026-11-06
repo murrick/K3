@@ -10,7 +10,7 @@ import tempfile
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--mode', choices=('contract', 'reference', 'witness-contract', 'independent-reopen-contract', 'ordinary-commit-contract', 'private-witness-contract', 'universal-unit-contract'), default='contract')
+    parser.add_argument('--mode', choices=('contract', 'reference', 'witness-contract', 'independent-reopen-contract', 'ordinary-commit-contract', 'ordinary-ground-attachment-contract', 'private-witness-contract', 'universal-unit-contract'), default='contract')
     parser.add_argument('--ordinary-integration-candidate', action='store_true',
                         help='Compile an isolated experimental default hook; never edit production sources')
     args = parser.parse_args()
@@ -34,6 +34,9 @@ def main():
         if args.ordinary_integration_candidate:
             names.append(('org.kanger.storage.dumb2.ContextProductionRoundsContractRunner',
                           'CONTEXT_PRODUCTION_ROUNDS_CONTRACT_PASS'))
+    if args.mode == 'ordinary-ground-attachment-contract':
+        names = [('org.kanger.storage.dumb2.ContextOrdinaryGroundAttachmentRunner',
+                  'CONTEXT_ORDINARY_GROUND_ATTACHMENT_PASS')]
     if args.mode == 'private-witness-contract':
         names = [('org.kanger.storage.dumb2.ContextPrivateWitnessAdmissionContractRunner', 'CONTEXT_PRIVATE_WITNESS_ADMISSION_CONTRACT_PASS')]
     if args.mode == 'universal-unit-contract':
@@ -879,6 +882,7 @@ def main():
                          'independent-reopen-contract': 'Certified independent-coordinate source must reopen after publication',
                          'universal-unit-contract': 'Desired universal-unit family coverage; open required language gate, not expected-refusal PASS',
                          'private-witness-contract': 'Bounded actual private witness admission/local refutation; required integration gate',
+                         'ordinary-ground-attachment-contract': 'Ordinary attachment with a published X rule in both orders',
                          'ordinary-commit-contract': 'Ordinary admission and observational/publication compatibility; activation gate',
                          'reference': 'Capture, witness identity and scoped Horn reference; round gate unchanged'}[args.mode],
                   source_dirty=bool(subprocess.check_output(
