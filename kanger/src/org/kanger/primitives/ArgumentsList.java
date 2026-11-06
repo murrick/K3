@@ -259,25 +259,48 @@ public class ArgumentsList extends ArrayList<IArgument> implements IList {
         return getTVariables(mind, includeDeleted, () -> {});
     }
 
+    private static final class VariableScan {
+        final ArgumentsList source;
+        final Iterator<IArgument> arguments;
+        final List<TVariable> variables = new ArrayList<>();
+
+        VariableScan(ArgumentsList source) {
+            this.source = source;
+            this.arguments = source.iterator();
+        }
+    }
+
     public List<TVariable> getTVariables(IMind mind, boolean includeDeleted, Runnable chargeWork) throws Exception {
-        List<TVariable> list = new ArrayList<>();
-        for (IArgument a : this) {
-            chargeWork.run();
-            if (a.getType() == ArgumentType.TVARIABLE
-                    && (includeDeleted || !a.isDeleted(mind))
-                    && !list.contains(a.getObject(mind))) {
-                list.add(((TVariable) a.getObject(mind)));
-            } else if (a.getType() == ArgumentType.FUNCTION) {
-                List<TVariable> temp = ((Function) a.getObject(mind)).getArguments().getTVariables(mind, includeDeleted, chargeWork);
-                for (TVariable t : temp) {
+        Deque<VariableScan> scans = new ArrayDeque<>();
+        Set<ArgumentsList> active = Collections.newSetFromMap(new IdentityHashMap<>());
+        scans.push(new VariableScan(this));
+        active.add(this);
+        while (true) {
+            VariableScan scan = scans.peek();
+            if (!scan.arguments.hasNext()) {
+                scans.pop();
+                active.remove(scan.source);
+                if (scans.isEmpty()) return scan.variables;
+                List<TVariable> parent = scans.peek().variables;
+                for (TVariable variable : scan.variables) {
                     chargeWork.run();
-                    if (!list.contains(t)) {
-                        list.add(t);
-                    }
+                    if (!parent.contains(variable)) parent.add(variable);
                 }
+                continue;
+            }
+
+            IArgument argument = scan.arguments.next();
+            chargeWork.run();
+            if (argument.getType() == ArgumentType.TVARIABLE
+                    && (includeDeleted || !argument.isDeleted(mind))) {
+                TVariable variable = (TVariable) argument.getObject(mind);
+                if (!scan.variables.contains(variable)) scan.variables.add(variable);
+            } else if (argument.getType() == ArgumentType.FUNCTION) {
+                ArgumentsList nested = ((Function) argument.getObject(mind)).getArguments();
+                if (!active.add(nested)) throw new IllegalStateException("Cyclic function arguments in T-variable scan");
+                scans.push(new VariableScan(nested));
             }
         }
-        return list;
     }
 
     public List<ITerm> getCVariables(Mind mind) throws Exception {

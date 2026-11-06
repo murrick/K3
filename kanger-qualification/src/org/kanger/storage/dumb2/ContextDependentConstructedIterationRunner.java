@@ -32,6 +32,29 @@ public final class ContextDependentConstructedIterationRunner {
         ContextDependentRuntimeIterationInspection.Result shortRun=ContextDependentRuntimeIterationProbe.minimal(b,child,Collections.emptyList(),kernel(start,request(q.startup,4)));incomplete(shortRun);need(shortRun.phase.equals("round-limit"),"productive schedule exhaustion is not saturation");RoundLimits bad=new RoundLimits(round().discovery,8000000,8000000,1000000,8000000,8000000,1);Request late=new Request(q.startup,q.receivingSearch,Arrays.asList(round(),round(),bad),q.initialWork,q.frontierWork,q.frontierCapacity);ContextDependentRuntimeIterationInspection.Result no=ContextDependentRuntimeIterationProbe.minimal(b,child,Collections.emptyList(),kernel(start,late));incomplete(no);need(no.phase.equals("round-final"),"late independent audit clears already constructed earlier round models");p.release(c);
     }
     static void functions()throws Exception{
+        Mind scanMind = memory();
+        org.kanger.units.TVariable variable = new org.kanger.units.TVariable(scanMind);
+        org.kanger.primitives.ArgumentsList nested = new org.kanger.primitives.ArgumentsList();
+        nested.add(new org.kanger.primitives.Argument(variable));
+        for (int i = 0; i < 20000; i++) {
+            org.kanger.units.Function function = new org.kanger.units.Function(scanMind);
+            function.getArguments().addAll(nested);
+            nested = new org.kanger.primitives.ArgumentsList();
+            nested.add(new org.kanger.primitives.Argument(function));
+        }
+        org.kanger.primitives.ArgumentsList deep = nested;
+        need(deep.getTVariables(scanMind, true).equals(Collections.singletonList(variable)),
+                "deep function arguments retain their variable without using the Java stack");
+        int[] remaining = {64};
+        reject(() -> deep.getTVariables(scanMind, true, () -> {
+            if (remaining[0]-- == 0) throw new IllegalStateException("expansion test allowance");
+        }), "deep traversal still spends the expansion allowance");
+        org.kanger.units.Function cyclic = new org.kanger.units.Function(scanMind);
+        cyclic.getArguments().add(new org.kanger.primitives.Argument(cyclic));
+        reject(() -> cyclic.getArguments().getTVariables(scanMind, true),
+                "a function cycle cannot grow the explicit traversal stack indefinitely");
+
+
         for(int rank:new int[]{1,7,17,65}){Mind p=memory();StringBuilder prefix=new StringBuilder(),args=new StringBuilder();for(int i=0;i<rank;i++){prefix.append("@x").append(i).append(' ');if(i>0)args.append(',');args.append('x').append(i);}Rule witness=raw(p,"!"+prefix+"$u rel("+args+",u);");Member b=member(p,5200+rank,true);Mind c=new Mind(p);Rule out=raw(c,"!"+prefix+"@u rel("+args+",u)->out("+args+",u);");Member child=member(c,5200+rank,true);Request q=request(startup(Collections.singletonList(out.getOrigin())),2);Result r=ContextDependentConstructedIterationInspection.inspect(b,child,Collections.emptyList(),q);stable(r);for(Model model:r.iteration.cycles.get(0).constructedModels.values()){Function f=model.functions.keySet().iterator().next();need(f.binder==rank&&model.functions.get(f).arity==rank&&f.source.view.equals("inventory:"+child.inventory.fingerprint),"receiving model uses exact actual child Source/rank "+rank);}need(((Term)witness.getDomain().get(rank).getValue(p)).getParent(c)==null,"chosen model values never assigned to Cvar");ContextDependentConstructedIterationAuditProbe.audit(child,Collections.emptyList(),r.iteration,q.receivingSearch);p.release(c);}
     }
     static void candidateFunction()throws Exception{
