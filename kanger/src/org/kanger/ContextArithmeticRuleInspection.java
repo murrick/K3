@@ -57,6 +57,18 @@ public final class ContextArithmeticRuleInspection {
             this.proof = proof;
         }
 
+        public static Premise primary(Mind mind, ContextProductionInventory inventory,
+                                      long rule, int clause, int maximumWork) throws Exception {
+            ContextArithmeticRuleInspection declaration = inspect(mind, inventory, rule, maximumWork);
+            if (!declaration.variables.isEmpty()) throw new IllegalArgumentException("Ground primary unit required");
+            List<Clause> instances = declaration.instantiate(Collections.emptyMap(), maximumWork);
+            if (clause < 0 || clause >= instances.size()) throw new IllegalArgumentException("Exact primary clause required");
+            Clause selected = instances.get(clause);
+            Fact fact = selected.literals.size() == 1 ? selected.literals.get(0).fact() : null;
+            if (fact == null) throw new IllegalArgumentException("Ground primary unit required");
+            return new Premise(fact, new ContextProductionCapture.Support(Collections.singleton(declaration.source), 0));
+        }
+
         public static Premise primary(ContextProductionNativeBinding.Snapshot snapshot, Source source, int clause) {
             for (ContextProductionNativeBinding.Entry entry : snapshot.primary) {
                 if (!entry.source.equals(source)) continue;
@@ -156,7 +168,10 @@ public final class ContextArithmeticRuleInspection {
     public Step apply(int branch, List<Premise> premises, int maximumDepth, int maximumWork) throws Exception {
         if (branch < 0 || branch >= branches.size() || premises == null || maximumDepth < 1)
             throw new IllegalArgumentException("Bounded exact branch premises required");
-        Runnable work = ContextGroundProductionRounds.budget(maximumWork);
+        return apply(branch, premises, maximumDepth, ContextGroundProductionRounds.budget(maximumWork));
+    }
+
+    private Step apply(int branch, List<Premise> premises, int maximumDepth, Runnable work) throws Exception {
         List<Premise> donors = new ArrayList<>();
         for (Premise premise : premises) {
             work.run();
@@ -206,6 +221,72 @@ public final class ContextArithmeticRuleInspection {
         Premise conclusion = new Premise(Fact.ground(head.predicate, true, values),
                 new ContextProductionCapture.Support(sources, depth + 1));
         return new Step(source, branch, donors, conclusion);
+    }
+
+    void preflight(Runnable work) {
+        for (List<Atom> branch : branches) {
+            int heads = 0;
+            Set<Integer> bound = new LinkedHashSet<>();
+            for (Atom atom : branch) {
+                work.run();
+                if (atom.positive) heads++;
+                else for (Slot slot : atom.arguments) {
+                    work.run();
+                    if (slot.expression != null) throw new IllegalArgumentException("Arithmetic body inversion remains unsupported");
+                    if (slot.variable >= 0) bound.add(slot.variable);
+                }
+            }
+            if (heads != 1 || !bound.equals(variables))
+                throw new IllegalArgumentException("Complete range-restricted definite arithmetic rule required");
+        }
+    }
+
+    private static boolean match(Atom atom, Premise premise, Map<Integer, SemanticTermSnapshot> assignment, Runnable work) {
+        work.run();
+        if (!premise.fact.positive || !atom.predicate.equals(premise.fact.predicate)
+                || atom.arguments.size() != premise.fact.arguments.size()) return false;
+        for (int i = 0; i < atom.arguments.size(); i++) {
+            work.run();
+            Slot slot = atom.arguments.get(i);
+            SemanticTermSnapshot actual = premise.fact.arguments.get(i);
+            SemanticTermSnapshot expected = slot.variable < 0 ? slot.value : assignment.putIfAbsent(slot.variable, actual);
+            if (expected != null && !expected.semanticallyEquals(actual)) return false;
+        }
+        return true;
+    }
+
+    void produce(List<Premise> frozen, int maximumDepth, Runnable work, java.util.function.Consumer<Step> output) throws Exception {
+        for (int branch = 0; branch < branches.size(); branch++) {
+            List<Atom> body = new ArrayList<>();
+            for (Atom atom : branches.get(branch)) {
+                work.run();
+                if (!atom.positive) body.add(atom);
+            }
+            int[] next = new int[body.size()];
+            List<Premise> donors = new ArrayList<>(Collections.nCopies(body.size(), null));
+            List<Map<Integer, SemanticTermSnapshot>> assignments = new ArrayList<>();
+            assignments.add(Collections.emptyMap());
+            int depth = 0;
+            while (depth >= 0) {
+                work.run();
+                if (depth == body.size()) {
+                    output.accept(apply(branch, donors, maximumDepth, work));
+                    depth--;
+                } else if (next[depth] == frozen.size()) {
+                    next[depth] = 0;
+                    depth--;
+                } else {
+                    Premise donor = frozen.get(next[depth]++);
+                    Map<Integer, SemanticTermSnapshot> assignment = new LinkedHashMap<>(assignments.get(depth));
+                    if (match(body.get(depth), donor, assignment, work)) {
+                        donors.set(depth, donor);
+                        if (assignments.size() == depth + 1) assignments.add(assignment);
+                        else assignments.set(depth + 1, assignment);
+                        depth++;
+                    }
+                }
+            }
+        }
     }
 
     public List<Clause> instantiate(Map<Integer, SemanticTermSnapshot> assignment, int maximumWork) throws Exception {
