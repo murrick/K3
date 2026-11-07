@@ -13,6 +13,8 @@ def main():
     parser.add_argument('--mode', choices=('contract', 'reference', 'witness-contract', 'independent-reopen-contract', 'ordinary-commit-contract', 'ordinary-ground-attachment-contract', 'private-witness-contract', 'universal-unit-contract'), default='contract')
     parser.add_argument('--ordinary-integration-candidate', action='store_true',
                         help='Compile an isolated experimental default hook; never edit production sources')
+    parser.add_argument('--ground-attachment-candidate', action='store_true',
+                        help='Compile an isolated ground topology admission candidate')
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
     output = root / 'target/context-production-rounds'
@@ -842,6 +844,49 @@ def main():
         candidate.parent.mkdir(parents=True, exist_ok=True)
         candidate.write_text(source.replace(before, after), encoding='utf-8')
         production = [candidate if p == original else p for p in production]
+    if args.ground_attachment_candidate:
+        original = root / 'kanger-data-dumb2/src/org/kanger/storage/dumb2/DB.java'
+        source = candidate.read_text(encoding='utf-8') if args.ordinary_integration_candidate else original.read_text(encoding='utf-8')
+        before = "            ConnectionVector candidate = workingConnections.with(connection);"
+        if source.count(before) != 1:
+            raise RuntimeError('Attachment baseline changed; reconcile the candidate')
+        source = source.replace(before, before + """
+            qualifyGroundAttachment(candidate);""")
+        helper = """
+    private void qualifyGroundAttachment(ConnectionVector proposed) throws Exception {
+        Mind x = (Mind) user.getCurrentMind();
+        int remaining = 1000;
+        org.kanger.ContextProductionInventory inventory = org.kanger.ContextProductionInventory.inspect(
+                x, getContextId(), getRevision(), true, java.util.Collections.emptyList(), remaining);
+        remaining -= inventory.rows.size();
+        org.kanger.ContextProductionNativeBinding.Result bound =
+                org.kanger.ContextProductionNativeBinding.bind(x, inventory, 64000000, 100000);
+        if (!bound.bound) throw new IllegalStateException("Ground attachment X binding incomplete: " + bound.reason);
+        java.util.List<org.kanger.ContextProductionNativeBinding.Snapshot> foreign = new java.util.ArrayList<>();
+        for (ContextConnection member : proposed.getConnections()) {
+            if (member.getTrustGroup() != null) throw new IllegalStateException("Ground attachment candidate requires independent cuts");
+            org.kanger.ContextProductionInventory view = org.kanger.ContextProductionInventory.inspect(
+                    member.layer(), member.getTarget().getContextId(), member.getTarget().getRevision(),
+                    false, member.getInitialization(), remaining);
+            remaining -= view.rows.size();
+            org.kanger.ContextProductionNativeBinding.Result binding =
+                    org.kanger.ContextProductionNativeBinding.bind(member.layer(), view, 64000000, 100000);
+            if (!binding.bound) throw new IllegalStateException("Ground attachment member binding incomplete: " + binding.reason);
+            foreign.add(binding.snapshot);
+        }
+        org.kanger.ContextGroundClauseFamily.Evaluation result = org.kanger.ContextGroundClauseFamily.evaluate(
+                bound.snapshot, foreign, 16, 16, 16, 64000000, 100000, 1000000, 100000);
+        if (result.status != org.kanger.ContextGroundClauseFamily.Status.GROUND_FIXED_POINT) {
+            throw new org.kanger.exception.ContextGroundProductionCommitException(
+                    "Proposed ground topology: " + result.reason, result);
+        }
+    }
+"""
+        source = source.replace("    private boolean validatingCommit;", helper + "\n    private boolean validatingCommit;")
+        candidate = run / 'candidate/org/kanger/storage/dumb2/DB.java'
+        candidate.parent.mkdir(parents=True, exist_ok=True)
+        candidate.write_text(source, encoding='utf-8')
+        production = [candidate if p == original else p for p in production]
     listing = run / 'sources.list'
     listing.write_text(''.join('"' + str(p).replace('\\', '/') + '"\n'
                                for p in production + drivers), encoding='utf-8')
@@ -876,7 +921,7 @@ def main():
         print(log, end='', flush=True)
     head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip()
     passed = all(result['passed'] for result in results)
-    report = dict(ordinary_integration_candidate=args.ordinary_integration_candidate, head=head, production_sources=len(production), mode=args.mode, passed=passed, results=results,
+    report = dict(ground_attachment_candidate=args.ground_attachment_candidate, ordinary_integration_candidate=args.ordinary_integration_candidate, head=head, production_sources=len(production), mode=args.mode, passed=passed, results=results,
                   scope={'contract': 'Pending runtime authoring contract',
                          'witness-contract': 'Native primary existential witness consistency contract',
                          'independent-reopen-contract': 'Certified independent-coordinate source must reopen after publication',
