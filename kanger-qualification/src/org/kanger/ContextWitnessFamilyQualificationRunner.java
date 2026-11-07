@@ -58,7 +58,7 @@ public final class ContextWitnessFamilyQualificationRunner {
             ContextWitnessClauseCollision.Result evidence = collision.collisions.get(0);
             require(evidence.scanned && evidence.cut.equals(Cut.of(s(3,3))) && evidence.evidence.size() == 1,"evidence identifies the actual target cut and completed direct-instance scan");
             require(proof(evidence.evidence.get(0),2,s(0,0),s(1,1),s(2,2),s(3,3)),"refutation keeps complete X/A/B/C source proof at depth2");
-            require(collision.uncovered.equals(Collections.singleton(s(3,3))),"unsupported productive coverage remains explicit even for a proved collision");
+            require(collision.uncovered.isEmpty(),"pure negative guard is covered by complete cut scans");
             ContextWitnessFamilyQualification.Result reverse = ContextWitnessFamilyQualification.run(plan(branch(3,guard),branch(2,br),branch(1,aq),branch(0)),base,LIMITS);
             require(reverse.status == Status.COLLISION && reverse.barrier == 1 && proof(reverse.collisions.get(0).evidence.get(0),2,s(0,0),s(1,1),s(2,2),s(3,3)),"reversing cuts preserves collision barrier and complete proof");
             Declaration bout = d(s(2,2),"!@w q(w,1)&&flag(w,1)->out(w,1);");
@@ -72,8 +72,9 @@ public final class ContextWitnessFamilyQualificationRunner {
             require(initial.status == Status.COLLISION && initial.barrier == 0 && initial.collisions.get(0).inputIdentity.equals(q.identity),"already proved collision is found at initial barrier without native inference");
             Plan noCollision = plan(branch(0),branch(1,aq),branch(2,br),branch(3,d(s(3,3),"!@w q(w,1)&&r(w,1)->~other(w,1);")));
             ContextWitnessFamilyQualification.Result partial = ContextWitnessFamilyQualification.run(noCollision,base,LIMITS);
-            incomplete(partial,"closed positive discovery does not complete omitted signed rules");
-            require(partial.uncovered.contains(s(3,3)),"incomplete result records the exact uncovered declaration");
+            require(partial.status == Status.FIXED_POINT && partial.collisions.isEmpty(),
+                    "positive Horn closure with a satisfied pure negative constraint is consistent");
+            require(partial.uncovered.isEmpty(),"the scanned constraint is covered");
             ContextWitnessFamilyQualification.Result closed = ContextWitnessFamilyQualification.run(plan(branch(0),branch(1,aq),branch(2,bout)),base,LIMITS);
             require(closed.status == Status.FIXED_POINT && closed.uncovered.isEmpty() && closed.collisions.isEmpty() && closed.fixedPoint != null,"full supported positive snapshots retain their scoped fixed-point verdict");
             require(closed.barrier == 3 && closed.fixedPoint.rounds.size() == 3,"final unchanged barrier is collision-checked too");

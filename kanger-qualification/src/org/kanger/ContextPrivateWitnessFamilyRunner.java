@@ -51,7 +51,7 @@ public final class ContextPrivateWitnessFamilyRunner {
         String end=negative?NEG:OUT;Snapshot x=bind(true,"!anchor(1); "+MID+" "+end),a=bind(false,split?"!$w seed(w,1); !$w flag(w,1);":"!$w seed(w,1)&&flag(w,1);"),b=bind(false,"!$w token(w,1); "+DONE);Packet initial=ContextPrivateWitnessPoolRunner.common(x);Plan p=family(x,initial,Arrays.asList(a,b),reverse);
         ContextWitnessFamilyQualification.Result q=ContextWitnessFamilyQualification.run(p,initial,LIMITS);
         if(negative){
-            require(q.status==(split?ContextWitnessFamilyQualification.Status.INCOMPLETE:ContextWitnessFamilyQualification.Status.COLLISION),"local all-cut qualification uses original private witness identity: "+q.reason);
+            require(q.status==(split?ContextWitnessFamilyQualification.Status.FIXED_POINT:ContextWitnessFamilyQualification.Status.COLLISION),"local all-cut qualification uses original private witness identity: "+q.reason);
             if(split)require(q.collisions.isEmpty(),"split seed/flag witnesses never falsely refute");
             else {require(q.barrier==2&&q.collisions.size()==1,"independent B cannot use same-round A product; A refutes at barrier2");for(ContextWitnessClauseCollision.Result c:q.collisions){require(c.cut.equals(Cut.of(a)),"collision belongs to A with its private flag, not B's independent token");for(ContextWitnessClauseCollision.Evidence e:c.evidence){require(e.producer.equals(source(x,NEG)),"exact negative X producer");for(Support proof:e.proofs)require(proof.depth==3&&proof.sources.equals(set(a.primary.get(0).source,source(x,MID),source(b,DONE),source(x,NEG))),"four whole original sources at cumulative depth3");}}}
         }else{

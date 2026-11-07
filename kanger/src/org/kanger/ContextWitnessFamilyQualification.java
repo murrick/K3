@@ -56,6 +56,20 @@ final class ContextWitnessFamilyQualification {
             if (!found.isEmpty()) { collisions = found; throw new IllegalStateException("Proved full-cut collision"); }
         }
     }
+    /** Pure negative clauses are constraints checked by every full-cut scan. */
+    private static boolean constraintsOnly(Input definition, Runnable work) {
+        if (definition.shapes.isEmpty()) return false;
+        for (Clause clause : definition.shapes) {
+            work.run();
+            if (clause.literals.isEmpty()) return false;
+            for (ContextProductionCapture.Atom literal : clause.literals) {
+                work.run();
+                if (literal.positive) return false;
+            }
+        }
+        return true;
+    }
+
     static Result run(Plan supplied,Packet input,Limits limits) {
         Set<Source> uncovered = new LinkedHashSet<>(); Scan scan = new Scan(supplied,limits);
         try {
@@ -74,7 +88,10 @@ final class ContextWitnessFamilyQualification {
                     boolean supported = true;
                     try { ContextWitnessHornClosure.validate(proofPool,Collections.singletonList(definition),limits.depth,work); }
                     catch (Limit stopped) { throw stopped; }
-                    catch (IllegalStateException outside) { supported = false; uncovered.add(definition.source); }
+                    catch (IllegalStateException outside) {
+                        supported = false;
+                        if (!constraintsOnly(definition, work)) uncovered.add(definition.source);
+                    }
                     eligible.put(definition.source,supported);
                 }
                 List<Declaration> producers = new ArrayList<>(); boolean target = branch.emptyTarget != null || branch.privatePool!=null;
