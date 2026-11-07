@@ -862,9 +862,9 @@ def main():
         org.kanger.ContextProductionNativeBinding.Result bound =
                 org.kanger.ContextProductionNativeBinding.bind(x, inventory, 64000000, 100000);
         if (!bound.bound) throw new IllegalStateException("Ground attachment X binding incomplete: " + bound.reason);
-        java.util.List<org.kanger.ContextProductionNativeBinding.Snapshot> foreign = new java.util.ArrayList<>();
+        java.util.List<org.kanger.ContextProductionNativeBinding.Snapshot> members = new java.util.ArrayList<>();
+        java.util.Map<String,java.util.List<org.kanger.ContextProductionNativeBinding.Snapshot>> groups = new java.util.LinkedHashMap<>();
         for (ContextConnection member : proposed.getConnections()) {
-            if (member.getTrustGroup() != null) throw new IllegalStateException("Ground attachment candidate requires independent cuts");
             org.kanger.ContextProductionInventory view = org.kanger.ContextProductionInventory.inspect(
                     member.layer(), member.getTarget().getContextId(), member.getTarget().getRevision(),
                     false, member.getInitialization(), remaining);
@@ -872,7 +872,19 @@ def main():
             org.kanger.ContextProductionNativeBinding.Result binding =
                     org.kanger.ContextProductionNativeBinding.bind(member.layer(), view, 64000000, 100000);
             if (!binding.bound) throw new IllegalStateException("Ground attachment member binding incomplete: " + binding.reason);
-            foreign.add(binding.snapshot);
+            members.add(binding.snapshot);
+            if (member.getTrustGroup() != null) {
+                groups.computeIfAbsent(member.getTrustGroup(), key -> new java.util.ArrayList<>()).add(binding.snapshot);
+            }
+        }
+        java.util.List<org.kanger.ContextProductionNativeBinding.Snapshot> foreign = new java.util.ArrayList<>();
+        java.util.Set<String> emitted = new java.util.HashSet<>();
+        int index = 0;
+        for (ContextConnection member : proposed.getConnections()) {
+            String group = member.getTrustGroup();
+            if (group == null) foreign.add(members.get(index));
+            else if (emitted.add(group)) foreign.add(org.kanger.ContextProductionNativeBinding.trusted(group, groups.get(group), 64000000));
+            index++;
         }
         org.kanger.ContextGroundClauseFamily.Evaluation result = org.kanger.ContextGroundClauseFamily.evaluate(
                 bound.snapshot, foreign, 16, 16, 16, 64000000, 100000, 1000000, 100000);

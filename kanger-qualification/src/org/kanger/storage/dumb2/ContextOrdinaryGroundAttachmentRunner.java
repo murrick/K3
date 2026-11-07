@@ -18,9 +18,13 @@ public final class ContextOrdinaryGroundAttachmentRunner {
         ContextSevenPremiseNativeWriteRunner.create(home, "A", "!left(1); !p(1);");
         ContextSevenPremiseNativeWriteRunner.create(home, "B", "!right(1); !~p(1);");
         ContextSevenPremiseNativeWriteRunner.create(home, "Safe", "!unrelated(1);");
+        ContextSevenPremiseNativeWriteRunner.create(home, "TA", "!left(1);");
+        ContextSevenPremiseNativeWriteRunner.create(home, "TB", "!right(1);");
+        ContextSevenPremiseNativeWriteRunner.create(home, "N", "!~p(1);");
         List<String> failures = new ArrayList<>();
         for (boolean reverse : new boolean[]{false, true}) {
             verify(home, reverse, failures);
+            verifyTrust(home, reverse, failures);
         }
         if (!failures.isEmpty()) {
             System.err.println("CONTEXT_ORDINARY_GROUND_ATTACHMENT_FAIL failures=" + failures);
@@ -28,6 +32,44 @@ public final class ContextOrdinaryGroundAttachmentRunner {
         }
         System.out.println("CONTEXT_ORDINARY_GROUND_ATTACHMENT_PASS");
         System.exit(0);
+    }
+
+    private static void verifyTrust(Path home, boolean reverse, List<String> failures) throws Exception {
+        String first = reverse ? "TB" : "TA";
+        String second = reverse ? "TA" : "TB";
+        String name = "TrustAttach" + first;
+        List<RevisionRef> settled;
+        try (ContextSevenPremiseNativeWriteRunner.Fixture f =
+                     new ContextSevenPremiseNativeWriteRunner.Fixture(home, name)) {
+            ContextSevenPremiseNativeWriteRunner.require(f.root.compile(RULE, null, false), "trust X rule");
+            f.db.connectContext("N");
+            f.db.connectContext(first, "team");
+            f.db.saveConnections(f.root);
+            long revision = f.db.getRevision();
+            List<RevisionRef> before = ContextSevenPremiseNativeWriteRunner.pins(f);
+            String fingerprint = org.kanger.ContextProductionInventory.inspect(f.root, f.db.getContextId(), f.db.getRevision(), true, java.util.Collections.emptyList(), 1000).fingerprint;
+            boolean rejected = false;
+            try {
+                f.db.connectContext(second, "team");
+            } catch (StorageLifecycleException conflict) {
+                if (conflict.getErrorCode() != StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT) throw conflict;
+                rejected = true;
+            }
+            System.out.println("trust " + first + " -> " + second + " rejected=" + rejected);
+            if (!rejected) failures.add("trust " + first + " -> " + second + " accepted");
+            else ContextSevenPremiseNativeWriteRunner.require(f.db.getRevision() == revision
+                    && before.equals(ContextSevenPremiseNativeWriteRunner.pins(f))
+                    && fingerprint.equals(org.kanger.ContextProductionInventory.inspect(f.root, f.db.getContextId(), f.db.getRevision(), true, java.util.Collections.emptyList(), 1000).fingerprint),
+                    "trust refusal preserves revision, pins and X source");
+            f.db.connectContext("Safe", "team");
+            f.db.saveConnections(f.root);
+            settled = ContextSevenPremiseNativeWriteRunner.pins(f);
+        }
+        try (ContextSevenPremiseNativeWriteRunner.Fixture f =
+                     new ContextSevenPremiseNativeWriteRunner.Fixture(home, name)) {
+            ContextSevenPremiseNativeWriteRunner.require(
+                    settled.equals(ContextSevenPremiseNativeWriteRunner.pins(f)), "trust attachment reopens");
+        }
     }
 
     private static void verify(Path home, boolean reverse, List<String> failures) throws Exception {
@@ -42,7 +84,7 @@ public final class ContextOrdinaryGroundAttachmentRunner {
             f.db.saveConnections(f.root);
             long revision = f.db.getRevision();
             List<RevisionRef> before = ContextSevenPremiseNativeWriteRunner.pins(f);
-            String fingerprint = ContextSevenPremiseNativeWriteRunner.inventory(f).fingerprint;
+            String fingerprint = org.kanger.ContextProductionInventory.inspect(f.root, f.db.getContextId(), f.db.getRevision(), true, java.util.Collections.emptyList(), 1000).fingerprint;
 
             boolean rejected = false;
             try {
@@ -55,7 +97,7 @@ public final class ContextOrdinaryGroundAttachmentRunner {
             if (rejected) {
                 ContextSevenPremiseNativeWriteRunner.require(f.db.getRevision() == revision
                         && before.equals(ContextSevenPremiseNativeWriteRunner.pins(f))
-                        && fingerprint.equals(ContextSevenPremiseNativeWriteRunner.inventory(f).fingerprint),
+                        && fingerprint.equals(org.kanger.ContextProductionInventory.inspect(f.root, f.db.getContextId(), f.db.getRevision(), true, java.util.Collections.emptyList(), 1000).fingerprint),
                         "refusal preserves revision, working pins and source");
             } else {
                 failures.add(first + " -> " + second + " accepted");
