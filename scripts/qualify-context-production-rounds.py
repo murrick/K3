@@ -886,6 +886,34 @@ def main():
             else if (emitted.add(group)) foreign.add(org.kanger.ContextProductionNativeBinding.trusted(group, groups.get(group), 64000000));
             index++;
         }
+        boolean variables = false;
+        java.util.List<org.kanger.ContextProductionNativeBinding.Snapshot> complete = new java.util.ArrayList<>(foreign);
+        complete.add(bound.snapshot);
+        int selectionWork = 64000000;
+        for (org.kanger.ContextProductionNativeBinding.Snapshot cut : complete) {
+            for (org.kanger.ContextProductionNativeBinding.Entry entry : cut.primary) {
+                if (--selectionWork < 0) throw new IllegalStateException("Attachment engine selection limit");
+                if (entry.kind == org.kanger.ContextProductionNativeBinding.Kind.WITNESS_BUNDLE)
+                    throw new IllegalStateException("Witness topology qualification remains open");
+                for (org.kanger.ContextProductionCapture.Clause clause : entry.clauses) {
+                    if (--selectionWork < 0) throw new IllegalStateException("Attachment engine selection limit");
+                    variables |= !clause.variables.isEmpty();
+                }
+            }
+        }
+        if (variables) {
+            org.kanger.ContextUniversalFamilyInspection.Result verdict =
+                    org.kanger.ContextUniversalFamilyInspection.inspect(bound.snapshot, foreign, 16, 16, 16, 100000, 100000, 64000000);
+            org.kanger.ContextUniversalFamilyAudit.Audit audit =
+                    org.kanger.ContextUniversalFamilyAudit.audit(verdict, bound.snapshot, foreign, 16, 100000, 64000000);
+            if (!audit.verified || verdict.status == org.kanger.ContextUniversalFamilyInspection.Status.INCOMPLETE)
+                throw org.kanger.exception.ContextProductionCommitException.incomplete("Proposed universal topology incomplete: " + verdict.reason, audit);
+            if (verdict.status == org.kanger.ContextUniversalFamilyInspection.Status.COLLISION)
+                throw org.kanger.exception.ContextProductionCommitException.collision(audit);
+            if (verdict.status != org.kanger.ContextUniversalFamilyInspection.Status.CONSISTENT)
+                throw org.kanger.exception.ContextProductionCommitException.incomplete("No complete proposed topology verdict", audit);
+            return;
+        }
         org.kanger.ContextGroundClauseFamily.Evaluation result = org.kanger.ContextGroundClauseFamily.evaluate(
                 bound.snapshot, foreign, 16, 16, 16, 64000000, 100000, 1000000, 100000);
         if (result.status != org.kanger.ContextGroundClauseFamily.Status.GROUND_FIXED_POINT) {

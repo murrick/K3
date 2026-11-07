@@ -23,8 +23,10 @@ public final class ContextOrdinaryGroundAttachmentRunner {
         ContextSevenPremiseNativeWriteRunner.create(home, "N", "!~p(1);");
         List<String> failures = new ArrayList<>();
         for (boolean reverse : new boolean[]{false, true}) {
-            verify(home, reverse, failures);
-            verifyTrust(home, reverse, failures);
+            for (boolean universal : new boolean[]{false, true}) {
+                verify(home, reverse, universal, failures);
+                verifyTrust(home, reverse, universal, failures);
+            }
         }
         if (!failures.isEmpty()) {
             System.err.println("CONTEXT_ORDINARY_GROUND_ATTACHMENT_FAIL failures=" + failures);
@@ -34,14 +36,14 @@ public final class ContextOrdinaryGroundAttachmentRunner {
         System.exit(0);
     }
 
-    private static void verifyTrust(Path home, boolean reverse, List<String> failures) throws Exception {
+    private static void verifyTrust(Path home, boolean reverse, boolean universal, List<String> failures) throws Exception {
         String first = reverse ? "TB" : "TA";
         String second = reverse ? "TA" : "TB";
-        String name = "TrustAttach" + first;
+        String name = "TrustAttach" + first + universal;
         List<RevisionRef> settled;
         try (ContextSevenPremiseNativeWriteRunner.Fixture f =
                      new ContextSevenPremiseNativeWriteRunner.Fixture(home, name)) {
-            ContextSevenPremiseNativeWriteRunner.require(f.root.compile(RULE, null, false), "trust X rule");
+            ContextSevenPremiseNativeWriteRunner.require(f.root.compile(universal ? "!@x left(x)&&right(x)->p(x);" : RULE, null, false), "trust X rule");
             f.db.connectContext("N");
             f.db.connectContext(first, "team");
             f.db.saveConnections(f.root);
@@ -55,7 +57,7 @@ public final class ContextOrdinaryGroundAttachmentRunner {
                 if (conflict.getErrorCode() != StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT) throw conflict;
                 rejected = true;
             }
-            System.out.println("trust " + first + " -> " + second + " rejected=" + rejected);
+            System.out.println("universal=" + universal + " trust " + first + " -> " + second + " rejected=" + rejected);
             if (!rejected) failures.add("trust " + first + " -> " + second + " accepted");
             else ContextSevenPremiseNativeWriteRunner.require(f.db.getRevision() == revision
                     && before.equals(ContextSevenPremiseNativeWriteRunner.pins(f))
@@ -72,14 +74,14 @@ public final class ContextOrdinaryGroundAttachmentRunner {
         }
     }
 
-    private static void verify(Path home, boolean reverse, List<String> failures) throws Exception {
+    private static void verify(Path home, boolean reverse, boolean universal, List<String> failures) throws Exception {
         String first = reverse ? "B" : "A";
         String second = reverse ? "A" : "B";
-        String name = "Attach" + first;
+        String name = "Attach" + first + universal;
         List<RevisionRef> settledPins;
         try (ContextSevenPremiseNativeWriteRunner.Fixture f =
                      new ContextSevenPremiseNativeWriteRunner.Fixture(home, name)) {
-            ContextSevenPremiseNativeWriteRunner.require(f.root.compile(RULE, null, false), "standalone X rule");
+            ContextSevenPremiseNativeWriteRunner.require(f.root.compile(universal ? "!@x left(x)&&right(x)->p(x);" : RULE, null, false), "standalone X rule");
             f.db.connectContext(first);
             f.db.saveConnections(f.root);
             long revision = f.db.getRevision();
@@ -93,7 +95,7 @@ public final class ContextOrdinaryGroundAttachmentRunner {
                 if (conflict.getErrorCode() != StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT) throw conflict;
                 rejected = true;
             }
-            System.out.println(first + " -> " + second + " rejected=" + rejected);
+            System.out.println("universal=" + universal + " " + first + " -> " + second + " rejected=" + rejected);
             if (rejected) {
                 ContextSevenPremiseNativeWriteRunner.require(f.db.getRevision() == revision
                         && before.equals(ContextSevenPremiseNativeWriteRunner.pins(f))
