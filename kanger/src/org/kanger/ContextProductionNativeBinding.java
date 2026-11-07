@@ -5,8 +5,6 @@ import java.util.*;
 import org.kanger.ContextProductionCapture.*;
 import org.kanger.enums.ArgumentType;
 import org.kanger.enums.DataType;
-import org.kanger.enums.FunctionBinding;
-import org.kanger.units.Function;
 import org.kanger.interfaces.IArgument;
 import org.kanger.units.Domain;
 import org.kanger.units.Rule;
@@ -86,26 +84,13 @@ public final class ContextProductionNativeBinding {
         return witness;
     }
     /** Closed numeric arithmetic is a value; variable-bearing calls remain outside this binder. */
-    private static boolean closedArithmetic(IArgument argument, Mind mind, Runnable work) throws Exception {
+    private static boolean closedArithmetic(IArgument argument, Rule owner, Mind mind, Runnable work) throws Exception {
         if (argument.getType() != ArgumentType.FUNCTION) return false;
-        Deque<Function> pending = new ArrayDeque<>();
-        pending.push((Function) argument.getObject(mind));
-        while (!pending.isEmpty()) {
-            work.run();
-            Function function = pending.pop();
-            String name = function.getName(mind).getValue().toString();
-            if (function.getBinding() != FunctionBinding.INFRASTRUCTURE || function.getRange() != 2
-                    || !Arrays.asList("_add", "_sub", "_mul", "_div", "_rem").contains(name)) return false;
-            for (int i = 0; i < function.getRange(); i++) {
-                work.run();
-                IArgument input = function.getArguments().get(i);
-                if (input.getType() == ArgumentType.FUNCTION) pending.push((Function) input.getObject(mind));
-                else if (input.getType() != ArgumentType.TERM) return false;
-                if (input.getValue(mind) == null || input.getValue(mind).getType() != DataType.NUMERIC) return false;
-            }
-            if (function.getValue(mind) == null || function.getValue(mind).getType() != DataType.NUMERIC) return false;
-        }
-        return true;
+        ContextArithmeticExpression expression = ContextArithmeticExpression.capture(argument, owner, mind, work);
+        if (!expression.variables.isEmpty()) return false;
+        if (argument.getValue(mind) == null || argument.getValue(mind).getType() != DataType.NUMERIC) return false;
+        return expression.evaluate(Collections.emptyMap(), work).semanticallyEquals(
+                SemanticTermSnapshot.capture(argument.getValue(mind)));
     }
 
     private static List<Clause> clauses(Rule rule,Mind mind,Runnable work) throws Exception {
@@ -122,7 +107,7 @@ public final class ContextProductionNativeBinding {
                         TVariable variable = (TVariable)argument.getObject(mind);
                         if (variable.getRuleId() != rule.getId()) throw new IllegalStateException("Nonlocal native universal variable");
                         variables.add(variable.getId());
-                    } else if (argument.getType() != ArgumentType.TERM && !closedArithmetic(argument, mind, work)
+                    } else if (argument.getType() != ArgumentType.TERM && !closedArithmetic(argument, rule, mind, work)
                             || !SemanticTermSnapshot.isOrdinaryValue(argument.getValue(mind))) {
                         throw new IllegalStateException("Unsupported native clause argument");
                     }
