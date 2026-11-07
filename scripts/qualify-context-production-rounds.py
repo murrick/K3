@@ -887,19 +887,28 @@ def main():
             index++;
         }
         boolean variables = false;
+        boolean witnesses = false;
         java.util.List<org.kanger.ContextProductionNativeBinding.Snapshot> complete = new java.util.ArrayList<>(foreign);
         complete.add(bound.snapshot);
         int selectionWork = 64000000;
         for (org.kanger.ContextProductionNativeBinding.Snapshot cut : complete) {
             for (org.kanger.ContextProductionNativeBinding.Entry entry : cut.primary) {
                 if (--selectionWork < 0) throw new IllegalStateException("Attachment engine selection limit");
-                if (entry.kind == org.kanger.ContextProductionNativeBinding.Kind.WITNESS_BUNDLE)
-                    throw new IllegalStateException("Witness topology qualification remains open");
+                witnesses |= entry.kind == org.kanger.ContextProductionNativeBinding.Kind.WITNESS_BUNDLE;
                 for (org.kanger.ContextProductionCapture.Clause clause : entry.clauses) {
                     if (--selectionWork < 0) throw new IllegalStateException("Attachment engine selection limit");
                     variables |= !clause.variables.isEmpty();
                 }
             }
+        }
+        if (witnesses) {
+            org.kanger.ContextProductionFamilyAssembly.Result assembled =
+                    org.kanger.ContextProductionFamilyAssembly.assemble(bound.snapshot, foreign, 64000000);
+            if (!assembled.assembled) throw new IllegalStateException("Witness topology incomplete: " + assembled.reason);
+            org.kanger.ContextProductionFamilyAssembly.Evaluation verdict = assembled.artifact.evaluate(16, 16, 64000000, 100000);
+            if (verdict.status != org.kanger.ContextProductionFamilyAssembly.Status.FIXED_POINT)
+                throw new org.kanger.exception.ContextWitnessProductionCommitException("Proposed witness topology: " + verdict.reason, verdict);
+            return;
         }
         if (variables) {
             org.kanger.ContextUniversalFamilyInspection.Result verdict =

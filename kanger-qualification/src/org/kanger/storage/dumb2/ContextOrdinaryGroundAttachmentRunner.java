@@ -21,6 +21,8 @@ public final class ContextOrdinaryGroundAttachmentRunner {
         ContextSevenPremiseNativeWriteRunner.create(home, "TA", "!left(1);");
         ContextSevenPremiseNativeWriteRunner.create(home, "TB", "!right(1);");
         ContextSevenPremiseNativeWriteRunner.create(home, "N", "!~p(1);");
+        ContextSevenPremiseNativeWriteRunner.create(home, "WA", "!@w seed(w,1)->q(w,1);");
+        ContextSevenPremiseNativeWriteRunner.create(home, "WB", "!@w q(w,1)->~flag(w,1);");
         List<String> failures = new ArrayList<>();
         for (boolean reverse : new boolean[]{false, true}) {
             for (boolean universal : new boolean[]{false, true}) {
@@ -28,12 +30,65 @@ public final class ContextOrdinaryGroundAttachmentRunner {
                 verifyTrust(home, reverse, universal, failures);
             }
         }
+        for (boolean reverse : new boolean[]{false, true}) verifyWitness(home, reverse, failures);
         if (!failures.isEmpty()) {
             System.err.println("CONTEXT_ORDINARY_GROUND_ATTACHMENT_FAIL failures=" + failures);
             System.exit(1);
         }
         System.out.println("CONTEXT_ORDINARY_GROUND_ATTACHMENT_PASS");
         System.exit(0);
+    }
+
+    private static void verifyWitness(Path home, boolean reverse, List<String> failures) throws Exception {
+        String first = reverse ? "WB" : "WA";
+        String second = reverse ? "WA" : "WB";
+        String name = "WitnessAttach" + first;
+        List<RevisionRef> settled;
+        try (ContextSevenPremiseNativeWriteRunner.Fixture f =
+                     new ContextSevenPremiseNativeWriteRunner.Fixture(home, name)) {
+            ContextSevenPremiseNativeWriteRunner.require(
+                    f.root.compile("!$w seed(w,1)&&flag(w,1);", null, false), "X witness source");
+            long initialRevision = f.db.getRevision();
+            List<RevisionRef> initialPins = ContextSevenPremiseNativeWriteRunner.pins(f);
+            try {
+                f.db.connectContext(first);
+            } catch (StorageLifecycleException incomplete) {
+                if (incomplete.getErrorCode() != StorageLifecycleErrorCode.STORAGE_CONTEXT_INCOMPLETE) throw incomplete;
+                ContextSevenPremiseNativeWriteRunner.require(f.db.getRevision() == initialRevision
+                        && initialPins.equals(ContextSevenPremiseNativeWriteRunner.pins(f)),
+                        "incomplete witness attachment preserves revision and pins");
+                failures.add("safe first witness attachment " + first + " incomplete");
+                System.out.println("witness first=" + first + " incomplete=" + incomplete.getMessage());
+                return;
+            }
+            f.db.saveConnections(f.root);
+            long revision = f.db.getRevision();
+            List<RevisionRef> before = ContextSevenPremiseNativeWriteRunner.pins(f);
+            String fingerprint = org.kanger.ContextProductionInventory.inspect(f.root,
+                    f.db.getContextId(), revision, true, java.util.Collections.emptyList(), 1000).fingerprint;
+            boolean rejected = false;
+            try {
+                f.db.connectContext(second);
+            } catch (org.kanger.exception.ContextWitnessProductionCommitException conflict) {
+                if (conflict.getErrorCode() != StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT) throw conflict;
+                rejected = true;
+            }
+            System.out.println("witness " + first + " -> " + second + " rejected=" + rejected);
+            if (!rejected) failures.add("witness " + first + " -> " + second + " accepted");
+            else ContextSevenPremiseNativeWriteRunner.require(f.db.getRevision() == revision
+                    && before.equals(ContextSevenPremiseNativeWriteRunner.pins(f))
+                    && fingerprint.equals(org.kanger.ContextProductionInventory.inspect(f.root,
+                            f.db.getContextId(), revision, true, java.util.Collections.emptyList(), 1000).fingerprint),
+                    "witness refusal preserves revision, pins and original source");
+            f.db.connectContext("Safe");
+            f.db.saveConnections(f.root);
+            settled = ContextSevenPremiseNativeWriteRunner.pins(f);
+        }
+        try (ContextSevenPremiseNativeWriteRunner.Fixture f =
+                     new ContextSevenPremiseNativeWriteRunner.Fixture(home, name)) {
+            ContextSevenPremiseNativeWriteRunner.require(
+                    settled.equals(ContextSevenPremiseNativeWriteRunner.pins(f)), "witness attachment reopens");
+        }
     }
 
     private static void verifyTrust(Path home, boolean reverse, boolean universal, List<String> failures) throws Exception {
