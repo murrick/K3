@@ -10,7 +10,7 @@ import tempfile
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--mode', choices=('contract', 'reference', 'witness-contract', 'independent-reopen-contract', 'ordinary-commit-contract', 'ordinary-ground-attachment-contract', 'ordinary-revision-switch-contract', 'ordinary-private-edit-contract', 'ordinary-topology-contract', 'ordinary-function-attachment-contract', 'native-function-pair-contract', 'closed-arithmetic-contract', 'arithmetic-expression-contract', 'private-witness-contract', 'universal-unit-contract'), default='contract')
+    parser.add_argument('--mode', choices=('contract', 'reference', 'witness-contract', 'independent-reopen-contract', 'ordinary-commit-contract', 'ordinary-ground-attachment-contract', 'ordinary-revision-switch-contract', 'ordinary-private-edit-contract', 'ordinary-topology-contract', 'ordinary-function-attachment-contract', 'native-function-pair-contract', 'closed-arithmetic-contract', 'arithmetic-expression-contract', 'arithmetic-rule-contract', 'private-witness-contract', 'universal-unit-contract'), default='contract')
     parser.add_argument('--ordinary-integration-candidate', action='store_true',
                         help='Compile an isolated experimental default hook; never edit production sources')
     parser.add_argument('--ground-attachment-candidate', action='store_true',
@@ -66,6 +66,9 @@ def main():
                   'CONTEXT_ARITHMETIC_EXPRESSION_PASS'),
                  ('org.kanger.ContextClosedArithmeticBindingRunner',
                   'CONTEXT_CLOSED_ARITHMETIC_BINDING_PASS')]
+    if args.mode == 'arithmetic-rule-contract':
+        names = [('org.kanger.ContextArithmeticRuleInspectionRunner',
+                  'CONTEXT_ARITHMETIC_RULE_INSPECTION_PASS')]
     if args.mode == 'private-witness-contract':
         names = [('org.kanger.storage.dumb2.ContextPrivateWitnessAdmissionContractRunner', 'CONTEXT_PRIVATE_WITNESS_ADMISSION_CONTRACT_PASS')]
     if args.mode == 'universal-unit-contract':
@@ -933,7 +936,15 @@ def main():
             remaining -= view.rows.size();
             org.kanger.ContextProductionNativeBinding.Result binding =
                     org.kanger.ContextProductionNativeBinding.bind(member.layer(), view, 64000000, 100000);
-            if (!binding.bound) throw new IllegalStateException("Ground attachment member binding incomplete: " + binding.reason);
+            if (!binding.bound) {
+                int inspected = 0;
+                for (org.kanger.ContextProductionInventory.Row row : view.primary) {
+                    org.kanger.ContextArithmeticRuleInspection.inspect(member.layer(), view, row.nativeRule, 64000000);
+                    inspected++;
+                }
+                throw new IllegalStateException("Member declarations captured for arithmetic instantiation (" + inspected
+                        + "); whole-family arithmetic closure remains incomplete: " + binding.reason);
+            }
             members.add(binding.snapshot);
             if (member.getTrustGroup() != null) {
                 groups.computeIfAbsent(member.getTrustGroup(), key -> new java.util.ArrayList<>()).add(binding.snapshot);
@@ -1038,6 +1049,7 @@ def main():
                          'independent-reopen-contract': 'Certified independent-coordinate source must reopen after publication',
                          'universal-unit-contract': 'Desired universal-unit family coverage; open required language gate, not expected-refusal PASS',
                          'private-witness-contract': 'Bounded actual private witness admission/local refutation; required integration gate',
+                         'arithmetic-rule-contract': 'Detached whole arithmetic rule instantiation',
                          'arithmetic-expression-contract': 'Detached numeric expression dependencies and native evaluation',
                          'closed-arithmetic-contract': 'Closed numeric arithmetic native binding',
                          'native-function-pair-contract': 'Native arithmetic pair direction and flat replay gate',

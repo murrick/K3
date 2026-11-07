@@ -49,6 +49,12 @@ public final class ContextProductionCapture implements AutoCloseable {
             this.predicate = predicate; this.positive = positive;
             this.arguments = Collections.unmodifiableList(new ArrayList<>(arguments));
         }
+        static Fact ground(String predicate, boolean positive, List<SemanticTermSnapshot> arguments) {
+            if (predicate == null || arguments == null || arguments.contains(null))
+                throw new IllegalArgumentException("Complete ground atom required");
+            return new Fact(predicate, positive, arguments);
+        }
+
         static Fact of(Domain domain, Mind mind, boolean opposite) throws Exception {
             if (!domain.isComplete() || domain.isSystem(mind) || domain.isCalculated(mind)
                     || "rule(1)".equals(domain.getPredicate(mind).toString(mind))) return null;
