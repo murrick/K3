@@ -27,7 +27,13 @@ public final class ContextArithmeticRoundInspection {
                 || maximumDepth < 1 || capacity < 1 || (group == null && foreign.size() > 1))
             throw new IllegalArgumentException("One bounded actual cut manifest required");
         if (group != null) TrustGroups.validate(group);
-        Runnable work = ContextGroundProductionRounds.budget(maximumWork);
+        return inspect(x, foreign, group, rules, input, Collections.emptyList(), Collections.emptySet(),
+                maximumDepth, ContextGroundProductionRounds.budget(maximumWork), capacity);
+    }
+
+    static Result inspect(ContextProductionInventory x, List<ContextProductionInventory> foreign, String group,
+                          List<ContextArithmeticRuleInspection> rules, List<Premise> input, List<Premise> imports,
+                          Set<Source> family, int maximumDepth, Runnable work, int capacity) throws Exception {
         Set<UUID> contexts = new HashSet<>();
         Set<Source> universe = new HashSet<>();
         List<ContextProductionInventory> inventories = new ArrayList<>();
@@ -54,10 +60,23 @@ public final class ContextArithmeticRoundInspection {
         for (Premise premise : input) {
             work.run();
             if (premise == null) throw new IllegalArgumentException("Complete frozen frontier required");
+            if (premise.proof.depth > maximumDepth) throw new IllegalStateException("Carried arithmetic proof depth limit");
             for (Source source : premise.proof.sources) {
                 work.run();
                 if (!universe.contains(source)) throw new IllegalArgumentException("Premise outside the selected cut");
             }
+            merge(frozen, premise, capacity, work);
+        }
+        for (Premise premise : imports) {
+            work.run();
+            if (premise.proof.depth > maximumDepth) throw new IllegalStateException("Imported arithmetic proof depth limit");
+            boolean local = false;
+            for (Source source : premise.proof.sources) {
+                work.run();
+                if (!family.contains(source)) throw new IllegalArgumentException("Imported source outside the family");
+                local |= source.localX;
+            }
+            if (!local) throw new IllegalArgumentException("Imported arithmetic fact lacks X support");
             merge(frozen, premise, capacity, work);
         }
         List<Premise> frontier = new ArrayList<>(frozen);
@@ -80,7 +99,7 @@ public final class ContextArithmeticRoundInspection {
         return new Result(frontier, common, changed[0]);
     }
 
-    private static boolean merge(List<Premise> frontier, Premise candidate, int capacity, Runnable work) {
+    static boolean merge(List<Premise> frontier, Premise candidate, int capacity, Runnable work) {
         for (int i = 0; i < frontier.size(); i++) {
             work.run();
             Premise existing = frontier.get(i);

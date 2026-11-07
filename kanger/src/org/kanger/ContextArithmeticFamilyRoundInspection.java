@@ -1,0 +1,158 @@
+/* MIT License. Copyright (c) 2026 Dmitry G. Quznetsov. */
+package org.kanger;
+
+import java.util.*;
+import org.kanger.ContextArithmeticRuleInspection.Premise;
+import org.kanger.ContextProductionCapture.Source;
+
+/** Sealed synchronous arithmetic transport. No consistency, saturation or admission certificate. */
+public final class ContextArithmeticFamilyRoundInspection {
+    private ContextArithmeticFamilyRoundInspection() {}
+
+    public static final class Cut {
+        public final String group;
+        public final List<ContextProductionInventory> members;
+        public final List<ContextArithmeticRuleInspection> rules;
+        public final List<Premise> seeds;
+
+        public Cut(String group, List<ContextProductionInventory> members,
+                   List<ContextArithmeticRuleInspection> rules, List<Premise> seeds) {
+            this.group = TrustGroups.validate(group);
+            if (members == null || members.isEmpty() || (group == null && members.size() != 1)
+                    || members.contains(null) || rules == null || rules.contains(null) || seeds == null || seeds.contains(null))
+                throw new IllegalArgumentException("Complete arithmetic cut manifest required");
+            this.members = Collections.unmodifiableList(new ArrayList<>(members));
+            this.rules = Collections.unmodifiableList(new ArrayList<>(rules));
+            this.seeds = Collections.unmodifiableList(new ArrayList<>(seeds));
+        }
+    }
+
+    public static final class Frame {
+        public final List<Premise> common;
+        public final List<List<Premise>> privateFrontiers;
+        public final boolean changed;
+        private final ContextProductionInventory x;
+        private final List<ContextArithmeticRuleInspection> localRules;
+        private final List<Cut> cuts;
+        private final Set<Source> universe;
+
+        private Frame(ContextProductionInventory x, List<ContextArithmeticRuleInspection> localRules,
+                      List<Cut> cuts, Set<Source> universe, List<Premise> common,
+                      List<List<Premise>> privateFrontiers, boolean changed) {
+            this.x = x;
+            this.localRules = Collections.unmodifiableList(new ArrayList<>(localRules));
+            this.cuts = Collections.unmodifiableList(new ArrayList<>(cuts));
+            this.universe = Collections.unmodifiableSet(new HashSet<>(universe));
+            this.common = Collections.unmodifiableList(new ArrayList<>(common));
+            List<List<Premise>> copy = new ArrayList<>();
+            for (List<Premise> frontier : privateFrontiers)
+                copy.add(Collections.unmodifiableList(new ArrayList<>(frontier)));
+            this.privateFrontiers = Collections.unmodifiableList(copy);
+            this.changed = changed;
+        }
+    }
+
+    private static void sources(ContextProductionInventory inventory, Set<Source> target, Runnable work) {
+        for (ContextProductionInventory.Row row : inventory.primary) {
+            work.run();
+            target.add(new Source(inventory.context, inventory.revision, row.nativeRule, inventory.localX,
+                    "inventory:" + inventory.fingerprint));
+        }
+    }
+
+    public static Frame start(ContextProductionInventory x, List<ContextArithmeticRuleInspection> localRules,
+                              List<Premise> localSeeds, List<Cut> cuts, int maximumWork, int capacity) {
+        if (x == null || !x.localX || localRules == null || localRules.contains(null)
+                || localSeeds == null || localSeeds.contains(null) || cuts == null || cuts.contains(null) || capacity < 1)
+            throw new IllegalArgumentException("Bounded arithmetic family required");
+        Runnable work = ContextGroundProductionRounds.budget(maximumWork);
+        Set<UUID> contexts = new HashSet<>();
+        contexts.add(x.context);
+        Set<String> groups = new HashSet<>();
+        Set<Source> universe = new HashSet<>();
+        sources(x, universe, work);
+        Set<Source> local = new HashSet<>(universe);
+        List<Premise> common = new ArrayList<>();
+        validate(localRules, localSeeds, local, work);
+        for (Premise seed : localSeeds) ContextArithmeticRoundInspection.merge(common, seed, capacity, work);
+        List<List<Premise>> privateFrontiers = new ArrayList<>();
+        for (Cut cut : cuts) {
+            work.run();
+            if (cut.group != null && !groups.add(cut.group)) throw new IllegalArgumentException("Split trusted cut");
+            Set<Source> selected = new HashSet<>(local);
+            for (ContextProductionInventory member : cut.members) {
+                work.run();
+                if (member.localX || !contexts.add(member.context)) throw new IllegalArgumentException("Repeated or local foreign member");
+                sources(member, selected, work);
+            }
+            universe.addAll(selected);
+            validate(cut.rules, cut.seeds, selected, work);
+            List<Premise> frontier = new ArrayList<>();
+            for (Premise seed : cut.seeds) {
+                work.run();
+                if (supportedByX(seed)) throw new IllegalArgumentException("Private seed must have foreign-only ancestry");
+                ContextArithmeticRoundInspection.merge(frontier, seed, capacity, work);
+            }
+            privateFrontiers.add(frontier);
+        }
+        return new Frame(x, localRules, cuts, universe, common, privateFrontiers, false);
+    }
+
+    private static void validate(List<ContextArithmeticRuleInspection> rules, List<Premise> seeds,
+                                 Set<Source> universe, Runnable work) {
+        for (ContextArithmeticRuleInspection rule : rules) {
+            work.run();
+            if (!universe.contains(rule.source)) throw new IllegalArgumentException("Rule outside cut manifest");
+            rule.preflight(work);
+        }
+        for (Premise seed : seeds) for (Source source : seed.proof.sources) {
+            work.run();
+            if (!universe.contains(source)) throw new IllegalArgumentException("Seed outside cut manifest");
+        }
+    }
+
+    private static boolean supportedByX(Premise premise) {
+        for (Source source : premise.proof.sources) if (source.localX) return true;
+        return false;
+    }
+
+    public static Frame advance(Frame input, int maximumDepth, int maximumWork, int capacity) throws Exception {
+        if (input == null || maximumDepth < 1 || capacity < 1) throw new IllegalArgumentException("Bounded sealed frame required");
+        Runnable work = ContextGroundProductionRounds.budget(maximumWork);
+        List<Premise> common = new ArrayList<>();
+        for (Premise premise : input.common) ContextArithmeticRoundInspection.merge(common, premise, capacity, work);
+        ContextArithmeticRoundInspection.Result local = ContextArithmeticRoundInspection.inspect(
+                input.x, Collections.emptyList(), null, input.localRules, Collections.emptyList(),
+                input.common, input.universe, maximumDepth, work, capacity);
+        boolean changed = merge(common, local.common, capacity, work);
+        List<List<Premise>> privateFrontiers = new ArrayList<>();
+        for (int i = 0; i < input.cuts.size(); i++) {
+            work.run();
+            Cut cut = input.cuts.get(i);
+            List<ContextArithmeticRuleInspection> rules = new ArrayList<>(input.localRules);
+            rules.addAll(cut.rules);
+            ContextArithmeticRoundInspection.Result result = ContextArithmeticRoundInspection.inspect(
+                    input.x, cut.members, cut.group, rules, input.privateFrontiers.get(i),
+                    input.common, input.universe, maximumDepth, work, capacity);
+            changed |= merge(common, result.common, capacity, work);
+            List<Premise> privateState = new ArrayList<>(input.privateFrontiers.get(i));
+            List<Premise> products = new ArrayList<>();
+            for (Premise premise : result.frontier) {
+                work.run();
+                if (!supportedByX(premise)) products.add(premise);
+            }
+            changed |= merge(privateState, products, capacity, work);
+            privateFrontiers.add(privateState);
+        }
+        return new Frame(input.x, input.localRules, input.cuts, input.universe, common, privateFrontiers, changed);
+    }
+
+    private static boolean merge(List<Premise> target, List<Premise> additions, int capacity, Runnable work) {
+        boolean changed = false;
+        for (Premise premise : additions) {
+            work.run();
+            changed |= ContextArithmeticRoundInspection.merge(target, premise, capacity, work);
+        }
+        return changed;
+    }
+}
