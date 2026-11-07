@@ -10,7 +10,7 @@ import tempfile
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--mode', choices=('contract', 'reference', 'witness-contract', 'independent-reopen-contract', 'ordinary-commit-contract', 'ordinary-ground-attachment-contract', 'ordinary-revision-switch-contract', 'ordinary-private-edit-contract', 'ordinary-topology-contract', 'private-witness-contract', 'universal-unit-contract'), default='contract')
+    parser.add_argument('--mode', choices=('contract', 'reference', 'witness-contract', 'independent-reopen-contract', 'ordinary-commit-contract', 'ordinary-ground-attachment-contract', 'ordinary-revision-switch-contract', 'ordinary-private-edit-contract', 'ordinary-topology-contract', 'ordinary-function-attachment-contract', 'private-witness-contract', 'universal-unit-contract'), default='contract')
     parser.add_argument('--ordinary-integration-candidate', action='store_true',
                         help='Compile an isolated experimental default hook; never edit production sources')
     parser.add_argument('--ground-attachment-candidate', action='store_true',
@@ -52,6 +52,9 @@ def main():
                  ('org.kanger.storage.dumb2.ContextOrdinaryProductionCommitRunner', 'CONTEXT_ORDINARY_PRODUCTION_COMMIT_PASS'),
                  ('org.kanger.storage.dumb2.ContextOrdinaryCommitCompatibilityRunner', 'CONTEXT_ORDINARY_COMMIT_COMPATIBILITY_PASS'),
                  ('org.kanger.storage.dumb2.ContextProductionRoundsContractRunner', 'CONTEXT_PRODUCTION_ROUNDS_CONTRACT_PASS')]
+    if args.mode == 'ordinary-function-attachment-contract':
+        names = [('org.kanger.storage.dumb2.ContextOrdinaryFunctionAttachmentRunner',
+                  'CONTEXT_ORDINARY_FUNCTION_ATTACHMENT_PASS')]
     if args.mode == 'private-witness-contract':
         names = [('org.kanger.storage.dumb2.ContextPrivateWitnessAdmissionContractRunner', 'CONTEXT_PRIVATE_WITNESS_ADMISSION_CONTRACT_PASS')]
     if args.mode == 'universal-unit-contract':
@@ -864,13 +867,13 @@ def main():
         if source.count(before) != 1:
             raise RuntimeError('Attachment baseline changed; reconcile the candidate')
         source = source.replace(before, before + """
-            qualifyGroundAttachment(candidate);""")
+            qualifyProposedAttachment(candidate);""")
         switch_before = """        retiredLayers.add(connection);
         retiredLayers.addAll(workingConnections.getConnections());
         activateConnections(workingConnections.with(connection));"""
         switch_after = """        retiredLayers.add(connection);
         try {
-            qualifyGroundAttachment(workingConnections.with(connection));
+            qualifyProposedAttachment(workingConnections.with(connection));
         } catch (Exception rejection) {
             collectAfterRejectedTopologyChange(rejection);
             throw rejection;
@@ -883,12 +886,24 @@ def main():
         edit_before = """            ConnectionVector proposed = workingConnections.with(candidate);
             validateEffectiveConnections((Mind) sourceMind, proposed);"""
         edit_after = """            ConnectionVector proposed = workingConnections.with(candidate);
-            qualifyGroundAttachment(proposed);
+            qualifyProposedAttachment(proposed);
             validateEffectiveConnections((Mind) sourceMind, proposed);"""
         if source.count(edit_before) != 1:
             raise RuntimeError('Private edit baseline changed; reconcile the candidate')
         source = source.replace(edit_before, edit_after)
         helper = """
+    private void qualifyProposedAttachment(ConnectionVector proposed) throws Exception {
+        try {
+            qualifyGroundAttachment(proposed);
+        } catch (IllegalStateException unsupported) {
+            org.kanger.exception.ContextProductionCommitException failure =
+                    org.kanger.exception.ContextProductionCommitException.incomplete(
+                            "Proposed topology qualification incomplete: " + unsupported.getMessage(), null);
+            failure.initCause(unsupported);
+            throw failure;
+        }
+    }
+
     private void qualifyGroundAttachment(ConnectionVector proposed) throws Exception {
         Mind x = (Mind) user.getCurrentMind();
         int remaining = 1000;
@@ -1012,6 +1027,7 @@ def main():
                          'independent-reopen-contract': 'Certified independent-coordinate source must reopen after publication',
                          'universal-unit-contract': 'Desired universal-unit family coverage; open required language gate, not expected-refusal PASS',
                          'private-witness-contract': 'Bounded actual private witness admission/local refutation; required integration gate',
+                         'ordinary-function-attachment-contract': 'Required safe and refuting arithmetic function attachments',
                          'ordinary-topology-contract': 'Combined ordinary write, topology and compatibility contracts',
                          'ordinary-private-edit-contract': 'Ordinary private connection edits in both member orders',
                          'ordinary-revision-switch-contract': 'Ordinary proposed revision switch in both member orders',
