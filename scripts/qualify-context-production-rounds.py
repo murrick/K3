@@ -10,7 +10,7 @@ import tempfile
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--mode', choices=('contract', 'reference', 'witness-contract', 'independent-reopen-contract', 'ordinary-commit-contract', 'ordinary-ground-attachment-contract', 'private-witness-contract', 'universal-unit-contract'), default='contract')
+    parser.add_argument('--mode', choices=('contract', 'reference', 'witness-contract', 'independent-reopen-contract', 'ordinary-commit-contract', 'ordinary-ground-attachment-contract', 'ordinary-revision-switch-contract', 'private-witness-contract', 'universal-unit-contract'), default='contract')
     parser.add_argument('--ordinary-integration-candidate', action='store_true',
                         help='Compile an isolated experimental default hook; never edit production sources')
     parser.add_argument('--ground-attachment-candidate', action='store_true',
@@ -39,6 +39,9 @@ def main():
     if args.mode == 'ordinary-ground-attachment-contract':
         names = [('org.kanger.storage.dumb2.ContextOrdinaryGroundAttachmentRunner',
                   'CONTEXT_ORDINARY_GROUND_ATTACHMENT_PASS')]
+    if args.mode == 'ordinary-revision-switch-contract':
+        names = [('org.kanger.storage.dumb2.ContextOrdinaryRevisionSwitchRunner',
+                  'CONTEXT_ORDINARY_REVISION_SWITCH_PASS')]
     if args.mode == 'private-witness-contract':
         names = [('org.kanger.storage.dumb2.ContextPrivateWitnessAdmissionContractRunner', 'CONTEXT_PRIVATE_WITNESS_ADMISSION_CONTRACT_PASS')]
     if args.mode == 'universal-unit-contract':
@@ -852,6 +855,21 @@ def main():
             raise RuntimeError('Attachment baseline changed; reconcile the candidate')
         source = source.replace(before, before + """
             qualifyGroundAttachment(candidate);""")
+        switch_before = """        retiredLayers.add(connection);
+        retiredLayers.addAll(workingConnections.getConnections());
+        activateConnections(workingConnections.with(connection));"""
+        switch_after = """        retiredLayers.add(connection);
+        try {
+            qualifyGroundAttachment(workingConnections.with(connection));
+        } catch (Exception rejection) {
+            collectAfterRejectedTopologyChange(rejection);
+            throw rejection;
+        }
+        retiredLayers.addAll(workingConnections.getConnections());
+        activateConnections(workingConnections.with(connection));"""
+        if source.count(switch_before) != 1:
+            raise RuntimeError('Revision switch baseline changed; reconcile the candidate')
+        source = source.replace(switch_before, switch_after)
         helper = """
     private void qualifyGroundAttachment(ConnectionVector proposed) throws Exception {
         Mind x = (Mind) user.getCurrentMind();
@@ -976,6 +994,7 @@ def main():
                          'independent-reopen-contract': 'Certified independent-coordinate source must reopen after publication',
                          'universal-unit-contract': 'Desired universal-unit family coverage; open required language gate, not expected-refusal PASS',
                          'private-witness-contract': 'Bounded actual private witness admission/local refutation; required integration gate',
+                         'ordinary-revision-switch-contract': 'Ordinary proposed revision switch in both member orders',
                          'ordinary-ground-attachment-contract': 'Ordinary attachment with a published X rule in both orders',
                          'ordinary-commit-contract': 'Ordinary admission and observational/publication compatibility; activation gate',
                          'reference': 'Capture, witness identity and scoped Horn reference; round gate unchanged'}[args.mode],
