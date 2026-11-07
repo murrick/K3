@@ -10,7 +10,7 @@ import tempfile
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--mode', choices=('contract', 'reference', 'witness-contract', 'independent-reopen-contract', 'ordinary-commit-contract', 'ordinary-ground-attachment-contract', 'ordinary-revision-switch-contract', 'ordinary-private-edit-contract', 'ordinary-topology-contract', 'ordinary-function-attachment-contract', 'private-witness-contract', 'universal-unit-contract'), default='contract')
+    parser.add_argument('--mode', choices=('contract', 'reference', 'witness-contract', 'independent-reopen-contract', 'ordinary-commit-contract', 'ordinary-ground-attachment-contract', 'ordinary-revision-switch-contract', 'ordinary-private-edit-contract', 'ordinary-topology-contract', 'ordinary-function-attachment-contract', 'native-function-pair-contract', 'private-witness-contract', 'universal-unit-contract'), default='contract')
     parser.add_argument('--ordinary-integration-candidate', action='store_true',
                         help='Compile an isolated experimental default hook; never edit production sources')
     parser.add_argument('--ground-attachment-candidate', action='store_true',
@@ -55,6 +55,9 @@ def main():
     if args.mode == 'ordinary-function-attachment-contract':
         names = [('org.kanger.storage.dumb2.ContextOrdinaryFunctionAttachmentRunner',
                   'CONTEXT_ORDINARY_FUNCTION_ATTACHMENT_PASS')]
+    if args.mode == 'native-function-pair-contract':
+        names = [('org.kanger.storage.dumb2.ContextFunctionPairDirectionRunner',
+                  'CONTEXT_FUNCTION_PAIR_DIRECTION_PASS')]
     if args.mode == 'private-witness-contract':
         names = [('org.kanger.storage.dumb2.ContextPrivateWitnessAdmissionContractRunner', 'CONTEXT_PRIVATE_WITNESS_ADMISSION_CONTRACT_PASS')]
     if args.mode == 'universal-unit-contract':
@@ -1027,6 +1030,7 @@ def main():
                          'independent-reopen-contract': 'Certified independent-coordinate source must reopen after publication',
                          'universal-unit-contract': 'Desired universal-unit family coverage; open required language gate, not expected-refusal PASS',
                          'private-witness-contract': 'Bounded actual private witness admission/local refutation; required integration gate',
+                         'native-function-pair-contract': 'Native arithmetic pair direction and flat replay gate',
                          'ordinary-function-attachment-contract': 'Required safe and refuting arithmetic function attachments',
                          'ordinary-topology-contract': 'Combined ordinary write, topology and compatibility contracts',
                          'ordinary-private-edit-contract': 'Ordinary private connection edits in both member orders',

@@ -556,6 +556,12 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
     @Override
     public Domain setMind(Mind mind) throws Exception {
         this.mind = mind;
+        Deque<Function> pending = new ArrayDeque<>(arguments.getFunctions(mind));
+        while (!pending.isEmpty()) {
+            Function function = pending.pop();
+            function.setMind(mind);
+            pending.addAll(function.getArguments().getFunctions(mind));
+        }
         for (TVariable t : arguments.getTVariables(mind)) {
             t.setMind(mind);
         }
