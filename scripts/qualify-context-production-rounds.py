@@ -10,7 +10,7 @@ import tempfile
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--mode', choices=('contract', 'reference', 'witness-contract', 'independent-reopen-contract', 'ordinary-commit-contract', 'ordinary-ground-attachment-contract', 'ordinary-revision-switch-contract', 'ordinary-private-edit-contract', 'ordinary-topology-contract', 'ordinary-function-attachment-contract', 'native-function-pair-contract', 'closed-arithmetic-contract', 'arithmetic-expression-contract', 'arithmetic-rule-contract', 'arithmetic-step-contract', 'arithmetic-round-contract', 'arithmetic-family-round-contract', 'arithmetic-collision-contract', 'private-witness-contract', 'universal-unit-contract'), default='contract')
+    parser.add_argument('--mode', choices=('contract', 'reference', 'witness-contract', 'independent-reopen-contract', 'ordinary-commit-contract', 'ordinary-ground-attachment-contract', 'ordinary-revision-switch-contract', 'ordinary-private-edit-contract', 'ordinary-topology-contract', 'ordinary-function-attachment-contract', 'native-function-pair-contract', 'closed-arithmetic-contract', 'arithmetic-expression-contract', 'arithmetic-rule-contract', 'arithmetic-step-contract', 'arithmetic-round-contract', 'arithmetic-family-round-contract', 'arithmetic-collision-contract', 'arithmetic-iteration-contract', 'private-witness-contract', 'universal-unit-contract'), default='contract')
     parser.add_argument('--ordinary-integration-candidate', action='store_true',
                         help='Compile an isolated experimental default hook; never edit production sources')
     parser.add_argument('--ground-attachment-candidate', action='store_true',
@@ -81,6 +81,9 @@ def main():
     if args.mode == 'arithmetic-collision-contract':
         names = [('org.kanger.ContextArithmeticFamilyCollisionRunner', 'CONTEXT_ARITHMETIC_FAMILY_COLLISION_PASS'),
                  ('org.kanger.ContextArithmeticFamilyRoundInspectionRunner', 'CONTEXT_ARITHMETIC_FAMILY_ROUND_INSPECTION_PASS')]
+    if args.mode == 'arithmetic-iteration-contract':
+        names = [('org.kanger.ContextArithmeticFamilyIterationRunner', 'CONTEXT_ARITHMETIC_FAMILY_ITERATION_PASS'),
+                 ('org.kanger.ContextArithmeticFamilyCollisionRunner', 'CONTEXT_ARITHMETIC_FAMILY_COLLISION_PASS')]
     if args.mode == 'private-witness-contract':
         names = [('org.kanger.storage.dumb2.ContextPrivateWitnessAdmissionContractRunner', 'CONTEXT_PRIVATE_WITNESS_ADMISSION_CONTRACT_PASS')]
     if args.mode == 'universal-unit-contract':
@@ -1061,6 +1064,7 @@ def main():
                          'independent-reopen-contract': 'Certified independent-coordinate source must reopen after publication',
                          'universal-unit-contract': 'Desired universal-unit family coverage; open required language gate, not expected-refusal PASS',
                          'private-witness-contract': 'Bounded actual private witness admission/local refutation; required integration gate',
+                         'arithmetic-iteration-contract': 'Bounded arithmetic family loop with complete unchanged barriers',
                          'arithmetic-collision-contract': 'Sourced arithmetic collisions at complete family barriers',
                          'arithmetic-family-round-contract': 'Sealed synchronous arithmetic family transport',
                          'arithmetic-round-contract': 'Frozen arithmetic cut round and exact proof frontier',

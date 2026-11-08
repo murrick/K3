@@ -65,6 +65,59 @@ public final class ContextArithmeticFamilyRoundInspection {
         }
     }
 
+    public enum Status { STABLE_PENDING, COLLISION, INCOMPLETE }
+
+    public static final class Iteration {
+        public final Status status;
+        public final String reason;
+        public final Frame frame;
+        public final int completedBarriers;
+
+        private Iteration(Status status, String reason, Frame frame, int completedBarriers) {
+            this.status = status;
+            this.reason = reason;
+            this.frame = frame;
+            this.completedBarriers = completedBarriers;
+        }
+    }
+
+    public static Iteration iterate(Frame initial, int maximumRounds, int maximumDepth,
+                                    int maximumWork, int capacity) {
+        if (initial == null || maximumRounds < 1 || maximumDepth < 1 || maximumWork < 1 || capacity < 1)
+            throw new IllegalArgumentException("Positive bounded arithmetic iteration required");
+        Runnable work = ContextGroundProductionRounds.budget(maximumWork);
+        int completed = 0;
+        try {
+            checkFrontier(initial.common, maximumDepth, capacity, work);
+            for (List<Premise> frontier : initial.privateFrontiers)
+                checkFrontier(frontier, maximumDepth, capacity, work);
+            if (initial.collisions.size() > capacity) throw new IllegalStateException("Arithmetic collision capacity");
+            if (!initial.collisions.isEmpty())
+                return new Iteration(Status.COLLISION, "Sourced collision at the initial barrier", initial, 0);
+            Frame current = initial;
+            for (int round = 0; round < maximumRounds; round++) {
+                work.run();
+                current = advance(current, maximumDepth, work, capacity);
+                completed++;
+                if (!current.collisions.isEmpty())
+                    return new Iteration(Status.COLLISION, "Sourced collision at a complete family barrier", current, completed);
+                if (!current.changed)
+                    return new Iteration(Status.STABLE_PENDING, "Complete unchanged arithmetic proof frontier; model audit pending", current, completed);
+            }
+            return new Iteration(Status.INCOMPLETE, "Arithmetic round limit before an unchanged barrier", null, completed);
+        } catch (Exception stopped) {
+            return new Iteration(Status.INCOMPLETE, stopped.getMessage(), null, completed);
+        }
+    }
+
+    private static void checkFrontier(List<Premise> frontier, int maximumDepth, int capacity, Runnable work) {
+        if (frontier.size() > capacity) throw new IllegalStateException("Arithmetic frontier capacity");
+        for (Premise premise : frontier) {
+            work.run();
+            if (premise.proof.depth > maximumDepth) throw new IllegalStateException("Carried arithmetic proof depth limit");
+        }
+    }
+
     private static void sources(ContextProductionInventory inventory, Set<Source> target, Runnable work) {
         for (ContextProductionInventory.Row row : inventory.primary) {
             work.run();
@@ -136,8 +189,11 @@ public final class ContextArithmeticFamilyRoundInspection {
 
     public static Frame advance(Frame input, int maximumDepth, int maximumWork, int capacity) throws Exception {
         if (input == null || maximumDepth < 1 || capacity < 1) throw new IllegalArgumentException("Bounded sealed frame required");
+        return advance(input, maximumDepth, ContextGroundProductionRounds.budget(maximumWork), capacity);
+    }
+
+    private static Frame advance(Frame input, int maximumDepth, Runnable work, int capacity) throws Exception {
         if (!input.collisions.isEmpty()) throw new IllegalArgumentException("A refuted arithmetic frame cannot advance");
-        Runnable work = ContextGroundProductionRounds.budget(maximumWork);
         List<Premise> common = new ArrayList<>();
         for (Premise premise : input.common) ContextArithmeticRoundInspection.merge(common, premise, capacity, work);
         ContextArithmeticRoundInspection.Result local = ContextArithmeticRoundInspection.inspect(
