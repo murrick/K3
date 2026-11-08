@@ -358,7 +358,7 @@ public final class ContextArithmeticRuleInspection {
 
     private static boolean match(Atom atom, Premise premise, Map<Integer, SemanticTermSnapshot> assignment, Runnable work) {
         work.run();
-        if (!premise.fact.positive || !atom.predicate.equals(premise.fact.predicate)
+        if (premise.fact.positive == atom.positive || !atom.predicate.equals(premise.fact.predicate)
                 || atom.arguments.size() != premise.fact.arguments.size()) return false;
         for (int i = 0; i < atom.arguments.size(); i++) {
             work.run();
@@ -403,14 +403,28 @@ public final class ContextArithmeticRuleInspection {
             int selected = branch;
             if (hasHead(branch, work)) {
                 joins(branch, -1, frozen, work, donors -> output.accept(apply(selected, donors, maximumDepth, work)));
-            } else {
-                for (int literal = 0; literal < branches.get(branch).size(); literal++) {
-                    int retained = literal;
-                    joins(branch, retained, frozen, work,
-                            donors -> output.accept(negative(selected, retained, donors, maximumDepth, work)));
-                }
+            }
+            for (int literal = 0; literal < branches.get(branch).size(); literal++) {
+                work.run();
+                if (branches.get(branch).get(literal).positive || !residualBound(branch, literal, work)) continue;
+                int retained = literal;
+                joins(branch, retained, frozen, work,
+                        donors -> output.accept(negative(selected, retained, donors, maximumDepth, work)));
             }
         }
+    }
+
+    private boolean residualBound(int branch, int retained, Runnable work) {
+        Set<Integer> bound = new HashSet<>();
+        for (int i = 0; i < branches.get(branch).size(); i++) {
+            work.run();
+            if (i == retained) continue;
+            for (Slot slot : branches.get(branch).get(i).arguments) {
+                work.run();
+                if (slot.variable >= 0) bound.add(slot.variable);
+            }
+        }
+        return bound.equals(variables);
     }
 
     private Step negative(int branch, int retained, List<Premise> donors, int maximumDepth, Runnable work) throws Exception {
@@ -421,14 +435,14 @@ public final class ContextArithmeticRuleInspection {
         for (int i = 0; i < branches.get(branch).size(); i++) if (i != retained) {
             Premise donor = donors.get(donorIndex++);
             if (!match(branches.get(branch).get(i), donor, assignment, work))
-                throw new IllegalArgumentException("Constraint residual premises differ");
+                throw new IllegalArgumentException("Horn residual premises differ");
             for (Source original : donor.proof.sources) {
                 work.run();
                 sources.add(original);
             }
             depth = Math.max(depth, donor.proof.depth);
         }
-        if (!variables.equals(assignment.keySet())) throw new IllegalArgumentException("Unbound constraint residual");
+        if (!variables.equals(assignment.keySet())) throw new IllegalArgumentException("Unbound Horn residual");
         List<Atom> body = new ArrayList<>();
         for (int i = 0; i < branches.get(branch).size(); i++) {
             work.run();
@@ -473,7 +487,7 @@ public final class ContextArithmeticRuleInspection {
         for (int i = 0; i < branches.get(branch).size(); i++) {
             work.run();
             Atom atom = branches.get(branch).get(i);
-            if (i != omitted && !atom.positive) body.add(atom);
+            if (i != omitted && (omitted >= 0 || !atom.positive)) body.add(atom);
         }
         int[] next = new int[body.size()];
         List<Premise> donors = new ArrayList<>(Collections.nCopies(body.size(), null));

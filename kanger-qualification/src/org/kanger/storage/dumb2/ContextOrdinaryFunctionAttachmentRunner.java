@@ -24,6 +24,8 @@ public final class ContextOrdinaryFunctionAttachmentRunner {
         ContextSevenPremiseNativeWriteRunner.create(home, "Blocker", "!blocked(2);");
         ContextSevenPremiseNativeWriteRunner.create(home, "BodyFX", "!@x next(x+1)&&seed(x)->done(x+2);");
         ContextSevenPremiseNativeWriteRunner.create(home, "BodyDeny", "!~done(3);");
+        ContextSevenPremiseNativeWriteRunner.create(home, "ResidualFX", "!@x seed(x)&&gate(x)->next(x+1);");
+        ContextSevenPremiseNativeWriteRunner.create(home, "GateFact", "!gate(1);");
         List<String> failures = new ArrayList<>();
         for (int mode = 0; mode < 3; mode++) {
             String name = "Function" + mode;
@@ -71,6 +73,7 @@ public final class ContextOrdinaryFunctionAttachmentRunner {
         }
         verifyMixedDomainSafe(home);
         for (boolean reverse : new boolean[]{false, true}) {
+            verifyDefiniteResidual(home, reverse);
             verifyBoundBody(home, reverse);
             verifyCrossCut(home, reverse);
             verifyConstraintCut(home, reverse);
@@ -115,6 +118,40 @@ public final class ContextOrdinaryFunctionAttachmentRunner {
             }
             System.out.println("mixed domain mode=" + mode + " accepted and reopened");
         }
+    }
+
+    private static void verifyDefiniteResidual(Path home, boolean reverse) throws Exception {
+        String name = "DefiniteResidual" + reverse;
+        List<RevisionRef> settled;
+        try (ContextSevenPremiseNativeWriteRunner.Fixture f =
+                     new ContextSevenPremiseNativeWriteRunner.Fixture(home, name)) {
+            ContextSevenPremiseNativeWriteRunner.require(f.root.compile("!seed(1); !~next(2);", null, false), "definite residual X");
+            f.db.connectContext(reverse ? "ResidualFX" : "GateFact");
+            f.db.saveConnections(f.root);
+            long revision = f.db.getRevision();
+            List<RevisionRef> before = ContextSevenPremiseNativeWriteRunner.pins(f);
+            String fingerprint = ContextProductionInventory.inspect(f.root, f.db.getContextId(),
+                    revision, true, Collections.emptyList(), 1000).fingerprint;
+            StorageLifecycleException conflict = null;
+            try { f.db.connectContext(reverse ? "GateFact" : "ResidualFX"); }
+            catch (StorageLifecycleException refusal) { conflict = refusal; }
+            ContextSevenPremiseNativeWriteRunner.require(conflict != null
+                    && conflict.getErrorCode() == StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT
+                    && !conflict.getCollisions().isEmpty(), "definite residual conflict carries witnesses");
+            ContextSevenPremiseNativeWriteRunner.require(revision == f.db.getRevision()
+                    && before.equals(ContextSevenPremiseNativeWriteRunner.pins(f))
+                    && fingerprint.equals(ContextProductionInventory.inspect(f.root, f.db.getContextId(),
+                            revision, true, Collections.emptyList(), 1000).fingerprint), "definite residual rejection purity");
+            f.db.connectContext("Safe");
+            f.db.saveConnections(f.root);
+            settled = ContextSevenPremiseNativeWriteRunner.pins(f);
+        }
+        try (ContextSevenPremiseNativeWriteRunner.Fixture f =
+                     new ContextSevenPremiseNativeWriteRunner.Fixture(home, name)) {
+            ContextSevenPremiseNativeWriteRunner.require(settled.equals(ContextSevenPremiseNativeWriteRunner.pins(f)),
+                    "definite residual settled topology reopens");
+        }
+        System.out.println("definite residual reverse=" + reverse + " rejected with witnesses");
     }
 
     private static void verifyBoundBody(Path home, boolean reverse) throws Exception {

@@ -31,6 +31,7 @@ public final class ContextArithmeticConstraintRunner {
 
     public static void main(String[] args) throws Exception {
         System.setProperty("user.home", Files.createTempDirectory("arithmetic-constraint-").toString());
+        definiteNegativeResiduals();
         boundBodyExpressions();
         Fixture producer = new Fixture(false, "!@x seed(x)->next(x+1);");
         Fixture guard = new Fixture(false, "!@x next(x)->~blocked(x);");
@@ -88,6 +89,61 @@ public final class ContextArithmeticConstraintRunner {
         require(!ContextArithmeticModelAudit.inspect(collision, 1000000).verified, "refuted iterations expose no valid model");
         System.out.println("CONTEXT_ARITHMETIC_CONSTRAINT_PASS checks=" + checks);
         System.exit(0);
+    }
+
+    private static void definiteNegativeResiduals() throws Exception {
+        Fixture x = new Fixture(true, "!seed(1); !~next(2);");
+        Fixture rule = new Fixture(false, "!@x seed(x)&&gate(x)->next(x+1);");
+        Fixture gate = new Fixture(false, "!gate(1);");
+        Fixture expected = new Fixture(true, "!~gate(1);");
+        Iteration safe = run(x, Collections.singletonList(rule.cut()), 16);
+        Premise residual = safe.frame.common.stream().filter(value -> value.fact.equivalent(expected.seeds.get(0).fact))
+                .findFirst().orElseThrow(AssertionError::new);
+        require(safe.status == Status.STABLE_PENDING && residual.proof.sources.size() == 3
+                && residual.proof.depth == 1 && residual.proof.sources.contains(rule.rules.get(0).source),
+                "bound negative head produces exact signed fact with full original support");
+        require(ContextArithmeticModelAudit.inspect(safe, 1000000).verified, "safe definite residual has checked models");
+        Iteration result = run(x, Arrays.asList(rule.cut(), gate.cut()), 16);
+        require(result.status == Status.COLLISION && result.completedBarriers == 1
+                && result.frame.collisions.stream().anyMatch(value -> value.cut.equals(
+                        ContextDependentCutInspection.independent(gate.inventory.context))),
+                "bound negative head transports ~gate(1) into the receiving cut");
+        Iteration reverse = run(x, Arrays.asList(gate.cut(), rule.cut()), 16);
+        require(reverse.status == Status.COLLISION && reverse.completedBarriers == result.completedBarriers,
+                "definite residual conflict is independent of cut order");
+        for (String source : Arrays.asList("!seed(1); !~next(3);", "!seed(1); !next(2);")) {
+            Fixture control = new Fixture(true, source);
+            Iteration compatible = run(control, Arrays.asList(rule.cut(), gate.cut()), 16);
+            require(compatible.status == Status.STABLE_PENDING && ContextArithmeticModelAudit.inspect(compatible, 1000000).verified
+                    && compatible.frame.common.stream().noneMatch(value -> value.fact.equivalent(expected.seeds.get(0).fact)),
+                    "negative-head donor must have opposite sign and exact computed arguments");
+        }
+        Fixture negativeHead = new Fixture(true, "!~done(1);");
+        Fixture plainHead = new Fixture(false, "!@x gate(x)->done(x);");
+        Iteration headBound = run(negativeHead, Collections.singletonList(plainHead.cut()), 16);
+        require(headBound.status == Status.STABLE_PENDING && headBound.frame.common.stream().anyMatch(
+                value -> value.fact.equivalent(expected.seeds.get(0).fact))
+                && ContextArithmeticModelAudit.inspect(headBound, 1000000).verified,
+                "ordinary negative head alone binds the residual variable");
+        Fixture anchor = new Fixture(true, "!anchor(1);");
+        Fixture privateRule = new Fixture(false, "!seed(1); !~next(2); !@x seed(x)&&gate(x)->next(x+1);");
+        Iteration separate = run(anchor, Arrays.asList(privateRule.cut(), gate.cut()), 16);
+        require(separate.status == Status.STABLE_PENDING && ContextArithmeticModelAudit.inspect(separate, 1000000).verified
+                && separate.frame.common.stream().noneMatch(value -> value.fact.equivalent(expected.seeds.get(0).fact)),
+                "private definite residual does not cross independent siblings without X support");
+        List<Premise> trustedSeeds = new ArrayList<>(privateRule.seeds);
+        trustedSeeds.addAll(gate.seeds);
+        Cut trusted = new Cut("residual", Arrays.asList(privateRule.inventory, gate.inventory), privateRule.rules, trustedSeeds);
+        Iteration joined = run(anchor, Collections.singletonList(trusted), 16);
+        require(joined.status == Status.COLLISION, "TRUST combines signed definite residual premises");
+        Fixture chain = new Fixture(false, "!@x seed(x)&&permit(x)->gate(x);");
+        Fixture permit = new Fixture(false, "!permit(1);");
+        Iteration chained = run(x, Arrays.asList(rule.cut(), chain.cut(), permit.cut()), 16);
+        require(chained.status == Status.COLLISION && chained.completedBarriers == 2,
+                "negative residuals propagate through two frozen barriers");
+        Iteration shallow = run(x, Arrays.asList(rule.cut(), chain.cut(), permit.cut()), 1);
+        require(shallow.status == Status.INCOMPLETE && shallow.frame == null,
+                "signed definite residual chain respects cumulative proof depth without prefix");
     }
 
     private static void boundBodyExpressions() throws Exception {
