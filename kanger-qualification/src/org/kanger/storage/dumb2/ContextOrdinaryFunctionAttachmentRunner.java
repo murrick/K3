@@ -69,6 +69,7 @@ public final class ContextOrdinaryFunctionAttachmentRunner {
                         settled.equals(ContextSevenPremiseNativeWriteRunner.pins(f)), "function topology reopens");
             }
         }
+        verifyMixedDomainSafe(home);
         for (boolean reverse : new boolean[]{false, true}) {
             verifyBoundBody(home, reverse);
             verifyCrossCut(home, reverse);
@@ -94,12 +95,34 @@ public final class ContextOrdinaryFunctionAttachmentRunner {
         System.out.println("CONTEXT_ORDINARY_FUNCTION_ATTACHMENT_PASS");
         System.exit(0);
     }
+    private static void verifyMixedDomainSafe(Path home) throws Exception {
+        for (int mode = 0; mode < 2; mode++) {
+            String name = "MixedDomainSafe" + mode;
+            List<RevisionRef> settled;
+            try (ContextSevenPremiseNativeWriteRunner.Fixture f =
+                         new ContextSevenPremiseNativeWriteRunner.Fixture(home, name)) {
+                String source = mode == 0 ? "!tag(\"outside\");" : "!seed(1); !next(3); !tag(\"outside\");";
+                ContextSevenPremiseNativeWriteRunner.require(f.root.compile(source, null, false), "mixed-domain safe X");
+                f.db.connectContext("BodyFX");
+                f.db.connectContext("BodyDeny");
+                f.db.saveConnections(f.root);
+                settled = ContextSevenPremiseNativeWriteRunner.pins(f);
+            }
+            try (ContextSevenPremiseNativeWriteRunner.Fixture f =
+                         new ContextSevenPremiseNativeWriteRunner.Fixture(home, name)) {
+                ContextSevenPremiseNativeWriteRunner.require(settled.equals(ContextSevenPremiseNativeWriteRunner.pins(f)),
+                        "safe mixed-domain arithmetic topology reopens");
+            }
+            System.out.println("mixed domain mode=" + mode + " accepted and reopened");
+        }
+    }
+
     private static void verifyBoundBody(Path home, boolean reverse) throws Exception {
         String name = "BoundBody" + reverse;
         List<RevisionRef> settled;
         try (ContextSevenPremiseNativeWriteRunner.Fixture f =
                      new ContextSevenPremiseNativeWriteRunner.Fixture(home, name)) {
-            ContextSevenPremiseNativeWriteRunner.require(f.root.compile("!seed(1); !next(2);", null, false), "bound body X");
+            ContextSevenPremiseNativeWriteRunner.require(f.root.compile("!seed(1); !next(2); !tag(\"outside\");", null, false), "bound body X");
             f.db.connectContext(reverse ? "BodyFX" : "BodyDeny");
             f.db.saveConnections(f.root);
             long revision = f.db.getRevision();

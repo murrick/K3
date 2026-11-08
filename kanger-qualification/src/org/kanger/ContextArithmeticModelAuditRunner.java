@@ -33,6 +33,7 @@ public final class ContextArithmeticModelAuditRunner {
 
     public static void main(String[] args) throws Exception {
         System.setProperty("user.home", Files.createTempDirectory("arithmetic-model-audit-").toString());
+        mixedDomainAudit();
         Fixture x = new Fixture(true, "!seed(1); !@x out(x)->local(x+1);");
         Fixture a = new Fixture(false, "!@x seed(x)->middle(x+1); !private_seed(4); !@x private_seed(x)->hidden(x+1);");
         Fixture b = new Fixture(false, "!@x middle(x)->out(x+1);");
@@ -73,6 +74,52 @@ public final class ContextArithmeticModelAuditRunner {
         require(immutable, "checked models are immutable");
         System.out.println("CONTEXT_ARITHMETIC_MODEL_AUDIT_PASS checks=" + checks);
         System.exit(0);
+    }
+
+    private static void mixedDomainAudit() throws Exception {
+        Fixture typedX = new Fixture(true, "!seed(1); !next(2); !pair(2,1); !tag(\"outside\");");
+        for (String body : Arrays.asList("next(x+1)&&seed(x)", "seed(x)&&next(x+1)", "pair(x+1,x)")) {
+            Fixture rule = new Fixture(false, "!@x " + body + "->done(x+2);");
+            Frame initial = start(typedX, Collections.singletonList(rule.cut()));
+            Audit missing = ContextArithmeticModelAudit.inspectFrame(initial, 1000000);
+            require(!missing.verified && missing.models.isEmpty() && missing.reason.contains("violates an original rule"),
+                    "mixed-domain audit still detects the missing enabled numeric conclusion");
+            Iteration closure = ContextArithmeticFamilyRoundInspection.iterate(initial, 8, 16, 1000000, 100);
+            Audit audit = ContextArithmeticModelAudit.inspect(closure, 1000000);
+            require(audit.verified, "unrelated string does not evaluate an impossible numeric antecedent: " + audit.reason);
+            Audit stopped = ContextArithmeticModelAudit.inspect(closure, 1);
+            require(!stopped.verified && stopped.models.isEmpty(), "mixed-domain guard spends bounded audit work");
+        }
+        Fixture empty = new Fixture(true, "!tag(\"outside\");");
+        Fixture dormant = new Fixture(false, "!@x next(x+1)&&seed(x)->done(x+2);");
+        Iteration none = ContextArithmeticFamilyRoundInspection.iterate(
+                start(empty, Collections.singletonList(dormant.cut())), 8, 16, 1000000, 100);
+        require(ContextArithmeticModelAudit.inspect(none, 1000000).verified,
+                "missing ordinary relation disables an arithmetic antecedent over mixed values");
+        Fixture constants = new Fixture(true, "!seed(1); !pair(2,1,2); !tag(\"outside\");");
+        Fixture constantRule = new Fixture(false, "!@x pair(x+1,x,1)&&seed(x)->done(x+2);");
+        Iteration mismatch = ContextArithmeticFamilyRoundInspection.iterate(
+                start(constants, Collections.singletonList(constantRule.cut())), 8, 16, 1000000, 100);
+        Audit constantAudit = ContextArithmeticModelAudit.inspect(mismatch, 1000000);
+        require(constantAudit.verified && constantAudit.models.stream().noneMatch(value -> has(value, "done")),
+                "ordinary constant mismatch disables expression comparison within the same atom");
+        Fixture guard = new Fixture(false, "!@x pair(x+1,x)&&seed(x)->~blocked(x);");
+        Iteration constrained = ContextArithmeticFamilyRoundInspection.iterate(
+                start(typedX, Collections.singletonList(guard.cut())), 8, 16, 1000000, 100);
+        require(ContextArithmeticModelAudit.inspect(constrained, 1000000).verified,
+                "mixed-domain constraints retain a checked model with negative residuals");
+        Fixture guardedMismatch = new Fixture(true, "!seed(1); !pair(3,1); !blocked(1); !tag(\"outside\");");
+        Iteration mismatchConstraint = ContextArithmeticFamilyRoundInspection.iterate(
+                start(guardedMismatch, Collections.singletonList(guard.cut())), 8, 16, 1000000, 100);
+        require(mismatchConstraint.status == Status.STABLE_PENDING
+                && ContextArithmeticModelAudit.inspect(mismatchConstraint, 1000000).verified,
+                "computed constraint mismatch over mixed values is independently satisfiable");
+        Fixture wrongType = new Fixture(true, "!seed(\"outside\"); !next(2);");
+        Iteration unsupported = ContextArithmeticFamilyRoundInspection.iterate(
+                start(wrongType, Collections.singletonList(dormant.cut())), 8, 16, 1000000, 100);
+        Audit unsafe = ContextArithmeticModelAudit.inspect(unsupported, 1000000);
+        require(unsupported.status == Status.INCOMPLETE && !unsafe.verified && unsafe.models.isEmpty(),
+                "genuinely bound nonnumeric expression input remains incomplete without a model prefix");
     }
 
     private static Frame start(Fixture x, List<Cut> cuts) throws Exception {

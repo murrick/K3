@@ -530,6 +530,16 @@ public final class ContextArithmeticRuleInspection {
                 work.run();
                 Atom head = null;
                 boolean enabled = true;
+                // Reject impossible ordinary bindings before evaluating any arithmetic.
+                // This is an independent relation scan, not the producer join path.
+                for (Atom atom : branch) {
+                    work.run();
+                    if (!atom.positive && !modelHasOrdinaryArguments(positives, atom, assignment, work)) {
+                        enabled = false;
+                        break;
+                    }
+                }
+                if (!enabled) continue;
                 for (Atom atom : branch) {
                     work.run();
                     if (atom.positive) head = atom;
@@ -562,6 +572,28 @@ public final class ContextArithmeticRuleInspection {
             }
         }
         return obligations;
+    }
+
+    private static boolean modelHasOrdinaryArguments(List<Fact> positives, Atom atom,
+                                                     Map<Integer, SemanticTermSnapshot> assignment, Runnable work) {
+        for (Fact fact : positives) {
+            work.run();
+            if (!fact.positive || !atom.predicate.equals(fact.predicate)
+                    || atom.arguments.size() != fact.arguments.size()) continue;
+            boolean matches = true;
+            for (int i = 0; i < atom.arguments.size(); i++) {
+                work.run();
+                Slot slot = atom.arguments.get(i);
+                if (slot.expression != null) continue;
+                SemanticTermSnapshot expected = slot.variable < 0 ? slot.value : assignment.get(slot.variable);
+                if (!expected.semanticallyEquals(fact.arguments.get(i))) {
+                    matches = false;
+                    break;
+                }
+            }
+            if (matches) return true;
+        }
+        return false;
     }
 
     static boolean modelContains(List<Fact> positives, Fact required, Runnable work) {
