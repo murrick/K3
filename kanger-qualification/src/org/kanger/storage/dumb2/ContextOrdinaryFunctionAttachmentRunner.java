@@ -22,6 +22,8 @@ public final class ContextOrdinaryFunctionAttachmentRunner {
         ContextSevenPremiseNativeWriteRunner.create(home, "FunFact", "!fun(1);");
         ContextSevenPremiseNativeWriteRunner.create(home, "Guard", "!@x next(x)->~blocked(x);");
         ContextSevenPremiseNativeWriteRunner.create(home, "Blocker", "!blocked(2);");
+        ContextSevenPremiseNativeWriteRunner.create(home, "BodyFX", "!@x next(x+1)&&seed(x)->done(x+2);");
+        ContextSevenPremiseNativeWriteRunner.create(home, "BodyDeny", "!~done(3);");
         List<String> failures = new ArrayList<>();
         for (int mode = 0; mode < 3; mode++) {
             String name = "Function" + mode;
@@ -68,6 +70,7 @@ public final class ContextOrdinaryFunctionAttachmentRunner {
             }
         }
         for (boolean reverse : new boolean[]{false, true}) {
+            verifyBoundBody(home, reverse);
             verifyCrossCut(home, reverse);
             verifyConstraintCut(home, reverse);
         }
@@ -91,6 +94,40 @@ public final class ContextOrdinaryFunctionAttachmentRunner {
         System.out.println("CONTEXT_ORDINARY_FUNCTION_ATTACHMENT_PASS");
         System.exit(0);
     }
+    private static void verifyBoundBody(Path home, boolean reverse) throws Exception {
+        String name = "BoundBody" + reverse;
+        List<RevisionRef> settled;
+        try (ContextSevenPremiseNativeWriteRunner.Fixture f =
+                     new ContextSevenPremiseNativeWriteRunner.Fixture(home, name)) {
+            ContextSevenPremiseNativeWriteRunner.require(f.root.compile("!seed(1); !next(2);", null, false), "bound body X");
+            f.db.connectContext(reverse ? "BodyFX" : "BodyDeny");
+            f.db.saveConnections(f.root);
+            long revision = f.db.getRevision();
+            List<RevisionRef> before = ContextSevenPremiseNativeWriteRunner.pins(f);
+            String fingerprint = ContextProductionInventory.inspect(f.root, f.db.getContextId(),
+                    revision, true, Collections.emptyList(), 1000).fingerprint;
+            StorageLifecycleException conflict = null;
+            try { f.db.connectContext(reverse ? "BodyDeny" : "BodyFX"); }
+            catch (StorageLifecycleException refusal) { conflict = refusal; }
+            ContextSevenPremiseNativeWriteRunner.require(conflict != null
+                    && conflict.getErrorCode() == StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT
+                    && !conflict.getCollisions().isEmpty(), "computed body conflict carries witnesses");
+            ContextSevenPremiseNativeWriteRunner.require(revision == f.db.getRevision()
+                    && before.equals(ContextSevenPremiseNativeWriteRunner.pins(f))
+                    && fingerprint.equals(ContextProductionInventory.inspect(f.root, f.db.getContextId(),
+                            revision, true, Collections.emptyList(), 1000).fingerprint), "computed body rejection purity");
+            f.db.connectContext("Safe");
+            f.db.saveConnections(f.root);
+            settled = ContextSevenPremiseNativeWriteRunner.pins(f);
+        }
+        try (ContextSevenPremiseNativeWriteRunner.Fixture f =
+                     new ContextSevenPremiseNativeWriteRunner.Fixture(home, name)) {
+            ContextSevenPremiseNativeWriteRunner.require(settled.equals(ContextSevenPremiseNativeWriteRunner.pins(f)),
+                    "computed body settled topology reopens");
+        }
+        System.out.println("bound body reverse=" + reverse + " rejected with witnesses");
+    }
+
     private static void verifyConstraintCut(Path home, boolean reverse) throws Exception {
         String name = "ConstraintFunction" + reverse;
         List<RevisionRef> settled;

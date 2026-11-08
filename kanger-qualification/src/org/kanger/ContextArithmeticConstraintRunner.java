@@ -31,6 +31,7 @@ public final class ContextArithmeticConstraintRunner {
 
     public static void main(String[] args) throws Exception {
         System.setProperty("user.home", Files.createTempDirectory("arithmetic-constraint-").toString());
+        boundBodyExpressions();
         Fixture producer = new Fixture(false, "!@x seed(x)->next(x+1);");
         Fixture guard = new Fixture(false, "!@x next(x)->~blocked(x);");
         Fixture safeX = new Fixture(true, "!seed(1);");
@@ -87,6 +88,55 @@ public final class ContextArithmeticConstraintRunner {
         require(!ContextArithmeticModelAudit.inspect(collision, 1000000).verified, "refuted iterations expose no valid model");
         System.out.println("CONTEXT_ARITHMETIC_CONSTRAINT_PASS checks=" + checks);
         System.exit(0);
+    }
+
+    private static void boundBodyExpressions() throws Exception {
+        Fixture x = new Fixture(true, "!seed(1); !next(2); !pair(1,2);");
+        for (String body : Arrays.asList("seed(x)&&next(x+1)", "next(x+1)&&seed(x)")) {
+            Fixture rule = new Fixture(false, "!@x " + body + "->done(x+2);");
+            Iteration result = run(x, Collections.singletonList(rule.cut()), 16);
+            require(result.status == Status.STABLE_PENDING && result.frame.common.stream().anyMatch(
+                    value -> value.fact.positive && value.fact.predicate.equals("done")),
+                    "bound arithmetic body derives regardless of premise order");
+            require(ContextArithmeticModelAudit.inspect(result, 1000000).verified,
+                    "bound arithmetic body passes independent assignment enumeration");
+            Fixture mismatch = new Fixture(true, "!seed(1); !next(3);");
+            Iteration absent = run(mismatch, Collections.singletonList(rule.cut()), 16);
+            require(absent.status == Status.STABLE_PENDING && absent.frame.common.stream().noneMatch(
+                    value -> value.fact.predicate.equals("done"))
+                    && ContextArithmeticModelAudit.inspect(absent, 1000000).verified,
+                    "unequal computed body does not produce a conclusion");
+        }
+        Fixture reordered = new Fixture(false, "!@x pair(x+1,x)->done(x+2);");
+        Fixture donor = new Fixture(true, "!pair(2,1);");
+        Fixture expected = new Fixture(true, "!done(3);");
+        require(reordered.rules.get(0).apply(0, donor.seeds, 16, 100000).conclusion.fact
+                .equivalent(expected.seeds.get(0).fact), "direct apply binds later argument before checking expression");
+        Fixture badDonor = new Fixture(true, "!pair(3,1);");
+        boolean directRefused = false;
+        try { reordered.rules.get(0).apply(0, badDonor.seeds, 16, 100000); }
+        catch (IllegalArgumentException mismatch) { directRefused = true; }
+        require(directRefused, "direct apply rejects unequal expression after complete binding");
+        Fixture guard = new Fixture(false, "!@x seed(x)&&pair(x,x+1)->~blocked(x);");
+        Fixture blocker = new Fixture(false, "!blocked(1);");
+        Iteration denied = run(x, Arrays.asList(guard.cut(), blocker.cut()), 16);
+        require(denied.status == Status.COLLISION && denied.completedBarriers == 1,
+                "computed constraint body transports negative residual to another cut");
+        Fixture safe = new Fixture(true, "!seed(1); !pair(1,3);");
+        Iteration allowed = run(safe, Arrays.asList(guard.cut(), blocker.cut()), 16);
+        require(allowed.status == Status.STABLE_PENDING && ContextArithmeticModelAudit.inspect(allowed, 1000000).verified,
+                "constraint arithmetic mismatch remains compatible");
+        Fixture unbound = new Fixture(false, "!@x next(x+1)->done(x);");
+        boolean refused = false;
+        try { run(x, Collections.singletonList(unbound.cut()), 16); }
+        catch (IllegalArgumentException unsupported) { refused = true; }
+        require(refused, "inverse-only body remains explicitly unsupported");
+        Fixture missing = new Fixture(false, "!@x seed(x)&&next(x+1)->done(x+2);");
+        boolean auditRefused = false;
+        try { missing.rules.get(0).auditModel(Arrays.asList(x.seeds.get(0).fact,
+                x.seeds.get(1).fact, x.seeds.get(2).fact), ContextGroundProductionRounds.budget(100000)); }
+        catch (IllegalStateException invalid) { auditRefused = true; }
+        require(auditRefused, "independent audit detects missing computed-body conclusion");
     }
 
     private static Iteration run(Fixture x, List<Cut> cuts, int depth) throws Exception {

@@ -253,7 +253,7 @@ public final class ContextArithmeticRuleInspection {
                 work.run();
                 Slot slot = atom.arguments.get(j);
                 SemanticTermSnapshot actual = premise.fact.arguments.get(j);
-                if (slot.expression != null) throw new IllegalArgumentException("Arithmetic premise inversion remains unsupported");
+                if (slot.expression != null) continue;
                 SemanticTermSnapshot expected = slot.variable < 0 ? slot.value : assignment.putIfAbsent(slot.variable, actual);
                 if (expected != null && !expected.semanticallyEquals(actual))
                     throw new IllegalArgumentException("Inconsistent shared variable or constant");
@@ -265,6 +265,8 @@ public final class ContextArithmeticRuleInspection {
             depth = Math.max(depth, premise.proof.depth);
         }
         if (!variables.equals(assignment.keySet())) throw new IllegalArgumentException("Complete range-restricted rule assignment required");
+        if (!expressionsMatch(body, donors, assignment, work))
+            throw new IllegalArgumentException("Arithmetic premise value differs");
         if (depth >= maximumDepth) throw new IllegalStateException("Arithmetic proof depth limit");
         List<SemanticTermSnapshot> values = new ArrayList<>();
         for (Slot slot : head.arguments) values.add(slot.instantiate(assignment, work));
@@ -332,7 +334,7 @@ public final class ContextArithmeticRuleInspection {
                 if (atom.positive) heads++;
                 else for (Slot slot : atom.arguments) {
                     work.run();
-                    if (slot.expression != null) throw new IllegalArgumentException("Arithmetic body inversion remains unsupported");
+                    // Expressions are checked after all ordinary body bindings are known.
                     if (slot.variable >= 0) bound.add(slot.variable);
                 }
             }
@@ -361,9 +363,24 @@ public final class ContextArithmeticRuleInspection {
         for (int i = 0; i < atom.arguments.size(); i++) {
             work.run();
             Slot slot = atom.arguments.get(i);
+            if (slot.expression != null) continue;
             SemanticTermSnapshot actual = premise.fact.arguments.get(i);
             SemanticTermSnapshot expected = slot.variable < 0 ? slot.value : assignment.putIfAbsent(slot.variable, actual);
             if (expected != null && !expected.semanticallyEquals(actual)) return false;
+        }
+        return true;
+    }
+
+    private static boolean expressionsMatch(List<Atom> body, List<Premise> donors,
+                                            Map<Integer, SemanticTermSnapshot> assignment, Runnable work) throws Exception {
+        for (int i = 0; i < body.size(); i++) {
+            work.run();
+            for (int j = 0; j < body.get(i).arguments.size(); j++) {
+                work.run();
+                Slot slot = body.get(i).arguments.get(j);
+                if (slot.expression != null && !slot.instantiate(assignment, work)
+                        .semanticallyEquals(donors.get(i).fact.arguments.get(j))) return false;
+            }
         }
         return true;
     }
@@ -412,6 +429,13 @@ public final class ContextArithmeticRuleInspection {
             depth = Math.max(depth, donor.proof.depth);
         }
         if (!variables.equals(assignment.keySet())) throw new IllegalArgumentException("Unbound constraint residual");
+        List<Atom> body = new ArrayList<>();
+        for (int i = 0; i < branches.get(branch).size(); i++) {
+            work.run();
+            if (i != retained) body.add(branches.get(branch).get(i));
+        }
+        if (!expressionsMatch(body, donors, assignment, work))
+            throw new IllegalArgumentException("Arithmetic residual premise value differs");
         if (depth >= maximumDepth) throw new IllegalStateException("Arithmetic residual proof depth limit");
         Atom head = branches.get(branch).get(retained);
         List<SemanticTermSnapshot> values = new ArrayList<>();
@@ -459,7 +483,7 @@ public final class ContextArithmeticRuleInspection {
         while (depth >= 0) {
             work.run();
             if (depth == body.size()) {
-                output.accept(donors);
+                if (expressionsMatch(body, donors, assignments.get(depth), work)) output.accept(donors);
                 depth--;
             } else if (next[depth] == frozen.size()) {
                 next[depth] = 0;
