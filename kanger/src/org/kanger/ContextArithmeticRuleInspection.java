@@ -131,7 +131,8 @@ public final class ContextArithmeticRuleInspection {
             List<Atom> atoms = new ArrayList<>();
             for (Domain domain : branch) {
                 work.run();
-                if (domain.isSystem(mind)) throw new IllegalStateException("Ordinary predicate required");
+                if (domain.isSystem(mind) || "rule(1)".equals(domain.getPredicate(mind).toString(mind)))
+                    throw new IllegalStateException("Ordinary predicate required");
                 List<Slot> slots = new ArrayList<>();
                 for (IArgument argument : domain.getArguments()) {
                     work.run();
@@ -164,6 +165,30 @@ public final class ContextArithmeticRuleInspection {
         ContextArithmeticRuleInspection result = new ContextArithmeticRuleInspection(source, rule.getOrigin(), variables, branches);
         current(mind, inventory);
         return result;
+    }
+
+    public boolean equivalentTo(ContextArithmeticRuleInspection other, int maximumWork) {
+        Runnable work = ContextGroundProductionRounds.budget(maximumWork);
+        if (other == null || !variables.equals(other.variables) || branches.size() != other.branches.size()) return false;
+        for (int i = 0; i < branches.size(); i++) {
+            work.run();
+            List<Atom> left = branches.get(i), right = other.branches.get(i);
+            if (left.size() != right.size()) return false;
+            for (int j = 0; j < left.size(); j++) {
+                work.run();
+                Atom a = left.get(j), b = right.get(j);
+                if (a.positive != b.positive || !a.predicate.equals(b.predicate) || a.arguments.size() != b.arguments.size()) return false;
+                for (int k = 0; k < a.arguments.size(); k++) {
+                    work.run();
+                    Slot x = a.arguments.get(k), y = b.arguments.get(k);
+                    if (x.variable != y.variable || (x.expression == null) != (y.expression == null)) return false;
+                    if (x.expression != null) {
+                        if (!x.expression.equivalent(y.expression, work)) return false;
+                    } else if (x.value == null ? y.value != null : y.value == null || !x.value.semanticallyEquals(y.value)) return false;
+                }
+            }
+        }
+        return true;
     }
 
     private static void current(Mind mind, ContextProductionInventory expected) throws Exception {
@@ -344,6 +369,76 @@ public final class ContextArithmeticRuleInspection {
                 }
             }
         }
+    }
+
+    /** Checks a finite positive-relation model independently of premise joins and production. */
+    long auditModel(List<Fact> positives, Runnable work) throws Exception {
+        preflight(work);
+        List<SemanticTermSnapshot> points = new ArrayList<>();
+        for (Fact fact : positives) for (SemanticTermSnapshot value : fact.arguments) {
+            work.run();
+            boolean known = false;
+            for (SemanticTermSnapshot point : points) {
+                work.run();
+                known |= point.semanticallyEquals(value);
+            }
+            if (!known) points.add(value);
+        }
+        List<Integer> indexes = new ArrayList<>(variables);
+        if (!indexes.isEmpty() && points.isEmpty()) return 0;
+        int[] digits = new int[indexes.size()];
+        long obligations = 0;
+        boolean complete = false;
+        while (!complete) {
+            work.run();
+            Map<Integer, SemanticTermSnapshot> assignment = new LinkedHashMap<>();
+            for (int i = 0; i < indexes.size(); i++) {
+                work.run();
+                assignment.put(indexes.get(i), points.get(digits[i]));
+            }
+            for (List<Atom> branch : branches) {
+                work.run();
+                Atom head = null;
+                boolean enabled = true;
+                for (Atom atom : branch) {
+                    work.run();
+                    if (atom.positive) head = atom;
+                    else {
+                        List<SemanticTermSnapshot> arguments = new ArrayList<>();
+                        for (Slot slot : atom.arguments) arguments.add(slot.instantiate(assignment, work));
+                        if (!modelContains(positives, Fact.ground(atom.predicate, true, arguments), work)) {
+                            enabled = false;
+                            break;
+                        }
+                    }
+                }
+                if (enabled) {
+                    List<SemanticTermSnapshot> arguments = new ArrayList<>();
+                    for (Slot slot : head.arguments) arguments.add(slot.instantiate(assignment, work));
+                    if (!modelContains(positives, Fact.ground(head.predicate, true, arguments), work))
+                        throw new IllegalStateException("Arithmetic model violates an original rule");
+                    obligations++;
+                }
+            }
+            complete = true;
+            for (int i = digits.length - 1; i >= 0; i--) {
+                work.run();
+                if (++digits[i] < points.size()) {
+                    complete = false;
+                    break;
+                }
+                digits[i] = 0;
+            }
+        }
+        return obligations;
+    }
+
+    static boolean modelContains(List<Fact> positives, Fact required, Runnable work) {
+        for (Fact fact : positives) {
+            work.run();
+            if (fact.equivalent(required)) return true;
+        }
+        return false;
     }
 
     public List<Clause> instantiate(Map<Integer, SemanticTermSnapshot> assignment, int maximumWork) throws Exception {

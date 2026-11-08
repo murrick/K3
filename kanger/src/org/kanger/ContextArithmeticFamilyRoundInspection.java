@@ -43,10 +43,10 @@ public final class ContextArithmeticFamilyRoundInspection {
         public final List<List<Premise>> privateFrontiers;
         public final boolean changed;
         public final List<Collision> collisions;
-        private final ContextProductionInventory x;
-        private final List<ContextArithmeticRuleInspection> localRules;
-        private final List<Cut> cuts;
-        private final Set<Source> universe;
+        final ContextProductionInventory x;
+        final List<ContextArithmeticRuleInspection> localRules;
+        final List<Cut> cuts;
+        final Set<Source> universe;
 
         private Frame(ContextProductionInventory x, List<ContextArithmeticRuleInspection> localRules,
                       List<Cut> cuts, Set<Source> universe, List<Premise> common,

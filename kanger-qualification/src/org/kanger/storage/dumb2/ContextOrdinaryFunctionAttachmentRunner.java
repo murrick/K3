@@ -17,6 +17,8 @@ public final class ContextOrdinaryFunctionAttachmentRunner {
         System.setProperty("user.home", home.toString());
         ContextSevenPremiseNativeWriteRunner.create(home, "FX", "!@x fun(x)->next(x+1);");
         ContextSevenPremiseNativeWriteRunner.create(home, "Safe", "!unrelated(1);");
+        ContextSevenPremiseNativeWriteRunner.create(home, "Producer", "!@x seed(x)->fun(x);");
+        ContextSevenPremiseNativeWriteRunner.create(home, "Deny", "!~next(2);");
         List<String> failures = new ArrayList<>();
         for (int mode = 0; mode < 3; mode++) {
             String name = "Function" + mode;
@@ -62,6 +64,7 @@ public final class ContextOrdinaryFunctionAttachmentRunner {
                         settled.equals(ContextSevenPremiseNativeWriteRunner.pins(f)), "function topology reopens");
             }
         }
+        for (boolean reverse : new boolean[]{false, true}) verifyCrossCut(home, reverse);
         if (!failures.isEmpty()) {
             System.err.println("CONTEXT_ORDINARY_FUNCTION_ATTACHMENT_FAIL " + failures);
             System.exit(1);
@@ -69,4 +72,39 @@ public final class ContextOrdinaryFunctionAttachmentRunner {
         System.out.println("CONTEXT_ORDINARY_FUNCTION_ATTACHMENT_PASS");
         System.exit(0);
     }
+    private static void verifyCrossCut(Path home, boolean reverse) throws Exception {
+        String name = "CrossFunction" + reverse;
+        List<RevisionRef> settled;
+        try (ContextSevenPremiseNativeWriteRunner.Fixture f =
+                     new ContextSevenPremiseNativeWriteRunner.Fixture(home, name)) {
+            ContextSevenPremiseNativeWriteRunner.require(f.root.compile("!seed(1);", null, false), "cross-cut X seed");
+            f.db.connectContext("Producer");
+            f.db.connectContext(reverse ? "FX" : "Deny");
+            f.db.saveConnections(f.root);
+            long revision = f.db.getRevision();
+            List<RevisionRef> before = ContextSevenPremiseNativeWriteRunner.pins(f);
+            String fingerprint = ContextProductionInventory.inspect(f.root, f.db.getContextId(),
+                    revision, true, Collections.emptyList(), 1000).fingerprint;
+            StorageLifecycleException conflict = null;
+            try { f.db.connectContext(reverse ? "Deny" : "FX"); }
+            catch (StorageLifecycleException refusal) { conflict = refusal; }
+            ContextSevenPremiseNativeWriteRunner.require(conflict != null
+                    && conflict.getErrorCode() == StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT
+                    && !conflict.getCollisions().isEmpty(), "cross-cut arithmetic conflict carries witnesses");
+            ContextSevenPremiseNativeWriteRunner.require(revision == f.db.getRevision()
+                    && before.equals(ContextSevenPremiseNativeWriteRunner.pins(f))
+                    && fingerprint.equals(ContextProductionInventory.inspect(f.root, f.db.getContextId(),
+                            revision, true, Collections.emptyList(), 1000).fingerprint), "cross-cut arithmetic refusal purity");
+            f.db.connectContext("Safe");
+            f.db.saveConnections(f.root);
+            settled = ContextSevenPremiseNativeWriteRunner.pins(f);
+            System.out.println("cross-cut arithmetic reverse=" + reverse + " rejected with witnesses");
+        }
+        try (ContextSevenPremiseNativeWriteRunner.Fixture f =
+                     new ContextSevenPremiseNativeWriteRunner.Fixture(home, name)) {
+            ContextSevenPremiseNativeWriteRunner.require(
+                    settled.equals(ContextSevenPremiseNativeWriteRunner.pins(f)), "cross-cut arithmetic settled pins reopen");
+        }
+    }
+
 }

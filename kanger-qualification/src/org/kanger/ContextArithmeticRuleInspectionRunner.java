@@ -18,6 +18,24 @@ public final class ContextArithmeticRuleInspectionRunner {
                 "!fun(1,4)->next(2,4,1);");
         verify("!@x fun(x)->next(x+1)&&keep(x);", new double[]{1},
                 "!fun(1)->next(2)&&keep(1);");
+        ContextArithmeticRuleInspection shape = capture("!@x fun(x)->next(x+1);", false);
+        require(shape.equivalentTo(capture("!@y fun(y)->next(y+1);", true), 100000),
+                "replay shape normalizes binder names and native rule allocation");
+        require(!shape.equivalentTo(capture("!@x fun(x)->next(x+2);", false), 100000),
+                "a changed arithmetic constant is rejected");
+        require(!capture("!@x @y pair(x,y)->next(x+x);", false).equivalentTo(
+                capture("!@x @y pair(x,y)->next(x+y);", false), 100000),
+                "replay preserves repeated variable dependencies");
+        User metaUser = new User();
+        Mind meta = new Mind(metaUser);
+        metaUser.setCurrentMind(meta);
+        meta.compileLine("!rule(1);", false, new LinkedList<>());
+        ContextProductionInventory mi = ContextProductionInventory.inspect(meta, UUID.randomUUID(), 0,
+                true, Collections.emptyList(), 1000);
+        boolean metaRejected = false;
+        try { ContextArithmeticRuleInspection.inspect(meta, mi, mi.primary.get(0).nativeRule, 100000); }
+        catch (IllegalStateException unsupported) { metaRejected = true; }
+        require(metaRejected, "native rule metadata is excluded from ordinary relation models");
         System.out.println("CONTEXT_ARITHMETIC_RULE_INSPECTION_PASS checks=" + checks);
         System.exit(0);
     }
@@ -55,6 +73,14 @@ public final class ContextArithmeticRuleInspectionRunner {
         require(missing, "partial whole-rule assignment refused");
         require(inventory.fingerprint.equals(ContextProductionInventory.inspect(mind,
                 context, 7, true, Collections.emptyList(), 1000).fingerprint), "instantiation preserves native source");
+    }
+
+    private static ContextArithmeticRuleInspection capture(String source, boolean shifted) throws Exception {
+        Mind mind = memory((shifted ? "!preamble(7);" : "") + source);
+        ContextProductionInventory inventory = ContextProductionInventory.inspect(
+                mind, UUID.randomUUID(), 0, true, Collections.emptyList(), 1000);
+        long id = inventory.primary.get(inventory.primary.size() - 1).nativeRule;
+        return ContextArithmeticRuleInspection.inspect(mind, inventory, id, 100000);
     }
 
     private static Mind memory(String text) throws Exception {

@@ -99,6 +99,19 @@ final class ContextArithmeticExpression {
         return new ContextArithmeticExpression(nodes, variables);
     }
 
+    boolean equivalent(ContextArithmeticExpression other, Runnable work) {
+        if (other == null || nodes.size() != other.nodes.size() || !variables.equals(other.variables)) return false;
+        for (int i = 0; i < nodes.size(); i++) {
+            work.run();
+            Node left = nodes.get(i), right = other.nodes.get(i);
+            if (left.variable != right.variable || left.left != right.left || left.right != right.right
+                    || !Objects.equals(left.operation, right.operation)) return false;
+            if (left.value == null ? right.value != null : right.value == null || !left.value.semanticallyEquals(right.value))
+                return false;
+        }
+        return true;
+    }
+
     SemanticTermSnapshot evaluate(Map<Integer, SemanticTermSnapshot> assignment, Runnable work) throws Exception {
         if (!variables.equals(assignment.keySet())) throw new IllegalArgumentException("Exact expression assignment required");
         User user = new User();

@@ -10,7 +10,7 @@ import tempfile
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--mode', choices=('contract', 'reference', 'witness-contract', 'independent-reopen-contract', 'ordinary-commit-contract', 'ordinary-ground-attachment-contract', 'ordinary-revision-switch-contract', 'ordinary-private-edit-contract', 'ordinary-topology-contract', 'ordinary-function-attachment-contract', 'native-function-pair-contract', 'closed-arithmetic-contract', 'arithmetic-expression-contract', 'arithmetic-rule-contract', 'arithmetic-step-contract', 'arithmetic-round-contract', 'arithmetic-family-round-contract', 'arithmetic-collision-contract', 'arithmetic-iteration-contract', 'private-witness-contract', 'universal-unit-contract'), default='contract')
+    parser.add_argument('--mode', choices=('contract', 'reference', 'witness-contract', 'independent-reopen-contract', 'ordinary-commit-contract', 'ordinary-ground-attachment-contract', 'ordinary-revision-switch-contract', 'ordinary-private-edit-contract', 'ordinary-topology-contract', 'ordinary-function-attachment-contract', 'native-function-pair-contract', 'closed-arithmetic-contract', 'arithmetic-expression-contract', 'arithmetic-rule-contract', 'arithmetic-step-contract', 'arithmetic-round-contract', 'arithmetic-family-round-contract', 'arithmetic-collision-contract', 'arithmetic-iteration-contract', 'arithmetic-model-contract', 'private-witness-contract', 'universal-unit-contract'), default='contract')
     parser.add_argument('--ordinary-integration-candidate', action='store_true',
                         help='Compile an isolated experimental default hook; never edit production sources')
     parser.add_argument('--ground-attachment-candidate', action='store_true',
@@ -51,7 +51,8 @@ def main():
                  ('org.kanger.storage.dumb2.ContextOrdinaryPrivateEditRunner', 'CONTEXT_ORDINARY_PRIVATE_EDIT_PASS'),
                  ('org.kanger.storage.dumb2.ContextOrdinaryProductionCommitRunner', 'CONTEXT_ORDINARY_PRODUCTION_COMMIT_PASS'),
                  ('org.kanger.storage.dumb2.ContextOrdinaryCommitCompatibilityRunner', 'CONTEXT_ORDINARY_COMMIT_COMPATIBILITY_PASS'),
-                 ('org.kanger.storage.dumb2.ContextProductionRoundsContractRunner', 'CONTEXT_PRODUCTION_ROUNDS_CONTRACT_PASS')]
+                 ('org.kanger.storage.dumb2.ContextProductionRoundsContractRunner', 'CONTEXT_PRODUCTION_ROUNDS_CONTRACT_PASS'),
+                 ('org.kanger.storage.dumb2.ContextOrdinaryFunctionAttachmentRunner', 'CONTEXT_ORDINARY_FUNCTION_ATTACHMENT_PASS')]
     if args.mode == 'ordinary-function-attachment-contract':
         names = [('org.kanger.storage.dumb2.ContextOrdinaryFunctionAttachmentRunner',
                   'CONTEXT_ORDINARY_FUNCTION_ATTACHMENT_PASS')]
@@ -84,6 +85,9 @@ def main():
     if args.mode == 'arithmetic-iteration-contract':
         names = [('org.kanger.ContextArithmeticFamilyIterationRunner', 'CONTEXT_ARITHMETIC_FAMILY_ITERATION_PASS'),
                  ('org.kanger.ContextArithmeticFamilyCollisionRunner', 'CONTEXT_ARITHMETIC_FAMILY_COLLISION_PASS')]
+    if args.mode == 'arithmetic-model-contract':
+        names = [('org.kanger.ContextArithmeticModelAuditRunner', 'CONTEXT_ARITHMETIC_MODEL_AUDIT_PASS'),
+                 ('org.kanger.ContextArithmeticFamilyIterationRunner', 'CONTEXT_ARITHMETIC_FAMILY_ITERATION_PASS')]
     if args.mode == 'private-witness-contract':
         names = [('org.kanger.storage.dumb2.ContextPrivateWitnessAdmissionContractRunner', 'CONTEXT_PRIVATE_WITNESS_ADMISSION_CONTRACT_PASS')]
     if args.mode == 'universal-unit-contract':
@@ -923,14 +927,136 @@ def main():
         helper = """
     private void qualifyProposedAttachment(ConnectionVector proposed) throws Exception {
         try {
-            qualifyGroundAttachment(proposed);
-        } catch (IllegalStateException unsupported) {
+            if (hasArithmeticTopology(proposed)) qualifyArithmeticTopology(proposed);
+            else qualifyGroundAttachment(proposed);
+        } catch (IllegalStateException | IllegalArgumentException unsupported) {
             org.kanger.exception.ContextProductionCommitException failure =
                     org.kanger.exception.ContextProductionCommitException.incomplete(
                             "Proposed topology qualification incomplete: " + unsupported.getMessage(), null);
             failure.initCause(unsupported);
             throw failure;
         }
+    }
+
+    private boolean hasArithmeticTopology(ConnectionVector proposed) throws Exception {
+        java.util.List<Mind> views = new java.util.ArrayList<>();
+        views.add((Mind) user.getCurrentMind());
+        for (ContextConnection connection : proposed.getConnections()) views.add(connection.layer());
+        int remaining = 64000000;
+        for (Mind view : views) for (org.kanger.interfaces.IRule item : view.getRules()) {
+            if (--remaining < 0) throw new IllegalStateException("Arithmetic topology selection limit");
+            if (item.isGenerated() || item.isDeleted(view)) continue;
+            for (java.util.List<org.kanger.units.Domain> branch : ((org.kanger.units.Rule) item).getTree())
+                for (org.kanger.units.Domain domain : branch) for (org.kanger.interfaces.IArgument argument : domain.getArguments()) {
+                    if (--remaining < 0) throw new IllegalStateException("Arithmetic topology selection limit");
+                    if (argument.getType() == org.kanger.enums.ArgumentType.FUNCTION
+                            && !((org.kanger.units.Function) argument.getObject(view)).getArguments().getTVariables(view, true).isEmpty())
+                        return true;
+                }
+        }
+        return false;
+    }
+
+    private void captureArithmeticView(Mind view, org.kanger.ContextProductionInventory inventory,
+            java.util.List<org.kanger.ContextArithmeticRuleInspection> rules,
+            java.util.List<org.kanger.ContextArithmeticRuleInspection.Premise> seeds) throws Exception {
+        for (org.kanger.ContextProductionInventory.Row row : inventory.primary) {
+            org.kanger.ContextArithmeticRuleInspection declaration =
+                    org.kanger.ContextArithmeticRuleInspection.inspect(view, inventory, row.nativeRule, 64000000);
+            User replayUser = new User();
+            Mind replay = new Mind(replayUser);
+            replayUser.setCurrentMind(replay);
+            replay.compileLine(row.origin, false, new java.util.LinkedList<>());
+            org.kanger.ContextProductionInventory replayInventory = org.kanger.ContextProductionInventory.inspect(
+                    replay, inventory.context, inventory.revision, inventory.localX, java.util.Collections.emptyList(), 1000);
+            if (replayInventory.primary.size() != 1) throw new IllegalStateException("One whole arithmetic replay Source required");
+            org.kanger.ContextArithmeticRuleInspection reconstructed = org.kanger.ContextArithmeticRuleInspection.inspect(
+                    replay, replayInventory, replayInventory.primary.get(0).nativeRule, 64000000);
+            if (!declaration.equivalentTo(reconstructed, 64000000))
+                throw new IllegalStateException("Arithmetic origin/native whole declaration mismatch");
+            boolean unitsOnly = declaration.variables.isEmpty();
+            if (declaration.variables.isEmpty()) {
+                java.util.List<org.kanger.ContextProductionCapture.Clause> clauses =
+                        declaration.instantiate(java.util.Collections.emptyMap(), 64000000);
+                for (int i = 0; i < clauses.size(); i++) {
+                    if (clauses.get(i).literals.size() == 1) {
+                        seeds.add(org.kanger.ContextArithmeticRuleInspection.Premise.primary(view, inventory, row.nativeRule, i, 64000000));
+                    } else unitsOnly = false;
+                }
+            }
+            if (!unitsOnly) rules.add(declaration);
+        }
+    }
+
+    private void qualifyArithmeticTopology(ConnectionVector proposed) throws Exception {
+        Mind x = (Mind) user.getCurrentMind();
+        org.kanger.ContextProductionInventory xi = org.kanger.ContextProductionInventory.inspect(
+                x, getContextId(), getRevision(), true, java.util.Collections.emptyList(), 1000);
+        java.util.List<org.kanger.ContextArithmeticRuleInspection> localRules = new java.util.ArrayList<>();
+        java.util.List<org.kanger.ContextArithmeticRuleInspection.Premise> localSeeds = new java.util.ArrayList<>();
+        captureArithmeticView(x, xi, localRules, localSeeds);
+        java.util.Map<String,java.util.List<org.kanger.ContextProductionInventory>> members = new java.util.LinkedHashMap<>();
+        java.util.Map<String,java.util.List<org.kanger.ContextArithmeticRuleInspection>> rules = new java.util.LinkedHashMap<>();
+        java.util.Map<String,java.util.List<org.kanger.ContextArithmeticRuleInspection.Premise>> seeds = new java.util.LinkedHashMap<>();
+        java.util.Map<String,String> groups = new java.util.LinkedHashMap<>();
+        java.util.List<org.kanger.ContextProductionInventory> captured = new java.util.ArrayList<>();
+        int remaining = 1000 - xi.rows.size();
+        for (ContextConnection connection : proposed.getConnections()) {
+            org.kanger.ContextProductionInventory inventory = org.kanger.ContextProductionInventory.inspect(connection.layer(),
+                    connection.getTarget().getContextId(), connection.getTarget().getRevision(), false,
+                    connection.getInitialization(), remaining);
+            remaining -= inventory.rows.size();
+            captured.add(inventory);
+            String group = connection.getTrustGroup();
+            String key = group == null ? "context:" + inventory.context : "trust:" + group;
+            groups.put(key, group);
+            members.computeIfAbsent(key, ignored -> new java.util.ArrayList<>()).add(inventory);
+            captureArithmeticView(connection.layer(), inventory,
+                    rules.computeIfAbsent(key, ignored -> new java.util.ArrayList<>()),
+                    seeds.computeIfAbsent(key, ignored -> new java.util.ArrayList<>()));
+        }
+        java.util.List<org.kanger.ContextArithmeticFamilyRoundInspection.Cut> cuts = new java.util.ArrayList<>();
+        for (String key : members.keySet()) cuts.add(new org.kanger.ContextArithmeticFamilyRoundInspection.Cut(
+                groups.get(key), members.get(key), rules.get(key), seeds.get(key)));
+        org.kanger.ContextArithmeticFamilyRoundInspection.Frame initial =
+                org.kanger.ContextArithmeticFamilyRoundInspection.start(xi, localRules, localSeeds, cuts, 64000000, 10000);
+        org.kanger.ContextArithmeticFamilyRoundInspection.Iteration result =
+                org.kanger.ContextArithmeticFamilyRoundInspection.iterate(initial, 16, 16, 64000000, 10000);
+        if (result.status == org.kanger.ContextArithmeticFamilyRoundInspection.Status.INCOMPLETE)
+            throw new IllegalStateException(result.reason);
+        if (result.status == org.kanger.ContextArithmeticFamilyRoundInspection.Status.COLLISION) {
+            java.util.List<org.kanger.ContextQualification.CollisionWitness> witnesses = new java.util.ArrayList<>();
+            for (org.kanger.ContextArithmeticFamilyRoundInspection.Collision collision : result.frame.collisions)
+                witnesses.add(org.kanger.ContextQualification.witness(
+                        arithmeticEvidence(collision.left), arithmeticEvidence(collision.right)));
+            throw new org.kanger.exception.StorageLifecycleException(
+                    org.kanger.enums.StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT,
+                    "Proposed arithmetic topology has a sourced collision", witnesses);
+        }
+        org.kanger.ContextArithmeticModelAudit.Audit audit = org.kanger.ContextArithmeticModelAudit.inspect(result, 64000000);
+        if (!audit.verified) throw new IllegalStateException("Arithmetic topology model audit: " + audit.reason);
+        if (!xi.fingerprint.equals(org.kanger.ContextProductionInventory.inspect(x, xi.context, xi.revision,
+                true, xi.initialization, 1000).fingerprint)) throw new IllegalStateException("Arithmetic X changed during qualification");
+        int index = 0;
+        for (ContextConnection connection : proposed.getConnections()) {
+            org.kanger.ContextProductionInventory expected = captured.get(index++);
+            if (!expected.fingerprint.equals(org.kanger.ContextProductionInventory.inspect(connection.layer(),
+                    expected.context, expected.revision, false, expected.initialization, 1000).fingerprint))
+                throw new IllegalStateException("Arithmetic member changed during qualification");
+        }
+    }
+
+    private String arithmeticEvidence(org.kanger.ContextArithmeticRuleInspection.Premise premise) throws Exception {
+        StringBuilder text = new StringBuilder(premise.fact.positive ? "!" : "!~");
+        text.append(premise.fact.predicate).append('(');
+        for (int i = 0; i < premise.fact.arguments.size(); i++) {
+            if (i != 0) text.append(',');
+            text.append(premise.fact.arguments.get(i).materialize().toString());
+        }
+        text.append("); depth=").append(premise.proof.depth);
+        for (org.kanger.ContextProductionCapture.Source source : premise.proof.sources)
+            text.append(" [").append(source.context).append('@').append(source.revision).append('#').append(source.rule).append(']');
+        return text.toString();
     }
 
     private void qualifyGroundAttachment(ConnectionVector proposed) throws Exception {
@@ -1064,6 +1190,7 @@ def main():
                          'independent-reopen-contract': 'Certified independent-coordinate source must reopen after publication',
                          'universal-unit-contract': 'Desired universal-unit family coverage; open required language gate, not expected-refusal PASS',
                          'private-witness-contract': 'Bounded actual private witness admission/local refutation; required integration gate',
+                         'arithmetic-model-contract': 'Independent arithmetic rule and per-cut model audit',
                          'arithmetic-iteration-contract': 'Bounded arithmetic family loop with complete unchanged barriers',
                          'arithmetic-collision-contract': 'Sourced arithmetic collisions at complete family barriers',
                          'arithmetic-family-round-contract': 'Sealed synchronous arithmetic family transport',
