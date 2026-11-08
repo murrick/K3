@@ -27,10 +27,22 @@ public final class ContextArithmeticFamilyRoundInspection {
         }
     }
 
+    public static final class Collision {
+        public final String cut;
+        public final Premise left, right;
+
+        private Collision(String cut, Premise left, Premise right) {
+            this.cut = cut;
+            this.left = left;
+            this.right = right;
+        }
+    }
+
     public static final class Frame {
         public final List<Premise> common;
         public final List<List<Premise>> privateFrontiers;
         public final boolean changed;
+        public final List<Collision> collisions;
         private final ContextProductionInventory x;
         private final List<ContextArithmeticRuleInspection> localRules;
         private final List<Cut> cuts;
@@ -38,7 +50,7 @@ public final class ContextArithmeticFamilyRoundInspection {
 
         private Frame(ContextProductionInventory x, List<ContextArithmeticRuleInspection> localRules,
                       List<Cut> cuts, Set<Source> universe, List<Premise> common,
-                      List<List<Premise>> privateFrontiers, boolean changed) {
+                      List<List<Premise>> privateFrontiers, boolean changed, List<Collision> collisions) {
             this.x = x;
             this.localRules = Collections.unmodifiableList(new ArrayList<>(localRules));
             this.cuts = Collections.unmodifiableList(new ArrayList<>(cuts));
@@ -49,6 +61,7 @@ public final class ContextArithmeticFamilyRoundInspection {
                 copy.add(Collections.unmodifiableList(new ArrayList<>(frontier)));
             this.privateFrontiers = Collections.unmodifiableList(copy);
             this.changed = changed;
+            this.collisions = Collections.unmodifiableList(new ArrayList<>(collisions));
         }
     }
 
@@ -99,7 +112,8 @@ public final class ContextArithmeticFamilyRoundInspection {
             }
             privateFrontiers.add(frontier);
         }
-        return new Frame(x, localRules, cuts, universe, common, privateFrontiers, false);
+        return new Frame(x, localRules, cuts, universe, common, privateFrontiers, false,
+                collisions(x, cuts, common, privateFrontiers, work, capacity));
     }
 
     private static void validate(List<ContextArithmeticRuleInspection> rules, List<Premise> seeds,
@@ -122,6 +136,7 @@ public final class ContextArithmeticFamilyRoundInspection {
 
     public static Frame advance(Frame input, int maximumDepth, int maximumWork, int capacity) throws Exception {
         if (input == null || maximumDepth < 1 || capacity < 1) throw new IllegalArgumentException("Bounded sealed frame required");
+        if (!input.collisions.isEmpty()) throw new IllegalArgumentException("A refuted arithmetic frame cannot advance");
         Runnable work = ContextGroundProductionRounds.budget(maximumWork);
         List<Premise> common = new ArrayList<>();
         for (Premise premise : input.common) ContextArithmeticRoundInspection.merge(common, premise, capacity, work);
@@ -148,7 +163,41 @@ public final class ContextArithmeticFamilyRoundInspection {
             changed |= merge(privateState, products, capacity, work);
             privateFrontiers.add(privateState);
         }
-        return new Frame(input.x, input.localRules, input.cuts, input.universe, common, privateFrontiers, changed);
+        return new Frame(input.x, input.localRules, input.cuts, input.universe, common, privateFrontiers, changed,
+                collisions(input.x, input.cuts, common, privateFrontiers, work, capacity));
+    }
+
+    private static List<Collision> collisions(ContextProductionInventory x, List<Cut> cuts,
+                                               List<Premise> common, List<List<Premise>> privateFrontiers,
+                                               Runnable work, int capacity) {
+        List<Collision> result = new ArrayList<>();
+        scan(ContextDependentCutInspection.local(x.context), common, result, work, capacity);
+        for (int i = 0; i < cuts.size(); i++) {
+            work.run();
+            Cut cut = cuts.get(i);
+            String key = cut.group == null ? ContextDependentCutInspection.independent(cut.members.get(0).context)
+                    : ContextDependentCutInspection.trusted(cut.group);
+            List<Premise> visible = new ArrayList<>(common);
+            for (Premise premise : privateFrontiers.get(i)) {
+                work.run();
+                visible.add(premise);
+            }
+            scan(key, visible, result, work, capacity);
+        }
+        return result;
+    }
+
+    private static void scan(String cut, List<Premise> visible, List<Collision> result, Runnable work, int capacity) {
+        for (int i = 0; i < visible.size(); i++) {
+            for (int j = i + 1; j < visible.size(); j++) {
+                work.run();
+                Premise left = visible.get(i), right = visible.get(j);
+                if (left.fact.positive != right.fact.positive && left.fact.equivalent(right.fact.opposite())) {
+                    if (result.size() == capacity) throw new IllegalStateException("Arithmetic collision capacity");
+                    result.add(new Collision(cut, left, right));
+                }
+            }
+        }
     }
 
     private static boolean merge(List<Premise> target, List<Premise> additions, int capacity, Runnable work) {
