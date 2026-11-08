@@ -19,6 +19,9 @@ public final class ContextOrdinaryFunctionAttachmentRunner {
         ContextSevenPremiseNativeWriteRunner.create(home, "Safe", "!unrelated(1);");
         ContextSevenPremiseNativeWriteRunner.create(home, "Producer", "!@x seed(x)->fun(x);");
         ContextSevenPremiseNativeWriteRunner.create(home, "Deny", "!~next(2);");
+        ContextSevenPremiseNativeWriteRunner.create(home, "FunFact", "!fun(1);");
+        ContextSevenPremiseNativeWriteRunner.create(home, "Guard", "!@x next(x)->~blocked(x);");
+        ContextSevenPremiseNativeWriteRunner.create(home, "Blocker", "!blocked(2);");
         List<String> failures = new ArrayList<>();
         for (int mode = 0; mode < 3; mode++) {
             String name = "Function" + mode;
@@ -64,7 +67,23 @@ public final class ContextOrdinaryFunctionAttachmentRunner {
                         settled.equals(ContextSevenPremiseNativeWriteRunner.pins(f)), "function topology reopens");
             }
         }
-        for (boolean reverse : new boolean[]{false, true}) verifyCrossCut(home, reverse);
+        for (boolean reverse : new boolean[]{false, true}) {
+            verifyCrossCut(home, reverse);
+            verifyConstraintCut(home, reverse);
+        }
+        try (ContextSevenPremiseNativeWriteRunner.Fixture f =
+                     new ContextSevenPremiseNativeWriteRunner.Fixture(home, "BackwardFunction")) {
+            ContextSevenPremiseNativeWriteRunner.require(f.root.compile("!~next(2);", null, false), "negative X premise");
+            f.db.connectContext("FX");
+            boolean rejected = false;
+            try { f.db.connectContext("FunFact"); }
+            catch (StorageLifecycleException conflict) {
+                if (conflict.getErrorCode() != StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT) throw conflict;
+                rejected = true;
+            }
+            System.out.println("backward arithmetic cross-cut rejected=" + rejected);
+            if (!rejected) failures.add("backward arithmetic cross-cut conflict accepted");
+        }
         if (!failures.isEmpty()) {
             System.err.println("CONTEXT_ORDINARY_FUNCTION_ATTACHMENT_FAIL " + failures);
             System.exit(1);
@@ -72,6 +91,42 @@ public final class ContextOrdinaryFunctionAttachmentRunner {
         System.out.println("CONTEXT_ORDINARY_FUNCTION_ATTACHMENT_PASS");
         System.exit(0);
     }
+    private static void verifyConstraintCut(Path home, boolean reverse) throws Exception {
+        String name = "ConstraintFunction" + reverse;
+        List<RevisionRef> settled;
+        try (ContextSevenPremiseNativeWriteRunner.Fixture f =
+                     new ContextSevenPremiseNativeWriteRunner.Fixture(home, name)) {
+            ContextSevenPremiseNativeWriteRunner.require(f.root.compile("!seed(1);", null, false), "constraint X seed");
+            f.db.connectContext("Producer");
+            f.db.connectContext("FX");
+            f.db.connectContext(reverse ? "Blocker" : "Guard");
+            f.db.saveConnections(f.root);
+            long revision = f.db.getRevision();
+            List<RevisionRef> before = ContextSevenPremiseNativeWriteRunner.pins(f);
+            String fingerprint = ContextProductionInventory.inspect(f.root, f.db.getContextId(),
+                    revision, true, Collections.emptyList(), 1000).fingerprint;
+            StorageLifecycleException conflict = null;
+            try { f.db.connectContext(reverse ? "Guard" : "Blocker"); }
+            catch (StorageLifecycleException refusal) { conflict = refusal; }
+            ContextSevenPremiseNativeWriteRunner.require(conflict != null
+                    && conflict.getErrorCode() == StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT
+                    && !conflict.getCollisions().isEmpty(), "constraint residual conflicts in the receiving private context");
+            ContextSevenPremiseNativeWriteRunner.require(revision == f.db.getRevision()
+                    && before.equals(ContextSevenPremiseNativeWriteRunner.pins(f))
+                    && fingerprint.equals(ContextProductionInventory.inspect(f.root, f.db.getContextId(),
+                            revision, true, Collections.emptyList(), 1000).fingerprint), "constraint attachment refusal purity");
+            f.db.connectContext("Safe");
+            f.db.saveConnections(f.root);
+            settled = ContextSevenPremiseNativeWriteRunner.pins(f);
+            System.out.println("constraint arithmetic reverse=" + reverse + " rejected with witnesses");
+        }
+        try (ContextSevenPremiseNativeWriteRunner.Fixture f =
+                     new ContextSevenPremiseNativeWriteRunner.Fixture(home, name)) {
+            ContextSevenPremiseNativeWriteRunner.require(
+                    settled.equals(ContextSevenPremiseNativeWriteRunner.pins(f)), "constraint settled pins reopen");
+        }
+    }
+
     private static void verifyCrossCut(Path home, boolean reverse) throws Exception {
         String name = "CrossFunction" + reverse;
         List<RevisionRef> settled;

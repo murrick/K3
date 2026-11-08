@@ -10,7 +10,7 @@ import tempfile
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--mode', choices=('contract', 'reference', 'witness-contract', 'independent-reopen-contract', 'ordinary-commit-contract', 'ordinary-ground-attachment-contract', 'ordinary-revision-switch-contract', 'ordinary-private-edit-contract', 'ordinary-topology-contract', 'ordinary-function-attachment-contract', 'native-function-pair-contract', 'closed-arithmetic-contract', 'arithmetic-expression-contract', 'arithmetic-rule-contract', 'arithmetic-step-contract', 'arithmetic-round-contract', 'arithmetic-family-round-contract', 'arithmetic-collision-contract', 'arithmetic-iteration-contract', 'arithmetic-model-contract', 'private-witness-contract', 'universal-unit-contract'), default='contract')
+    parser.add_argument('--mode', choices=('contract', 'reference', 'witness-contract', 'independent-reopen-contract', 'ordinary-commit-contract', 'ordinary-ground-attachment-contract', 'ordinary-revision-switch-contract', 'ordinary-private-edit-contract', 'ordinary-topology-contract', 'ordinary-function-attachment-contract', 'native-function-pair-contract', 'closed-arithmetic-contract', 'arithmetic-expression-contract', 'arithmetic-rule-contract', 'arithmetic-step-contract', 'arithmetic-round-contract', 'arithmetic-family-round-contract', 'arithmetic-collision-contract', 'arithmetic-iteration-contract', 'arithmetic-model-contract', 'arithmetic-constraint-contract', 'private-witness-contract', 'universal-unit-contract'), default='contract')
     parser.add_argument('--ordinary-integration-candidate', action='store_true',
                         help='Compile an isolated experimental default hook; never edit production sources')
     parser.add_argument('--ground-attachment-candidate', action='store_true',
@@ -88,6 +88,9 @@ def main():
     if args.mode == 'arithmetic-model-contract':
         names = [('org.kanger.ContextArithmeticModelAuditRunner', 'CONTEXT_ARITHMETIC_MODEL_AUDIT_PASS'),
                  ('org.kanger.ContextArithmeticFamilyIterationRunner', 'CONTEXT_ARITHMETIC_FAMILY_ITERATION_PASS')]
+    if args.mode == 'arithmetic-constraint-contract':
+        names = [('org.kanger.ContextArithmeticConstraintRunner', 'CONTEXT_ARITHMETIC_CONSTRAINT_PASS'),
+                 ('org.kanger.ContextArithmeticModelAuditRunner', 'CONTEXT_ARITHMETIC_MODEL_AUDIT_PASS')]
     if args.mode == 'private-witness-contract':
         names = [('org.kanger.storage.dumb2.ContextPrivateWitnessAdmissionContractRunner', 'CONTEXT_PRIVATE_WITNESS_ADMISSION_CONTRACT_PASS')]
     if args.mode == 'universal-unit-contract':
@@ -1029,6 +1032,14 @@ def main():
             for (org.kanger.ContextArithmeticFamilyRoundInspection.Collision collision : result.frame.collisions)
                 witnesses.add(org.kanger.ContextQualification.witness(
                         arithmeticEvidence(collision.left), arithmeticEvidence(collision.right)));
+            for (org.kanger.ContextArithmeticFamilyRoundInspection.ConstraintCollision collision : result.frame.constraints) {
+                StringBuilder premises = new StringBuilder();
+                for (org.kanger.ContextArithmeticRuleInspection.Premise premise : collision.evidence.premises)
+                    premises.append(arithmeticEvidence(premise)).append(" ");
+                witnesses.add(org.kanger.ContextQualification.witness(
+                        collision.cut + " " + collision.evidence.source.context + "#" + collision.evidence.source.rule
+                                + " " + collision.evidence.origin, premises.toString()));
+            }
             throw new org.kanger.exception.StorageLifecycleException(
                     org.kanger.enums.StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT,
                     "Proposed arithmetic topology has a sourced collision", witnesses);
@@ -1190,6 +1201,7 @@ def main():
                          'independent-reopen-contract': 'Certified independent-coordinate source must reopen after publication',
                          'universal-unit-contract': 'Desired universal-unit family coverage; open required language gate, not expected-refusal PASS',
                          'private-witness-contract': 'Bounded actual private witness admission/local refutation; required integration gate',
+                         'arithmetic-constraint-contract': 'Arithmetic Horn constraints with sourced violations and model checks',
                          'arithmetic-model-contract': 'Independent arithmetic rule and per-cut model audit',
                          'arithmetic-iteration-contract': 'Bounded arithmetic family loop with complete unchanged barriers',
                          'arithmetic-collision-contract': 'Sourced arithmetic collisions at complete family barriers',

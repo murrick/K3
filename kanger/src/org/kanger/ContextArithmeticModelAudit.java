@@ -45,7 +45,7 @@ public final class ContextArithmeticModelAudit {
     static Audit inspectFrame(Frame frame, int maximumWork) {
         Runnable work = ContextGroundProductionRounds.budget(maximumWork);
         try {
-            if (frame == null || frame.changed || !frame.collisions.isEmpty())
+            if (frame == null || frame.changed || frame.refuted())
                 throw new IllegalStateException("Unchanged unrefuted frame required");
             List<Model> models = new ArrayList<>();
             models.add(model(ContextDependentCutInspection.local(frame.x.context), frame.localRules,

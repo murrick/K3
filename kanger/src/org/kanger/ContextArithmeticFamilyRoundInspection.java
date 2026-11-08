@@ -38,11 +38,24 @@ public final class ContextArithmeticFamilyRoundInspection {
         }
     }
 
+    public static final class ConstraintCollision {
+        public final String cut;
+        public final ContextArithmeticRuleInspection.ConstraintViolation evidence;
+
+        private ConstraintCollision(String cut, ContextArithmeticRuleInspection.ConstraintViolation evidence) {
+            this.cut = cut;
+            this.evidence = evidence;
+        }
+    }
+
     public static final class Frame {
         public final List<Premise> common;
         public final List<List<Premise>> privateFrontiers;
         public final boolean changed;
         public final List<Collision> collisions;
+        public final List<ConstraintCollision> constraints;
+
+        public boolean refuted() { return !collisions.isEmpty() || !constraints.isEmpty(); }
         final ContextProductionInventory x;
         final List<ContextArithmeticRuleInspection> localRules;
         final List<Cut> cuts;
@@ -50,7 +63,7 @@ public final class ContextArithmeticFamilyRoundInspection {
 
         private Frame(ContextProductionInventory x, List<ContextArithmeticRuleInspection> localRules,
                       List<Cut> cuts, Set<Source> universe, List<Premise> common,
-                      List<List<Premise>> privateFrontiers, boolean changed, List<Collision> collisions) {
+                      List<List<Premise>> privateFrontiers, boolean changed, List<Collision> collisions, List<ConstraintCollision> constraints) {
             this.x = x;
             this.localRules = Collections.unmodifiableList(new ArrayList<>(localRules));
             this.cuts = Collections.unmodifiableList(new ArrayList<>(cuts));
@@ -62,6 +75,7 @@ public final class ContextArithmeticFamilyRoundInspection {
             this.privateFrontiers = Collections.unmodifiableList(copy);
             this.changed = changed;
             this.collisions = Collections.unmodifiableList(new ArrayList<>(collisions));
+            this.constraints = Collections.unmodifiableList(new ArrayList<>(constraints));
         }
     }
 
@@ -91,15 +105,20 @@ public final class ContextArithmeticFamilyRoundInspection {
             checkFrontier(initial.common, maximumDepth, capacity, work);
             for (List<Premise> frontier : initial.privateFrontiers)
                 checkFrontier(frontier, maximumDepth, capacity, work);
-            if (initial.collisions.size() > capacity) throw new IllegalStateException("Arithmetic collision capacity");
-            if (!initial.collisions.isEmpty())
+            if ((long) initial.collisions.size() + initial.constraints.size() > capacity) throw new IllegalStateException("Arithmetic collision capacity");
+            for (ConstraintCollision constraint : initial.constraints) {
+                work.run();
+                if (constraint.evidence.proof.depth > maximumDepth)
+                    throw new IllegalStateException("Carried arithmetic constraint depth limit");
+            }
+            if (initial.refuted())
                 return new Iteration(Status.COLLISION, "Sourced collision at the initial barrier", initial, 0);
             Frame current = initial;
             for (int round = 0; round < maximumRounds; round++) {
                 work.run();
                 current = advance(current, maximumDepth, work, capacity);
                 completed++;
-                if (!current.collisions.isEmpty())
+                if (current.refuted())
                     return new Iteration(Status.COLLISION, "Sourced collision at a complete family barrier", current, completed);
                 if (!current.changed)
                     return new Iteration(Status.STABLE_PENDING, "Complete unchanged arithmetic proof frontier; model audit pending", current, completed);
@@ -165,8 +184,7 @@ public final class ContextArithmeticFamilyRoundInspection {
             }
             privateFrontiers.add(frontier);
         }
-        return new Frame(x, localRules, cuts, universe, common, privateFrontiers, false,
-                collisions(x, cuts, common, privateFrontiers, work, capacity));
+        return frame(x, localRules, cuts, universe, common, privateFrontiers, false, Integer.MAX_VALUE, work, capacity);
     }
 
     private static void validate(List<ContextArithmeticRuleInspection> rules, List<Premise> seeds,
@@ -193,7 +211,7 @@ public final class ContextArithmeticFamilyRoundInspection {
     }
 
     private static Frame advance(Frame input, int maximumDepth, Runnable work, int capacity) throws Exception {
-        if (!input.collisions.isEmpty()) throw new IllegalArgumentException("A refuted arithmetic frame cannot advance");
+        if (input.refuted()) throw new IllegalArgumentException("A refuted arithmetic frame cannot advance");
         List<Premise> common = new ArrayList<>();
         for (Premise premise : input.common) ContextArithmeticRoundInspection.merge(common, premise, capacity, work);
         ContextArithmeticRoundInspection.Result local = ContextArithmeticRoundInspection.inspect(
@@ -219,8 +237,49 @@ public final class ContextArithmeticFamilyRoundInspection {
             changed |= merge(privateState, products, capacity, work);
             privateFrontiers.add(privateState);
         }
-        return new Frame(input.x, input.localRules, input.cuts, input.universe, common, privateFrontiers, changed,
-                collisions(input.x, input.cuts, common, privateFrontiers, work, capacity));
+        return frame(input.x, input.localRules, input.cuts, input.universe, common, privateFrontiers, changed,
+                maximumDepth, work, capacity);
+    }
+
+    private static Frame frame(ContextProductionInventory x, List<ContextArithmeticRuleInspection> localRules,
+            List<Cut> cuts, Set<Source> universe, List<Premise> common, List<List<Premise>> privateFrontiers,
+            boolean changed, int maximumDepth, Runnable work, int capacity) throws Exception {
+        List<Collision> literals = collisions(x, cuts, common, privateFrontiers, work, capacity);
+        List<ConstraintCollision> guards = constraints(x, localRules, cuts, common, privateFrontiers,
+                maximumDepth, work, capacity - literals.size());
+        return new Frame(x, localRules, cuts, universe, common, privateFrontiers, changed, literals, guards);
+    }
+
+    private static List<ConstraintCollision> constraints(ContextProductionInventory x,
+            List<ContextArithmeticRuleInspection> localRules, List<Cut> cuts, List<Premise> common,
+            List<List<Premise>> privateFrontiers, int maximumDepth, Runnable work, int capacity) throws Exception {
+        List<ConstraintCollision> result = new ArrayList<>();
+        scanConstraints(ContextDependentCutInspection.local(x.context), localRules, common,
+                maximumDepth, work, capacity, result);
+        for (int i = 0; i < cuts.size(); i++) {
+            work.run();
+            Cut cut = cuts.get(i);
+            List<ContextArithmeticRuleInspection> rules = new ArrayList<>(localRules);
+            rules.addAll(cut.rules);
+            List<Premise> visible = new ArrayList<>(common);
+            visible.addAll(privateFrontiers.get(i));
+            String key = cut.group == null ? ContextDependentCutInspection.independent(cut.members.get(0).context)
+                    : ContextDependentCutInspection.trusted(cut.group);
+            scanConstraints(key, rules, visible, maximumDepth, work, capacity, result);
+        }
+        return result;
+    }
+
+    private static void scanConstraints(String cut, List<ContextArithmeticRuleInspection> rules,
+            List<Premise> visible, int maximumDepth, Runnable work, int capacity,
+            List<ConstraintCollision> result) throws Exception {
+        for (ContextArithmeticRuleInspection rule : rules) {
+            work.run();
+            rule.constraints(visible, maximumDepth, work, evidence -> {
+                if (result.size() == capacity) throw new IllegalStateException("Arithmetic constraint capacity");
+                result.add(new ConstraintCollision(cut, evidence));
+            });
+        }
     }
 
     private static List<Collision> collisions(ContextProductionInventory x, List<Cut> cuts,

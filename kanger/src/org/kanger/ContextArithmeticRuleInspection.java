@@ -93,15 +93,33 @@ public final class ContextArithmeticRuleInspection {
     /** Detached forward consequence; later family use requires exact cut/source validation. */
     public static final class Step {
         public final Source rule;
-        public final int branch;
+        public final int branch, retainedLiteral;
         public final List<Premise> premises;
         public final Premise conclusion;
 
-        private Step(Source rule, int branch, List<Premise> premises, Premise conclusion) {
+        private Step(Source rule, int branch, int retainedLiteral, List<Premise> premises, Premise conclusion) {
             this.rule = rule;
             this.branch = branch;
+            this.retainedLiteral = retainedLiteral;
             this.premises = Collections.unmodifiableList(new ArrayList<>(premises));
             this.conclusion = conclusion;
+        }
+    }
+
+    public static final class ConstraintViolation {
+        public final Source source;
+        public final String origin;
+        public final int branch;
+        public final List<Premise> premises;
+        public final ContextProductionCapture.Support proof;
+
+        private ConstraintViolation(Source source, String origin, int branch, List<Premise> premises,
+                                    ContextProductionCapture.Support proof) {
+            this.source = source;
+            this.origin = origin;
+            this.branch = branch;
+            this.premises = Collections.unmodifiableList(new ArrayList<>(premises));
+            this.proof = proof;
         }
     }
 
@@ -252,7 +270,7 @@ public final class ContextArithmeticRuleInspection {
         for (Slot slot : head.arguments) values.add(slot.instantiate(assignment, work));
         Premise conclusion = new Premise(Fact.ground(head.predicate, true, values),
                 new ContextProductionCapture.Support(sources, depth + 1));
-        return new Step(source, branch, donors, conclusion);
+        return new Step(source, branch, -1, donors, conclusion);
     }
 
     static void requireCoverage(Set<Source> owned, List<ContextArithmeticRuleInspection> rules,
@@ -318,8 +336,21 @@ public final class ContextArithmeticRuleInspection {
                     if (slot.variable >= 0) bound.add(slot.variable);
                 }
             }
-            if (heads != 1 || !bound.equals(variables))
-                throw new IllegalArgumentException("Complete range-restricted definite arithmetic rule required");
+            if (heads > 1 || !bound.equals(variables))
+                throw new IllegalArgumentException("Complete range-restricted Horn arithmetic rule required");
+            if (heads == 0) {
+                for (int retained = 0; retained < branch.size(); retained++) {
+                    Set<Integer> inputs = new HashSet<>();
+                    for (int i = 0; i < branch.size(); i++) if (i != retained) {
+                        for (Slot slot : branch.get(i).arguments) {
+                            work.run();
+                            if (slot.variable >= 0) inputs.add(slot.variable);
+                        }
+                    }
+                    if (!inputs.equals(variables))
+                        throw new IllegalArgumentException("Constraint residual requires unbound universal transport");
+                }
+            }
         }
     }
 
@@ -337,35 +368,110 @@ public final class ContextArithmeticRuleInspection {
         return true;
     }
 
+    @FunctionalInterface
+    private interface Matches {
+        void accept(List<Premise> donors) throws Exception;
+    }
+
+    private boolean hasHead(int branch, Runnable work) {
+        for (Atom atom : branches.get(branch)) {
+            work.run();
+            if (atom.positive) return true;
+        }
+        return false;
+    }
+
     void produce(List<Premise> frozen, int maximumDepth, Runnable work, java.util.function.Consumer<Step> output) throws Exception {
         for (int branch = 0; branch < branches.size(); branch++) {
-            List<Atom> body = new ArrayList<>();
-            for (Atom atom : branches.get(branch)) {
-                work.run();
-                if (!atom.positive) body.add(atom);
+            int selected = branch;
+            if (hasHead(branch, work)) {
+                joins(branch, -1, frozen, work, donors -> output.accept(apply(selected, donors, maximumDepth, work)));
+            } else {
+                for (int literal = 0; literal < branches.get(branch).size(); literal++) {
+                    int retained = literal;
+                    joins(branch, retained, frozen, work,
+                            donors -> output.accept(negative(selected, retained, donors, maximumDepth, work)));
+                }
             }
-            int[] next = new int[body.size()];
-            List<Premise> donors = new ArrayList<>(Collections.nCopies(body.size(), null));
-            List<Map<Integer, SemanticTermSnapshot>> assignments = new ArrayList<>();
-            assignments.add(Collections.emptyMap());
-            int depth = 0;
-            while (depth >= 0) {
+        }
+    }
+
+    private Step negative(int branch, int retained, List<Premise> donors, int maximumDepth, Runnable work) throws Exception {
+        Map<Integer, SemanticTermSnapshot> assignment = new LinkedHashMap<>();
+        Set<Source> sources = new LinkedHashSet<>();
+        sources.add(source);
+        int depth = 0, donorIndex = 0;
+        for (int i = 0; i < branches.get(branch).size(); i++) if (i != retained) {
+            Premise donor = donors.get(donorIndex++);
+            if (!match(branches.get(branch).get(i), donor, assignment, work))
+                throw new IllegalArgumentException("Constraint residual premises differ");
+            for (Source original : donor.proof.sources) {
                 work.run();
-                if (depth == body.size()) {
-                    output.accept(apply(branch, donors, maximumDepth, work));
-                    depth--;
-                } else if (next[depth] == frozen.size()) {
-                    next[depth] = 0;
-                    depth--;
-                } else {
-                    Premise donor = frozen.get(next[depth]++);
-                    Map<Integer, SemanticTermSnapshot> assignment = new LinkedHashMap<>(assignments.get(depth));
-                    if (match(body.get(depth), donor, assignment, work)) {
-                        donors.set(depth, donor);
-                        if (assignments.size() == depth + 1) assignments.add(assignment);
-                        else assignments.set(depth + 1, assignment);
-                        depth++;
+                sources.add(original);
+            }
+            depth = Math.max(depth, donor.proof.depth);
+        }
+        if (!variables.equals(assignment.keySet())) throw new IllegalArgumentException("Unbound constraint residual");
+        if (depth >= maximumDepth) throw new IllegalStateException("Arithmetic residual proof depth limit");
+        Atom head = branches.get(branch).get(retained);
+        List<SemanticTermSnapshot> values = new ArrayList<>();
+        for (Slot slot : head.arguments) values.add(slot.instantiate(assignment, work));
+        return new Step(source, branch, retained, donors, new Premise(Fact.ground(head.predicate, false, values),
+                new ContextProductionCapture.Support(sources, depth + 1)));
+    }
+
+    void constraints(List<Premise> visible, int maximumDepth, Runnable work,
+                     java.util.function.Consumer<ConstraintViolation> output) throws Exception {
+        for (int branch = 0; branch < branches.size(); branch++) {
+            int selected = branch;
+            if (hasHead(branch, work)) continue;
+            joins(branch, -1, visible, work, donors -> {
+                Set<Source> sources = new LinkedHashSet<>();
+                sources.add(source);
+                int depth = 0;
+                for (Premise donor : donors) {
+                    work.run();
+                    for (Source original : donor.proof.sources) {
+                        work.run();
+                        sources.add(original);
                     }
+                    depth = Math.max(depth, donor.proof.depth);
+                }
+                if (depth >= maximumDepth) throw new IllegalStateException("Arithmetic constraint proof depth limit");
+                output.accept(new ConstraintViolation(source, origin, selected, donors,
+                        new ContextProductionCapture.Support(sources, depth + 1)));
+            });
+        }
+    }
+
+    private void joins(int branch, int omitted, List<Premise> frozen, Runnable work, Matches output) throws Exception {
+        List<Atom> body = new ArrayList<>();
+        for (int i = 0; i < branches.get(branch).size(); i++) {
+            work.run();
+            Atom atom = branches.get(branch).get(i);
+            if (i != omitted && !atom.positive) body.add(atom);
+        }
+        int[] next = new int[body.size()];
+        List<Premise> donors = new ArrayList<>(Collections.nCopies(body.size(), null));
+        List<Map<Integer, SemanticTermSnapshot>> assignments = new ArrayList<>();
+        assignments.add(Collections.emptyMap());
+        int depth = 0;
+        while (depth >= 0) {
+            work.run();
+            if (depth == body.size()) {
+                output.accept(donors);
+                depth--;
+            } else if (next[depth] == frozen.size()) {
+                next[depth] = 0;
+                depth--;
+            } else {
+                Premise donor = frozen.get(next[depth]++);
+                Map<Integer, SemanticTermSnapshot> assignment = new LinkedHashMap<>(assignments.get(depth));
+                if (match(body.get(depth), donor, assignment, work)) {
+                    donors.set(depth, donor);
+                    if (assignments.size() == depth + 1) assignments.add(assignment);
+                    else assignments.set(depth + 1, assignment);
+                    depth++;
                 }
             }
         }
@@ -413,6 +519,7 @@ public final class ContextArithmeticRuleInspection {
                     }
                 }
                 if (enabled) {
+                    if (head == null) throw new IllegalStateException("Arithmetic model violates an original constraint");
                     List<SemanticTermSnapshot> arguments = new ArrayList<>();
                     for (Slot slot : head.arguments) arguments.add(slot.instantiate(assignment, work));
                     if (!modelContains(positives, Fact.ground(head.predicate, true, arguments), work))
