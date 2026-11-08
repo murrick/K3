@@ -13,12 +13,13 @@ public final class ContextArithmeticFamilyRoundInspectionRunner {
 
     private static final class Fixture {
         final ContextProductionInventory inventory;
+        final Mind mind;
         final List<ContextArithmeticRuleInspection> rules = new ArrayList<>();
         final List<Premise> seeds = new ArrayList<>();
 
         Fixture(boolean local, String source) throws Exception {
             User user = new User();
-            Mind mind = new Mind(user);
+            mind = new Mind(user);
             user.setCurrentMind(mind);
             if (!mind.compile(source, null, false)) throw new AssertionError("fixture");
             inventory = ContextProductionInventory.inspect(mind, UUID.randomUUID(), 0,
@@ -71,11 +72,37 @@ public final class ContextArithmeticFamilyRoundInspectionRunner {
         reject(() -> start(x, Arrays.asList(a.cut(), a.cut())), "repeated independent member");
         require(!has(start.common, "middle") && start.privateFrontiers.get(0).size() == a.seeds.size(),
                 "earlier sealed frame stays unchanged");
+        ContextArithmeticRuleInspection originalFact = ContextArithmeticRuleInspection.inspect(
+                x.mind, x.inventory, x.inventory.primary.get(0).nativeRule, 100000);
+        Premise reproduced = originalFact.apply(0, Collections.emptyList(), 1, 100000).conclusion;
+        reject(() -> ContextArithmeticFamilyRoundInspection.start(x.inventory, x.rules,
+                Collections.singletonList(reproduced), Arrays.asList(a.cut(), b.cut()), 1000000, 100),
+                "a derived unit cannot replace authenticated primary knowledge");
+        Cut missingRule = new Cut(null, Collections.singletonList(a.inventory),
+                a.rules.subList(0, a.rules.size() - 1), a.seeds);
+        reject(() -> start(x, Arrays.asList(missingRule, b.cut())), "missing original producer");
+        reject(() -> ContextArithmeticFamilyRoundInspection.start(x.inventory, x.rules, Collections.emptyList(),
+                Arrays.asList(a.cut(), b.cut()), 1000000, 100), "missing original X fact");
+        // Build the two unit premises of one whole conjunctive Source.
+        User cu = new User();
+        Mind cm = new Mind(cu);
+        cu.setCurrentMind(cm);
+        if (!cm.compile("!first(1)&&second(2);", null, false)) throw new AssertionError("conjunction fixture");
+        ContextProductionInventory ci = ContextProductionInventory.inspect(cm, UUID.randomUUID(), 0,
+                false, Collections.emptyList(), 1000);
+        long cr = ci.primary.get(0).nativeRule;
+        Premise oneUnit = Premise.primary(cm, ci, cr, 0, 100000);
+        Cut partial = new Cut(null, Collections.singletonList(ci), Collections.emptyList(), Collections.singletonList(oneUnit));
+        reject(() -> start(x, Collections.singletonList(partial)), "missing second clause of a whole Source");
+        Premise otherUnit = Premise.primary(cm, ci, cr, 1, 100000);
+        Cut complete = new Cut(null, Collections.singletonList(ci), Collections.emptyList(), Arrays.asList(oneUnit, otherUnit));
+        require(start(x, Collections.singletonList(complete)).privateFrontiers.get(0).size() == 2,
+                "both clauses cover the original conjunctive Source");
         System.out.println("CONTEXT_ARITHMETIC_FAMILY_ROUND_INSPECTION_PASS checks=" + checks);
         System.exit(0);
     }
 
-    private static Frame start(Fixture x, List<Cut> cuts) {
+    private static Frame start(Fixture x, List<Cut> cuts) throws Exception {
         return ContextArithmeticFamilyRoundInspection.start(x.inventory, x.rules, x.seeds, cuts, 1000000, 100);
     }
 

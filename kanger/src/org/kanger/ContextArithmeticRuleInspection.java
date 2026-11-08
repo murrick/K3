@@ -51,10 +51,17 @@ public final class ContextArithmeticRuleInspection {
     public static final class Premise {
         public final Fact fact;
         public final ContextProductionCapture.Support proof;
+        private final List<Clause> primaryDeclaration;
 
         private Premise(Fact fact, ContextProductionCapture.Support proof) {
+            this(fact, proof, null);
+        }
+
+        private Premise(Fact fact, ContextProductionCapture.Support proof, List<Clause> primaryDeclaration) {
             this.fact = fact;
             this.proof = proof;
+            this.primaryDeclaration = primaryDeclaration == null ? null
+                    : Collections.unmodifiableList(new ArrayList<>(primaryDeclaration));
         }
 
         public static Premise primary(Mind mind, ContextProductionInventory inventory,
@@ -66,7 +73,7 @@ public final class ContextArithmeticRuleInspection {
             Clause selected = instances.get(clause);
             Fact fact = selected.literals.size() == 1 ? selected.literals.get(0).fact() : null;
             if (fact == null) throw new IllegalArgumentException("Ground primary unit required");
-            return new Premise(fact, new ContextProductionCapture.Support(Collections.singleton(declaration.source), 0));
+            return new Premise(fact, new ContextProductionCapture.Support(Collections.singleton(declaration.source), 0), instances);
         }
 
         public static Premise primary(ContextProductionNativeBinding.Snapshot snapshot, Source source, int clause) {
@@ -77,7 +84,7 @@ public final class ContextArithmeticRuleInspection {
                 Fact fact = selected.literals.size() == 1 ? selected.literals.get(0).fact() : null;
                 if (fact == null) throw new IllegalArgumentException("Ground primary unit required");
                 return new Premise(fact, new ContextProductionCapture.Support(
-                        Collections.singleton(entry.source), 0));
+                        Collections.singleton(entry.source), 0), entry.clauses);
             }
             throw new IllegalArgumentException("Primary source is absent from the snapshot");
         }
@@ -221,6 +228,56 @@ public final class ContextArithmeticRuleInspection {
         Premise conclusion = new Premise(Fact.ground(head.predicate, true, values),
                 new ContextProductionCapture.Support(sources, depth + 1));
         return new Step(source, branch, donors, conclusion);
+    }
+
+    static void requireCoverage(Set<Source> owned, List<ContextArithmeticRuleInspection> rules,
+                                List<Premise> seeds, Runnable work) throws Exception {
+        Map<Source, ContextArithmeticRuleInspection> declarations = new HashMap<>();
+        for (ContextArithmeticRuleInspection rule : rules) {
+            work.run();
+            if (!owned.contains(rule.source)) throw new IllegalArgumentException("Declaration belongs to another owner");
+            if (declarations.put(rule.source, rule) != null) throw new IllegalArgumentException("Duplicate whole declaration");
+        }
+        for (Source source : owned) {
+            work.run();
+            List<Premise> primary = new ArrayList<>();
+            for (Premise seed : seeds) {
+                work.run();
+                if (seed.primaryDeclaration != null && seed.proof.depth == 0
+                        && seed.proof.sources.equals(Collections.singleton(source))) primary.add(seed);
+            }
+            List<Fact> required = new ArrayList<>();
+            ContextArithmeticRuleInspection declaration = declarations.get(source);
+            if (declaration != null) {
+                if (declaration.variables.isEmpty()) {
+                    for (List<Atom> branch : declaration.branches) {
+                        work.run();
+                        if (branch.size() == 1) {
+                            Atom atom = branch.get(0);
+                            List<SemanticTermSnapshot> values = new ArrayList<>();
+                            for (Slot slot : atom.arguments) values.add(slot.instantiate(Collections.emptyMap(), work));
+                            required.add(Fact.ground(atom.predicate, atom.positive, values));
+                        }
+                    }
+                }
+            } else {
+                if (primary.isEmpty()) throw new IllegalArgumentException("Missing whole original declaration");
+                for (Clause clause : primary.get(0).primaryDeclaration) {
+                    work.run();
+                    Fact fact = clause.literals.size() == 1 ? clause.literals.get(0).fact() : null;
+                    if (fact == null) throw new IllegalArgumentException("Missing non-unit original declaration");
+                    required.add(fact);
+                }
+            }
+            for (Fact fact : required) {
+                boolean found = false;
+                for (Premise seed : primary) {
+                    work.run();
+                    found |= fact.equivalent(seed.fact);
+                }
+                if (!found) throw new IllegalArgumentException("Missing primary unit of the whole original Source");
+            }
+        }
     }
 
     void preflight(Runnable work) {

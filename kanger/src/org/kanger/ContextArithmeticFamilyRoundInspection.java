@@ -61,7 +61,7 @@ public final class ContextArithmeticFamilyRoundInspection {
     }
 
     public static Frame start(ContextProductionInventory x, List<ContextArithmeticRuleInspection> localRules,
-                              List<Premise> localSeeds, List<Cut> cuts, int maximumWork, int capacity) {
+                              List<Premise> localSeeds, List<Cut> cuts, int maximumWork, int capacity) throws Exception {
         if (x == null || !x.localX || localRules == null || localRules.contains(null)
                 || localSeeds == null || localSeeds.contains(null) || cuts == null || cuts.contains(null) || capacity < 1)
             throw new IllegalArgumentException("Bounded arithmetic family required");
@@ -74,6 +74,7 @@ public final class ContextArithmeticFamilyRoundInspection {
         Set<Source> local = new HashSet<>(universe);
         List<Premise> common = new ArrayList<>();
         validate(localRules, localSeeds, local, work);
+        ContextArithmeticRuleInspection.requireCoverage(local, localRules, localSeeds, work);
         for (Premise seed : localSeeds) ContextArithmeticRoundInspection.merge(common, seed, capacity, work);
         List<List<Premise>> privateFrontiers = new ArrayList<>();
         for (Cut cut : cuts) {
@@ -87,6 +88,9 @@ public final class ContextArithmeticFamilyRoundInspection {
             }
             universe.addAll(selected);
             validate(cut.rules, cut.seeds, selected, work);
+            Set<Source> owned = new HashSet<>(selected);
+            owned.removeAll(local);
+            ContextArithmeticRuleInspection.requireCoverage(owned, cut.rules, cut.seeds, work);
             List<Premise> frontier = new ArrayList<>();
             for (Premise seed : cut.seeds) {
                 work.run();
