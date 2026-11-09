@@ -153,7 +153,13 @@ final class NativeUniversalConstraintCollision {
                     try {
                         Clause residual=unit.clause.resolveWithUnits(current,0,pivot,work);
                         Step step=new Step(previous,unit,pivot,residual);
-                        if (residual==null) return new Proof(root.getKey(),branch,step,mind,work);
+                        if (residual==null) {
+                            if (constraint.literals.size()==2 && previous!=null && previous.previous==null
+                                    && DmzTypedNativeResume.deniesSymbolic(mind,root.getKey(),branch,
+                                            previous.unit.rule,previous.unit.clause.literals.get(0),
+                                            unit.rule,a,work)) continue;
+                            return new Proof(root.getKey(),branch,step,mind,work);
+                        }
                         if (pending.size()>=maximumStates) throw new IllegalStateException("Native symbolic constraint state limit");
                         pending.add(step);
                     } catch (Clause.UnificationFailure incompatible) { /* This exact tuple does not discharge this premise. */ }

@@ -300,6 +300,72 @@ final class DmzTypedNativeResume {
         }
         return false;
     }
+    /** Same exact no-good for the symbolic encoding of a two-literal ground application. */
+    static boolean deniesSymbolic(Mind mind,Rule rule,int branch,Rule firstRule,
+            ContextProductionCapture.Atom first,Rule secondRule,ContextProductionCapture.Atom second,
+            Runnable work) throws Exception {
+        Scope scope=ACTIVE.get();
+        if(scope==null || !scope.local(mind) || branch!=0 || rule.getTree().size()!=1)return false;
+        TerminalSupportCapture.Ground left=symbolicGround(first,work),right=symbolicGround(second,work);
+        if(left==null || right==null)return false;
+        List<Domain> literals=rule.getTree().get(branch);
+        Map<Long,SemanticTermSnapshot> values=new TreeMap<>();
+        if(!bindSymbolic(literals.get(0),left,values,mind,work)
+                || !bindSymbolic(literals.get(1),right,values,mind,work))return false;
+        List<TerminalSupportCapture.Binding> bindings=new ArrayList<>();
+        for(Map.Entry<Long,SemanticTermSnapshot> entry:values.entrySet()) {
+            work.run();
+            bindings.add(new TerminalSupportCapture.Binding(bindings.size(),entry.getKey(),"native","native",entry.getValue()));
+        }
+        TerminalSupportCapture.Ground notLeft=new TerminalSupportCapture.Ground(left.predicate,!left.sign,left.arguments);
+        TerminalSupportCapture.Ground notRight=new TerminalSupportCapture.Ground(right.predicate,!right.sign,right.arguments);
+        for(Choice choice:scope.choices) {
+            work.run();
+            if(choice.selected.source.nativeRule!=rule.getId()
+                    || !DmzProofWitnesses.NoGood.sameBindings(choice.bindings,bindings)
+                    || !hasExactSource(mind,rule,choice.selected.source,work))continue;
+            DmzProofWitnesses.Witness donor=choice.selected.premises.get(0);
+            if(donor.step>=0)continue; // A symbolic primary unit cannot stand in for a derived donor.
+            boolean exact=(choice.root.equivalent(notLeft) && choice.premise.equivalent(right)
+                    && hasExactSource(mind,secondRule,donor.source,work))
+                    || (choice.root.equivalent(notRight) && choice.premise.equivalent(left)
+                    && hasExactSource(mind,firstRule,donor.source,work));
+            if(exact && !scope.alternative(choice,true))return true;
+        }
+        return false;
+    }
+    private static TerminalSupportCapture.Ground symbolicGround(ContextProductionCapture.Atom atom,Runnable work) {
+        List<SemanticTermSnapshot> arguments=new ArrayList<>();
+        for(ContextProductionCapture.Slot slot:atom.arguments) {
+            work.run();
+            if(slot.variable>=0)return null;
+            arguments.add(slot.value);
+        }
+        return new TerminalSupportCapture.Ground(atom.predicate,atom.positive,arguments);
+    }
+    private static boolean bindSymbolic(Domain literal,TerminalSupportCapture.Ground donor,
+            Map<Long,SemanticTermSnapshot> values,Mind mind,Runnable work) throws Exception {
+        if(literal.isAntc()==donor.sign || !literal.getPredicate(mind).getName(mind).equals(donor.predicate)
+                || literal.getArguments().size()!=donor.arguments.size())return false;
+        int i=0;
+        for(IArgument argument:literal.getArguments()) {
+            work.run();
+            SemanticTermSnapshot actual=donor.arguments.get(i++);
+            SemanticTermSnapshot expected=argument.getType()==ArgumentType.TVARIABLE
+                    ? values.putIfAbsent(argument.getId(),actual)
+                    : SemanticTermSnapshot.capture(argument.getValue(mind));
+            if(expected!=null && !expected.semanticallyEquals(actual))return false;
+        }
+        return true;
+    }
+    private static boolean hasExactSource(Mind mind,Rule rule,DmzReplayProvenance.Binding source,Runnable work) {
+        if(rule.getId()!=source.nativeRule)return false;
+        for(DmzReplayProvenance.SourceObservation observation:DmzReplayProvenance.observedSources(mind,rule.getId())) {
+            work.run();
+            if(observation.binding==source && observation.outcome==DmzReplayProvenance.Outcome.ACCEPTED)return true;
+        }
+        return false;
+    }
     private static List<TerminalSupportCapture.Binding> assignment(Mind mind,List<Domain> tree) throws Exception {
         Map<Long,SemanticTermSnapshot> values=new TreeMap<Long,SemanticTermSnapshot>();
         for(Domain literal:tree)for(IArgument argument:literal.getArguments())if(argument.getType()==ArgumentType.TVARIABLE) {
