@@ -14,11 +14,25 @@ under `target/dmz-manual`, with separate databases, operator settings and histor
 It does not open existing user storage. `--output <directory>` changes the parent;
 the launcher still creates a unique child. Stable legacy DUMB is excluded.
 
-The terminal prints exact Context UUIDs/revisions, the discovered trigger rule and
+The terminal prints context names and exact revisions, the discovered trigger rule and
 complete commands for that run. They are also in `WALKTHROUGH.txt` in the displayed
 run directory. Copy commands from the current run, since a new run has new UUIDs.
 `walkthrough.commands` contains the complete scripted path, including deliberate
 errors. `--prepare-only` prepares those files without entering Console.
+
+## Signed proof with a derived premise
+
+Run `python3 scripts/run-dmz-manual.py --recursive` for the negative
+variant. Q protects `cache(1)` and `cache(2)`; Rules derives
+`seed(x) -> middle(x) -> ~cache(x) -> ~tail(x)`. Use the generated
+`Start:` command, inspect each conflict, and choose the displayed
+restriction explicitly. After two choices, `ctx tree 1` shows the
+four-node proof of `~tail(3)`, including `middle(3)` from Rules and
+`seed(3)` from Q. The Q-only control returns UNKNOWN.
+
+The generated retry for this variant uses `projection=8` to fit the
+longer evidence. Use the retry printed for the current run. Add
+`--smoke` to replay the walkthrough automatically in a disposable database.
 
 ## Knowledge and expected result
 

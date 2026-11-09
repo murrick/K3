@@ -17,11 +17,15 @@ def main():
     mode.add_argument('--prepare-only', action='store_true', help='Prepare files without opening Console')
     mode.add_argument('--smoke', action='store_true', help='Run and verify the generated walkthrough')
     mode.add_argument('--family', action='store_true', help='Create a disposable SDK family proof report')
+    parser.add_argument('--recursive', action='store_true',
+                        help='Use the signed recursive proof walkthrough instead of the direct fixture')
     parser.add_argument('--family-invocations', type=int, default=None, help='Fresh provider invocation cap (1..10000), family only')
     parser.add_argument('--family-choices', type=int, default=None, help='Restriction choice depth (1..128), family only')
     parser.add_argument('--output', type=Path, default=ROOT / 'target/dmz-manual',
                         help='Parent directory; each run creates a new child')
     args = parser.parse_args()
+    if args.family and args.recursive:
+        parser.error('--recursive is for the Console walkthrough')
     if not args.family and (args.family_invocations is not None or args.family_choices is not None):
         parser.error('family limits require --family')
     family_invocations = 64 if args.family_invocations is None else args.family_invocations
@@ -52,6 +56,8 @@ def main():
                'org.kanger.storage.dumb2.' + fixture, str(run)]
     command += [str(family_invocations), str(family_choices)] if args.family else [
         'prepare' if args.prepare_only else 'smoke' if args.smoke else 'console']
+    if args.recursive:
+        command.append('recursive')
     print('Disposable DMZ fixture: ' + str(run), flush=True)
     return subprocess.call(command, cwd=run)
 
