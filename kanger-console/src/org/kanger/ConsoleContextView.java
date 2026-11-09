@@ -270,20 +270,23 @@ final class ConsoleContextView {
     }
 
     static void showProofCauses(List<IContextFederation.ProofCause> causes, String indent, IMind mind) throws Exception {
+        Object data = ((User) mind.getUser()).getData();
+        IContextFederation.Snapshot snapshot = hasContextProof(causes) && data instanceof IContextFederation
+                ? ((IContextFederation) data).federationSnapshot() : null;
+        showProofCauses(causes, indent, snapshot);
+    }
+
+    private static void showProofCauses(List<IContextFederation.ProofCause> causes, String indent,
+                                        IContextFederation.Snapshot snapshot) {
         for (IContextFederation.ProofCause cause : causes) {
             if (cause.commune != null) {
                 System.out.println(indent + "Commune " + cause.commune);
                 for (IContextFederation.Revision member : cause.communeMembers)
-                    System.out.println(indent + "  Member: " + member.getContextId() + "@" + member.getRevision());
+                    System.out.println(indent + "  Member: " + contextLocator(snapshot, member.getContextId())
+                            + "@" + member.getRevision());
                 System.out.println(indent + "  Statement: " + cause.ruleStatement);
             } else if (cause.contextSource != null) {
-                String locator = cause.contextSource.getContextId().toString();
-                if (((User) mind.getUser()).getData() instanceof IContextFederation) {
-                    IContextFederation.Snapshot snapshot = ((IContextFederation) ((User) mind.getUser()).getData()).federationSnapshot();
-                    if (snapshot.getSourceContextId().equals(cause.contextSource.getContextId())) locator = snapshot.getSourceLocator();
-                    for (IContextFederation.Connection connection : snapshot.getConnections())
-                        if (connection.getTargetContextId().equals(cause.contextSource.getContextId())) locator = connection.getLocator();
-                }
+                String locator = contextLocator(snapshot, cause.contextSource.getContextId());
                 System.out.println(indent + "Context " + locator + "@" + cause.contextSource.getRevision()
                         + (cause.configuredByX ? " [configured by X]" : ""));
                 System.out.println(indent + "  Statement: " + cause.ruleStatement);
@@ -291,7 +294,7 @@ final class ConsoleContextView {
                 System.out.println(indent + "Rule " + cause.ruleId + ": " + cause.ruleStatement);
                 System.out.println(indent + "Donor: " + cause.donorStatement + (cause.cycle ? " [cycle]" : ""));
             }
-            showProofCauses(cause.causes, indent + "    ", mind);
+            showProofCauses(cause.causes, indent + "    ", snapshot);
         }
     }
 
@@ -492,6 +495,7 @@ final class ConsoleContextView {
     private static String contextLocator(
             IContextFederation.Snapshot snapshot,
             java.util.UUID contextId) {
+        if (snapshot == null) return "<unknown-context>";
         if (snapshot.getSourceContextId().equals(contextId)) {
             return snapshot.getSourceLocator();
         }

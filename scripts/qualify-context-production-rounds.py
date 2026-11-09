@@ -1044,6 +1044,10 @@ def main():
         java.util.Map<String,java.util.List<org.kanger.ContextArithmeticRuleInspection.Premise>> seeds = new java.util.LinkedHashMap<>();
         java.util.Map<String,String> groups = new java.util.LinkedHashMap<>();
         java.util.List<org.kanger.ContextProductionInventory> captured = new java.util.ArrayList<>();
+        java.util.Map<java.util.UUID,String> names = new java.util.HashMap<>();
+        names.put(xi.context, getStorageName());
+        java.util.Map<String,String> cutNames = new java.util.HashMap<>();
+        cutNames.put(org.kanger.ContextDependentCutInspection.local(xi.context), getStorageName());
         int remaining = 1000 - xi.rows.size();
         for (ContextConnection connection : proposed.getConnections()) {
             org.kanger.ContextProductionInventory inventory = org.kanger.ContextProductionInventory.inspect(connection.layer(),
@@ -1053,6 +1057,9 @@ def main():
             captured.add(inventory);
             String group = connection.getTrustGroup();
             String key = group == null ? "context:" + inventory.context : "trust:" + group;
+            String locator = displayFederationLocator(connection.getTargetLocation());
+            names.put(inventory.context, locator);
+            cutNames.put(key, group == null ? locator : "TRUST " + group);
             groups.put(key, group);
             members.computeIfAbsent(key, ignored -> new java.util.ArrayList<>()).add(inventory);
             captureArithmeticView(connection.layer(), inventory,
@@ -1072,13 +1079,13 @@ def main():
             java.util.List<org.kanger.ContextQualification.CollisionWitness> witnesses = new java.util.ArrayList<>();
             for (org.kanger.ContextArithmeticFamilyRoundInspection.Collision collision : result.frame.collisions)
                 witnesses.add(org.kanger.ContextQualification.witness(
-                        arithmeticEvidence(collision.left), arithmeticEvidence(collision.right)));
+                        arithmeticEvidence(collision.left, names), arithmeticEvidence(collision.right, names)));
             for (org.kanger.ContextArithmeticFamilyRoundInspection.ConstraintCollision collision : result.frame.constraints) {
                 StringBuilder premises = new StringBuilder();
                 for (org.kanger.ContextArithmeticRuleInspection.Premise premise : collision.evidence.premises)
-                    premises.append(arithmeticEvidence(premise)).append(" ");
+                    premises.append(arithmeticEvidence(premise, names)).append(" ");
                 witnesses.add(org.kanger.ContextQualification.witness(
-                        collision.cut + " " + collision.evidence.source.context + "#" + collision.evidence.source.rule
+                        cutNames.getOrDefault(collision.cut, "<unknown context>") + ": " + arithmeticSource(collision.evidence.source, names)
                                 + " " + collision.evidence.origin, premises.toString()));
             }
             throw new org.kanger.exception.StorageLifecycleException(
@@ -1098,7 +1105,8 @@ def main():
         }
     }
 
-    private String arithmeticEvidence(org.kanger.ContextArithmeticRuleInspection.Premise premise) throws Exception {
+    private String arithmeticEvidence(org.kanger.ContextArithmeticRuleInspection.Premise premise,
+            java.util.Map<java.util.UUID,String> names) throws Exception {
         StringBuilder text = new StringBuilder(premise.fact.positive ? "!" : "!~");
         text.append(premise.fact.predicate).append('(');
         for (int i = 0; i < premise.fact.arguments.size(); i++) {
@@ -1107,8 +1115,13 @@ def main():
         }
         text.append("); depth=").append(premise.proof.depth);
         for (org.kanger.ContextProductionCapture.Source source : premise.proof.sources)
-            text.append(" [").append(source.context).append('@').append(source.revision).append('#').append(source.rule).append(']');
+            text.append(" [").append(arithmeticSource(source, names)).append(']');
         return text.toString();
+    }
+
+    private String arithmeticSource(org.kanger.ContextProductionCapture.Source source,
+            java.util.Map<java.util.UUID,String> names) {
+        return names.getOrDefault(source.context, "<unknown context>") + "@" + source.revision + "#" + source.rule;
     }
 
     private void qualifyGroundAttachment(ConnectionVector proposed) throws Exception {

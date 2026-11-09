@@ -140,8 +140,8 @@ public final class DmzConsoleWorkflowRunner {
         System.out.println("DMZ_CONSOLE_STDOUT_BEGIN\n"+out+"\nDMZ_CONSOLE_STDOUT_END");
         System.out.println("DMZ_CONSOLE_STDERR_BEGIN\n"+err+"\nDMZ_CONSOLE_STDERR_END");
         require(out.contains("UUID: "+qp.getContextId()) && out.contains("UUID: "+a.getContextId()),"read-only history provides exact Q and unconnected source UUIDs for operator selection");
-        require(out.contains("DMZ policy:") && out.contains("Q: Q "+pin(qp)),"real session displays applied policy and physical authority pin");
-        require(out.contains("Source: A "+pin(a)) && out.contains("Fixed productions: 1") && out.contains("Ordered grounds: 4"),"display retains historical exact source and every input selection");
+        require(out.contains("DMZ policy:") && out.contains("Q: Q@"+qp.getRevision()+"\n"),"real session displays applied policy and named authority revision");
+        require(out.contains("Source: A@"+a.getRevision()+",") && out.contains("Fixed productions: 1") && out.contains("Ordered grounds: 4"),"display retains historical exact source and every input selection");
         require(out.contains("Opinion 1:") && out.contains(": TRUE") && out.contains(": FALSE") && out.contains("DECLINED_Q"),"opposing branch answers and Q decisions displayed separately");
         require(out.contains("DMZ traversal: PARTIAL") && out.contains("Completed leaves below are partial historical observations")
                 && out.contains("Interrupted input:") && out.contains("Conditional event at input") && out.contains("WORK_LIMIT"),"both stop kinds are explicit incomplete histories");

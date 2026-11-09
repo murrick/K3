@@ -12,16 +12,16 @@ final class ConsoleDmzView {
     private ConsoleDmzView() { }
     static void explain(DmzSourcesQuery.Result result) {
         System.out.println("DMZ policy: "+result.request.policy);
-        System.out.println("Q: "+result.acquisition.authority.locator+" "+pin(result.acquisition.authority.revision));
+        System.out.println("Q: "+pin(result.acquisition.authority));
         System.out.println("Query: "+result.request.queryStatement);
         for(DmzSourcePlan.Source component:result.acquisition.authorityComponents)
-            System.out.println("Q component: "+component.locator+" "+pin(component.revision)+(component.configured ? " [configured by Q]" : ""));
+            System.out.println("Q component: "+pin(component)+(component.configured ? " [configured by Q]" : ""));
         DmzSourcesQuery.Limits l=result.request.limits;
         System.out.println("Limits: rows="+result.request.sources.maximumRows+", preparation="+l.preparation+", audit="+l.audit
                 +", lookup="+l.lookup+", recognition="+l.recognition+", projection="+l.projection+", application="+l.application
                 +", query="+l.query+", depth="+l.depth+", nodes="+l.nodes+", work="+l.work+", visits="+l.maximumVisits);
         for(DmzSourcesQuery.SourceInventory source:result.sources)
-            System.out.println("Source: "+locator(result,source.revision)+" "+pin(source.revision)+", primaries="+source.primaryRules
+            System.out.println("Source: "+locator(result,source.revision)+"@"+source.revision.getRevision()+", primaries="+source.primaryRules
                     +", inspected="+source.inspectedRows+", excluded caches="+source.excludedGeneratedCaches+", digest="+source.primaryDigest);
         System.out.println("Fixed productions: "+result.productions.size());
         for(DmzSourcesQuery.Input input:result.productions)System.out.println("  "+identity(result,input)+" "+input.statement);
@@ -119,14 +119,13 @@ final class ConsoleDmzView {
                 int ordinal=0;
                 for(int i=0;i<step.alternatives.size();++i)if(step.alternatives.get(i).identity().equals(step.selected.identity()))ordinal=i+1;
                 System.out.println("Restriction step "+step.number+": selected alternative "+ordinal+"/"+step.alternatives.size()+" -> "+step.after);
-                System.out.println("  Historical identity: "+step.selected.identity());
+                System.out.println("  Selected proof: "+proofLabel(result,step.selected));
                 conflicts(result,step.conflicts,"  ");
             }
             int cut=0;
             for(DmzSourcesQuery.Proof proof:result.restrictionProofs) {
                 System.out.println("Restricted source chain "+(++cut)+":");tree(result,proof,"  ");
             }
-            for(String choice:request.choices)System.out.println("  Selected choice: "+choiceArgument(choice));
         }
         if(detailed && !outcome.availableConflicts.isEmpty()) {
             System.out.println("Current covered conflict evidence:");conflicts(result,outcome.availableConflicts,"  ");
@@ -166,8 +165,7 @@ final class ConsoleDmzView {
     }
     static void tree(DmzSourcesQuery.Result result,DmzSourcesQuery.Proof proof,String indent) {
         DmzSourcePlan.Source source=source(result,proof.source.revision);
-        System.out.println(indent+proof.conclusion+" from "+source.locator+"@"+source.revision.getRevision()
-                +" ["+pin(source.revision)+":"+proof.source.rule+"]"+(source.configured ? " [configured by Q]" : ""));
+        System.out.println(indent+proof.conclusion+" from "+proofLabel(result,proof)+(source.configured ? " [configured by Q]" : ""));
         if(!proof.premises.isEmpty())System.out.println(indent+"  Rule: "+proof.source.statement);
         for(DmzSourcesQuery.Proof child:proof.premises)tree(result,child,indent+"  ");
     }
@@ -187,7 +185,12 @@ final class ConsoleDmzView {
     private static String identity(DmzSourcesQuery.Result result,DmzSourcesQuery.Input input) {
         return locator(result,input.revision)+"@"+input.revision.getRevision()+":"+input.rule;
     }
-    private static String pin(IContextResults.Revision revision) { return revision.getContextId()+"@"+revision.getRevision(); }
+    private static String pin(DmzSourcePlan.Source source) {
+        return source.locator+"@"+source.revision.getRevision();
+    }
+    private static String proofLabel(DmzSourcesQuery.Result result,DmzSourcesQuery.Proof proof) {
+        return locator(result,proof.source.revision)+"@"+proof.source.revision.getRevision()+"#"+proof.source.rule;
+    }
     private static String locator(DmzSourcesQuery.Result result,IContextResults.Revision revision) {
         return source(result,revision).locator;
     }

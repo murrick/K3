@@ -132,7 +132,10 @@ public final class DmzOpinionWorkflowRunner {
                     && output.contains("[configured by Q]"),"real tree includes applied rule and configured authority provenance");
             int firstTree=output.indexOf("Inference 1:");
             require(!output.substring(0,firstTree).contains("DMZ policy:") && !output.substring(0,firstTree).contains("variant="),"default answer excludes traversal analytics");
-            require(output.contains("DMZ policy:") && output.contains("Q component: T"),"explicit explain contains technical composite-Q report");
+            require(output.contains("DMZ policy:") && output.contains("Q component: T@"+t.getRevision()),
+                    "explicit explain names the pinned composite-Q component");
+            require(!output.contains(t.getContextId().toString()) && output.contains("from T@"+t.getRevision()+"#"),
+                    "human proof labels use names and exact rule numbers instead of UUIDs");
             q=(Mind)user.getCurrentMind().useStorage("Q");user.setCurrentMind(q);
             require(beforeScript.equals(DmzSourceShape.inspect(q,10000).primaryDigest) && topology.equals(topology(db)),"ordinary script preserves durable Q");
             // A failed new DMZ attempt clears history; reading it cannot accidentally show the previous answer.
