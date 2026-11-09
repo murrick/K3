@@ -1,0 +1,37 @@
+storage use Rules
+!@x seed(x)&&gate(x)->next(x+1);
+storage close
+storage use Gate
+!gate(1);
+storage close
+storage use X
+!seed(1); !~next(2);
+ctx connect Rules
+ctx publish "Arithmetic rules attached"
+ctx
+ctx connect Gate
+ctx
+storage close
+storage use X
+ctx
+storage close
+storage use XReverse
+!seed(1); !~next(2);
+ctx connect Gate
+ctx publish "Gate attached first"
+ctx
+ctx connect Rules
+ctx
+storage close
+storage use XReverse
+ctx
+storage close
+storage use XCompatible
+!seed(1); !~next(3);
+ctx connect Rules
+ctx connect Gate
+ctx publish "Both compatible sources attached"
+storage close
+storage use XCompatible
+ctx
+quit

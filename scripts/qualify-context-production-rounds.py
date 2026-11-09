@@ -4,8 +4,41 @@ from pathlib import Path
 import argparse
 import json
 import os
+import shutil
 import subprocess
 import tempfile
+
+
+def prepare_arithmetic_console(root, run, libs, modules):
+    for module in modules:
+        resources = root / module / 'resources'
+        if resources.is_dir():
+            shutil.copytree(resources, run / 'resources' / module)
+    (run / 'lib').mkdir()
+    for library in libs:
+        shutil.copy2(library, run / 'lib' / library.name)
+    for name in ('arithmetic-console.commands', 'arithmetic-console-walkthrough.md'):
+        shutil.copy2(root / 'docs' / name, run / name)
+    (run / 'console.py').write_text("""#!/usr/bin/env python3
+import os
+from pathlib import Path
+import subprocess
+
+root = Path(__file__).resolve().parent
+home = root / 'home'
+home.mkdir(exist_ok=True)
+classpath = os.pathsep.join(map(str, [root / 'classes']
+    + sorted((root / 'resources').iterdir()) + sorted((root / 'lib').glob('*.jar'))))
+environment = os.environ.copy()
+for option in ('KANGER_OPTIONS', 'JAVA_TOOL_OPTIONS', '_JAVA_OPTIONS', 'JDK_JAVA_OPTIONS'):
+    environment.pop(option, None)
+print('Experimental arithmetic topology Console; data: ' + str(home), flush=True)
+raise SystemExit(subprocess.call(['java', '-XX:-UsePerfData', '-Duser.home=' + str(home),
+    '-cp', classpath, 'org.kanger.Kanger', '--singleuser'], cwd=root, env=environment))
+""", encoding='utf-8')
+    print('Arithmetic Console package:', run)
+    print('From that directory, run: python3 console.py')
+    return 0
 
 
 def main():
@@ -15,7 +48,13 @@ def main():
                         help='Compile an isolated experimental default hook; never edit production sources')
     parser.add_argument('--ground-attachment-candidate', action='store_true',
                         help='Compile an isolated ground topology admission candidate')
+    parser.add_argument('--prepare-arithmetic-console', action='store_true',
+                        help='Prepare a disposable Console with the isolated topology candidate')
     args = parser.parse_args()
+    if args.prepare_arithmetic_console:
+        if args.mode != 'contract' or args.ordinary_integration_candidate:
+            parser.error('manual arithmetic Console uses only the topology candidate')
+        args.ground_attachment_candidate = True
     root = Path(__file__).resolve().parents[1]
     output = root / 'target/context-production-rounds'
     output.mkdir(parents=True, exist_ok=True)
@@ -879,6 +918,8 @@ def main():
     if args.mode == 'reference': names += [('org.kanger.storage.dumb2.ContextDependentConstructedIterationScopeRunner', 'CONTEXT_DEPENDENT_CONSTRUCTED_ITERATION_SCOPE_PASS')]
     if args.mode == 'reference': names += [('org.kanger.storage.dumb2.ContextDependentConstructedIterationBoundsRunner', 'CONTEXT_DEPENDENT_CONSTRUCTED_ITERATION_BOUNDS_PASS')]
     if args.mode == 'reference': names += [('org.kanger.storage.dumb2.ContextDependentConstructedIterationOwnershipRunner', 'CONTEXT_DEPENDENT_CONSTRUCTED_ITERATION_OWNERSHIP_PASS')]
+    if args.prepare_arithmetic_console:
+        names = []
     drivers = [root / 'kanger-qualification/src' / (name.replace('.', '/') + '.java') for name, _ in names]
     if args.ordinary_integration_candidate:
         original = root / 'kanger-data-dumb2/src/org/kanger/storage/dumb2/DB.java'
@@ -1175,6 +1216,8 @@ def main():
     if compile_result.returncode:
         print(compile_result.stdout)
         return compile_result.returncode
+    if args.prepare_arithmetic_console:
+        return prepare_arithmetic_console(root, run, libs, modules)
     runtime_cp = os.pathsep.join([str(classes), str(root / 'kanger/resources')] + [str(p) for p in libs])
     results = []
     for name, marker in names:
