@@ -138,8 +138,10 @@ final class ConsoleDmzView {
         }
         if(outcome.status==DmzSourcesQuery.RestrictionStatus.NEXT_CONFLICT)
             System.out.println("Replay the full invocation with all prior choice values and one selected alternative.");
-        else if(outcome.status==DmzSourcesQuery.RestrictionStatus.STOPPED_UNCOVERED)
+        else if(outcome.status==DmzSourcesQuery.RestrictionStatus.STOPPED_UNCOVERED) {
+            if(outcome.stopReason!=null)System.out.println("Reason: "+outcome.stopReason);
             System.out.println("Source history is uncovered; no further choices or completed opinion.");
+        }
         else if(outcome.status==DmzSourcesQuery.RestrictionStatus.COMPLETE)
             System.out.println("Opinion queried in the completed restricted native branch.");
     }

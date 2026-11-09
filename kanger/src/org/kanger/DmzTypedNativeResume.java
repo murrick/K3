@@ -35,6 +35,7 @@ final class DmzTypedNativeResume {
         final int applicationDenied,queryDenied;
         final DmzSourcedProofGraph graph;
         final List<CollisionProofCapture.Conflict> conflicts;
+        final List<CollisionProofCapture.SymbolicConflict> symbolicConflicts;
         final List<Long> retractedCaches;
         final List<Materialization> materializations;
         final QueryObservation queryAnswer;
@@ -48,11 +49,13 @@ final class DmzTypedNativeResume {
         }
         private Result(boolean compiled,Scope scope,DmzSourcedProofGraph graph,List<CollisionProofCapture.Conflict> conflicts,
                 List<Rule> removed,Mind branch,int budget,boolean provisional,DmzCacheRestrictionSet prefix,Mind target) throws Exception {
-            this(compiled,scope,graph,conflicts,removed,branch,budget,provisional,prefix,target,null);
+            this(compiled,scope,graph,conflicts,removed,branch,budget,provisional,prefix,target,null,Collections.emptyList());
         }
         private Result(boolean compiled,Scope scope,DmzSourcedProofGraph graph,List<CollisionProofCapture.Conflict> conflicts,
-                List<Rule> removed,Mind branch,int budget,boolean provisional,DmzCacheRestrictionSet prefix,Mind target,QueryObservation queryAnswer) throws Exception {
+                List<Rule> removed,Mind branch,int budget,boolean provisional,DmzCacheRestrictionSet prefix,Mind target,QueryObservation queryAnswer,
+                List<CollisionProofCapture.SymbolicConflict> symbolicConflicts) throws Exception {
             this.queryAnswer=queryAnswer;
+            this.symbolicConflicts=Collections.unmodifiableList(new ArrayList<>(symbolicConflicts));
             this.prefix=prefix;this.target=target;state=DmzObservationStateFingerprint.capture(target);sources=DmzReplayProvenance.sourceCheckpoint(target);
             this.compiled=compiled;this.provisional=provisional;applicationDenied=scope.denied;queryDenied=scope.queryDenied;this.graph=graph;
             this.conflicts=Collections.unmodifiableList(new ArrayList<CollisionProofCapture.Conflict>(conflicts));
@@ -214,6 +217,12 @@ final class DmzTypedNativeResume {
                     observations.add(new TerminalSupportCapture.ApplicationSources(app.application,labels(app.ruleSources),supports,app.excludedPairs,app.noGoods));
                 }
                 // Rejected native frames remain event-owned diagnostics after their inner rollback.
+                List<CollisionProofCapture.SymbolicConflict> symbolic=collisions.symbolicSnapshot();
+                if(!symbolic.isEmpty()) {
+                    if(compiled || set==null)throw new IllegalStateException("Symbolic multi-root evidence requires an accumulated rejected continuation");
+                    return new Result(false,scope,null,Collections.emptyList(),cacheRules,tx.mind(),budget,
+                            inventory.provisional,set,target,null,symbolic);
+                }
                 if(!compiled && !collisions.snapshot().isEmpty()) {
                     CollisionProofCapture.Conflict event=collisions.snapshot().get(collisions.snapshot().size()-1);
                     DmzSourcedProofGraph graph=DmzProvisionalCollisionProof.build(event,budget,budget).graph;
@@ -258,7 +267,7 @@ final class DmzTypedNativeResume {
                     }
                     queryAnswer=new QueryObservation(queryValue,witnesses,hypotheses,assertions);
                 }
-                return new Result(compiled,scope,graph,collisions.snapshot(),cacheRules,tx.mind(),budget,inventory.provisional,set,target,queryAnswer);
+                return new Result(compiled,scope,graph,collisions.snapshot(),cacheRules,tx.mind(),budget,inventory.provisional,set,target,queryAnswer,Collections.emptyList());
             }
         } finally {
             if(!state.equals(DmzObservationStateFingerprint.capture(target)) || !sources.isCurrent(target))

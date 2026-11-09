@@ -183,7 +183,7 @@ public final class DmzSourceRestrictionWorkflow {
                                 observation.hypotheses,observation.assertions,proofs);
                     }
                     return new Result(new DmzSourcesQuery.RestrictionOutcome(summary.status,summary.choices,
-                            Collections.<DmzSourcesQuery.Proof>emptyList(),trace),selected,answer);
+                            Collections.<DmzSourcesQuery.Proof>emptyList(),trace,Collections.emptyList(),summary.stopReason),selected,answer);
                 }
                 next=continued.next;pairs=next.combinations;
             }

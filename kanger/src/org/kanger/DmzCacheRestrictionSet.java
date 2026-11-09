@@ -16,7 +16,9 @@ final class DmzCacheRestrictionSet {
         }
         org.kanger.interfaces.DmzSourcesQuery.RestrictionOutcome detached() {
             return new org.kanger.interfaces.DmzSourcesQuery.RestrictionOutcome(
-                    org.kanger.interfaces.DmzSourcesQuery.RestrictionStatus.valueOf(status.name()),choices);
+                    org.kanger.interfaces.DmzSourcesQuery.RestrictionStatus.valueOf(status.name()),choices,
+                    Collections.emptyList(),Collections.emptyList(),Collections.emptyList(),
+                    result.symbolicConflicts.isEmpty() ? null : "Symbolic multi-root conflict is outside supported restriction replay");
         }
     }
     static final class UncoveredConflict extends IllegalStateException {
@@ -173,6 +175,8 @@ final class DmzCacheRestrictionSet {
         if(prefix==null || result==null || !result.belongsTo(prefix,target))
             throw new IllegalStateException("Owned accumulated continuation result required");
         if(result.compiled)return new Continuation(ContinuationStatus.COMPLETE,result,null,prefix.selections.size());
+        if(!result.symbolicConflicts.isEmpty())
+            return new Continuation(ContinuationStatus.STOPPED_UNCOVERED,result,null,prefix.selections.size());
         try { return new Continuation(ContinuationStatus.NEXT_CONFLICT,result,prefix.next(result,target,budget),prefix.selections.size()); }
         catch(UncoveredConflict uncovered) {
             return new Continuation(ContinuationStatus.STOPPED_UNCOVERED,result,null,prefix.selections.size());

@@ -85,6 +85,7 @@ public final class DmzSourcesQuery {
         public final List<Proof> availableChoices;
         public final List<RestrictionStep> trace;
         public final List<RestrictionConflict> availableConflicts;
+        public final String stopReason;
         public RestrictionOutcome(RestrictionStatus status,int choices) {
             this(status,choices,Collections.<Proof>emptyList());
         }
@@ -96,6 +97,13 @@ public final class DmzSourcesQuery {
         }
         public RestrictionOutcome(RestrictionStatus status,int choices,List<Proof> availableChoices,List<RestrictionStep> trace,
                 List<RestrictionConflict> availableConflicts) {
+            this(status,choices,availableChoices,trace,availableConflicts,null);
+        }
+        public RestrictionOutcome(RestrictionStatus status,int choices,List<Proof> availableChoices,List<RestrictionStep> trace,
+                List<RestrictionConflict> availableConflicts,String stopReason) {
+            if(stopReason!=null && status!=RestrictionStatus.STOPPED_UNCOVERED)
+                throw new IllegalArgumentException("Only an uncovered stop can carry a stop reason");
+            this.stopReason=stopReason;
             if(status==null || choices<0 || status==RestrictionStatus.NOT_REQUESTED && choices!=0)
                 throw new IllegalArgumentException("Restriction outcome");
             this.status=status;this.choices=choices;

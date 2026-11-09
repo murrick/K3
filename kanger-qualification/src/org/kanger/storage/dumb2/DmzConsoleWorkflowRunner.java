@@ -30,7 +30,16 @@ public final class DmzConsoleWorkflowRunner {
     private static final CommandParser PARSER=new CommandParser();
     private static final CommandFormatter FORMATTER=new CommandFormatter();
     public static void main(String[] args) {
-        try { family();run();restrictions(false);restrictions(true);staleAuthority();lateDiagnostic(false);lateDiagnostic(true);
+        try {
+            if(args.length==1 && "--symbolic-stop".equals(args[0])) {
+                restrictions(true,true);
+                System.out.println("DMZ_SYMBOLIC_RESUME_STOP_PASS checks="+checks);System.exit(0);
+            }
+            if(args.length==1 && "--pair-replay".equals(args[0])) {
+                restrictions(false);
+                System.out.println("DMZ_PAIR_REPLAY_PASS checks="+checks);System.exit(0);
+            }
+            family();run();restrictions(false);restrictions(true);staleAuthority();lateDiagnostic(false);lateDiagnostic(true);
             answerDiagnostic(false,1,Boolean.TRUE);answerDiagnostic(true,1,Boolean.TRUE);
             for(boolean negative:new boolean[]{false,true})for(Boolean truth:new Boolean[]{Boolean.TRUE,Boolean.FALSE,null})answerDiagnostic(negative,3,truth);
             System.out.println("DMZ_CONSOLE_WORKFLOW_PASS checks="+checks);System.exit(0); }
@@ -168,6 +177,9 @@ public final class DmzConsoleWorkflowRunner {
         }
     }
     private static void restrictions(boolean negative) throws Exception {
+        restrictions(negative,false);
+    }
+    private static void restrictions(boolean negative,boolean symbolicStop) throws Exception {
         Path dir=Files.createTempDirectory("dmz-restriction-console-");System.setProperty("user.home",dir.toString());
         String sign=negative?"~":"",opposite=negative?"":"~";
         create(dir,"Q","!seed(1); !"+opposite+"cache(1); !seed(2); !"+opposite+"cache(2);");
@@ -192,6 +204,36 @@ public final class DmzConsoleWorkflowRunner {
             DmzSourcesQuery.Result result=sdk.executeDmzSources(request);
             require(result.restrictionOutcome.status==DmzSourcesQuery.RestrictionStatus.NEXT_CONFLICT && result.opinions.isEmpty(),
                     "public SDK interface returns detached restriction choices");
+            if(symbolicStop) {
+                result=processor.execute(PARSER.parse(named),user).getDmzResult();
+                StringBuilder script=new StringBuilder(named+"\n");
+                for(int i=0;i<2 && result.restrictionOutcome.status==DmzSourcesQuery.RestrictionStatus.NEXT_CONFLICT;i++) {
+                    result=processor.execute(PARSER.parse("ctx dmz choose 1"),user).getDmzResult();
+                    script.append("ctx dmz choose 1\n");
+                }
+                require(result.restrictionOutcome.status==DmzSourcesQuery.RestrictionStatus.STOPPED_UNCOVERED
+                        && result.restrictionOutcome.stopReason!=null
+                        && result.restrictionOutcome.stopReason.contains("Symbolic multi-root")
+                        && result.restrictionOutcome.trace.size()==result.request.restrictions.choices.size(),
+                        "exact selected prefix reaches a typed symbolic stop");
+                require(result.opinions.isEmpty() && result.restrictionOutcome.availableChoices.isEmpty()
+                        && result.restrictionOutcome.availableConflicts.isEmpty(),
+                        "uncovered proof yields neither an opinion nor a fabricated pair");
+                require(state.equals(DmzSourceMaterializationQualification.fingerprint(q)) && !db.hasConnectedContexts(),
+                        "symbolic stop restores Q and its topology");
+                InputStream in=System.in;PrintStream out=System.out,err=System.err;
+                ByteArrayOutputStream rendered=new ByteArrayOutputStream(),errors=new ByteArrayOutputStream();
+                try {
+                    System.setIn(new ByteArrayInputStream(script.append("ctx dmz explain\n").toString().getBytes("UTF-8")));
+                    System.setOut(new PrintStream(rendered,true,"UTF-8"));System.setErr(new PrintStream(errors,true,"UTF-8"));
+                    CanonicalConsole.session(q,new ShutdownHook(q));
+                } finally {System.setIn(in);System.setOut(out);System.setErr(err);}
+                String display=rendered.toString("UTF-8");
+                require(display.contains("STOPPED_UNCOVERED") && display.contains("Reason: Symbolic multi-root")
+                        && display.contains("no further choices or completed opinion") && errors.size()==0,
+                        "real Console explains the uncovered stop without a runtime failure");
+                return;
+            }
             String firstIdentity=result.restrictionOutcome.availableChoices.get(0).identity();
             reject(() -> new Mind(new User()).executeDmzSources(request),IllegalStateException.class);
             Mind pending=new Mind(q);
