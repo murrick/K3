@@ -33,6 +33,15 @@ public final class ContextArithmeticModelAuditRunner {
 
     public static void main(String[] args) throws Exception {
         System.setProperty("user.home", Files.createTempDirectory("arithmetic-model-audit-").toString());
+        Fixture missingX = new Fixture(true, "!seed(1); !~next(2);");
+        Fixture ruleCut = new Fixture(false, "!@x seed(x)&&gate(x)->next(x+1);");
+        Fixture gateCut = new Fixture(false, "!gate(1);");
+        Audit missingTransport = ContextArithmeticModelAudit.inspectFrame(
+                start(missingX, Arrays.asList(ruleCut.cut(), gateCut.cut())), 1000000);
+        require(!missingTransport.verified && missingTransport.models.isEmpty()
+                && missingTransport.reason.contains("Missing signed transport"),
+                "locally valid models must not hide omitted common residual: " + missingTransport.reason);
+        signedTransportAudit(missingX, ruleCut);
         mixedDomainAudit();
         Fixture x = new Fixture(true, "!seed(1); !@x out(x)->local(x+1);");
         Fixture a = new Fixture(false, "!@x seed(x)->middle(x+1); !private_seed(4); !@x private_seed(x)->hidden(x+1);");
@@ -74,6 +83,34 @@ public final class ContextArithmeticModelAuditRunner {
         require(immutable, "checked models are immutable");
         System.out.println("CONTEXT_ARITHMETIC_MODEL_AUDIT_PASS checks=" + checks);
         System.exit(0);
+    }
+
+    private static void signedTransportAudit(Fixture x, Fixture rule) throws Exception {
+        Fixture alternative = new Fixture(false, "!@x gate(x)&&seed(x)->next(x+1);");
+        Iteration closure = ContextArithmeticFamilyRoundInspection.iterate(
+                start(x, Arrays.asList(rule.cut(), alternative.cut())), 8, 16, 1000000, 100);
+        require(ContextArithmeticModelAudit.inspect(closure, 1000000).verified,
+                "both common supports satisfy transport audit");
+        List<Premise> reduced = new ArrayList<>(closure.frame.common);
+        require(reduced.removeIf(p -> p.fact.predicate.equals("gate") && p.proof.sources.contains(rule.rules.get(0).source))
+                && reduced.stream().anyMatch(p -> p.fact.predicate.equals("gate")), "fixture keeps an alternative proof");
+        boolean absent = false;
+        try {
+            rule.rules.get(0).auditTransport(reduced, Collections.emptyList(), reduced,
+                    ContextGroundProductionRounds.budget(1000000));
+        } catch (IllegalStateException failure) { absent = failure.getMessage().contains("common X"); }
+        require(absent, "equivalent truth with different sources cannot replace the required common proof");
+
+        Fixture local = new Fixture(true, "!anchor(1);");
+        Fixture privateRule = new Fixture(false, "!seed(1); !~next(2); !@x seed(x)&&gate(x)->next(x+1);");
+        Frame initial = start(local, Collections.singletonList(privateRule.cut()));
+        Audit missing = ContextArithmeticModelAudit.inspectFrame(initial, 1000000);
+        require(!missing.verified && missing.models.isEmpty() && missing.reason.contains("private cut"),
+                "private signed obligations must also reach their own frontier");
+        Iteration closed = ContextArithmeticFamilyRoundInspection.iterate(initial, 8, 16, 1000000, 100);
+        require(ContextArithmeticModelAudit.inspect(closed, 1000000).verified
+                && closed.frame.common.stream().noneMatch(p -> p.fact.predicate.equals("gate")),
+                "private-only proof verifies without exporting it to X");
     }
 
     private static void mixedDomainAudit() throws Exception {

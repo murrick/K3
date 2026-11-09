@@ -64,9 +64,26 @@ public final class ContextArithmeticModelAudit {
                         : ContextDependentCutInspection.trusted(cut.group);
                 models.add(model(key, rules, visible, owned(inventories, work), work));
             }
-            return new Audit(true, "All original definite rules and signed facts satisfy separate cut models", models);
+            verifyTransport(frame.localRules, frame.common, Collections.emptyList(), work);
+            for (int i = 0; i < frame.cuts.size(); i++) {
+                work.run();
+                List<ContextArithmeticRuleInspection> rules = new ArrayList<>(frame.localRules);
+                rules.addAll(frame.cuts.get(i).rules);
+                verifyTransport(rules, frame.common, frame.privateFrontiers.get(i), work);
+            }
+            return new Audit(true, "Separate cut models and supported signed transport verified", models);
         } catch (Exception failure) {
             return new Audit(false, failure.getMessage(), Collections.emptyList());
+        }
+    }
+
+    private static void verifyTransport(List<ContextArithmeticRuleInspection> rules, List<Premise> common,
+                                        List<Premise> privateFacts, Runnable work) throws Exception {
+        List<Premise> visible = new ArrayList<>(common);
+        visible.addAll(privateFacts);
+        for (ContextArithmeticRuleInspection rule : rules) {
+            work.run();
+            rule.auditTransport(common, privateFacts, visible, work);
         }
     }
 

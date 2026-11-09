@@ -515,6 +515,101 @@ public final class ContextArithmeticRuleInspection {
         }
     }
 
+    /** Independently checks closure of the supported signed, groundable fragment. */
+    void auditTransport(List<Premise> common, List<Premise> privateFacts, List<Premise> visible,
+                        Runnable work) throws Exception {
+        for (List<Atom> branch : branches) {
+            for (int retained = 0; retained < branch.size(); retained++) {
+                work.run();
+                Atom target = branch.get(retained);
+                List<Atom> donors = new ArrayList<>();
+                List<List<Premise>> choices = new ArrayList<>();
+                Set<Integer> binders = new HashSet<>();
+                for (int i = 0; i < branch.size(); i++) {
+                    work.run();
+                    if (i == retained) continue;
+                    Atom literal = branch.get(i);
+                    donors.add(literal);
+                    List<Premise> candidates = new ArrayList<>();
+                    for (Slot slot : literal.arguments) {
+                        work.run();
+                        if (slot.variable >= 0) binders.add(slot.variable);
+                    }
+                    for (Premise premise : visible) {
+                        work.run();
+                        Fact fact = premise.fact;
+                        if (fact.positive != literal.positive && fact.predicate.equals(literal.predicate)
+                                && fact.arguments.size() == literal.arguments.size()) candidates.add(premise);
+                    }
+                    if (candidates.isEmpty()) break;
+                    choices.add(candidates);
+                }
+                if (choices.size() != branch.size() - 1 || !binders.equals(variables)) continue;
+                int[] positions = new int[choices.size()];
+                do {
+                    work.run();
+                    auditTransportTuple(target, donors, choices, positions, common, privateFacts, work);
+                } while (nextTuple(positions, choices, work));
+            }
+        }
+    }
+
+    private static boolean nextTuple(int[] positions, List<List<Premise>> choices, Runnable work) {
+        for (int i = positions.length - 1; i >= 0; i--) {
+            work.run();
+            if (++positions[i] < choices.get(i).size()) return true;
+            positions[i] = 0;
+        }
+        return false;
+    }
+
+    private void auditTransportTuple(Atom target, List<Atom> donors, List<List<Premise>> choices,
+                                     int[] positions, List<Premise> common, List<Premise> privateFacts,
+                                     Runnable work) throws Exception {
+        Map<Integer, SemanticTermSnapshot> assignment = new HashMap<>();
+        Set<Source> support = new HashSet<>();
+        support.add(source);
+        boolean shared = source.localX;
+        int depth = 0;
+        for (int i = 0; i < positions.length; i++) {
+            work.run();
+            Premise premise = choices.get(i).get(positions[i]);
+            for (int j = 0; j < donors.get(i).arguments.size(); j++) {
+                work.run();
+                Slot slot = donors.get(i).arguments.get(j);
+                if (slot.expression != null) continue;
+                SemanticTermSnapshot actual = premise.fact.arguments.get(j);
+                SemanticTermSnapshot required = slot.variable < 0 ? slot.value : assignment.putIfAbsent(slot.variable, actual);
+                if (required != null && !required.semanticallyEquals(actual)) return;
+            }
+            depth = Math.max(depth, premise.proof.depth);
+            for (Source original : premise.proof.sources) {
+                work.run();
+                support.add(original);
+                shared |= original.localX;
+            }
+        }
+        for (int i = 0; i < positions.length; i++) {
+            work.run();
+            Fact fact = choices.get(i).get(positions[i]).fact;
+            for (int j = 0; j < donors.get(i).arguments.size(); j++) {
+                work.run();
+                Slot slot = donors.get(i).arguments.get(j);
+                if (!slot.instantiate(assignment, work).semanticallyEquals(fact.arguments.get(j))) return;
+            }
+        }
+        List<SemanticTermSnapshot> values = new ArrayList<>();
+        for (Slot slot : target.arguments) values.add(slot.instantiate(assignment, work));
+        Fact required = Fact.ground(target.predicate, target.positive, values);
+        for (Premise available : shared ? common : privateFacts) {
+            work.run();
+            if (available.proof.depth <= (long) depth + 1 && available.proof.sources.equals(support)
+                    && available.fact.equivalent(required)) return;
+        }
+        throw new IllegalStateException("Missing signed transport for " + target.predicate
+                + " in " + (shared ? "common X" : "private cut"));
+    }
+
     /** Checks a finite positive-relation model independently of premise joins and production. */
     long auditModel(List<Fact> positives, Runnable work) throws Exception {
         preflight(work);
