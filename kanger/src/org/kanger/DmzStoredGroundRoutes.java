@@ -29,9 +29,12 @@ final class DmzStoredGroundRoutes {
         DmzReplayProvenance.SourceCheckpoint sources=DmzReplayProvenance.sourceCheckpoint(target);
         String state=DmzObservationStateFingerprint.capture(target);
         IRule selected=null;int remaining=budget;
+        Map<Long,IRule> liveGenerated=new HashMap<>();
         for(IRule rule:target.getRules()) {
             if(--remaining<0)return refused(target,capture,boundary,sources,state,true);
-            if(rule.getId()==nativeCache && !rule.isDeleted(target))selected=rule;
+            if(rule.isDeleted(target))continue;
+            if(rule.getId()==nativeCache)selected=rule;
+            if(reconstruction && target.getRules().isGenerated(rule))liveGenerated.put(rule.getId(),rule);
         }
         if(selected==null || !target.getRules().isGenerated(selected)
                 || !DmzReplayProvenance.observedSources(target,nativeCache).isEmpty())
@@ -42,6 +45,7 @@ final class DmzStoredGroundRoutes {
         List<TerminalSupportCapture.ApplicationSources> routes=new ArrayList<TerminalSupportCapture.ApplicationSources>();
         Set<TerminalSupportCapture.Application> seen=Collections.newSetFromMap(new IdentityHashMap<TerminalSupportCapture.Application,Boolean>());
         boolean storedRoot=false;
+        List<TerminalSupportCapture.Ground> storedCaches=new ArrayList<>();
         // Only actual storage-time applications from committed observed operations are admitted.
         List<TerminalSupportCapture.StoredObservation> history;
         try {history=capture.storedSnapshotBounded(budget);}
@@ -51,6 +55,12 @@ final class DmzStoredGroundRoutes {
             if(stored.outcome!=TerminalSupportCapture.Outcome.COMMITTED || !stored.materialization.generated)continue;
             if(stored.materialization.nativeRule==nativeCache
                     && root.equivalent(stored.materialization.causes.nodes.get(stored.materialization.causes.root).ground))storedRoot=true;
+            IRule live=liveGenerated.get(stored.materialization.nativeRule);
+            if(live!=null) {
+                TerminalSupportCapture.Ground storedGround=stored.materialization.causes.nodes.get(stored.materialization.causes.root).ground;
+                if(storedGround!=null && storedGround.equivalent(DmzGroundIdentity.capture(live,target).ground()))
+                    storedCaches.add(storedGround);
+            }
             for(TerminalSupportCapture.Application app:stored.routes) {
                 if(--remaining<0)return refused(target,capture,boundary,sources,state,true);
                 if(!seen.add(app))continue;
@@ -70,21 +80,45 @@ final class DmzStoredGroundRoutes {
             List<TerminalSupportCapture.Application> committed;
             try { committed=capture.committedAt(boundary,remaining); }
             catch(IllegalStateException exhausted){return refused(target,capture,boundary,sources,state,true);}
-            for(TerminalSupportCapture.Application app:committed) {
-                if(--remaining<0)return refused(target,capture,boundary,sources,state,true);
-                if(!root.equivalent(app.ground) || !seen.add(app))continue;
-                TerminalSupportCapture.ProvisionalApplication frozen=capture.historicalSources(app);
-                if(frozen==null || !frozen.excludedPairs.isEmpty() || !frozen.noGoods.isEmpty())continue;
-                List<DmzReplayProvenance.Binding> production=current(frozen.ruleSources,sources);
-                if(production.isEmpty())continue;
-                List<List<DmzReplayProvenance.Binding>> supports=new ArrayList<>();
-                for(List<DmzReplayProvenance.SourceObservation> input:frozen.supportSources) {
+            // Follow observed generated premises backwards; do not treat every
+            // application in the reconstruction as an alternative to this endpoint.
+            List<TerminalSupportCapture.Ground> pending=new ArrayList<>();
+            pending.add(root);
+            for(int i=0;i<pending.size();++i) {
+                TerminalSupportCapture.Ground goal=pending.get(i);
+                boolean live=false;
+                for(TerminalSupportCapture.Ground stored:storedCaches) {
                     if(--remaining<0)return refused(target,capture,boundary,sources,state,true);
-                    supports.add(current(input,sources));
+                    if(goal.equivalent(stored)){live=true;break;}
                 }
-                TerminalSupportCapture.Application copy=new TerminalSupportCapture.Application(boundary.target,app.rule,
-                        app.ruleOrigin,app.conclusion,app.ground,app.bindings,app.supports,app.sourceCandidates);
-                routes.add(new TerminalSupportCapture.ApplicationSources(copy,production,supports));
+                if(!live)continue;
+                for(TerminalSupportCapture.Application app:committed) {
+                    if(--remaining<0)return refused(target,capture,boundary,sources,state,true);
+                    if(!goal.equivalent(app.ground))continue;
+                    TerminalSupportCapture.ProvisionalApplication frozen=capture.historicalSources(app);
+                    if(frozen==null || !frozen.excludedPairs.isEmpty() || !frozen.noGoods.isEmpty())continue;
+                    List<DmzReplayProvenance.Binding> production=current(frozen.ruleSources,sources);
+                    if(production.isEmpty())continue;
+                    for(TerminalSupportCapture.Support support:app.supports) {
+                        if(--remaining<0)return refused(target,capture,boundary,sources,state,true);
+                        if(support.primary || support.ground==null)continue;
+                        boolean known=false;
+                        for(TerminalSupportCapture.Ground item:pending) {
+                            if(--remaining<0)return refused(target,capture,boundary,sources,state,true);
+                            if(support.ground.equivalent(item)){known=true;break;}
+                        }
+                        if(!known)pending.add(support.ground);
+                    }
+                    if(!seen.add(app))continue;
+                    List<List<DmzReplayProvenance.Binding>> supports=new ArrayList<>();
+                    for(List<DmzReplayProvenance.SourceObservation> input:frozen.supportSources) {
+                        if(--remaining<0)return refused(target,capture,boundary,sources,state,true);
+                        supports.add(current(input,sources));
+                    }
+                    TerminalSupportCapture.Application copy=new TerminalSupportCapture.Application(boundary.target,app.rule,
+                            app.ruleOrigin,app.conclusion,app.ground,app.bindings,app.supports,app.sourceCandidates);
+                    routes.add(new TerminalSupportCapture.ApplicationSources(copy,production,supports));
+                }
             }
         }
         DmzSourcedProofGraph actual=DmzSourcedProofGraph.build(routes);
