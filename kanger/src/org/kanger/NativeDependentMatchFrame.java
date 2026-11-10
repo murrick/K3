@@ -105,7 +105,7 @@ final class NativeDependentMatchFrame implements AutoCloseable {
     private boolean failed,closed;
     private final Arena arena;
     private final Map<Long,Entry> entries=new LinkedHashMap<>();
-    private NativeDependentMatchFrame(Mind mind,UUID context,long revision,boolean localX,List<String> initialization,int maximumRows,int maximumSteps,int maximumWork,int maximumNodes) throws Exception {
+    private NativeDependentMatchFrame(Mind mind,UUID context,long revision,boolean localX,List<String> initialization,int maximumRows,int maximumSteps,int maximumWork,int maximumNodes,Set<Long> selected) throws Exception {
         if(maximumSteps<1||maximumWork<1)throw new IllegalArgumentException("Positive matching bounds required");
         this.mind=mind;this.context=context;this.revision=revision;this.localX=localX;
         this.initialization=Collections.unmodifiableList(new ArrayList<>(initialization));this.maximumRows=maximumRows;this.maximumSteps=maximumSteps;remaining=maximumWork;
@@ -114,7 +114,8 @@ final class NativeDependentMatchFrame implements AutoCloseable {
         try {
             // Account for the ENTIRE original inventory before exposing any entry.
             for(ContextProductionInventory.Row row:inventory.primary) {
-                tick();Rule original=(Rule)mind.getRules().get(row.nativeRule);List<Clause> clauses=headless(original,mind);
+                tick();if(selected!=null&&!selected.contains(row.nativeRule))continue;
+                Rule original=(Rule)mind.getRules().get(row.nativeRule);List<Clause> clauses=headless(original,mind);
                 Root root=null;if(clauses==null) {root=arena.capture(original);clauses=Collections.emptyList();}
                 else {
                     User user=new User();Mind replay=new Mind(user);user.setCurrentMind(replay);
@@ -126,11 +127,19 @@ final class NativeDependentMatchFrame implements AutoCloseable {
                 Source source=new Source(context,revision,row.nativeRule,localX,"inventory:"+inventory.fingerprint);
                 entries.put(row.nativeRule,new Entry(this,original,source,root,clauses));
             }
+            if(selected!=null&&!entries.keySet().equals(selected))throw refuse("Exact selected primary rows required");
             current();
         }catch(Exception failure){failed=true;arena.close();throw failure;}
     }
     static NativeDependentMatchFrame open(Mind mind,UUID context,long revision,boolean localX,List<String> initialization,int maximumRows,int maximumSteps,int maximumWork,int maximumNodes) throws Exception {
-        return new NativeDependentMatchFrame(mind,context,revision,localX,initialization,maximumRows,maximumSteps,maximumWork,maximumNodes);
+        return new NativeDependentMatchFrame(mind,context,revision,localX,initialization,maximumRows,maximumSteps,maximumWork,maximumNodes,null);
+    }
+    static NativeDependentMatchFrame openPair(Mind mind,Rule producer,Rule receiver) throws Exception {
+        if(mind.getRules().get(producer.getId())!=producer || mind.getRules().get(receiver.getId())!=receiver
+                || producer.getId()==receiver.getId())throw new IllegalStateException("Exact pair owners required");
+        Set<Long> selected=new HashSet<>(Arrays.asList(producer.getId(),receiver.getId()));
+        return new NativeDependentMatchFrame(mind,UUID.randomUUID(),0,true,Collections.emptyList(),
+                1000,2,1000000,10000,selected);
     }
     private IllegalStateException refuse(String why){failed=true;return new IllegalStateException(why);}
     private void active(){if(Thread.currentThread()!=owner)throw new IllegalStateException("Matching frame requires owning thread");if(failed||closed)throw new IllegalStateException("Matching frame failed or closed");}

@@ -43,14 +43,18 @@ raise SystemExit(subprocess.call(['java', '-XX:-UsePerfData', '-Duser.home=' + s
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--mode', choices=('contract', 'reference', 'witness-contract', 'independent-reopen-contract', 'ordinary-commit-contract', 'ordinary-ground-attachment-contract', 'ordinary-revision-switch-contract', 'ordinary-private-edit-contract', 'ordinary-topology-contract', 'ordinary-function-attachment-contract', 'native-function-pair-contract', 'closed-arithmetic-contract', 'arithmetic-expression-contract', 'arithmetic-rule-contract', 'arithmetic-step-contract', 'arithmetic-round-contract', 'arithmetic-family-round-contract', 'arithmetic-collision-contract', 'arithmetic-iteration-contract', 'arithmetic-model-contract', 'arithmetic-constraint-contract', 'private-witness-contract', 'universal-unit-contract'), default='contract')
+    parser.add_argument('--mode', choices=('native-dependent-authoring-contract', 'contract', 'reference', 'witness-contract', 'independent-reopen-contract', 'ordinary-commit-contract', 'ordinary-ground-attachment-contract', 'ordinary-revision-switch-contract', 'ordinary-private-edit-contract', 'ordinary-topology-contract', 'ordinary-function-attachment-contract', 'native-function-pair-contract', 'closed-arithmetic-contract', 'arithmetic-expression-contract', 'arithmetic-rule-contract', 'arithmetic-step-contract', 'arithmetic-round-contract', 'arithmetic-family-round-contract', 'arithmetic-collision-contract', 'arithmetic-iteration-contract', 'arithmetic-model-contract', 'arithmetic-constraint-contract', 'private-witness-contract', 'universal-unit-contract'), default='contract')
     parser.add_argument('--ordinary-integration-candidate', action='store_true',
                         help='Compile an isolated experimental default hook; never edit production sources')
     parser.add_argument('--ground-attachment-candidate', action='store_true',
                         help='Compile an isolated ground topology admission candidate')
     parser.add_argument('--prepare-arithmetic-console', action='store_true',
                         help='Prepare a disposable Console with the isolated topology candidate')
+    parser.add_argument('--dependent-authoring-candidate', action='store_true',
+                        help='Compile isolated dependent-pair authoring refutation hook')
     args = parser.parse_args()
+    if args.dependent_authoring_candidate and args.mode != 'native-dependent-authoring-contract':
+        parser.error('dependent authoring candidate requires its own contract')
     if args.prepare_arithmetic_console:
         if args.mode != 'contract' or args.ordinary_integration_candidate:
             parser.error('manual arithmetic Console uses only the topology candidate')
@@ -65,6 +69,8 @@ def main():
                'kanger-data-dumb2', 'kanger-console')
     production = sorted(p for module in modules for p in (root / module / 'src').rglob('*.java'))
     names = [('org.kanger.storage.dumb2.ContextProductionRoundsContractRunner', 'CONTEXT_PRODUCTION_ROUNDS_CONTRACT_PASS')]
+    if args.mode == 'native-dependent-authoring-contract':
+        names = [('org.kanger.ContextAlternatingPrefixCollisionGate', 'missing=0')]
     if args.mode == 'witness-contract':
         names = [('org.kanger.ContextWitnessForkContractRunner', 'CONTEXT_WITNESS_FORK_CONTRACT_PASS')]
     if args.mode == 'independent-reopen-contract':
@@ -1215,6 +1221,25 @@ def main():
         candidate.parent.mkdir(parents=True, exist_ok=True)
         candidate.write_text(source, encoding='utf-8')
         production = [candidate if p == original else p for p in production]
+    if args.dependent_authoring_candidate:
+        original = root / 'kanger/src/org/kanger/Analyzer.java'
+        source = original.read_text(encoding='utf-8')
+        marker = """        if (!result) {
+
+            boolean occurs = false;"""
+        replacement = """        if (!result && !CollisionProofCapture.active()
+                && (ordinaryUnitQualification || mind.getQueryPass() == org.kanger.enums.QueryPass.ACCEPT)) {
+            ContextQualification.CollisionWitness dependent = NativeDependentPairCollision.find(mind);
+            if (dependent != null) { collisions.add(dependent); result = true; }
+        }
+
+""" + marker
+        if source.count(marker) != 1:
+            raise RuntimeError('Dependent authoring overlay does not match exact Analyzer boundary')
+        candidate = run / 'candidate/org/kanger/Analyzer.java'
+        candidate.parent.mkdir(parents=True, exist_ok=True)
+        candidate.write_text(source.replace(marker,replacement), encoding='utf-8')
+        production = [candidate if p == original else p for p in production]
     listing = run / 'sources.list'
     listing.write_text(''.join('"' + str(p).replace('\\', '/') + '"\n'
                                for p in production + drivers), encoding='utf-8')
@@ -1252,7 +1277,9 @@ def main():
     head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip()
     passed = all(result['passed'] for result in results)
     report = dict(ground_attachment_candidate=args.ground_attachment_candidate, ordinary_integration_candidate=args.ordinary_integration_candidate, head=head, production_sources=len(production), mode=args.mode, passed=passed, results=results,
-                  scope={'contract': 'Pending runtime authoring contract',
+                  dependent_authoring_candidate=args.dependent_authoring_candidate,
+                  scope={'native-dependent-authoring-contract': 'Dependent pair authoring refutation; isolated Analyzer candidate',
+                         'contract': 'Pending runtime authoring contract',
                          'witness-contract': 'Native primary existential witness consistency contract',
                          'independent-reopen-contract': 'Certified independent-coordinate source must reopen after publication',
                          'universal-unit-contract': 'Desired universal-unit family coverage; open required language gate, not expected-refusal PASS',

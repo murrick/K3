@@ -40,6 +40,8 @@ public final class ContextAlternatingPrefixCollisionGate {
         check("alternating", fixed, restriction, false);
         check("reverse", restriction, fixed, false);
         check("alpha", "!@x $z @y rel(x,z,y);", restriction, false);
+        check("reordered-literals", fixed, "!@a @u ~(rel(a,u,2)&&rel(a,u,1));", false);
+        check("unrelated-horn-in-inventory", fixed+" !@x left(x)->right(x);", restriction, false);
         check("dependent-control", dependent, restriction, true);
         check("dependent-reverse", restriction, dependent, true);
         check("ground-a-control", fixed, "!@u ~(rel(1,u,1)&&rel(1,u,2));", false);
