@@ -39,7 +39,11 @@ public final class DmzConsoleWorkflowRunner {
                 restrictions(false);
                 System.out.println("DMZ_PAIR_REPLAY_PASS checks="+checks);System.exit(0);
             }
-            family();run();restrictions(false);restrictions(true);staleAuthority();lateDiagnostic(false);lateDiagnostic(true);
+            if(args.length==1 && "--family".equals(args[0])) {
+                family(); sameRestrictionSet();
+                System.out.println("DMZ_FAMILY_REPORT_PASS checks="+checks);System.exit(0);
+            }
+            family();sameRestrictionSet();run();restrictions(false);restrictions(true);staleAuthority();lateDiagnostic(false);lateDiagnostic(true);
             answerDiagnostic(false,1,Boolean.TRUE);answerDiagnostic(true,1,Boolean.TRUE);
             for(boolean negative:new boolean[]{false,true})for(Boolean truth:new Boolean[]{Boolean.TRUE,Boolean.FALSE,null})answerDiagnostic(negative,3,truth);
             System.out.println("DMZ_CONSOLE_WORKFLOW_PASS checks="+checks);System.exit(0); }
@@ -81,6 +85,36 @@ public final class DmzConsoleWorkflowRunner {
         Mind reopened=(Mind)user.getCurrentMind().useStorage("Q");user.setCurrentMind(reopened);
         require(state.equals(DmzSourceMaterializationQualification.fingerprint(reopened)),"family Console restores Q through owner closure");
         user.setCurrentMind(reopened.closeStorage());
+    }
+    private static void sameRestrictionSet() throws Exception {
+        Path dir=Files.createTempDirectory("dmz-family-same-set-");
+        System.setProperty("user.home",dir.toString());
+        create(dir,"Q","!a(1);");
+        create(dir,"A","!@x a(x) -> p(x);");
+        create(dir,"B","!@x a(x) -> p(x);");
+        IContextResults.Revision blocker=create(dir,"Blocker","!~p(1);");
+        long trigger;
+        try(SnapshotMindRuntime snapshot=SnapshotMindRuntime.open(dir.resolve("Blocker"),
+                new RevisionRef(blocker.getContextId(),blocker.getRevision()),"same-set-trigger")) {
+            trigger=org.kanger.DmzSourceShape.inspect(snapshot.getMind(),100).declarations.get(0).sourceRule;
+        }
+        User user=new User();
+        user.setUserDir(Files.createDirectories(dir.resolve("operator")).toString());
+        user.setDatabaseDir(dir.toString()+java.io.File.separator);
+        DB db=new DB();db.init(user);Mind initial=new Mind(user);user.setCurrentMind(initial);
+        Mind q=(Mind)initial.useStorage("Q");user.setCurrentMind(q);
+        ByteArrayOutputStream out=new ByteArrayOutputStream();
+        String errors=boundaryConsole(q,"ctx dmz Q@1 ?p(1); from=A@1 from=B@1 from=Blocker@1 restrict=Blocker@1:"+trigger
+                +"\nctx dmz family 10\n",out);
+        String report=out.toString("UTF-8");
+        require(errors.isEmpty(),"same-set fixture has no Console errors: "+errors);
+        require(report.contains("branches=2; distinct restriction sets=1")
+                && report.contains("Branch 1: choices=2; restriction set=1")
+                && report.contains("Branch 2: choices=2; restriction set=1"),"same choices in opposite orders share a display set: "+report);
+        java.util.List<DmzSourcesQuery.Result> leaves=user.getLastDmzFamily().leaves;
+        java.util.List<String> left=leaves.get(0).request.restrictions.choices,right=leaves.get(1).request.restrictions.choices;
+        require(!left.equals(right) && left.get(0).equals(right.get(1)) && left.get(1).equals(right.get(0)),
+                "grouping does not merge or reorder the historical branches");
     }
     private static String pin(IContextResults.Revision p) { return p.getContextId()+"@"+p.getRevision(); }
     private static void run() throws Exception {
