@@ -40,10 +40,10 @@ public final class DmzConsoleWorkflowRunner {
                 System.out.println("DMZ_PAIR_REPLAY_PASS checks="+checks);System.exit(0);
             }
             if(args.length==1 && "--family".equals(args[0])) {
-                family(); sameRestrictionSet();
+                family(); sameRestrictionSet(false); sameRestrictionSet(true);
                 System.out.println("DMZ_FAMILY_REPORT_PASS checks="+checks);System.exit(0);
             }
-            family();sameRestrictionSet();run();restrictions(false);restrictions(true);staleAuthority();lateDiagnostic(false);lateDiagnostic(true);
+            family();sameRestrictionSet(false);sameRestrictionSet(true);run();restrictions(false);restrictions(true);staleAuthority();lateDiagnostic(false);lateDiagnostic(true);
             answerDiagnostic(false,1,Boolean.TRUE);answerDiagnostic(true,1,Boolean.TRUE);
             for(boolean negative:new boolean[]{false,true})for(Boolean truth:new Boolean[]{Boolean.TRUE,Boolean.FALSE,null})answerDiagnostic(negative,3,truth);
             System.out.println("DMZ_CONSOLE_WORKFLOW_PASS checks="+checks);System.exit(0); }
@@ -86,12 +86,12 @@ public final class DmzConsoleWorkflowRunner {
         require(state.equals(DmzSourceMaterializationQualification.fingerprint(reopened)),"family Console restores Q through owner closure");
         user.setCurrentMind(reopened.closeStorage());
     }
-    private static void sameRestrictionSet() throws Exception {
+    private static void sameRestrictionSet(boolean independent) throws Exception {
         Path dir=Files.createTempDirectory("dmz-family-same-set-");
         System.setProperty("user.home",dir.toString());
-        create(dir,"Q","!a(1);");
+        create(dir,"Q",independent?"!a(1); !b(1);":"!a(1);");
         create(dir,"A","!@x a(x) -> p(x);");
-        create(dir,"B","!@x a(x) -> p(x);");
+        create(dir,"B",independent?"!@x b(x) -> p(x);":"!@x a(x) -> p(x);");
         IContextResults.Revision blocker=create(dir,"Blocker","!~p(1);");
         long trigger;
         try(SnapshotMindRuntime snapshot=SnapshotMindRuntime.open(dir.resolve("Blocker"),
@@ -103,6 +103,7 @@ public final class DmzConsoleWorkflowRunner {
         user.setDatabaseDir(dir.toString()+java.io.File.separator);
         DB db=new DB();db.init(user);Mind initial=new Mind(user);user.setCurrentMind(initial);
         Mind q=(Mind)initial.useStorage("Q");user.setCurrentMind(q);
+        String state=DmzSourceMaterializationQualification.fingerprint(q);
         ByteArrayOutputStream out=new ByteArrayOutputStream();
         String errors=boundaryConsole(q,"ctx dmz Q@1 ?p(1); from=A@1 from=B@1 from=Blocker@1 restrict=Blocker@1:"+trigger
                 +"\nctx dmz family 10\n",out);
@@ -115,6 +116,17 @@ public final class DmzConsoleWorkflowRunner {
         java.util.List<String> left=leaves.get(0).request.restrictions.choices,right=leaves.get(1).request.restrictions.choices;
         require(!left.equals(right) && left.get(0).equals(right.get(1)) && left.get(1).equals(right.get(0)),
                 "grouping does not merge or reorder the historical branches");
+        if(independent) {
+            java.util.Set<String> donors=new java.util.HashSet<>();
+            for(DmzSourcesQuery.Proof proof:leaves.get(0).restrictionProofs)
+                donors.add(proof.premises.get(0).conclusion);
+            require(donors.equals(new java.util.HashSet<>(java.util.Arrays.asList("!a(1);","!b(1);"))),
+                    "independent proof roots preserve their distinct primary donors: "+donors);
+        }
+        Mind reopened=(Mind)user.getCurrentMind().useStorage("Q");user.setCurrentMind(reopened);
+        require(state.equals(DmzSourceMaterializationQualification.fingerprint(reopened))
+                && !db.hasConnectedContexts(),"family does not persist reconstructions in Q");
+        user.setCurrentMind(reopened.closeStorage());
     }
     private static String pin(IContextResults.Revision p) { return p.getContextId()+"@"+p.getRevision(); }
     private static void run() throws Exception {

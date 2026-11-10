@@ -22,10 +22,12 @@ final class DmzCacheCollisionEvidence {
     }
     static final class Baseline {
         private final TerminalSupportCapture capture;
+        private final boolean reconstruction;
         private final Mind target;
         private final TerminalSupportCapture.Checkpoint state;
         private final DmzReplayProvenance.SourceCheckpoint sources;
-        private Baseline(TerminalSupportCapture capture,Mind target) throws Exception {
+        private Baseline(TerminalSupportCapture capture,Mind target,boolean reconstruction) throws Exception {
+            this.reconstruction=reconstruction;
             this.capture=capture;this.target=target;state=capture.baselineCheckpoint(target);
             sources=DmzReplayProvenance.sourceCheckpoint(target);
         }
@@ -48,7 +50,10 @@ final class DmzCacheCollisionEvidence {
         this.receipts=Collections.unmodifiableList(new ArrayList<DmzStoredGroundRoutes>(receipts));
     }
     static Baseline beforeOperation(TerminalSupportCapture capture,Mind target) throws Exception {
-        return new Baseline(capture,target);
+        return new Baseline(capture,target,false);
+    }
+    static Baseline beforeReconstructionProbe(TerminalSupportCapture capture,Mind target) throws Exception {
+        return new Baseline(capture,target,true);
     }
     static DmzCacheCollisionEvidence bind(Baseline baseline,CollisionProofCapture.Conflict event,Mind target,int budget) throws Exception {
         if(budget<1 || budget>10000)throw new IllegalArgumentException("Bounded cache collision evidence required");
@@ -67,7 +72,7 @@ final class DmzCacheCollisionEvidence {
             }
             if(live==null || !endpoint.ground.equivalent(DmzGroundIdentity.capture(live,target).ground()))return refused(baseline,event,false);
             if(target.getRules().isGenerated(live)) {
-                DmzStoredGroundRoutes receipt=DmzStoredGroundRoutes.capture(baseline.capture,target,endpoint.nativeRule,remaining);
+                DmzStoredGroundRoutes receipt=DmzStoredGroundRoutes.capture(baseline.capture,target,endpoint.nativeRule,remaining,baseline.reconstruction);
                 if(!receipt.covered || !receipt.isCurrent(target))return refused(baseline,event,receipt.truncated);
                 receipts.add(receipt);
                 for(int i=0;i<receipt.graph.observed.steps.size();++i) {
@@ -119,7 +124,7 @@ final class DmzCacheCollisionEvidence {
             if(rule.getId()!=endpoint.nativeRule || rule.isDeleted(target))continue;
             if(!endpoint.ground.equivalent(DmzGroundIdentity.capture(rule,target).ground()))break;
             if(target.getRules().isGenerated(rule)) {
-                DmzStoredGroundRoutes receipt=DmzStoredGroundRoutes.capture(baseline.capture,target,rule.getId(),remaining);
+                DmzStoredGroundRoutes receipt=DmzStoredGroundRoutes.capture(baseline.capture,target,rule.getId(),remaining,baseline.reconstruction);
                 if(!receipt.covered || !receipt.isCurrent(target))break;
                 return receipt;
             }
@@ -181,7 +186,7 @@ final class DmzCacheCollisionEvidence {
                 }
             }
             if(live==null)return new Projection(false,false,0,null);
-            causalRoute=DmzStoredGroundRoutes.capture(baseline.capture,target,live.getId(),remaining);
+            causalRoute=DmzStoredGroundRoutes.capture(baseline.capture,target,live.getId(),remaining,baseline.reconstruction);
             if(!causalRoute.covered || !causalRoute.isCurrent(target))return new Projection(false,causalRoute.truncated,0,null);
         }
         DmzProofWitnesses.NoGood pattern;

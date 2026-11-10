@@ -216,6 +216,21 @@ final class TerminalSupportCapture implements AutoCloseable {
         return storedSnapshot();
     }
 
+    /** Bounded committed applications owned by this reconstruction boundary. */
+    List<Application> committedAt(Checkpoint boundary,int budget) {
+        requireActive();
+        if(!scopeId.equals(boundary.scope) || applications.size()>budget)
+            throw new IllegalStateException("Committed route scan budget exceeded");
+        List<Application> result=new ArrayList<>();
+        for(Application application:applications) {
+            Frame operation=frames.get(operation(application.mind));
+            if(operation!=null && operation.parent==boundary.target && operation.knownBoundary
+                    && operation.opened<=boundary.opened && outcome(application.mind)==Outcome.COMMITTED)
+                result.add(application);
+        }
+        return result;
+    }
+
     /** Same concrete atom in exactly this observed Mind and technical operation. */
     static boolean matchesStored(Materialization stored, Application application, int operation) {
         Ground ground = stored.causes.nodes.get(stored.causes.root).ground;

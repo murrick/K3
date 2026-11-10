@@ -20,6 +20,10 @@ final class DmzStoredGroundRoutes {
         this.covered=covered;this.truncated=truncated;this.graph=graph;expectedProofs=expected;observedProofs=observed;
     }
     static DmzStoredGroundRoutes capture(TerminalSupportCapture capture,Mind target,long nativeCache,int budget) throws Exception {
+        return capture(capture,target,nativeCache,budget,false);
+    }
+    static DmzStoredGroundRoutes capture(TerminalSupportCapture capture,Mind target,long nativeCache,int budget,
+            boolean reconstruction) throws Exception {
         if(budget<1 || budget>10000)throw new IllegalArgumentException("Bounded stored route audit required");
         TerminalSupportCapture.Checkpoint boundary=capture.baselineCheckpoint(target);
         DmzReplayProvenance.SourceCheckpoint sources=DmzReplayProvenance.sourceCheckpoint(target);
@@ -62,6 +66,27 @@ final class DmzStoredGroundRoutes {
             }
         }
         if(!storedRoot)return refused(target,capture,boundary,sources,state,false);
+        if(reconstruction) {
+            List<TerminalSupportCapture.Application> committed;
+            try { committed=capture.committedAt(boundary,remaining); }
+            catch(IllegalStateException exhausted){return refused(target,capture,boundary,sources,state,true);}
+            for(TerminalSupportCapture.Application app:committed) {
+                if(--remaining<0)return refused(target,capture,boundary,sources,state,true);
+                if(!root.equivalent(app.ground) || !seen.add(app))continue;
+                TerminalSupportCapture.ProvisionalApplication frozen=capture.historicalSources(app);
+                if(frozen==null || !frozen.excludedPairs.isEmpty() || !frozen.noGoods.isEmpty())continue;
+                List<DmzReplayProvenance.Binding> production=current(frozen.ruleSources,sources);
+                if(production.isEmpty())continue;
+                List<List<DmzReplayProvenance.Binding>> supports=new ArrayList<>();
+                for(List<DmzReplayProvenance.SourceObservation> input:frozen.supportSources) {
+                    if(--remaining<0)return refused(target,capture,boundary,sources,state,true);
+                    supports.add(current(input,sources));
+                }
+                TerminalSupportCapture.Application copy=new TerminalSupportCapture.Application(boundary.target,app.rule,
+                        app.ruleOrigin,app.conclusion,app.ground,app.bindings,app.supports,app.sourceCandidates);
+                routes.add(new TerminalSupportCapture.ApplicationSources(copy,production,supports));
+            }
+        }
         DmzSourcedProofGraph actual=DmzSourcedProofGraph.build(routes);
         int node=-1;
         for(int i=0;i<actual.observed.nodes.size();++i) {

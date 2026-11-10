@@ -82,7 +82,7 @@ public final class DmzSourceRestrictionWorkflow {
             for(Input input:deferred)replay(q,input);
             String state=DmzObservationStateFingerprint.capture(q);
             DmzReplayProvenance.SourceCheckpoint checkpoint=DmzReplayProvenance.sourceCheckpoint(q);
-            DmzCacheCollisionEvidence.Baseline baseline=DmzCacheCollisionEvidence.beforeOperation(capture,q);
+            DmzCacheCollisionEvidence.Baseline baseline=DmzCacheCollisionEvidence.beforeReconstructionProbe(capture,q);
             CollisionProofCapture.Conflict conflict;
             try(CollisionProofCapture collisions=CollisionProofCapture.begin()) {
                 if(q.compile(trigger.declaration.statement,null,false) || collisions.snapshot().isEmpty())
