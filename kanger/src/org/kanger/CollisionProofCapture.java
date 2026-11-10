@@ -73,6 +73,7 @@ final class CollisionProofCapture implements AutoCloseable {
         }
     }
 
+    private final List<NativeDependentReplayCapsule.Saved> dependent=new ArrayList<>();
     private final List<SymbolicConflict> symbolic=new ArrayList<SymbolicConflict>();
     private final CollisionProofCapture previous;
     private final Thread owner;
@@ -84,8 +85,6 @@ final class CollisionProofCapture implements AutoCloseable {
         owner = Thread.currentThread();
         ACTIVE.set(this);
     }
-
-    static boolean active() { return ACTIVE.get()!=null; }
 
     static CollisionProofCapture begin() { return new CollisionProofCapture(); }
 
@@ -103,11 +102,22 @@ final class CollisionProofCapture implements AutoCloseable {
         capture.symbolic.add(new SymbolicConflict(proof.evidence(),roots));
     }
 
+    static void recordDependent(NativeDependentMatchFrame frame,NativeDependentMatchFrame.Match proof) throws Exception {
+        CollisionProofCapture capture=ACTIVE.get();
+        if(capture!=null)capture.dependent.add(NativeDependentReplayCapsule.capturePair(frame,proof,
+                new NativeDependentReplayCapsule.Limits(262144,2,2,1000000,10000)));
+    }
+
+    List<NativeDependentReplayCapsule.Saved> dependentSnapshot() {
+        return Collections.unmodifiableList(new ArrayList<>(dependent));
+    }
+
     List<SymbolicConflict> symbolicSnapshot() {
         return Collections.unmodifiableList(new ArrayList<>(symbolic));
     }
 
     List<Conflict> snapshot() {
+        if (!dependent.isEmpty()) throw new IllegalStateException("Dependent collision requires its complete replay evidence; legacy pair capture unsupported");
         if (!symbolic.isEmpty()) throw new IllegalStateException("Symbolic multi-root collision requires its complete evidence; legacy pair capture unsupported");
         return Collections.unmodifiableList(new ArrayList<Conflict>(conflicts));
     }

@@ -15,7 +15,7 @@ import org.kanger.units.Term;
 
 /** Pinned historical replay, never a physical-provider lease or admission receipt. */
 final class NativeDependentReplayCapsule {
-    private static final int MAGIC=0x4b334450,VERSION=1;
+    private static final int MAGIC=0x4b334450,VERSION=1,PAIR_VERSION=2;
     static final class Limits {
         final int bytes,rows,steps,work,nodes;
         Limits(int bytes,int rows,int steps,int work,int nodes) {
@@ -156,14 +156,35 @@ final class NativeDependentReplayCapsule {
         if(!inventory.initialization.isEmpty()||inventory.rows.size()!=inventory.primary.size()||!replay.initialization.isEmpty()||replay.rows.size()!=replay.primary.size())throw new IOException("Capsule requires primary-only inventory and empty initialization");
         if(inventory.rows.size()!=replay.rows.size()||inventory.rows.size()>limits.rows||plan.steps.isEmpty()||plan.steps.size()>limits.steps)throw new IOException("Dependent capsule shape limit");
         if(!inventory.context.equals(replay.context)||inventory.revision!=replay.revision||inventory.localX!=replay.localX)throw new IOException("Different projected context coordinate");
+        if(original!=null && originalToReplay==null)throw new IOException("Complete Source projection required");
+        return encode(frame,plan,inventory,inventory.rows,original==null?null:originalToReplay,limits,VERSION);
+    }
+    /** Capture exactly the verified roots, including from a view with generated rows. */
+    static Saved capturePair(NativeDependentMatchFrame frame,Match match,Limits limits)throws Exception {
+        ReplayPlan plan=frame.replayPlan(match);
+        if(!plan.materialization.remaining.isEmpty() || plan.materialization.support.sources.size()!=2
+                || !plan.inventory.initialization.isEmpty() || frame.entries().size()!=2)
+            throw new IOException("Complete dependent pair refutation required");
+        Set<Long> ids=new HashSet<>();
+        for(Source source:plan.materialization.support.sources)ids.add(source.rule);
+        List<ContextProductionInventory.Row> roots=new ArrayList<>();
+        for(ContextProductionInventory.Row row:plan.inventory.primary)
+            if(ids.contains(row.nativeRule))roots.add(row);
+        if(roots.size()!=2 || roots.size()>limits.rows || plan.steps.size()>limits.steps)
+            throw new IOException("Dependent pair capsule shape limit");
+        return encode(frame,plan,plan.inventory,roots,null,limits,PAIR_VERSION);
+    }
+    private static Saved encode(NativeDependentMatchFrame frame,ReplayPlan plan,ContextProductionInventory inventory,
+            List<ContextProductionInventory.Row> selected,Map<Long,Long> originalToReplay,Limits limits,int version)throws Exception {
+        ContextProductionInventory replay=plan.inventory;
         Budget budget=new Budget(limits);BoundedBytes buffer=new BoundedBytes(limits.bytes);DataOutputStream out=new DataOutputStream(buffer);
-        out.writeInt(MAGIC);out.writeInt(VERSION);out.writeLong(inventory.context.getMostSignificantBits());out.writeLong(inventory.context.getLeastSignificantBits());
+        out.writeInt(MAGIC);out.writeInt(version);out.writeLong(inventory.context.getMostSignificantBits());out.writeLong(inventory.context.getLeastSignificantBits());
         out.writeLong(inventory.revision);out.writeBoolean(inventory.localX);text(out,"inventory:"+inventory.fingerprint,limits,budget);
         Map<Long,ContextProductionInventory.Row> replayRows=new LinkedHashMap<>();for(ContextProductionInventory.Row row:replay.rows){budget.spend(1);replayRows.put(row.nativeRule,row);}
-        Map<Long,Integer> rows=new LinkedHashMap<>();out.writeInt(inventory.rows.size());
-        if(original!=null&&(originalToReplay==null||originalToReplay.size()!=inventory.rows.size()))throw new IOException("Complete Source projection required");
-        for(ContextProductionInventory.Row row:inventory.rows) {
-            budget.spend(1);Long id=original==null?Long.valueOf(row.nativeRule):originalToReplay.get(row.nativeRule);
+        Map<Long,Integer> rows=new LinkedHashMap<>();out.writeInt(selected.size());
+        if(originalToReplay!=null&&originalToReplay.size()!=selected.size())throw new IOException("Complete Source projection required");
+        for(ContextProductionInventory.Row row:selected) {
+            budget.spend(1);Long id=originalToReplay==null?Long.valueOf(row.nativeRule):originalToReplay.get(row.nativeRule);
             ContextProductionInventory.Row copy=replayRows.get(id);
             if(copy==null||!Objects.equals(row.origin,copy.origin)||rows.put(id,rows.size())!=null)throw new IOException("Non-bijective whole original projection");
             out.writeLong(row.nativeRule);text(out,row.origin,limits,budget);
@@ -174,13 +195,19 @@ final class NativeDependentReplayCapsule {
     }
     /** Caller supplies an independently retained exact pin. Reopening proves only the historical packet. */
     static Reopened reopen(byte[] packet,Pin expected,Limits limits)throws Exception {
+        return reopen(packet,expected,limits,VERSION);
+    }
+    static Reopened reopenPair(byte[] packet,Pin expected,Limits limits)throws Exception {
+        return reopen(packet,expected,limits,PAIR_VERSION);
+    }
+    private static Reopened reopen(byte[] packet,Pin expected,Limits limits,int version)throws Exception {
         if(packet==null||expected==null||packet.length>limits.bytes)throw new IOException("Bounded pinned capsule required");
         byte[] copy=packet.clone();if(!MessageDigest.isEqual(hash(copy),expected.digest))throw new IOException("Different dependent capsule pin");
         Budget budget=new Budget(limits);DataInputStream in=new DataInputStream(new ByteArrayInputStream(copy));
-        if(in.readInt()!=MAGIC||in.readInt()!=VERSION)throw new IOException("Unsupported dependent capsule version");
+        if(in.readInt()!=MAGIC||in.readInt()!=version)throw new IOException("Unsupported dependent capsule version");
         UUID context=new UUID(in.readLong(),in.readLong());long revision=in.readLong();int flag=in.readUnsignedByte();if(flag>1)throw new IOException("Noncanonical dependent capsule flag");boolean localX=flag==1;
         String view=text(in,limits,budget);if(!view.matches("inventory:[0-9a-f]{64}"))throw new IOException("Invalid saved inventory view");
-        int size=count(in,limits.rows);if(size==0)throw new IOException("Empty dependent capsule inventory");
+        int size=count(in,limits.rows);if(size==0||version==PAIR_VERSION&&size!=2)throw new IOException("Invalid dependent capsule inventory size");
         List<Source> saved=new ArrayList<>();List<String> origins=new ArrayList<>();long previous=-1;
         for(int i=0;i<size;i++) {
             budget.spend(1);long id=in.readLong();if(id<=previous)throw new IOException("Nonunique or unordered saved source");previous=id;
@@ -188,7 +215,7 @@ final class NativeDependentReplayCapsule {
             if(!origin.trim().startsWith("!"))throw new IOException("Original assertion required");origins.add(origin);
         }
         int receiver=in.readInt(),branch=in.readInt(),steps=count(in,limits.steps);
-        if(receiver<0||receiver>=size||branch<0||steps==0)throw new IOException("Invalid dependent receiver/steps");
+        if(receiver<0||receiver>=size||branch<0||steps==0||version==PAIR_VERSION&&steps!=2)throw new IOException("Invalid dependent receiver/steps");
         int[] producers=new int[steps],pivots=new int[steps];
         for(int i=0;i<steps;i++){budget.spend(1);producers[i]=in.readInt();pivots[i]=in.readInt();if(producers[i]<0||producers[i]>=size||pivots[i]<0)throw new IOException("Invalid dependent replay step");}
         byte[] claimed=bytes(in,limits,budget);if(in.available()!=0)throw new IOException("Trailing dependent capsule data");
@@ -207,6 +234,8 @@ final class NativeDependentReplayCapsule {
             }
             Materialization materialization=frame.materialize(last);byte[] actual=transcript(materialization,rows,limits,budget);
             if(!Arrays.equals(claimed,actual))throw new IOException("Different independently rebuilt dependent transcript");
+            if(version==PAIR_VERSION && (!materialization.remaining.isEmpty() || materialization.support.sources.size()!=2))
+                throw new IOException("Incomplete dependent pair replay");
             frame.verify(materialization);return new Reopened(frame,materialization,sources);
         }catch(Exception failure){frame.close();throw failure;}
     }

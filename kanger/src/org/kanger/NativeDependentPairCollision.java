@@ -100,6 +100,7 @@ final class NativeDependentPairCollision {
                 NativeDependentMatchFrame.Match last=frame.match(source,first.after,0);
                 if(last==null || !last.after.remaining.isEmpty())continue;
                 frame.verify(last);
+                CollisionProofCapture.recordDependent(frame,last);
                 return ContextQualification.witness(receiver.getOrigin(),producer.getOrigin());
             }
         }

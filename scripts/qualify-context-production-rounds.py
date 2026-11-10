@@ -71,7 +71,8 @@ def main():
     names = [('org.kanger.storage.dumb2.ContextProductionRoundsContractRunner', 'CONTEXT_PRODUCTION_ROUNDS_CONTRACT_PASS')]
     if args.mode == 'native-dependent-authoring-contract':
         names = [('org.kanger.ContextAlternatingPrefixCollisionGate', 'missing=0'),
-                 ('org.kanger.NativeWitnessDependencyGate', 'missing=0')]
+                 ('org.kanger.NativeWitnessDependencyGate', 'missing=0'),
+                 ('org.kanger.NativeDependentAuthoringCaptureRunner', 'NATIVE_DEPENDENT_AUTHORING_CAPTURE_PASS')]
     if args.mode == 'witness-contract':
         names = [('org.kanger.ContextWitnessForkContractRunner', 'CONTEXT_WITNESS_FORK_CONTRACT_PASS')]
     if args.mode == 'independent-reopen-contract':
@@ -1228,7 +1229,7 @@ def main():
         marker = """        if (!result) {
 
             boolean occurs = false;"""
-        replacement = """        if (!result && !CollisionProofCapture.active()
+        replacement = """        if (!result
                 && (ordinaryUnitQualification || mind.getQueryPass() == org.kanger.enums.QueryPass.ACCEPT)) {
             ContextQualification.CollisionWitness dependent = NativeDependentPairCollision.find(mind);
             if (dependent != null) { collisions.add(dependent); result = true; }
@@ -1245,7 +1246,7 @@ def main():
         source = original.read_text(encoding='utf-8')
         marker = "            } else if (!excluded.isEmpty() && candidates.isEmpty() && stored.isEmpty()) {"
         replacement = marker + """
-                if (mind.getQueryPass() == QueryPass.ACCEPT && !CollisionProofCapture.active()
+                if (mind.getQueryPass() == QueryPass.ACCEPT
                         && excluded.size()==tree.size() && NativeDependentPairCollision.rejectsLegacyJoin(mind,tree))
                     return false;
 """
