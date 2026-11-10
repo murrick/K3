@@ -140,8 +140,13 @@ public final class DmzSourcesQuery {
         public final Refusal reason;
         public final java.util.UUID context;
         public final Long rule;
+        public final String sourceLabel;
         public PlanningRefusal(Refusal reason,java.util.UUID context,Long rule,String message) {
+            this(reason,context,rule,message,null);
+        }
+        public PlanningRefusal(Refusal reason,java.util.UUID context,Long rule,String message,String sourceLabel) {
             super(message);
+            this.sourceLabel=sourceLabel;
             if(reason==null || (context==null)!=(rule==null))throw new IllegalArgumentException("Refusal identity");
             this.reason=reason;this.context=context;this.rule=rule;
         }

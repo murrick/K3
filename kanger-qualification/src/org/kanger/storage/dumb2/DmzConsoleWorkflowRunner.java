@@ -73,7 +73,7 @@ public final class DmzConsoleWorkflowRunner {
         require(pendingStart>=0 && pendingEnd>pendingStart && !report.substring(pendingStart,pendingEnd).contains("ctx dmz choose"),
                 "pending historical suffix does not advertise choices against the unrelated single result");
         require(report.contains("DMZ family: EXHAUSTED qualified choices") && report.contains("branches=4") && report.contains("DMZ family branch 4 (historical)"),"full family and selected leaf display in real Console");
-        require(report.contains("TRUE") && report.contains("FALSE") && report.contains("Selected") && report.contains("Restriction"),"Console branch includes opinions and proof provenance");
+        require(report.contains("TRUE") && report.contains("FALSE") && report.contains("Selected") && report.contains("Restriction") && report.contains("Excluded:") && !report.contains("\"choice="),"Console branch includes opinions and proof provenance");
         require(errors.contains("No saved DMZ family") && errors.contains("No saved family branch 99"),"missing/foreign ordinals refuse readably");
         require(user.getLastDmzFamily()!=null && user.getLastDmzFamily().leaves.size()==4 && user.getLastDmzFamily().exhausted,
                 "failed branch and parse requests preserve saved family");
@@ -155,7 +155,7 @@ public final class DmzConsoleWorkflowRunner {
         require(out.contains("DMZ traversal: PARTIAL") && out.contains("Completed leaves below are partial historical observations")
                 && out.contains("Interrupted input:") && out.contains("Conditional event at input") && out.contains("WORK_LIMIT"),"both stop kinds are explicit incomplete histories");
         require(out.contains("visits=2") && out.contains("work=1"),"display shows actual requested limits");
-        require(err.contains("DMZ refused: UNSUPPORTED_DECLARATION at "+decimal.getContextId()) && err.contains("DMZ Q revision mismatch"),"typed planning and Q revision refusals readable");
+        require(err.contains("DMZ refused: UNSUPPORTED_DECLARATION at Decimal@"+decimal.getRevision()+"#") && !err.contains(decimal.getContextId().toString()) && err.contains("DMZ Q revision mismatch"),"typed planning and Q revision refusals readable");
         require(err.contains("DMZ refused:") && err.contains("INVALID_ARGUMENT_SHAPE"),"phase/acquisition and malformed command refusals keep session alive");
         require(!err.contains("DMZ refused: null") && !err.contains("\tat org.kanger") && !err.contains("Unsupported canonical intent"),"expected DMZ failures are readable and routed");
         require(out.contains("Query: ?result(3);") && out.contains("Query: ?more(1);") && out.contains("KANGER III Session closed"),"fresh exact-pinned retry, unit-only execution and graceful session closure");
@@ -284,7 +284,8 @@ public final class DmzConsoleWorkflowRunner {
             System.out.println("DMZ_SAVED_REPLAY_STDOUT_BEGIN\n"+display+"\nDMZ_SAVED_REPLAY_STDOUT_END");
             System.out.println("DMZ_SAVED_REPLAY_STDERR_BEGIN\n"+err.toString("UTF-8")+"\nDMZ_SAVED_REPLAY_STDERR_END");
             require(display.contains("DMZ restrictions: NEXT_CONFLICT; selected=0") && display.contains("Restriction choice 1:")
-                    && display.contains("\"choice="+firstIdentity+"\"") && display.contains("Replay the full invocation"),"real console prints copyable exact choices and replay instructions");
+                    && !display.contains("choice="+firstIdentity)
+                    && display.contains("Choose by number with ctx dmz choose N"),"real console shows numbered choices without serialized proof identities");
             require(display.contains("ctx dmz choose 1"),"console exposes the saved exact-alternative replay command");
             require(display.contains("DMZ restrictions: COMPLETE; selected=2") && display.contains("Restricted source chain 2:")
                     && display.contains("Opinion 1: FALSE") && display.contains("completed restricted native branch"),"console explains restriction outcome and selected proof trees");

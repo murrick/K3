@@ -27,9 +27,17 @@ final class DmzSourceQueryProjection {
             value=session.evaluateSources(request.queryStatement,new DmzCandidateSession.Limits(l.preparation,l.audit,
                     l.lookup,l.recognition,l.projection,l.application,l.query,l.depth,l.nodes,l.work),l.maximumVisits);
         } catch(DmzSourceDispatchPlan.PlanningFailure refusal) {
+            String label=null;
+            if(refusal.offendingInput!=null) {
+                for(org.kanger.interfaces.DmzSourcePlan.Source source:session.plan.external)
+                    if(source.revision.getContextId().equals(refusal.offendingInput.context)) {
+                        label=source.locator+"@"+source.revision.getRevision()+"#"+refusal.offendingInput.rule;
+                        break;
+                    }
+            }
             throw new DmzSourcesQuery.PlanningRefusal(DmzSourcesQuery.Refusal.valueOf(refusal.reason.name()),
                     refusal.offendingInput==null ? null : refusal.offendingInput.context,
-                    refusal.offendingInput==null ? null : Long.valueOf(refusal.offendingInput.rule),refusal.getMessage());
+                    refusal.offendingInput==null ? null : Long.valueOf(refusal.offendingInput.rule),refusal.getMessage(),label);
         }
         DmzCandidateSession.SequenceResult run=value.sequence;
         List<DmzSourcesQuery.SourceInventory> sources=new ArrayList<DmzSourcesQuery.SourceInventory>();

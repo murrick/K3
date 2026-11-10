@@ -16,6 +16,8 @@ final class ConsoleDmzFamilyView {
             System.out.print("  Branch "+(++number)+": choices="+leaf.restrictionProofs.size()+"; native opinions=");
             for(DmzSourcesQuery.Opinion opinion:leaf.opinions)System.out.print(opinion.answer.value==null?"UNKNOWN ":opinion.answer.value?"TRUE ":"FALSE ");
             System.out.println();
+            for (DmzSourcesQuery.Proof proof : leaf.restrictionProofs)
+                System.out.println("    Excluded: "+proof.conclusion+" from "+ConsoleDmzView.proofLabel(leaf,proof));
         }
         number=0;
         for(DmzRestrictionFamily.Pending pending:family.pending) {

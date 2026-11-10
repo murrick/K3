@@ -66,7 +66,7 @@ public final class DmzSourceDispatchPlan {
                 if(declaration.groundStatement!=null) { grounds.add(selected);groundText.add(declaration.statement); }
                 else if(declaration.unitStatement!=null) { units.add(selected);unitText.add(declaration.statement); }
                 else throw new PlanningFailure(Refusal.UNSUPPORTED_DECLARATION,selected,
-                        "Unsupported acquired declaration at "+selected.context+":"+selected.rule+": "+declaration.statement);
+                        "Unsupported acquired declaration: "+declaration.statement);
             }
         }
         if(grounds.size()>MAXIMUM_GROUNDS)throw new PlanningFailure(Refusal.GROUND_LIMIT,null,

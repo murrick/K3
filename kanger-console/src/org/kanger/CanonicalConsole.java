@@ -465,7 +465,7 @@ public final class CanonicalConsole {
                     else ConsoleDmzView.show(dmz.getDmzResult());
                 } catch(org.kanger.interfaces.DmzSourcesQuery.PlanningRefusal refusal) {
                     System.err.println("DMZ refused: "+refusal.reason
-                            +(refusal.context==null ? "" : " at "+refusal.context+":"+refusal.rule)+": "+refusal.getMessage()
+                            +(refusal.context==null ? "" : " at "+(refusal.sourceLabel==null ? "<unknown-context>#"+refusal.rule : refusal.sourceLabel))+": "+refusal.getMessage()
                             +replayDiagnostic(attemptedReplay));
                 } catch(Exception refusal) {
                     String reason=refusal.getMessage();

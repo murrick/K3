@@ -133,11 +133,10 @@ final class ConsoleDmzView {
         int number=0;
         for(DmzSourcesQuery.Proof proof:outcome.availableChoices) {
             System.out.println("Restriction choice "+(++number)+":");tree(result,proof,"  ");
-            System.out.println("  "+choiceArgument(proof.identity()));
             System.out.println("  ctx dmz choose "+number);
         }
         if(outcome.status==DmzSourcesQuery.RestrictionStatus.NEXT_CONFLICT)
-            System.out.println("Replay the full invocation with all prior choice values and one selected alternative.");
+            System.out.println("Choose by number with ctx dmz choose N, or explore with ctx dmz family N.");
         else if(outcome.status==DmzSourcesQuery.RestrictionStatus.STOPPED_UNCOVERED) {
             if(outcome.stopReason!=null)System.out.println("Reason: "+outcome.stopReason);
             System.out.println("Source history is uncovered; no further choices or completed opinion.");
@@ -152,9 +151,6 @@ final class ConsoleDmzView {
             System.out.println(indent+"  Positive evidence:");tree(result,pair.positive,indent+"    ");
             System.out.println(indent+"  Negative evidence:");tree(result,pair.negative,indent+"    ");
         }
-    }
-    private static String choiceArgument(String identity) {
-        return "\"choice="+identity.replace("\\","\\\\").replace("\"","\\\"")+"\"";
     }
     private static void causes(DmzSourcesQuery.Proof proof,java.util.Set<String> values) {
         if(proof.premises.isEmpty())values.add(proof.conclusion);
@@ -190,7 +186,7 @@ final class ConsoleDmzView {
     private static String pin(DmzSourcePlan.Source source) {
         return source.locator+"@"+source.revision.getRevision();
     }
-    private static String proofLabel(DmzSourcesQuery.Result result,DmzSourcesQuery.Proof proof) {
+    static String proofLabel(DmzSourcesQuery.Result result,DmzSourcesQuery.Proof proof) {
         return locator(result,proof.source.revision)+"@"+proof.source.revision.getRevision()+"#"+proof.source.rule;
     }
     private static String locator(DmzSourcesQuery.Result result,IContextResults.Revision revision) {
