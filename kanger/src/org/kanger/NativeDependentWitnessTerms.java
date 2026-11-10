@@ -52,8 +52,9 @@ final class NativeDependentWitnessTerms {
         private final String origin;
         private final NativePrenexUnitScope scope;
         private final Symbol[] symbols;
-        private Root(Arena arena,Mind source,Rule original,long key,String origin,NativePrenexUnitScope scope) {
-            this.arena=arena;this.source=source;this.key=key; this.original=original; this.origin=origin; this.scope=scope;
+        private final boolean factoryRow;
+        private Root(Arena arena,Mind source,Rule original,long key,String origin,NativePrenexUnitScope scope,boolean factoryRow) {
+            this.arena=arena;this.source=source;this.key=key; this.original=original; this.origin=origin; this.scope=scope;this.factoryRow=factoryRow;
             symbols=new Symbol[scope.binders.size()];
             for (int i=0;i<symbols.length;i++) {
                 arena.tick(); if (!scope.binders.get(i).universal) symbols[i]=new Symbol(arena.id,key,i);
@@ -61,9 +62,12 @@ final class NativeDependentWitnessTerms {
         }
         private void current() throws Exception {
             arena.tick();
-            if (source.getRules().get(original.getId())!=original||!Objects.equals(origin,original.getOrigin()))
+            Rule live=(Rule)source.getRules().get(original.getId());
+            if (live==null || !factoryRow && live!=original || !Objects.equals(origin,live.getOrigin()))
                 throw arena.refuse("Changed dependent projection original");
-            NativePrenexUnitScope now=NativePrenexUnitScope.observe(original,source,arena::tick);
+            NativePrenexUnitScope now=factoryRow
+                    ?NativePrenexUnitScope.observeFactoryRow(original.getId(),source,arena::tick)
+                    :NativePrenexUnitScope.observe(original,source,arena::tick);
             if (!NativePrenexUnitScope.same(scope,now,arena::tick)) throw arena.refuse("Changed dependent projection native shape");
             for(int i=0;i<scope.binders.size();i++) {
                 arena.tick(); if(scope.binders.get(i).nativeId!=now.binders.get(i).nativeId)
@@ -120,14 +124,22 @@ final class NativeDependentWitnessTerms {
         Root capture(Rule original) throws Exception {return captureFrom(mind,original,original.getId());}
         /** Independent canonical owners share one term arena, with unique source-qualified keys. */
         Root captureFrom(Mind source,Rule original,long key) throws Exception {
+            return captureFrom(source,original,key,false);
+        }
+        Root captureFactoryRow(long id) throws Exception {
+            return captureFrom(mind,(Rule)mind.getRules().get(id),id,true);
+        }
+        private Root captureFrom(Mind source,Rule original,long key,boolean factoryRow) throws Exception {
             current();if(source==null||original==null||key<0)throw refuse("Exact source-qualified projection owner required");Root existing=roots.get(key);
-            if(existing!=null){if(existing.source!=source||existing.original!=original)throw refuse("Different projection original object");return existing;}
+            if(existing!=null){if(existing.source!=source||existing.factoryRow!=factoryRow||!factoryRow&&existing.original!=original)throw refuse("Different projection original object");return existing;}
             try {
-                NativePrenexUnitScope nativeScope=NativePrenexUnitScope.observe(original,source,this::tick);
+                NativePrenexUnitScope nativeScope=factoryRow
+                        ?NativePrenexUnitScope.observeFactoryRow(original.getId(),source,this::tick)
+                        :NativePrenexUnitScope.observe(original,source,this::tick);
                 String origin=original.getOrigin();User user=new User();Mind replay=new Mind(user);user.setCurrentMind(replay);
                 Rule rule=(Rule)replay.compileLine(origin,false,new LinkedList<ITerm>());
                 if(rule==null||!NativePrenexUnitScope.same(nativeScope,NativePrenexUnitScope.observe(rule,replay,this::tick),this::tick))throw refuse("Dependent projection whole origin/native replay mismatch");
-                Root root=new Root(this,source,original,key,origin,nativeScope);root.current();roots.put(key,root);return root;
+                Root root=new Root(this,source,original,key,origin,nativeScope,factoryRow);root.current();roots.put(key,root);return root;
             }catch(Exception failure){failed=true;throw failure;}
         }
         private Node variableNode() { return node(Kind.VARIABLE,variables++,null,null,Collections.emptyList()); }

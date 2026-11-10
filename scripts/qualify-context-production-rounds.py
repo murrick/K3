@@ -1229,7 +1229,7 @@ def main():
         marker = """        if (!result) {
 
             boolean occurs = false;"""
-        replacement = """        if (!result
+        replacement = """        if ((!result || CollisionProofCapture.isActive())
                 && (ordinaryUnitQualification || mind.getQueryPass() == org.kanger.enums.QueryPass.ACCEPT)) {
             ContextQualification.CollisionWitness dependent = NativeDependentPairCollision.find(mind);
             if (dependent != null) { collisions.add(dependent); result = true; }

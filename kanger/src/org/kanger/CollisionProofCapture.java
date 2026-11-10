@@ -86,6 +86,8 @@ final class CollisionProofCapture implements AutoCloseable {
         ACTIVE.set(this);
     }
 
+    static boolean isActive() { return ACTIVE.get()!=null; }
+
     static CollisionProofCapture begin() { return new CollisionProofCapture(); }
 
     static void record(Mind mind, Rule left, Rule right) throws Exception {

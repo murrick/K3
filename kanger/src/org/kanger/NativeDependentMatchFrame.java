@@ -100,6 +100,7 @@ final class NativeDependentMatchFrame implements AutoCloseable {
     private final List<String> initialization;
     private final ContextProductionInventory inventory;
     private final int maximumRows,maximumSteps;
+    private final boolean factoryRows;
     private final Thread owner=Thread.currentThread();
     private int remaining;
     private boolean failed,closed;
@@ -107,6 +108,7 @@ final class NativeDependentMatchFrame implements AutoCloseable {
     private final Map<Long,Entry> entries=new LinkedHashMap<>();
     private NativeDependentMatchFrame(Mind mind,UUID context,long revision,boolean localX,List<String> initialization,int maximumRows,int maximumSteps,int maximumWork,int maximumNodes,Set<Long> selected) throws Exception {
         if(maximumSteps<1||maximumWork<1)throw new IllegalArgumentException("Positive matching bounds required");
+        factoryRows=selected!=null;
         this.mind=mind;this.context=context;this.revision=revision;this.localX=localX;
         this.initialization=Collections.unmodifiableList(new ArrayList<>(initialization));this.maximumRows=maximumRows;this.maximumSteps=maximumSteps;remaining=maximumWork;
         inventory=ContextProductionInventory.inspect(mind,context,revision,localX,this.initialization,maximumRows);
@@ -116,7 +118,7 @@ final class NativeDependentMatchFrame implements AutoCloseable {
             for(ContextProductionInventory.Row row:inventory.primary) {
                 tick();if(selected!=null&&!selected.contains(row.nativeRule))continue;
                 Rule original=(Rule)mind.getRules().get(row.nativeRule);List<Clause> clauses=headless(original,mind);
-                Root root=null;if(clauses==null) {root=arena.capture(original);clauses=Collections.emptyList();}
+                Root root=null;if(clauses==null) {root=factoryRows?arena.captureFactoryRow(row.nativeRule):arena.capture(original);clauses=Collections.emptyList();}
                 else {
                     User user=new User();Mind replay=new Mind(user);user.setCurrentMind(replay);
                     Rule copy=(Rule)replay.compileLine(row.origin,false,new LinkedList<ITerm>());
@@ -134,10 +136,9 @@ final class NativeDependentMatchFrame implements AutoCloseable {
     static NativeDependentMatchFrame open(Mind mind,UUID context,long revision,boolean localX,List<String> initialization,int maximumRows,int maximumSteps,int maximumWork,int maximumNodes) throws Exception {
         return new NativeDependentMatchFrame(mind,context,revision,localX,initialization,maximumRows,maximumSteps,maximumWork,maximumNodes,null);
     }
-    static NativeDependentMatchFrame openPair(Mind mind,Rule producer,Rule receiver) throws Exception {
-        if(mind.getRules().get(producer.getId())!=producer || mind.getRules().get(receiver.getId())!=receiver
-                || producer.getId()==receiver.getId())throw new IllegalStateException("Exact pair owners required");
-        Set<Long> selected=new HashSet<>(Arrays.asList(producer.getId(),receiver.getId()));
+    static NativeDependentMatchFrame openPair(Mind mind,long producer,long receiver) throws Exception {
+        if(producer==receiver)throw new IllegalStateException("Distinct pair owners required");
+        Set<Long> selected=new HashSet<>(Arrays.asList(producer,receiver));
         return new NativeDependentMatchFrame(mind,UUID.randomUUID(),0,true,Collections.emptyList(),
                 1000,2,1000000,10000,selected);
     }
@@ -148,7 +149,7 @@ final class NativeDependentMatchFrame implements AutoCloseable {
         tick();try {
             ContextProductionInventory now=ContextProductionInventory.inspect(mind,context,revision,localX,initialization,maximumRows);
             if(!inventory.fingerprint.equals(now.fingerprint))throw refuse("Changed whole dependent matching inventory");
-            for(Entry entry:entries.values()){tick();if(mind.getRules().get(entry.original.getId())!=entry.original)throw refuse("Replaced matching original");}
+            if(!factoryRows)for(Entry entry:entries.values()){tick();if(mind.getRules().get(entry.original.getId())!=entry.original)throw refuse("Replaced matching original");}
             // Probe the arena lifecycle without allocating variables or term nodes.
             arena.unify(Collections.emptyList(),Collections.emptyList());
         }catch(Exception failure){failed=true;throw failure;}
@@ -177,6 +178,11 @@ final class NativeDependentMatchFrame implements AutoCloseable {
     List<Entry> entries() throws Exception {current();return Collections.unmodifiableList(new ArrayList<>(entries.values()));}
     ContextProductionInventory inventory() throws Exception {current();return inventory;}
     Entry entry(Rule rule) throws Exception {current();Entry entry=entries.get(rule.getId());owned(entry);if(entry.original!=rule)throw refuse("Different matching original object");return entry;}
+    Entry pairEntry(long id) throws Exception {
+        current();
+        if(!factoryRows)throw refuse("Factory-row lookup requires a pair frame");
+        Entry entry=entries.get(id);owned(entry);return entry;
+    }
     Instance instantiate(Entry receiver,int branch) throws Exception {
         current();owned(receiver);if(receiver.producer||branch<0||branch>=receiver.clauses.size())throw refuse("Exact headless receiver branch required");
         Map<Integer,Node> variables=new HashMap<>();List<Negative> literals=new ArrayList<>();Clause clause=receiver.clauses.get(branch);

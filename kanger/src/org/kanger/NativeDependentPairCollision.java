@@ -36,16 +36,16 @@ final class NativeDependentPairCollision {
         }
         if(producer==null || producer.getOrigin()==null || producer.getOrigin().indexOf('$')<0)return false;
         NativePrenexUnitScope scope;
-        try {scope=NativePrenexUnitScope.observe(producer,mind,ContextGroundProductionRounds.budget(100000));}
+        try {scope=NativePrenexUnitScope.observeFactoryRow(producer.getId(),mind,ContextGroundProductionRounds.budget(100000));}
         catch(UnsupportedOperationException unsupported){return false;}
         if(scope.binders.stream().allMatch(binder->binder.universal))return false;
         for(Domain literal:receiver.getTree().get(0))for(org.kanger.interfaces.IArgument argument:literal.getArguments())
             if(argument.getType()!=org.kanger.enums.ArgumentType.TVARIABLE
                     && (argument.getType()!=org.kanger.enums.ArgumentType.TERM
                     || !SemanticTermSnapshot.isOrdinaryValue(argument.getValue(mind))))return false;
-        try(NativeDependentMatchFrame frame=NativeDependentMatchFrame.openPair(mind,producer,receiver)) {
-            NativeDependentMatchFrame.Entry source=frame.entry(producer);
-            NativeDependentMatchFrame.Match first=frame.match(source,frame.instantiate(frame.entry(receiver),0),0);
+        try(NativeDependentMatchFrame frame=NativeDependentMatchFrame.openPair(mind,producer.getId(),receiver.getId())) {
+            NativeDependentMatchFrame.Entry source=frame.pairEntry(producer.getId());
+            NativeDependentMatchFrame.Match first=frame.match(source,frame.instantiate(frame.pairEntry(receiver.getId()),0),0);
             if(first==null)return false;
             frame.verify(first);
             return frame.match(source,first.after,0)==null;
@@ -64,7 +64,7 @@ final class NativeDependentPairCollision {
             else if(branch.size()==1 && branch.get(0).isAntc() && rule.getOrigin()!=null
                     && rule.getOrigin().indexOf('$')>=0) {
                 NativePrenexUnitScope scope;
-                try {scope=NativePrenexUnitScope.observe(rule,mind,work);}
+                try {scope=NativePrenexUnitScope.observeFactoryRow(rule.getId(),mind,work);}
                 catch(UnsupportedOperationException unsupported){continue;}
                 for(NativePrenexUnitScope.Binder binder:scope.binders)if(!binder.universal) {
                     producers.add(rule);break;
@@ -93,9 +93,9 @@ final class NativeDependentPairCollision {
             }
             if(!ordinary)continue;
             if(++attempts>16)throw new IllegalStateException("Dependent pair refutation search limit");
-            try(NativeDependentMatchFrame frame=NativeDependentMatchFrame.openPair(mind,producer,receiver)) {
-                NativeDependentMatchFrame.Entry source=frame.entry(producer);
-                NativeDependentMatchFrame.Match first=frame.match(source,frame.instantiate(frame.entry(receiver),0),0);
+            try(NativeDependentMatchFrame frame=NativeDependentMatchFrame.openPair(mind,producer.getId(),receiver.getId())) {
+                NativeDependentMatchFrame.Entry source=frame.pairEntry(producer.getId());
+                NativeDependentMatchFrame.Match first=frame.match(source,frame.instantiate(frame.pairEntry(receiver.getId()),0),0);
                 if(first==null)continue;
                 NativeDependentMatchFrame.Match last=frame.match(source,first.after,0);
                 if(last==null || !last.after.remaining.isEmpty())continue;
