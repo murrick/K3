@@ -22,6 +22,26 @@ public final class NativeWitnessDependencyGate {
             }
             System.out.println("DEPENDENCY_CASE prefix="+i+" reverse="+reverse+" expected="+expected+" actual="+actual);
         }
+        for(boolean reverse:new boolean[]{false,true}) {
+            User user=new User();Mind mind=new Mind(user);user.setCurrentMind(mind);
+            if(!mind.compile(reverse?restriction:prefixes[0],null,false))
+                throw new AssertionError("Initial witness control rejected");
+            if(!mind.compile(reverse?prefixes[0]:restriction,null,false)) {
+                // The same semantic defect is already counted in the base gate;
+                // the concrete control is only reachable on the compatible path.
+                continue;
+            }
+            if(!mind.compile("!rel(1,7,1);",null,false))
+                throw new AssertionError("A single explicit witness is compatible");
+            String before=DmzObservationStateFingerprint.capture(mind);
+            checks++;
+            if(mind.compile("!rel(2,7,1);",null,false)) {
+                missing++;
+                System.out.println("MISSED_CONCRETE_SHARED_WITNESS reverse="+reverse);
+            } else if(mind.getLastCompileQualification().getCollisions().isEmpty()
+                    || !before.equals(DmzObservationStateFingerprint.capture(mind))
+                    || mind.hasPendingTransactions())throw new AssertionError("Concrete rejection must roll back with evidence");
+        }
         System.out.println("NATIVE_WITNESS_DEPENDENCY_GATE checks="+checks+" missing="+missing);
         if (missing!=0) System.exit(1);
     }

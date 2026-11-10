@@ -70,7 +70,8 @@ def main():
     production = sorted(p for module in modules for p in (root / module / 'src').rglob('*.java'))
     names = [('org.kanger.storage.dumb2.ContextProductionRoundsContractRunner', 'CONTEXT_PRODUCTION_ROUNDS_CONTRACT_PASS')]
     if args.mode == 'native-dependent-authoring-contract':
-        names = [('org.kanger.ContextAlternatingPrefixCollisionGate', 'missing=0')]
+        names = [('org.kanger.ContextAlternatingPrefixCollisionGate', 'missing=0'),
+                 ('org.kanger.NativeWitnessDependencyGate', 'missing=0')]
     if args.mode == 'witness-contract':
         names = [('org.kanger.ContextWitnessForkContractRunner', 'CONTEXT_WITNESS_FORK_CONTRACT_PASS')]
     if args.mode == 'independent-reopen-contract':
@@ -1238,6 +1239,19 @@ def main():
             raise RuntimeError('Dependent authoring overlay does not match exact Analyzer boundary')
         candidate = run / 'candidate/org/kanger/Analyzer.java'
         candidate.parent.mkdir(parents=True, exist_ok=True)
+        candidate.write_text(source.replace(marker,replacement), encoding='utf-8')
+        production = [candidate if p == original else p for p in production]
+        original = root / 'kanger/src/org/kanger/Linker.java'
+        source = original.read_text(encoding='utf-8')
+        marker = "            } else if (!excluded.isEmpty() && candidates.isEmpty() && stored.isEmpty()) {"
+        replacement = marker + """
+                if (mind.getQueryPass() == QueryPass.ACCEPT && !CollisionProofCapture.active()
+                        && excluded.size()==tree.size() && NativeDependentPairCollision.rejectsLegacyJoin(mind,tree))
+                    return false;
+"""
+        if source.count(marker) != 1:
+            raise RuntimeError('Dependent authoring overlay does not match exact Linker boundary')
+        candidate = run / 'candidate/org/kanger/Linker.java'
         candidate.write_text(source.replace(marker,replacement), encoding='utf-8')
         production = [candidate if p == original else p for p in production]
     listing = run / 'sources.list'

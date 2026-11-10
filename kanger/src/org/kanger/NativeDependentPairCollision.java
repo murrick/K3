@@ -11,6 +11,47 @@ import org.kanger.units.Rule;
 final class NativeDependentPairCollision {
     private NativeDependentPairCollision() { }
 
+    /** Returns true only for a legacy join disproved by replay of its two exact primary roots. */
+    static boolean rejectsLegacyJoin(Mind mind,List<Domain> tree) throws Exception {
+        if(tree.size()!=2 || tree.get(0).isAntc() || tree.get(1).isAntc())return false;
+        Rule receiver=(Rule)tree.get(0).getRule();
+        if(receiver==null || receiver.isQuery() || receiver.isGenerated()
+                || receiver.getTree().size()!=1 || receiver.getTree().get(0).size()!=2
+                || tree.get(1).getRuleId()!=receiver.getId())return false;
+        Rule producer=null;
+        for(Domain premise:tree) {
+            if(premise.isSystem(mind) || premise.isCalculated(mind) || !premise.isComplete()
+                    || premise.getArguments().getCVariables(mind).isEmpty())return false;
+            org.kanger.primitives.Solve wanted=new org.kanger.primitives.Solve(premise.getPredicate(),true,
+                    premise.getArguments().convertBase(mind));
+            IRule donor=mind.getRules().find(wanted);
+            if(donor==null || donor.isDeleted(mind) || !donor.isGenerated() || donor.getCauses().isEmpty())return false;
+            for(org.kanger.interfaces.ICause cause:donor.getCauses()) {
+                IRule origin=cause.getRule(mind);
+                if(!(origin instanceof Rule) || origin.isGenerated() || origin.isDeleted(mind)
+                        || origin.isQuery() || cause.getDonor(mind)!=null
+                        || producer!=null && producer.getId()!=origin.getId())return false;
+                producer=(Rule)origin;
+            }
+        }
+        if(producer==null || producer.getOrigin()==null || producer.getOrigin().indexOf('$')<0)return false;
+        NativePrenexUnitScope scope;
+        try {scope=NativePrenexUnitScope.observe(producer,mind,ContextGroundProductionRounds.budget(100000));}
+        catch(UnsupportedOperationException unsupported){return false;}
+        if(scope.binders.stream().allMatch(binder->binder.universal))return false;
+        for(Domain literal:receiver.getTree().get(0))for(org.kanger.interfaces.IArgument argument:literal.getArguments())
+            if(argument.getType()!=org.kanger.enums.ArgumentType.TVARIABLE
+                    && (argument.getType()!=org.kanger.enums.ArgumentType.TERM
+                    || !SemanticTermSnapshot.isOrdinaryValue(argument.getValue(mind))))return false;
+        try(NativeDependentMatchFrame frame=NativeDependentMatchFrame.openPair(mind,producer,receiver)) {
+            NativeDependentMatchFrame.Entry source=frame.entry(producer);
+            NativeDependentMatchFrame.Match first=frame.match(source,frame.instantiate(frame.entry(receiver),0),0);
+            if(first==null)return false;
+            frame.verify(first);
+            return frame.match(source,first.after,0)==null;
+        }
+    }
+
     static ContextQualification.CollisionWitness find(Mind mind) throws Exception {
         Runnable work=ContextGroundProductionRounds.budget(100000);
         List<Rule> producers=new ArrayList<>(),receivers=new ArrayList<>();
