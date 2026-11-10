@@ -181,6 +181,112 @@ public final class NativeDependentAuthoringCaptureRunner {
                     "failed attachment leaves no disk connection after reopen");
         } finally {close(mind);}
     }
+    private static void revisionSwitch(boolean reverse) throws Exception {
+        Path directory=Files.createTempDirectory("dependent-switch-");
+        String prohibition="!@a @u ~(rel(a,u,1)&&rel(a,u,2));";
+        String initial=reverse?"!@a @b $u rel(a,u,b);":"!@u ~(rel(1,u,1)&&rel(2,u,1));";
+        seed(directory,"Source",reverse?prohibition:UNIT);
+        seed(directory,"Target",initial);
+
+        DB db=new DB();
+        Mind mind=open(db,directory,"Source");
+        long originalPin,published;
+        try {
+            originalPin=db.connectContext("Target").getPinnedRevision();
+            published=db.saveConnections(mind);
+        } finally {close(mind);}
+        db=new DB();mind=open(db,directory,"Target");
+        long compatible,conflicting;
+        try {
+            require(mind.compile("!switch_marker(1);",null,false),"new compatible target revision");
+            compatible=db.getRevision();
+            require(mind.compile(reverse?UNIT:prohibition,null,false),"new target rule is locally admissible");
+            conflicting=db.getRevision();
+            require(originalPin<compatible && compatible<conflicting,"three distinct pinned revisions");
+        } finally {close(mind);}
+
+        java.util.List<NativeDependentReplayCapsule.Saved> packets;
+        db=new DB();mind=open(db,directory,"Source");
+        long switchedRevision;
+        try {
+            Snapshot before=db.federationSnapshot();
+            require(before.getSourceRevision()==published && before.getConnections().size()==1
+                    && before.getConnections().get(0).getPinnedRevision()==originalPin
+                    && !before.hasWorkingChanges(),"target advances without moving the published pin");
+            String state=DmzObservationStateFingerprint.capture(mind);
+            try(CollisionProofCapture capture=CollisionProofCapture.begin()) {
+                boolean refused=false;
+                try {db.switchContextRevision("Target",conflicting);}
+                catch(StorageLifecycleException failure) {
+                    refused=failure.getErrorCode()==StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT
+                            && !failure.getCollisions().isEmpty()
+                            && failure.toString().contains("Source@R"+published)
+                            && failure.toString().contains("Target@R"+conflicting);
+                }
+                require(refused,"switch to incompatible revision is rejected with evidence");
+                packets=capture.dependentSnapshot();
+                require(packets.size()==2,"both switch qualification directions capture replay packets");
+            }
+            Snapshot after=db.federationSnapshot();
+            require(pins(before).equals(pins(after)) && !after.hasWorkingChanges()
+                    && after.getSourceRevision()==published && db.versionHistory("Target").getCurrentRevision()==conflicting
+                    && state.equals(DmzObservationStateFingerprint.capture(mind))
+                    && !mind.hasPendingTransactions(),"failed switch preserves the published pin and live state");
+            require(db.switchContextRevision("Target",compatible).getPinnedRevision()==compatible
+                    && db.getRevision()==published && db.federationSnapshot().hasWorkingChanges(),
+                    "compatible historical revision becomes the working pin before publication");
+            switchedRevision=db.saveConnections(mind);
+            require(switchedRevision>published && !db.federationSnapshot().hasWorkingChanges(),
+                    "publishing the switch advances the source revision");
+        } finally {close(mind);}
+        for(NativeDependentReplayCapsule.Saved packet:packets)
+            try(NativeDependentReplayCapsule.Reopened replay=NativeDependentReplayCapsule.reopenPair(packet.bytes(),packet.pin,
+                    new NativeDependentReplayCapsule.Limits(262144,2,2,1000000,10000))) {
+                replay.verify();
+                java.util.Set<String> origins=new HashSet<>();
+                for(NativeDependentMatchFrame.Entry entry:replay.frame.entries())origins.add(entry.origin);
+                require(replay.materialization.remaining.isEmpty()
+                        && origins.equals(new HashSet<>(Arrays.asList(UNIT,prohibition))),
+                        "rejected revision evidence replays after close from the exact roots");
+            }
+        db=new DB();mind=open(db,directory,"Source");
+        try {
+            Snapshot reopened=db.federationSnapshot();
+            require(reopened.getSourceRevision()==switchedRevision && reopened.getConnections().size()==1
+                    && reopened.getConnections().get(0).getPinnedRevision()==compatible
+                    && db.versionHistory("Target").getCurrentRevision()==conflicting && !reopened.hasWorkingChanges(),
+                    "saved historical pin survives reopen with newer incompatible target");
+            db.applyConnectionCommand(mind,"Target","!private_marker(1);");
+            long privateRevision=db.saveConnections(mind);
+            Snapshot edited=db.federationSnapshot();
+            require(edited.getConnections().get(0).getInitialization().equals(Arrays.asList("!private_marker(1);"))
+                    && !edited.hasWorkingChanges(),"compatible private initialization publishes at the existing pin");
+            String state=DmzObservationStateFingerprint.capture(mind);
+            boolean refused=false;
+            try {db.applyConnectionCommand(mind,"Target",reverse?UNIT:prohibition);}
+            catch(StorageLifecycleException failure) {
+                refused=failure.getErrorCode()==StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT
+                        && !failure.getCollisions().isEmpty();
+            }
+            require(refused,"conflicting private initialization is rejected with evidence");
+            Snapshot after=db.federationSnapshot();
+            require(after.getSourceRevision()==privateRevision && pins(edited).equals(pins(after))
+                    && after.getConnections().get(0).getInitialization().equals(edited.getConnections().get(0).getInitialization())
+                    && !after.hasWorkingChanges() && state.equals(DmzObservationStateFingerprint.capture(mind))
+                    && !mind.hasPendingTransactions(),"private refusal keeps exact working and published topology");
+            switchedRevision=privateRevision;
+        } finally {close(mind);}
+        db=new DB();mind=open(db,directory,"Source");
+        try {
+            Snapshot reopened=db.federationSnapshot();
+            require(reopened.getSourceRevision()==switchedRevision && !reopened.hasWorkingChanges()
+                    && reopened.getConnections().get(0).getPinnedRevision()==compatible
+                    && reopened.getConnections().get(0).getInitialization().equals(Arrays.asList("!private_marker(1);"))
+                    && db.versionHistory("Target").getCurrentRevision()==conflicting,
+                    "only the approved private edit survives reopen; target history is unchanged");
+        } finally {close(mind);}
+    }
+
     private static java.util.Map<String,String> pins(Snapshot snapshot) {
         java.util.Map<String,String> pins=new java.util.HashMap<>();
         for(org.kanger.interfaces.internal.IContextFederation.Connection connection:snapshot.getConnections())
@@ -240,6 +346,8 @@ public final class NativeDependentAuthoringCaptureRunner {
         persisted(true);
         attachment(false);
         attachment(true);
+        revisionSwitch(false);
+        revisionSwitch(true);
         Mind ordinary=memory();
         require(ordinary.compile("!p(1);",null,false),"first ordinary fact accepted");
         try(CollisionProofCapture capture=CollisionProofCapture.begin()) {

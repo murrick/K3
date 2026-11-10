@@ -293,7 +293,10 @@ final class ConnectionManager {
                     : PairQualification.qualify(sourceLocation, sourceRef.getRevision(), replacement);
             if (!pair.isCompatible() || pair.getCertificate() == null)
                 throw new StorageLifecycleException(StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT,
-                        "Requested Context revision is not compatible: " + sourceRef + " / " + requestedTarget, pair.getCollisions());
+                        "Requested Context revision is not compatible: "
+                                + sourceLocation.getFileName() + "@R" + sourceRef.getRevision() + " / "
+                                + existing.getTargetLocation().getFileName() + "@R" + requestedTarget.getRevision(),
+                        pair.getCollisions());
             replacement = replacement.recertified(pair.getCertificate());
             ConnectionVector candidate =
                     original.with(replacement);
@@ -319,7 +322,7 @@ final class ConnectionManager {
                 throw new StorageLifecycleException(
                         StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT,
                         "Requested Context revision introduces a new direct multi-context composition conflict: "
-                                + requestedTarget,
+                                + existing.getTargetLocation().getFileName() + "@R" + requestedTarget.getRevision(),
                         introduced);
             }
 
