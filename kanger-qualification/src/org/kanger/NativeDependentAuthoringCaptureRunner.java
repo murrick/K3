@@ -6,6 +6,9 @@ import java.nio.file.Path;
 import java.io.File;
 import org.kanger.interfaces.internal.IContextFederation.VersionHistory;
 import org.kanger.storage.dumb2.DB;
+import org.kanger.interfaces.internal.IContextFederation.Snapshot;
+import org.kanger.exception.StorageLifecycleException;
+import org.kanger.enums.StorageLifecycleErrorCode;
 import java.util.Arrays;
 import java.util.HashSet;
 
@@ -20,12 +23,15 @@ public final class NativeDependentAuthoringCaptureRunner {
         checks++;if(!condition)throw new AssertionError(message);
     }
     private static Mind open(DB db,Path directory) throws Exception {
+        return open(db,directory,"Witnesses");
+    }
+    private static Mind open(DB db,Path directory,String name) throws Exception {
         User user=new User();
         user.setDatabaseDir(directory.toString()+File.separator);
         db.init(user);
         Mind root=new Mind(user);
         user.setCurrentMind(root);
-        Mind mind=(Mind)root.useStorage("Witnesses");
+        Mind mind=(Mind)root.useStorage(name);
         user.setCurrentMind(mind);
         return mind;
     }
@@ -89,6 +95,99 @@ public final class NativeDependentAuthoringCaptureRunner {
                     "disk keeps accepted rows and excludes the rejected declaration");
         } finally {close(mind);}
     }
+    private static void seed(Path directory,String name,String rule) throws Exception {
+        Mind mind=open(new DB(),directory,name);
+        try {require(mind.compile(rule,null,false),"write fixture "+name);}
+        finally {close(mind);}
+    }
+
+    private static void attachment(boolean reverse) throws Exception {
+        Path directory=Files.createTempDirectory("dependent-attachment-");
+        String compatible="!@u ~(rel(1,u,1)&&rel(2,u,1));";
+        String conflict="!@a @u ~(rel(a,u,1)&&rel(a,u,2));";
+        seed(directory,"Producer",UNIT);
+        seed(directory,"Compatible",compatible);
+        seed(directory,"Conflicting",conflict);
+
+        String source=reverse?"Compatible":"Producer", target=reverse?"Producer":"Compatible";
+        DB db=new DB();
+        Mind mind=open(db,directory,source);
+        long published;
+        try {
+            VersionHistory pin=db.versionHistory(target);
+            db.connectContext(target);
+            db.saveConnections(mind);
+            Snapshot view=db.federationSnapshot();
+            published=db.getRevision();
+            require(!view.hasWorkingChanges() && view.getPublishedConnections().size()==1
+                    && view.getConnections().get(0).getTargetContextId().equals(pin.getContextId())
+                    && view.getConnections().get(0).getPinnedRevision()==pin.getCurrentRevision(),
+                    "compatible target is published at its exact pin");
+        } finally {close(mind);}
+        db=new DB();mind=open(db,directory,source);
+        try {
+            Snapshot view=db.federationSnapshot();
+            require(db.getRevision()==published && view.getConnections().size()==1
+                    && view.getConnections().get(0).getLocator().equals(target)
+                    && !view.hasWorkingChanges(),"compatible attachment survives fresh reopen");
+        } finally {close(mind);}
+
+        source=reverse?"Conflicting":"Producer"; target=reverse?"Producer":"Conflicting";
+        db=new DB();mind=open(db,directory,source);
+        Snapshot before;
+        java.util.List<NativeDependentReplayCapsule.Saved> packets;
+        try {
+            before=db.federationSnapshot();
+            long targetRevision=db.versionHistory(target).getCurrentRevision();
+            String state=DmzObservationStateFingerprint.capture(mind);
+            try(CollisionProofCapture capture=CollisionProofCapture.begin()) {
+                boolean refused=false;
+                try {db.connectContext(target);}
+                catch(StorageLifecycleException failure) {
+                    refused=failure.getErrorCode()==StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT
+                            && !failure.getCollisions().isEmpty()
+                            && failure.toString().contains(source+"@R")
+                            && failure.toString().contains(target+"@R");
+                }
+                require(refused,"conflicting attachment is rejected with evidence");
+                packets=capture.dependentSnapshot();
+                require(packets.size()==2,"both qualification directions capture dependent evidence");
+            }
+            Snapshot after=db.federationSnapshot();
+            require(before.getSourceRevision()==after.getSourceRevision()
+                    && before.getSourceContextId().equals(after.getSourceContextId())
+                    && pins(before).equals(pins(after))
+                    && !after.hasWorkingChanges()
+                    && db.versionHistory(source).getCurrentRevision()==before.getSourceRevision()
+                    && db.versionHistory(target).getCurrentRevision()==targetRevision
+                    && state.equals(DmzObservationStateFingerprint.capture(mind))
+                    && !mind.hasPendingTransactions(),"refusal preserves the source, target, and connection vector");
+        } finally {close(mind);}
+        for(NativeDependentReplayCapsule.Saved packet:packets)
+            try(NativeDependentReplayCapsule.Reopened replay=NativeDependentReplayCapsule.reopenPair(packet.bytes(),packet.pin,
+                    new NativeDependentReplayCapsule.Limits(262144,2,2,1000000,10000))) {
+                replay.verify();
+                java.util.Set<String> origins=new HashSet<>();
+                for(NativeDependentMatchFrame.Entry entry:replay.frame.entries())origins.add(entry.origin);
+                require(replay.materialization.remaining.isEmpty()
+                        && origins.equals(new HashSet<>(Arrays.asList(UNIT,conflict))),
+                        "independent replay verifies the exact roots of the failed attachment");
+            }
+        db=new DB();mind=open(db,directory,source);
+        try {
+            Snapshot reopened=db.federationSnapshot();
+            require(reopened.getSourceRevision()==before.getSourceRevision()
+                    && pins(before).equals(pins(reopened)) && !reopened.hasWorkingChanges(),
+                    "failed attachment leaves no disk connection after reopen");
+        } finally {close(mind);}
+    }
+    private static java.util.Map<String,String> pins(Snapshot snapshot) {
+        java.util.Map<String,String> pins=new java.util.HashMap<>();
+        for(org.kanger.interfaces.internal.IContextFederation.Connection connection:snapshot.getConnections())
+            pins.put(connection.getLocator(),connection.getTargetContextId()+"@"+connection.getPinnedRevision());
+        return pins;
+    }
+
     public static void main(String[] args) throws Exception {
         System.setProperty("user.home",Files.createTempDirectory("dependent-authoring-capture-").toString());
         for(boolean reverse:new boolean[]{false,true}) {
@@ -139,6 +238,8 @@ public final class NativeDependentAuthoringCaptureRunner {
         }
         persisted(false);
         persisted(true);
+        attachment(false);
+        attachment(true);
         Mind ordinary=memory();
         require(ordinary.compile("!p(1);",null,false),"first ordinary fact accepted");
         try(CollisionProofCapture capture=CollisionProofCapture.begin()) {

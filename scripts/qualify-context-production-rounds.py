@@ -1246,7 +1246,7 @@ def main():
         source = original.read_text(encoding='utf-8')
         marker = "            } else if (!excluded.isEmpty() && candidates.isEmpty() && stored.isEmpty()) {"
         replacement = marker + """
-                if (mind.getQueryPass() == QueryPass.ACCEPT
+                if ((mind.getQueryPass() == QueryPass.ACCEPT || mind.getQueryPass() == QueryPass.CHECK)
                         && excluded.size()==tree.size() && NativeDependentPairCollision.rejectsLegacyJoin(mind,tree))
                     return false;
 """

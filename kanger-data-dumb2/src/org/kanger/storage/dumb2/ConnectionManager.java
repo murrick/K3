@@ -142,7 +142,8 @@ final class ConnectionManager {
             throw new StorageLifecycleException(
                     StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT,
                     "Context pair is not compatible: "
-                            + source + " / " + target,
+                            + sourceLocation.getFileName() + "@R" + source.getRevision() + " / "
+                            + targetLocation.getFileName() + "@R" + target.getRevision(),
                     qualification.getCollisions());
         }
 
