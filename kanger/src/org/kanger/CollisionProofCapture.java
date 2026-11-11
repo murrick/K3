@@ -73,6 +73,7 @@ final class CollisionProofCapture implements AutoCloseable {
         }
     }
 
+    private final List<ContextDependentProductionReplay.Saved> dependentProduction = new ArrayList<>();
     private final List<NativeDependentReplayCapsule.Saved> dependent=new ArrayList<>();
     private final List<SymbolicConflict> symbolic=new ArrayList<SymbolicConflict>();
     private final CollisionProofCapture previous;
@@ -110,6 +111,9 @@ final class CollisionProofCapture implements AutoCloseable {
                 new NativeDependentReplayCapsule.Limits(262144,2,2,1000000,10000)));
     }
 
+    static void recordDependentProduction(ContextDependentProductionReplay.Saved proof){CollisionProofCapture capture=ACTIVE.get();if(capture!=null)capture.dependentProduction.add(proof);}
+    List<ContextDependentProductionReplay.Saved> productionSnapshot(){return Collections.unmodifiableList(new ArrayList<>(dependentProduction));}
+
     List<NativeDependentReplayCapsule.Saved> dependentSnapshot() {
         return Collections.unmodifiableList(new ArrayList<>(dependent));
     }
@@ -119,6 +123,7 @@ final class CollisionProofCapture implements AutoCloseable {
     }
 
     List<Conflict> snapshot() {
+        if (!dependentProduction.isEmpty())throw new IllegalStateException("Dependent chain collision requires complete original-only replay evidence; legacy pair capture unsupported");
         if (!dependent.isEmpty()) throw new IllegalStateException("Dependent collision requires its complete replay evidence; legacy pair capture unsupported");
         if (!symbolic.isEmpty()) throw new IllegalStateException("Symbolic multi-root collision requires its complete evidence; legacy pair capture unsupported");
         return Collections.unmodifiableList(new ArrayList<Conflict>(conflicts));
