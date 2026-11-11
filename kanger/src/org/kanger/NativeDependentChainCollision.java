@@ -2,7 +2,6 @@
 package org.kanger;
 
 import java.util.*;
-import org.kanger.ContextProductionCapture.Clause;
 import org.kanger.ContextDependentProductionInspection.Donor;
 import org.kanger.ContextDependentProductionInspection.Step;
 import org.kanger.interfaces.*;
@@ -13,10 +12,6 @@ import org.kanger.units.*;
 final class NativeDependentChainCollision {
     private NativeDependentChainCollision() {}
     private static final ContextDependentReplayInspection.Policy POLICY=new ContextDependentReplayInspection.Policy(2000000,1000,64,64000000,100000);
-    private static final class Theory {
-        final Mind copy;final ContextProductionInventory inventory;final Map<Long,Long> ids;
-        Theory(Mind copy,ContextProductionInventory inventory,Map<Long,Long> ids){this.copy=copy;this.inventory=inventory;this.ids=ids;}
-    }
     private static final class Scope {
         final ContextProductionInventory inventory;
         final List<Rule> roots=new ArrayList<>(),receivers=new ArrayList<>(),horns=new ArrayList<>();
@@ -61,26 +56,6 @@ final class NativeDependentChainCollision {
         List<Rule> routes=new ArrayList<>();for(Rule horn:scope.horns)if(predicate(body(horn),root.getDomain(),mind)
                 &&predicate(head(horn),receiver.getTree().get(0).get(0),mind)&&predicate(head(horn),receiver.getTree().get(0).get(1),mind))routes.add(horn);return routes;
     }
-    /** Full fingerprint remains a guard. Only selected actual declarations are copied; generated data is never input knowledge. */
-    private static Theory theory(Mind actual,ContextProductionInventory expected,Set<Long> selected)throws Exception{
-        current(actual,expected);User user=new User();Mind copy=new Mind(user);user.setCurrentMind(copy);Map<Long,Long> ids=new LinkedHashMap<>();Runnable work=ContextGroundProductionRounds.budget(POLICY.work);
-        try{
-            for(ContextProductionInventory.Row row:expected.primary){
-                ContextDependentRuntimeExecution.interrupt();work.run();if(selected!=null&&!selected.contains(row.nativeRule))continue;
-                Rule nativeRule=(Rule)actual.getRules().get(row.nativeRule),replayed=(Rule)copy.compileLineForReplay(row.origin);
-                if(nativeRule==null||replayed==null)throw new IllegalStateException("Whole native chain declaration required");
-                if(NativeDependentProductionRows.unit(nativeRule)){
-                    if(!NativePrenexUnitScope.same(NativePrenexUnitScope.observeFactoryRow(row.nativeRule,actual,work),NativePrenexUnitScope.observe(replayed,copy,work),work))throw new IllegalStateException("Chain declaration/native prefix differs");
-                }else{
-                    Clause a=NativeDependentProductionRows.ordinary(nativeRule,actual,work),b=NativeDependentProductionRows.ordinary(replayed,copy,work);
-                    if(!a.equivalent(b,work))throw new IllegalStateException("Chain declaration/native Horn shape differs");
-                }
-                ids.put(row.nativeRule,replayed.getId());
-            }
-            if(selected!=null&&!ids.keySet().equals(selected))throw new IllegalStateException("Every selected native chain original required");
-            return new Theory(copy,ContextProductionInventory.inspect(copy,expected.context,0,true,Collections.emptyList(),POLICY.rows),ids);
-        }finally{current(actual,expected);}
-    }
     static ContextQualification.CollisionWitness find(Mind mind)throws Exception{
         Scope scope=scope(mind);if(scope==null)return null;int attempts=0;
         try{
@@ -89,7 +64,7 @@ final class NativeDependentChainCollision {
                 for(int i=0;i<routes.size();i++)for(int j=i;j<routes.size();j++){
                     if(++attempts>16)throw new IllegalStateException("Dependent chain refutation attempt bound");
                     Rule a=routes.get(i),b=routes.get(j);Set<Long> selected=new HashSet<>(Arrays.asList(root.getId(),a.getId(),b.getId(),receiver.getId()));
-                    Theory theory=theory(mind,scope.inventory,selected);
+                    NativeDependentPrimaryTheory theory=NativeDependentPrimaryTheory.rebuild(mind,scope.inventory,selected);
                     List<Step> steps=Arrays.asList(new Step(theory.ids.get(a.getId()),Collections.singletonList(Donor.original(theory.ids.get(root.getId())))),
                             new Step(theory.ids.get(b.getId()),Collections.singletonList(Donor.original(theory.ids.get(root.getId())))));
                     ContextDependentProductionInspection.Request request=new ContextDependentProductionInspection.Request(POLICY,1000,steps);
@@ -118,7 +93,7 @@ final class NativeDependentChainCollision {
         for(Rule root:scope.roots){List<Rule> routes=routes(scope,root,receiver,mind);Set<Long> candidates=new HashSet<>();for(Rule rule:routes)candidates.add(rule.getId());if(candidates.containsAll(producingRules)){selected=true;break;}}
         if(!selected)return false;
         try{
-            Theory theory=theory(mind,scope.inventory,null);
+            NativeDependentPrimaryTheory theory=NativeDependentPrimaryTheory.rebuild(mind,scope.inventory,null);
             ContextDependentModelSearchInspection.Result model=ContextDependentAutomaticInspection.inspect(new ContextDependentCutInspection.Member(theory.copy,theory.inventory),Collections.emptyList(),
                     new ContextDependentIterationInspection.Request(POLICY,10000,8),
                     new ContextDependentModelSearchInspection.Limits(30,100000,100000,20000,64000000,64000000,64000000,64000000,64000000),
