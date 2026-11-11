@@ -33,7 +33,7 @@ public final class ContextDependentAutomaticInspection {
             for(Member member:members){
                 ContextDependentRuntimeExecution.interrupt();work.run();
                 if(!identities.add(member.inventory.context))throw new IllegalStateException("Distinct physical automatic palette members required");
-                if(!member.inventory.initialization.isEmpty()||member.inventory.rows.size()!=member.inventory.primary.size())throw new IllegalStateException("Whole primary-only automatic palette view required");
+                if(!member.inventory.dependentPrimaryView())throw new IllegalStateException("Whole primary-only automatic palette view required");
                 for(ContextProductionInventory.Row row:member.inventory.primary){
                     ContextDependentRuntimeExecution.interrupt();work.run();Rule rule=(Rule)member.actual.getRules().get(row.nativeRule);
                     if(rule==null||!Objects.equals(rule.getOrigin(),row.origin))throw new IllegalStateException("Exact actual palette original required");

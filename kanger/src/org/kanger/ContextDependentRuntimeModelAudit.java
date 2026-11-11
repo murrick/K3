@@ -18,7 +18,7 @@ final class ContextDependentRuntimeModelAudit {
     private static void need(boolean b,String why){if(!b)throw new IllegalStateException(why);}
     private static void interrupt()throws InterruptedException{if(Thread.currentThread().isInterrupted())throw new InterruptedException("Indexed runtime truth audit interrupted");}
     private Shape nativeShape(Member member,Runnable work)throws Exception{
-        Shape shape=new Shape();need(member.inventory.initialization.isEmpty()&&member.inventory.rows.size()==member.inventory.primary.size(),"Whole primary-only actual runtime model basis required");
+        Shape shape=new Shape();need(member.inventory.dependentPrimaryView(),"Whole primary-only actual runtime model basis required");
         for(ContextProductionInventory.Row row:member.inventory.rows){interrupt();work.run();Source source=new Source(member.inventory.context,member.inventory.revision,row.nativeRule,member.inventory.localX,"inventory:"+member.inventory.fingerprint);need(sources.add(source),"Distinct physical original runtime Source required");Rule rule=(Rule)member.actual.getRules().get(row.nativeRule);
             need(rule!=null&&rule.getId()==row.nativeRule&&row.origin.equals(rule.getOrigin())&&!rule.isQuery()&&!rule.isGenerated()&&!rule.isDeleted(member.actual)&&rule.getTree().size()==1&&!rule.getTree().get(0).isEmpty(),"Exact actual native primary clause required");
             if(rule.getTree().get(0).size()==1&&rule.getTree().get(0).get(0).isAntc()){

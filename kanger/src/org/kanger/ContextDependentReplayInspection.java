@@ -95,7 +95,7 @@ public final class ContextDependentReplayInspection {
     }
     private static Projection project(Mind actual,ContextProductionInventory expected,Policy policy,boolean horn,Runnable work,boolean local,Runnable chargeNewTerm,Runnable chargeCompilerEntry,Runnable chargeParserNode,Runnable chargeParserToken,long parserDepth,java.util.function.IntConsumer chargeLexemeText,java.util.function.LongConsumer chargeCompilerText,long compilerDepth,Runnable chargeExpansion)throws Exception {
         if(local)current(actual,expected,policy);else currentMember(actual,expected,policy);
-        if(!expected.initialization.isEmpty()||expected.rows.size()!=expected.primary.size())throw new IllegalStateException("Whole primary-only local-X diagnostic required");
+        if(!expected.dependentPrimaryView())throw new IllegalStateException("Whole primary-only local-X diagnostic required");
         User user=new User();Mind isolated=new Mind(user,chargeNewTerm,chargeCompilerEntry,chargeParserNode,chargeParserToken,parserDepth,chargeLexemeText,chargeCompilerText,compilerDepth,chargeExpansion);user.setCurrentMind(isolated);Map<Long,Long> mapping=new LinkedHashMap<>();
         try {
             for(ContextProductionInventory.Row row:expected.rows) {

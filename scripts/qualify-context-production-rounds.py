@@ -77,6 +77,7 @@ def main():
         names = [('org.kanger.ContextDependentTopologyModelRunner', 'CONTEXT_DEPENDENT_TOPOLOGY_MODEL_PASS'),
                  ('org.kanger.ContextDependentProjectionModelRunner', 'CONTEXT_DEPENDENT_PROJECTION_MODEL_PASS'),
                  ('org.kanger.ContextDependentAutomaticInspectionRunner', 'CONTEXT_DEPENDENT_AUTOMATIC_INSPECTION_PASS'),
+                 ('org.kanger.ContextDependentEffectiveViewInspectionRunner', 'CONTEXT_DEPENDENT_EFFECTIVE_VIEW_INSPECTION_PASS'),
                  ('org.kanger.storage.dumb2.ContextDependentModelSearchRunner', 'CONTEXT_DEPENDENT_MODEL_SEARCH_PASS'),
                  ('org.kanger.storage.dumb2.ContextDependentModelSearchFunctionRunner', 'CONTEXT_DEPENDENT_MODEL_SEARCH_FUNCTION_PASS'),
                  ('org.kanger.storage.dumb2.ContextDependentModelSearchScopeRunner', 'CONTEXT_DEPENDENT_MODEL_SEARCH_SCOPE_PASS'),
@@ -1166,6 +1167,15 @@ def main():
             org.kanger.ContextProductionInventory view = org.kanger.ContextProductionInventory.inspect(connection.layer(),
                     connection.getTarget().getContextId(), connection.getTarget().getRevision(), false, connection.getInitialization(), remaining);
             remaining -= view.rows.size();
+            if (!connection.getInitialization().isEmpty()) {
+                ContextConnection cold = new ContextConnection(connection.getTargetLocation(), connection.getTarget(),
+                        connection.getCertificate(), connection.getInitialization(), connection.getTrustGroup());
+                try {
+                    org.kanger.ContextProductionInventory replay = org.kanger.ContextProductionInventory.inspect(cold.layer(),
+                            view.context, view.revision, false, cold.getInitialization(), 1000);
+                    view = org.kanger.ContextDependentEffectiveViewInspection.verify(connection.layer(),view,cold.layer(),replay,1000,64000000);
+                } finally { cold.closeLayer(); }
+            }
             names.put(view.context,displayFederationLocator(connection.getTargetLocation()));inventories.put(view.context,view);
             org.kanger.ContextDependentCutInspection.Member member = new org.kanger.ContextDependentCutInspection.Member(connection.layer(), view);
             if (connection.getTrustGroup() == null) cuts.add(new org.kanger.ContextDependentCutInspection.Cut(null, java.util.Collections.singletonList(member)));

@@ -25,7 +25,12 @@ public final class ContextProductionInventory {
     public final String fingerprint;
     public final List<String> initialization;
     public final List<Row> rows, primary, generated;
+    private final boolean effectiveReplayVerified;
     private ContextProductionInventory(UUID context,long revision,boolean localX,List<String> initialization,List<Row> rows,String fingerprint) {
+        this(context,revision,localX,initialization,rows,fingerprint,false);
+    }
+    private ContextProductionInventory(UUID context,long revision,boolean localX,List<String> initialization,List<Row> rows,String fingerprint,boolean verified) {
+        effectiveReplayVerified=verified;
         this.context = context; this.revision = revision; this.localX = localX; this.fingerprint = fingerprint;
         this.initialization = Collections.unmodifiableList(new ArrayList<>(initialization));
         this.rows = Collections.unmodifiableList(new ArrayList<>(rows));
@@ -33,6 +38,9 @@ public final class ContextProductionInventory {
         for (Row row : rows) if (!row.deleted) { if (row.generated) generated.add(row); else primary.add(row); }
         this.primary = Collections.unmodifiableList(primary); this.generated = Collections.unmodifiableList(generated);
     }
+    /** Effective initialized content needs a separately checked cold replay; generated/deleted rows remain unsupported. */
+    public boolean dependentPrimaryView(){return rows.size()==primary.size()&&(initialization.isEmpty()||effectiveReplayVerified);}
+    ContextProductionInventory verifiedEffectiveReplay(){return new ContextProductionInventory(context,revision,localX,initialization,rows,fingerprint,true);}
     /** Identity/configuration must be acquired by the owning storage provider, not inferred from text. */
     public static ContextProductionInventory inspect(Mind mind,UUID context,long revision,boolean localX,List<String> initialization,int maximumRows) throws Exception {
         if (mind == null || context == null || revision < 0 || maximumRows < 0 || maximumRows > 10000)
