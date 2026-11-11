@@ -43,7 +43,7 @@ raise SystemExit(subprocess.call(['java', '-XX:-UsePerfData', '-Duser.home=' + s
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--mode', choices=('dependent-cache-alias-contract', 'native-dependent-chain-contract', 'dependent-cache-topology-contract', 'dependent-ground-cache-contract', 'dependent-topology-model-contract', 'combined-integration-contract', 'native-dependent-authoring-contract', 'contract', 'reference', 'witness-contract', 'independent-reopen-contract', 'ordinary-commit-contract', 'ordinary-ground-attachment-contract', 'ordinary-revision-switch-contract', 'ordinary-private-edit-contract', 'ordinary-topology-contract', 'ordinary-function-attachment-contract', 'native-function-pair-contract', 'closed-arithmetic-contract', 'arithmetic-expression-contract', 'arithmetic-rule-contract', 'arithmetic-step-contract', 'arithmetic-round-contract', 'arithmetic-family-round-contract', 'arithmetic-collision-contract', 'arithmetic-iteration-contract', 'arithmetic-model-contract', 'arithmetic-constraint-contract', 'private-witness-contract', 'universal-unit-contract'), default='contract')
+    parser.add_argument('--mode', choices=('dependent-cache-ancestry-contract', 'dependent-cache-alias-contract', 'native-dependent-chain-contract', 'dependent-cache-topology-contract', 'dependent-ground-cache-contract', 'dependent-topology-model-contract', 'combined-integration-contract', 'native-dependent-authoring-contract', 'contract', 'reference', 'witness-contract', 'independent-reopen-contract', 'ordinary-commit-contract', 'ordinary-ground-attachment-contract', 'ordinary-revision-switch-contract', 'ordinary-private-edit-contract', 'ordinary-topology-contract', 'ordinary-function-attachment-contract', 'native-function-pair-contract', 'closed-arithmetic-contract', 'arithmetic-expression-contract', 'arithmetic-rule-contract', 'arithmetic-step-contract', 'arithmetic-round-contract', 'arithmetic-family-round-contract', 'arithmetic-collision-contract', 'arithmetic-iteration-contract', 'arithmetic-model-contract', 'arithmetic-constraint-contract', 'private-witness-contract', 'universal-unit-contract'), default='contract')
     parser.add_argument('--ordinary-integration-candidate', action='store_true',
                         help='Compile an isolated experimental default hook; never edit production sources')
     parser.add_argument('--ground-attachment-candidate', action='store_true',
@@ -73,6 +73,9 @@ def main():
                'kanger-data-dumb2', 'kanger-console')
     production = sorted(p for module in modules for p in (root / module / 'src').rglob('*.java'))
     names = [('org.kanger.storage.dumb2.ContextProductionRoundsContractRunner', 'CONTEXT_PRODUCTION_ROUNDS_CONTRACT_PASS')]
+    if args.mode == 'dependent-cache-ancestry-contract':
+        names = [('org.kanger.ContextDependentCacheAncestryInspectionRunner', 'CONTEXT_DEPENDENT_CACHE_ANCESTRY_INSPECTION_PASS'),
+                 ('org.kanger.ContextDependentCacheAliasInspectionRunner', 'CONTEXT_DEPENDENT_CACHE_ALIAS_INSPECTION_PASS')]
     if args.mode == 'dependent-cache-alias-contract':
         names = [('org.kanger.ContextDependentCacheAliasInspectionRunner', 'CONTEXT_DEPENDENT_CACHE_ALIAS_INSPECTION_PASS')]
     if args.mode == 'native-dependent-chain-contract':
@@ -132,7 +135,8 @@ def main():
         names += [('org.kanger.ContextAlternatingPrefixCollisionGate', 'missing=0'),
                   ('org.kanger.NativeWitnessDependencyGate', 'missing=0'),
                   ('org.kanger.NativeDependentAuthoringCaptureRunner', 'NATIVE_DEPENDENT_AUTHORING_CAPTURE_PASS'),
-                 ('org.kanger.NativeDependentChainCollisionRunner', 'NATIVE_DEPENDENT_CHAIN_COLLISION_PASS')]
+                 ('org.kanger.NativeDependentChainCollisionRunner', 'NATIVE_DEPENDENT_CHAIN_COLLISION_PASS'),
+                  ('org.kanger.ContextDependentCacheAncestryInspectionRunner', 'CONTEXT_DEPENDENT_CACHE_ANCESTRY_INSPECTION_PASS')]
     if args.mode == 'ordinary-function-attachment-contract':
         names = [('org.kanger.storage.dumb2.ContextOrdinaryFunctionAttachmentRunner',
                   'CONTEXT_ORDINARY_FUNCTION_ATTACHMENT_PASS')]
@@ -1390,7 +1394,8 @@ def main():
     passed = all(result['passed'] for result in results)
     report = dict(ground_attachment_candidate=args.ground_attachment_candidate, ordinary_integration_candidate=args.ordinary_integration_candidate, head=head, production_sources=len(production), mode=args.mode, passed=passed, results=results,
                   dependent_authoring_candidate=args.dependent_authoring_candidate,
-                  scope={'dependent-cache-alias-contract': 'Read-only selected closed-product witness renaming audit; no cache coverage or admission authority',
+                  scope={'dependent-cache-ancestry-contract': 'Automatic resolved-cause recipes and complete generated occurrence classification; not cache admission or native event history',
+                         'dependent-cache-alias-contract': 'Read-only selected closed-product witness renaming audit; no cache coverage or admission authority',
                          'native-dependent-chain-contract': 'Typed original-only chained-witness native authoring comparison; symbolic-cache admission remains closed',
                          'dependent-cache-topology-contract': 'Required physical cached mixed-prefix topology admission and cold reopen in the combined candidate',
                          'dependent-ground-cache-contract': 'Primary-only implication witnesses for every actual local signed ground cache row; no admission or branch-history coverage',
