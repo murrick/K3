@@ -75,6 +75,7 @@ def main():
     names = [('org.kanger.storage.dumb2.ContextProductionRoundsContractRunner', 'CONTEXT_PRODUCTION_ROUNDS_CONTRACT_PASS')]
     if args.mode == 'dependent-topology-model-contract':
         names = [('org.kanger.ContextDependentTopologyModelRunner', 'CONTEXT_DEPENDENT_TOPOLOGY_MODEL_PASS'),
+                 ('org.kanger.ContextDependentProjectionModelRunner', 'CONTEXT_DEPENDENT_PROJECTION_MODEL_PASS'),
                  ('org.kanger.storage.dumb2.ContextDependentModelSearchRunner', 'CONTEXT_DEPENDENT_MODEL_SEARCH_PASS'),
                  ('org.kanger.storage.dumb2.ContextDependentModelSearchFunctionRunner', 'CONTEXT_DEPENDENT_MODEL_SEARCH_FUNCTION_PASS'),
                  ('org.kanger.storage.dumb2.ContextDependentModelSearchScopeRunner', 'CONTEXT_DEPENDENT_MODEL_SEARCH_SCOPE_PASS'),

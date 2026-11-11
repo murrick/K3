@@ -76,6 +76,13 @@ public final class ContextDependentTopologyModelRunner {
                 &&found.family!=null&&found.frame!=null&&found.finalObligations==found.runtimeObligations,
                 "one proposed model must pass original, final and independent indexed truth: "+found.phase+"/"+found.reason);
         require(!reverse||found.finalObligations>0,"reverse attachment includes actual transported symbolic consequences");
+        ContextDependentModelSearchInspection.Limits cap=request.limits;
+        ContextDependentModelSearchInspection.Request automatic=new ContextDependentModelSearchInspection.Request(request.iteration,request.extraPoints,request.otherRepresentative,
+                new ContextDependentModelSearchInspection.Limits(cap.points,cap.cells,cap.choiceCells,128,cap.schemaWork,cap.searchWork,cap.auditWork,cap.originalWork,cap.finalWork),request.projection);
+        ContextDependentModelSearchInspection.Result inferred=ContextDependentModelSearchInspection.inspect(x,cuts,automatic);
+        require(inferred.status==ContextDependentModelSearchInspection.Status.MODELLED_PENDING&&inferred.originalRows==3&&inferred.finalObligations==inferred.runtimeObligations,
+                "automatic dependent family model within 128 candidates, reverse="+reverse+": "+inferred.phase+"/"+inferred.reason);
+
         noPrefix(ContextDependentModelSearchInspection.inspect(x,cuts,search(x,foreign,pm,false,8000000)),"failed constant choice consumes budget without a false refutation or partial prefix");
         ContextDependentModelSearchInspection.Result bounded=ContextDependentModelSearchInspection.inspect(x,cuts,search(x,foreign,pm,true,1));
         noPrefix(bounded,"indexed truth limit preserves no model receipt");
