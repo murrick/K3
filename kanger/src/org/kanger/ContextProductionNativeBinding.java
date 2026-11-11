@@ -162,7 +162,7 @@ public final class ContextProductionNativeBinding {
                         }
                         if (universal) {
                             try {
-                                NativePrenexUnitScope observed=NativePrenexUnitScope.observe(nativeRule,mind,work);
+                                NativePrenexUnitScope observed=NativePrenexUnitScope.observeFactoryRow(row.nativeRule,mind,work);
                                 NativePrenexUnitScope replayed=NativePrenexUnitScope.observe(reconstructed,replay,work);
                                 if (!NativePrenexUnitScope.same(observed,replayed,work))
                                     throw new IllegalStateException("Whole mixed prefix/native replay shape or dependencies differ");
