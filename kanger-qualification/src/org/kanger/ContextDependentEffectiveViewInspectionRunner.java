@@ -29,6 +29,30 @@ public final class ContextDependentEffectiveViewInspectionRunner {
                 new ContextDependentModelSearchInspection.Limits(30,100000,100000,128,64000000,64000000,64000000,64000000,64000000),
                 new ContextDependentRuntimeContinuationInspection.Projection(100000,1000000,64000000,64000000,64000000,64000000));
     }
+    private static void cached()throws Exception{
+        Mind actual=memory(),cold=memory();
+        String first="!@x seed(x)->middle(x);",second="!@x middle(x)->tail(x);",seed="!seed(1);";
+        require(actual.compile(UNIT+first+second+seed,null,false),"real initialized ground cache fixture");
+        raw(cold,seed);raw(cold,second);raw(cold,first);raw(cold,UNIT);
+        List<String> init=Collections.singletonList(seed);
+        ContextProductionInventory full=inventory(actual,init),plain=inventory(cold,init);
+        require(full.generated.size()>=2&&plain.generated.isEmpty(),"same declarations with different legitimate cache population");
+        reject(()->verify(actual,full,cold,plain,4000000),"unproved warm cache is not hidden by a matching cold primary set");
+        ContextDependentGroundCacheInspection.Limits limits=new ContextDependentGroundCacheInspection.Limits(1000,1000,16,4000000,4000000);
+        ContextProductionInventory prepared=ContextDependentGroundCacheInspection.prepare(actual,full,limits);
+        require(!prepared.dependentPrimaryView(),"cache proof alone cannot qualify an initialized view");
+        ContextProductionInventory verified=verify(actual,prepared,cold,plain,4000000);
+        require(verified.dependentPrimaryView()&&verified.groundCacheProof()==prepared.groundCacheProof()
+                &&verified.fingerprint.equals(full.fingerprint)&&verified.generated.size()==full.generated.size(),"cold equivalence composes with actual full cache coverage without changing working rows or sources");
+        require(model(actual,verified).status==ContextDependentModelSearchInspection.Status.MODELLED_PENDING,"composed initialized-cache receipt reaches complete model audits");
+        raw(cold,"!middle(1);").setGenerated(true);
+        ContextProductionInventory sparse=ContextDependentGroundCacheInspection.prepare(cold,inventory(cold,init),limits);
+        require(sparse.generated.size()==1&&verify(actual,prepared,cold,sparse,4000000).dependentPrimaryView(),"both independently proved cache populations may differ while primary declarations remain equivalent");
+        raw(cold,"!forged(9);").setGenerated(true);
+        reject(()->verify(actual,prepared,cold,sparse,4000000),"old cold cache receipt invalidates when reconstruction changes");
+        reject(()->verify(actual,prepared,cold,inventory(cold,init),4000000),"a fresh unverified cold cache cannot reuse the warm proof");
+        reject(()->ContextDependentGroundCacheInspection.prepare(cold,inventory(cold,init),limits),"unproved extra cold cache refuses composition");
+    }
     public static void main(String[] args)throws Exception{
         System.setProperty("user.home",Files.createTempDirectory("effective-dependent-view-").toString());
         Mind actual=memory(),cold=memory();raw(actual,UNIT);raw(actual,MARKER);raw(cold,MARKER);raw(cold,UNIT);
@@ -51,6 +75,7 @@ public final class ContextDependentEffectiveViewInspectionRunner {
         reject(()->verify(actual,expected,generated,inventory(generated,INIT),1000000),"generated rows remain explicitly outside this primary-view receipt");
         ContextProductionInventory reinspected=inventory(actual,INIT);require(!reinspected.dependentPrimaryView(),"fresh inventory does not inherit a previous receipt implicitly");
         raw(actual,"!changed(1);");reject(()->model(actual,verified),"changed actual content invalidates the verified view");
+        cached();
         System.out.println("CONTEXT_DEPENDENT_EFFECTIVE_VIEW_INSPECTION_PASS checks="+checks);
     }
 }

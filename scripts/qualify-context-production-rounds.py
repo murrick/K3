@@ -1180,6 +1180,10 @@ def main():
                 try {
                     org.kanger.ContextProductionInventory replay = org.kanger.ContextProductionInventory.inspect(cold.layer(),
                             view.context, view.revision, false, cold.getInitialization(), 1000);
+                    if (!view.generated.isEmpty()) view = org.kanger.ContextDependentGroundCacheInspection.prepare(connection.layer(),view,
+                            new org.kanger.ContextDependentGroundCacheInspection.Limits(1000,10000,16,64000000,64000000));
+                    if (!replay.generated.isEmpty()) replay = org.kanger.ContextDependentGroundCacheInspection.prepare(cold.layer(),replay,
+                            new org.kanger.ContextDependentGroundCacheInspection.Limits(1000,10000,16,64000000,64000000));
                     view = org.kanger.ContextDependentEffectiveViewInspection.verify(connection.layer(),view,cold.layer(),replay,1000,64000000);
                 } finally { cold.closeLayer(); }
             }

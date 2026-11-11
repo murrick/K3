@@ -11,7 +11,9 @@ public final class ContextDependentEffectiveViewInspection {
         if(!expected.fingerprint.equals(ContextProductionInventory.inspect(actual,expected.context,expected.revision,expected.localX,expected.initialization,rows).fingerprint))throw new IllegalStateException("Effective initialized view changed during verification");
     }
     private static Map<String,Deque<ContextProductionInventory.Row>> rows(ContextProductionInventory inventory,Runnable work){
-        if(inventory.rows.size()!=inventory.primary.size())throw new IllegalStateException("Complete primary-only effective replay required; derived/deleted rows are not covered");
+        if(inventory.rows.size()!=inventory.primary.size()+inventory.generated.size()
+                ||(!inventory.generated.isEmpty()&&inventory.groundCacheProof()==null))
+            throw new IllegalStateException("Complete effective primary replay requires independent coverage of every ground cache row; deleted rows are not covered");
         Map<String,Deque<ContextProductionInventory.Row>> result=new LinkedHashMap<>();
         for(ContextProductionInventory.Row row:inventory.primary){
             work.run();if(row.origin==null)throw new IllegalStateException("Whole effective origin required");for(int i=0;i<row.origin.length();i++)work.run();
@@ -24,10 +26,12 @@ public final class ContextDependentEffectiveViewInspection {
         if(!expected.context.equals(replay.context)||expected.revision!=replay.revision||expected.localX!=replay.localX||!expected.initialization.equals(replay.initialization))throw new IllegalArgumentException("Exact physical pin and complete initialization recipe required");
         if(expected.localX||replay.localX)throw new IllegalArgumentException("Foreign physical effective views required");
         current(actual,expected,maximumRows);current(cold,replay,maximumRows);
+        boolean cached=!expected.generated.isEmpty()||!replay.generated.isEmpty();
+        if(cached&&(!DmzTerminalRestriction.activeNoGoods(actual).isEmpty()||!DmzTerminalRestriction.activeNoGoods(cold).isEmpty()))throw new IllegalStateException("Restricted effective cache view is outside cold equivalence scope");
         try{
             Runnable work=ContextGroundProductionRounds.budget(maximumWork);
             Map<String,Deque<ContextProductionInventory.Row>> left=rows(expected,work),right=rows(replay,work);
-            if(expected.rows.size()!=replay.rows.size()||!left.keySet().equals(right.keySet()))throw new IllegalStateException("Different complete effective declarations");
+            if(expected.primary.size()!=replay.primary.size()||!left.keySet().equals(right.keySet()))throw new IllegalStateException("Different complete effective declarations");
             for(String origin:left.keySet()){
                 ContextDependentRuntimeExecution.interrupt();Deque<ContextProductionInventory.Row> a=left.get(origin),b=right.get(origin);
                 if(a.size()!=b.size())throw new IllegalStateException("Different effective original multiplicity");
@@ -43,6 +47,9 @@ public final class ContextDependentEffectiveViewInspection {
                 }
             }
             return expected.verifiedEffectiveReplay();
-        }finally{current(actual,expected,maximumRows);current(cold,replay,maximumRows);}
+        }finally{
+            current(actual,expected,maximumRows);current(cold,replay,maximumRows);
+            if(cached&&(!DmzTerminalRestriction.activeNoGoods(actual).isEmpty()||!DmzTerminalRestriction.activeNoGoods(cold).isEmpty()))throw new IllegalStateException("Restricted effective cache view changed during verification");
+        }
     }
 }

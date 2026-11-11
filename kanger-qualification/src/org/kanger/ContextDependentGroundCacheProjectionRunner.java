@@ -32,7 +32,12 @@ public final class ContextDependentGroundCacheProjectionRunner {
             DmzCurrentGroundProofInventory proofs=DmzCurrentGroundProofInventory.capture(q,10000,false);require(proofs.eligible,"current proof inventory for restriction control");
             DmzProofWitnesses.Witness selected=null;for(DmzObservedProofGraph.Node node:proofs.graph.observed.nodes)if(node.ground.predicate.equals("hit")){selected=proofs.proofs(node.ground,10000).witnesses.get(0);break;}
             require(selected!=null,"real cache proof selected");
+            ContextProductionInventory foreign=prepare(q,inventory(q,6169,false,Collections.emptyList()));
+            Mind cold=memory();raw(cold,"!@x seed(x)->hit(x);");raw(cold,"!seed(1);");
+            ContextProductionInventory coldInventory=inventory(cold,6169,false,Collections.emptyList());
+            require(ContextDependentEffectiveViewInspection.verify(q,foreign,cold,coldInventory,1000,4000000).dependentPrimaryView(),"unrestricted cached cold equivalence control");
             try(DmzTerminalRestriction active=DmzTerminalRestriction.begin(q,selected)){
+                reject(()->ContextDependentEffectiveViewInspection.verify(q,foreign,cold,coldInventory,1000,4000000),"cold reconstruction cannot bypass an active cache branch restriction");
                 reject(()->model(new Member(q,prepared),Collections.emptyList()),"active branch restriction invalidates unrestricted cached model basis even with unchanged physical rows");
                 reject(()->prepare(q,inventory(q,6169,true,Collections.emptyList())),"fresh cache preparation cannot bypass an active restriction");
             }
