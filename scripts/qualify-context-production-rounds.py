@@ -76,6 +76,7 @@ def main():
     if args.mode == 'dependent-topology-model-contract':
         names = [('org.kanger.ContextDependentTopologyModelRunner', 'CONTEXT_DEPENDENT_TOPOLOGY_MODEL_PASS'),
                  ('org.kanger.ContextDependentProjectionModelRunner', 'CONTEXT_DEPENDENT_PROJECTION_MODEL_PASS'),
+                 ('org.kanger.ContextDependentAutomaticInspectionRunner', 'CONTEXT_DEPENDENT_AUTOMATIC_INSPECTION_PASS'),
                  ('org.kanger.storage.dumb2.ContextDependentModelSearchRunner', 'CONTEXT_DEPENDENT_MODEL_SEARCH_PASS'),
                  ('org.kanger.storage.dumb2.ContextDependentModelSearchFunctionRunner', 'CONTEXT_DEPENDENT_MODEL_SEARCH_FUNCTION_PASS'),
                  ('org.kanger.storage.dumb2.ContextDependentModelSearchScopeRunner', 'CONTEXT_DEPENDENT_MODEL_SEARCH_SCOPE_PASS'),
@@ -1149,6 +1150,44 @@ def main():
         return names.getOrDefault(source.context, "<unknown context>") + "@" + source.revision + "#" + source.rule;
     }
 
+    private void qualifyDependentTopology(ConnectionVector proposed) throws Exception {
+        Mind x = (Mind) user.getCurrentMind();
+        org.kanger.DmzCandidateSession.requireSettledPhysicalQ(x);
+        java.util.UUID identity = getContextId(); long revision = getRevision();
+        org.kanger.ContextProductionInventory xi = org.kanger.ContextProductionInventory.inspect(
+                x, identity, revision, true, java.util.Collections.emptyList(), 1000);
+        org.kanger.ContextDependentCutInspection.Member local = new org.kanger.ContextDependentCutInspection.Member(x, xi);
+        int remaining = 1000 - xi.rows.size();
+        java.util.Map<java.util.UUID,String> names = new java.util.HashMap<>();names.put(identity,getStorageName());
+        java.util.Map<java.util.UUID,org.kanger.ContextProductionInventory> inventories = new java.util.HashMap<>();inventories.put(identity,xi);
+        java.util.List<org.kanger.ContextDependentCutInspection.Cut> cuts = new java.util.ArrayList<>();
+        java.util.Map<String,java.util.List<org.kanger.ContextDependentCutInspection.Member>> groups = new java.util.LinkedHashMap<>();
+        for (ContextConnection connection : proposed.getConnections()) {
+            org.kanger.ContextProductionInventory view = org.kanger.ContextProductionInventory.inspect(connection.layer(),
+                    connection.getTarget().getContextId(), connection.getTarget().getRevision(), false, connection.getInitialization(), remaining);
+            remaining -= view.rows.size();
+            names.put(view.context,displayFederationLocator(connection.getTargetLocation()));inventories.put(view.context,view);
+            org.kanger.ContextDependentCutInspection.Member member = new org.kanger.ContextDependentCutInspection.Member(connection.layer(), view);
+            if (connection.getTrustGroup() == null) cuts.add(new org.kanger.ContextDependentCutInspection.Cut(null, java.util.Collections.singletonList(member)));
+            else groups.computeIfAbsent(connection.getTrustGroup(), key -> new java.util.ArrayList<>()).add(member);
+        }
+        for (String group : groups.keySet()) cuts.add(new org.kanger.ContextDependentCutInspection.Cut(group, groups.get(group)));
+        try {
+            org.kanger.ContextDependentModelSearchInspection.Result result = org.kanger.ContextDependentAutomaticInspection.inspect(local, cuts,
+                    new org.kanger.ContextDependentIterationInspection.Request(new org.kanger.ContextDependentReplayInspection.Policy(2000000,1000,1000,64000000,200000),10000,8),
+                    new org.kanger.ContextDependentModelSearchInspection.Limits(30,100000,100000,20000,64000000,64000000,64000000,64000000,64000000),
+                    new org.kanger.ContextDependentRuntimeContinuationInspection.Projection(100000,1000000,64000000,64000000,64000000,64000000));
+            if (result.status == org.kanger.ContextDependentModelSearchInspection.Status.REFUTED)
+                throw org.kanger.exception.ContextDependentFamilyCommitException.collision(result,names,inventories);
+            if (result.status != org.kanger.ContextDependentModelSearchInspection.Status.MODELLED_PENDING)
+                throw new IllegalStateException("Dependent family " + result.status + " at " + result.phase + ": " + result.reason);
+        } finally {
+            org.kanger.DmzCandidateSession.requireSettledPhysicalQ(x);
+            if (x != user.getCurrentMind() || !identity.equals(getContextId()) || revision != getRevision())
+                throw new IllegalStateException("Owning dependent topology source changed");
+        }
+    }
+
     private void qualifyGroundAttachment(ConnectionVector proposed) throws Exception {
         Mind x = (Mind) user.getCurrentMind();
         int remaining = 1000;
@@ -1157,6 +1196,9 @@ def main():
         remaining -= inventory.rows.size();
         org.kanger.ContextProductionNativeBinding.Result bound =
                 org.kanger.ContextProductionNativeBinding.bind(x, inventory, 64000000, 100000);
+        if (!bound.bound && "Mixed quantifier prefixes require dependency-aware qualification".equals(bound.reason)) {
+            qualifyDependentTopology(proposed); return;
+        }
         if (!bound.bound) throw new IllegalStateException("Ground attachment X binding incomplete: " + bound.reason);
         java.util.List<org.kanger.ContextProductionNativeBinding.Snapshot> members = new java.util.ArrayList<>();
         java.util.Map<String,java.util.List<org.kanger.ContextProductionNativeBinding.Snapshot>> groups = new java.util.LinkedHashMap<>();
@@ -1167,6 +1209,9 @@ def main():
             remaining -= view.rows.size();
             org.kanger.ContextProductionNativeBinding.Result binding =
                     org.kanger.ContextProductionNativeBinding.bind(member.layer(), view, 64000000, 100000);
+            if (!binding.bound && "Mixed quantifier prefixes require dependency-aware qualification".equals(binding.reason)) {
+                qualifyDependentTopology(proposed); return;
+            }
             if (!binding.bound) {
                 int inspected = 0;
                 for (org.kanger.ContextProductionInventory.Row row : view.primary) {
