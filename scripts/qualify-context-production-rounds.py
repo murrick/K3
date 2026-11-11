@@ -43,7 +43,7 @@ raise SystemExit(subprocess.call(['java', '-XX:-UsePerfData', '-Duser.home=' + s
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--mode', choices=('dependent-ground-cache-contract', 'dependent-topology-model-contract', 'combined-integration-contract', 'native-dependent-authoring-contract', 'contract', 'reference', 'witness-contract', 'independent-reopen-contract', 'ordinary-commit-contract', 'ordinary-ground-attachment-contract', 'ordinary-revision-switch-contract', 'ordinary-private-edit-contract', 'ordinary-topology-contract', 'ordinary-function-attachment-contract', 'native-function-pair-contract', 'closed-arithmetic-contract', 'arithmetic-expression-contract', 'arithmetic-rule-contract', 'arithmetic-step-contract', 'arithmetic-round-contract', 'arithmetic-family-round-contract', 'arithmetic-collision-contract', 'arithmetic-iteration-contract', 'arithmetic-model-contract', 'arithmetic-constraint-contract', 'private-witness-contract', 'universal-unit-contract'), default='contract')
+    parser.add_argument('--mode', choices=('dependent-cache-topology-contract', 'dependent-ground-cache-contract', 'dependent-topology-model-contract', 'combined-integration-contract', 'native-dependent-authoring-contract', 'contract', 'reference', 'witness-contract', 'independent-reopen-contract', 'ordinary-commit-contract', 'ordinary-ground-attachment-contract', 'ordinary-revision-switch-contract', 'ordinary-private-edit-contract', 'ordinary-topology-contract', 'ordinary-function-attachment-contract', 'native-function-pair-contract', 'closed-arithmetic-contract', 'arithmetic-expression-contract', 'arithmetic-rule-contract', 'arithmetic-step-contract', 'arithmetic-round-contract', 'arithmetic-family-round-contract', 'arithmetic-collision-contract', 'arithmetic-iteration-contract', 'arithmetic-model-contract', 'arithmetic-constraint-contract', 'private-witness-contract', 'universal-unit-contract'), default='contract')
     parser.add_argument('--ordinary-integration-candidate', action='store_true',
                         help='Compile an isolated experimental default hook; never edit production sources')
     parser.add_argument('--ground-attachment-candidate', action='store_true',
@@ -53,9 +53,9 @@ def main():
     parser.add_argument('--dependent-authoring-candidate', action='store_true',
                         help='Compile isolated dependent-pair authoring refutation hook')
     args = parser.parse_args()
-    if args.dependent_authoring_candidate and args.mode not in ('native-dependent-authoring-contract','combined-integration-contract'):
+    if args.dependent_authoring_candidate and args.mode not in ('native-dependent-authoring-contract','combined-integration-contract','dependent-cache-topology-contract'):
         parser.error('dependent authoring candidate requires its own contract')
-    if args.mode == 'combined-integration-contract':
+    if args.mode in ('combined-integration-contract','dependent-cache-topology-contract'):
         args.ordinary_integration_candidate = True
         args.ground_attachment_candidate = True
         args.dependent_authoring_candidate = True
@@ -73,8 +73,11 @@ def main():
                'kanger-data-dumb2', 'kanger-console')
     production = sorted(p for module in modules for p in (root / module / 'src').rglob('*.java'))
     names = [('org.kanger.storage.dumb2.ContextProductionRoundsContractRunner', 'CONTEXT_PRODUCTION_ROUNDS_CONTRACT_PASS')]
+    if args.mode == 'dependent-cache-topology-contract':
+        names = [('org.kanger.storage.dumb2.ContextDependentCacheTopologyRunner', 'CONTEXT_DEPENDENT_CACHE_TOPOLOGY_PASS')]
     if args.mode == 'dependent-ground-cache-contract':
-        names = [('org.kanger.ContextDependentGroundCacheInspectionRunner', 'CONTEXT_DEPENDENT_GROUND_CACHE_INSPECTION_PASS')]
+        names = [('org.kanger.ContextDependentGroundCacheInspectionRunner', 'CONTEXT_DEPENDENT_GROUND_CACHE_INSPECTION_PASS'),
+                 ('org.kanger.ContextDependentGroundCacheProjectionRunner', 'CONTEXT_DEPENDENT_GROUND_CACHE_PROJECTION_PASS')]
     if args.mode == 'dependent-topology-model-contract':
         names = [('org.kanger.ContextDependentTopologyModelRunner', 'CONTEXT_DEPENDENT_TOPOLOGY_MODEL_PASS'),
                  ('org.kanger.ContextDependentProjectionModelRunner', 'CONTEXT_DEPENDENT_PROJECTION_MODEL_PASS'),
@@ -1159,6 +1162,8 @@ def main():
         java.util.UUID identity = getContextId(); long revision = getRevision();
         org.kanger.ContextProductionInventory xi = org.kanger.ContextProductionInventory.inspect(
                 x, identity, revision, true, java.util.Collections.emptyList(), 1000);
+        if (!xi.generated.isEmpty()) xi = org.kanger.ContextDependentGroundCacheInspection.prepare(x,xi,
+                new org.kanger.ContextDependentGroundCacheInspection.Limits(1000,10000,16,64000000,64000000));
         org.kanger.ContextDependentCutInspection.Member local = new org.kanger.ContextDependentCutInspection.Member(x, xi);
         int remaining = 1000 - xi.rows.size();
         java.util.Map<java.util.UUID,String> names = new java.util.HashMap<>();names.put(identity,getStorageName());
@@ -1178,6 +1183,9 @@ def main():
                     view = org.kanger.ContextDependentEffectiveViewInspection.verify(connection.layer(),view,cold.layer(),replay,1000,64000000);
                 } finally { cold.closeLayer(); }
             }
+            if (connection.getInitialization().isEmpty() && !view.generated.isEmpty())
+                view = org.kanger.ContextDependentGroundCacheInspection.prepare(connection.layer(),view,
+                        new org.kanger.ContextDependentGroundCacheInspection.Limits(1000,10000,16,64000000,64000000));
             names.put(view.context,displayFederationLocator(connection.getTargetLocation()));inventories.put(view.context,view);
             org.kanger.ContextDependentCutInspection.Member member = new org.kanger.ContextDependentCutInspection.Member(connection.layer(), view);
             if (connection.getTrustGroup() == null) cuts.add(new org.kanger.ContextDependentCutInspection.Cut(null, java.util.Collections.singletonList(member)));
@@ -1367,7 +1375,8 @@ def main():
     passed = all(result['passed'] for result in results)
     report = dict(ground_attachment_candidate=args.ground_attachment_candidate, ordinary_integration_candidate=args.ordinary_integration_candidate, head=head, production_sources=len(production), mode=args.mode, passed=passed, results=results,
                   dependent_authoring_candidate=args.dependent_authoring_candidate,
-                  scope={'dependent-ground-cache-contract': 'Primary-only implication witnesses for every actual local signed ground cache row; no admission or branch-history coverage',
+                  scope={'dependent-cache-topology-contract': 'Required physical cached mixed-prefix topology admission and cold reopen in the combined candidate',
+                         'dependent-ground-cache-contract': 'Primary-only implication witnesses for every actual local signed ground cache row; no admission or branch-history coverage',
                          'dependent-topology-model-contract': 'Native all-value dependent topology models on actual and reopened physical views; read-only evidence',
                          'combined-integration-contract': 'Joint ordinary topology, writer, compatibility and dependent authoring candidates',
                          'native-dependent-authoring-contract': 'Dependent pair authoring refutation; isolated Analyzer candidate',

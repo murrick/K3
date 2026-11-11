@@ -114,8 +114,8 @@ public final class ContextDependentProductionInspection {
             this.context=context;this.revision=revision;this.fingerprint=fingerprint;this.rows=Collections.unmodifiableMap(new LinkedHashMap<>(rows));
         }
         static Originals of(ContextProductionInventory inventory) {
-            if(inventory==null||!inventory.localX||!inventory.initialization.isEmpty()||inventory.rows.size()!=inventory.primary.size())throw new IllegalArgumentException("Whole primary-only original inventory required");
-            Map<Long,String> rows=new LinkedHashMap<>();for(ContextProductionInventory.Row row:inventory.rows)rows.put(row.nativeRule,row.origin);return new Originals(inventory.context,inventory.revision,inventory.fingerprint,rows);
+            if(inventory==null||!inventory.localX||!inventory.initialization.isEmpty()||!inventory.dependentPrimaryView())throw new IllegalArgumentException("Whole primary-only original inventory required");
+            Map<Long,String> rows=new LinkedHashMap<>();for(ContextProductionInventory.Row row:inventory.primary)rows.put(row.nativeRule,row.origin);return new Originals(inventory.context,inventory.revision,inventory.fingerprint,rows);
         }
     }
     private static Projection rebuild(Originals originals,Policy policy)throws Exception {
@@ -197,8 +197,8 @@ public final class ContextDependentProductionInspection {
                 long key=0;Set<Source> distinct=new HashSet<>();
                 for(CutPart part:parts) {
                     work.run();ContextProductionInventory nativeView=ContextProductionInventory.inspect(part.projection.mind,part.original.context,part.original.revision,part.original.localX,Collections.emptyList(),request.policy.rows);
-                    if(nativeView.rows.size()!=part.original.rows.size()||nativeView.primary.size()!=nativeView.rows.size())throw new IllegalStateException("Different complete physical cut projection");guards.add(nativeView);
-                    for(ContextProductionInventory.Row row:part.original.rows){work.run();Long id=part.projection.mapping.get(row.nativeRule);if(id==null)throw new IllegalStateException("Missing physical original mapping");Rule rule=(Rule)part.projection.mind.getRules().get(id);
+                    if(nativeView.rows.size()!=part.original.primary.size()||nativeView.primary.size()!=nativeView.rows.size())throw new IllegalStateException("Different complete physical cut projection");guards.add(nativeView);
+                    for(ContextProductionInventory.Row row:part.original.primary){work.run();Long id=part.projection.mapping.get(row.nativeRule);if(id==null)throw new IllegalStateException("Missing physical original mapping");Rule rule=(Rule)part.projection.mind.getRules().get(id);
                         Source source=new Source(part.original.context,part.original.revision,row.nativeRule,part.original.localX,"inventory:"+part.original.fingerprint);if(!distinct.add(source))throw new IllegalStateException("Repeated physical original");
                         sources.put(key,source);ordinals.put(key,ordinals.size());Root root=null;Clause clause=null;if(NativeDependentProductionRows.unit(rule))root=arena.captureFrom(part.projection.mind,rule,key);else clause=NativeDependentProductionRows.ordinary(rule,part.projection.mind,work);
                         entries.put(key,new Entry(rule,part.projection.mind,key,source,root,clause));key++;
@@ -338,6 +338,7 @@ public final class ContextDependentProductionInspection {
         }
     }
     public static Result inspect(Mind actual,ContextProductionInventory expected,Request request)throws Exception {
+        if(expected!=null&&expected.rows.size()!=expected.primary.size())throw new IllegalStateException("Portable production replay still requires a whole primary-only inventory");
         if(actual==null||request==null)throw new IllegalArgumentException("Actual candidate and complete supplied recipe required");
         Policy policy=request.policy;ContextDependentReplayInspection.current(actual,expected,policy);
         try {

@@ -133,4 +133,12 @@ public final class ContextDependentGroundCacheInspection {
             return new Result(Status.VERIFIED,"Every actual ground cache row has an independently checked local primary-only implication witness; not family consistency or branch/history completeness",inventory.fingerprint,covered,unused,pool.size(),rounds);
         }catch(InterruptedException interrupted){Thread.currentThread().interrupt();throw interrupted;}catch(Exception failure){return Result.incomplete(failure.getMessage(),inventory);}}finally{current(mind,inventory,limits);}
     }
+    /** Fresh complete implication check; old inspection results cannot authorize a new inventory. */
+    public static ContextProductionInventory prepare(Mind mind,ContextProductionInventory inventory,Limits limits)throws Exception{
+        Result proof=inspect(mind,inventory,limits);
+        if(proof.status!=Status.VERIFIED)throw new IllegalStateException("Ground cache projection incomplete: "+proof.reason);
+        current(mind,inventory,limits);
+        return inventory.verifiedGroundCache(proof);
+    }
+
 }

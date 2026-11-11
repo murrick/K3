@@ -69,6 +69,7 @@ public final class ContextDependentReplayInspection {
     }
     static void currentMember(Mind mind,ContextProductionInventory expected,Policy policy)throws Exception {
         if(expected==null)throw new IllegalArgumentException("Actual physical member inventory required");
+        if(expected.groundCacheProof()!=null&&!DmzTerminalRestriction.activeNoGoods(mind).isEmpty())throw new IllegalStateException("Restricted branch cannot reuse local ground-cache implication coverage");
         ContextProductionInventory now=ContextProductionInventory.inspect(mind,expected.context,expected.revision,expected.localX,expected.initialization,policy.rows);
         if(!expected.fingerprint.equals(now.fingerprint))throw new IllegalStateException("Changed local-X replay diagnostic inventory");
     }
@@ -98,7 +99,7 @@ public final class ContextDependentReplayInspection {
         if(!expected.dependentPrimaryView())throw new IllegalStateException("Whole primary-only local-X diagnostic required");
         User user=new User();Mind isolated=new Mind(user,chargeNewTerm,chargeCompilerEntry,chargeParserNode,chargeParserToken,parserDepth,chargeLexemeText,chargeCompilerText,compilerDepth,chargeExpansion);user.setCurrentMind(isolated);Map<Long,Long> mapping=new LinkedHashMap<>();
         try {
-            for(ContextProductionInventory.Row row:expected.rows) {
+            for(ContextProductionInventory.Row row:expected.primary) {
                 work.run();Rule original=(Rule)actual.getRules().get(row.nativeRule),copy=(Rule)isolated.compileLineForReplay(row.origin);
                 if(original==null||copy==null)throw new IllegalStateException("Missing whole native original or replay");
                 if(horn&&!NativeDependentProductionRows.unit(original)) {
@@ -121,6 +122,7 @@ public final class ContextDependentReplayInspection {
     public static Result inspect(Mind actual,ContextProductionInventory expected,Request request)throws Exception {
         if(actual==null||request==null)throw new IllegalArgumentException("Actual local-X and exact replay request required");
         Policy policy=request.policy;current(actual,expected,policy);
+        if(expected.rows.size()!=expected.primary.size())throw new IllegalStateException("Portable local replay still requires a whole primary-only inventory");
         Runnable work=ContextGroundProductionRounds.budget(policy.work);
         Projection projection=project(actual,expected,policy,false,work);Mind isolated=projection.mind;Map<Long,Long> mapping=projection.mapping;
         try {

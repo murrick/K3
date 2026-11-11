@@ -58,7 +58,8 @@ public final class ContextDependentCutInspection {
     private static long key(Map<Ref,Long> keys,Ref ref){Long key=keys.get(ref);if(key==null)throw new IllegalArgumentException("Original belongs to another cut or is missing");return key;}
     private static ContextDependentProductionInspection.Result inspectOne(Member x,List<Member> foreign,String identity,List<Step> supplied,Request request)throws Exception {
         List<Member> members=new ArrayList<>();members.add(x);members.addAll(foreign);Map<Ref,Long> keys=new LinkedHashMap<>();long next=0;
-        for(Member member:members)for(ContextProductionInventory.Row row:member.inventory.rows)keys.put(new Ref(member.inventory.context,row.nativeRule),next++);
+        for(Member member:members)if(!member.inventory.dependentPrimaryView())throw new IllegalStateException("Whole verified primary projection required");
+        for(Member member:members)for(ContextProductionInventory.Row row:member.inventory.primary)keys.put(new Ref(member.inventory.context,row.nativeRule),next++);
         List<ContextDependentProductionInspection.Step> steps=new ArrayList<>();for(Step step:supplied){List<ContextDependentProductionInspection.Donor> donors=new ArrayList<>();for(Donor donor:step.donors)donors.add(donor.original==null?ContextDependentProductionInspection.Donor.product(donor.product):ContextDependentProductionInspection.Donor.original(key(keys,donor.original)));steps.add(new ContextDependentProductionInspection.Step(key(keys,step.rule),step.retainedLiteral,donors));}
         ContextDependentProductionInspection.Request recipe=new ContextDependentProductionInspection.Request(request.policy,request.capacity,steps,request.signed);
         return ContextDependentProductionInspection.inspectCut(project(members,request.policy),project(members,request.policy),identity,recipe);

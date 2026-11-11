@@ -84,17 +84,18 @@ public final class ContextDependentRoundInspection {
         List<Cut> cuts=new ArrayList<>(supplied);cuts.sort(Comparator.comparing(c->c.key));Map<String,Set<UUID>> scopes=new LinkedHashMap<>();Set<UUID> local=Collections.singleton(x.inventory.context);scopes.put(ContextDependentCutInspection.local(x.inventory.context),local);List<Member> members=new ArrayList<>();members.add(x);Set<UUID> contexts=new HashSet<>(local);long rows=x.inventory.rows.size();
         for(Cut cut:cuts){Set<UUID> scope=new LinkedHashSet<>(local);if(scopes.containsKey(cut.key))throw new IllegalArgumentException("Repeated/split logical cut");for(Member m:cut.members){if(!contexts.add(m.inventory.context))throw new IllegalArgumentException("Repeated physical member");scope.add(m.inventory.context);members.add(m);rows+=m.inventory.rows.size();}scopes.put(cut.key,scope);}
         if(rows>request.policy.rows||scopes.size()>request.policy.steps||contexts.size()>request.policy.steps+1)throw new IllegalArgumentException("Bounded whole family required");
+        for(Member member:members)if(!member.inventory.dependentPrimaryView())throw new IllegalStateException("Whole verified primary projection required");
         if (sourceChars != Long.MAX_VALUE) {
             long remaining = sourceChars;
             for (Member member : members) {
-                for (ContextProductionInventory.Row row : member.inventory.rows) {
+                for (ContextProductionInventory.Row row : member.inventory.primary) {
                     long required = 2L * row.origin.length();
                     if (required > remaining) throw new IllegalStateException("Replay source character limit");
                     remaining -= required;
                 }
             }
         }
-        Map<Ref,Long> keys=new LinkedHashMap<>();Map<String,Set<Long>> active=new LinkedHashMap<>();long next=0;for(Member m:members)for(ContextProductionInventory.Row row:m.inventory.rows)keys.put(new Ref(m.inventory.context,row.nativeRule),next++);
+        Map<Ref,Long> keys=new LinkedHashMap<>();Map<String,Set<Long>> active=new LinkedHashMap<>();long next=0;for(Member m:members)for(ContextProductionInventory.Row row:m.inventory.primary)keys.put(new Ref(m.inventory.context,row.nativeRule),next++);
         for(Map.Entry<String,Set<UUID>> scope:scopes.entrySet()){Set<Long> ids=new LinkedHashSet<>();for(Map.Entry<Ref,Long> row:keys.entrySet())if(scope.getValue().contains(row.getKey().context))ids.add(row.getValue());active.put(scope.getKey(),ids);}
         current(members,request.policy);
         try {
