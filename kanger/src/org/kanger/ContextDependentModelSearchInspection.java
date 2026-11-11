@@ -20,7 +20,14 @@ public final class ContextDependentModelSearchInspection {
     }
     public static final class Request {
         public final ContextDependentIterationInspection.Request iteration;public final List<SemanticTermSnapshot> extraPoints;public final SemanticTermSnapshot otherRepresentative;public final Limits limits;public final ContextDependentRuntimeContinuationInspection.Projection projection;
-        public Request(ContextDependentIterationInspection.Request iteration,List<SemanticTermSnapshot> extraPoints,SemanticTermSnapshot otherRepresentative,Limits limits,ContextDependentRuntimeContinuationInspection.Projection projection){if(iteration==null||extraPoints==null||extraPoints.contains(null)||otherRepresentative==null||limits==null||projection==null||extraPoints.size()>limits.points)throw new IllegalArgumentException("Actual family request, typed palette and bounded model construction required");this.iteration=iteration;this.extraPoints=Collections.unmodifiableList(new ArrayList<>(extraPoints));this.otherRepresentative=otherRepresentative;this.limits=limits;this.projection=projection;}
+        public final List<Map<String,Model>> proposals;
+        public Request(ContextDependentIterationInspection.Request iteration,List<SemanticTermSnapshot> extraPoints,SemanticTermSnapshot otherRepresentative,Limits limits,ContextDependentRuntimeContinuationInspection.Projection projection){this(iteration,extraPoints,otherRepresentative,limits,projection,Collections.emptyList());}
+        /** Proposals are guesses, never receipts: fresh native/final/indexed audits are mandatory. */
+        public Request(ContextDependentIterationInspection.Request iteration,List<SemanticTermSnapshot> extraPoints,SemanticTermSnapshot otherRepresentative,Limits limits,ContextDependentRuntimeContinuationInspection.Projection projection,List<Map<String,Model>> proposals){
+            if(iteration==null||extraPoints==null||extraPoints.contains(null)||otherRepresentative==null||limits==null||projection==null||extraPoints.size()>limits.points||proposals==null||proposals.size()>limits.candidates)throw new IllegalArgumentException("Actual family request, typed palette and bounded model construction required");
+            this.iteration=iteration;this.extraPoints=Collections.unmodifiableList(new ArrayList<>(extraPoints));this.otherRepresentative=otherRepresentative;this.limits=limits;this.projection=projection;
+            List<Map<String,Model>> copy=new ArrayList<>();for(Map<String,Model> proposal:proposals){if(proposal==null||proposal.containsKey(null)||proposal.containsValue(null))throw new IllegalArgumentException("Whole proposed family interpretation required");copy.add(Collections.unmodifiableMap(new LinkedHashMap<>(proposal)));}this.proposals=Collections.unmodifiableList(copy);
+        }
     }
     public static final class Result {
         public final Status status;public final String phase,reason;public final Map<String,Model> models;public final ContextDependentIterationInspection.Result family;public final ContextDependentRuntimeInspection.Frame frame;public final int tried,originalRows,finalObligations,runtimeObligations;
@@ -77,7 +84,14 @@ public final class ContextDependentModelSearchInspection {
     }
     private static Result construct(Member x,List<Cut> cuts,ContextDependentRoundInspection.Result checked,Request r,ContextDependentIterationInspection.Result family,Runnable chargeCandidate,Runnable chargeAudit)throws Exception{
         String phase="schema";int tried=0;try{
-            phase="schema";Map<String,Schema> schemas=schema(x,cuts,checked,r);Runnable build=ContextGroundProductionRounds.budget(r.limits.searchWork),localAudit=ContextGroundProductionRounds.budget(r.limits.auditWork);Runnable auditWork=()->{localAudit.run();chargeAudit.run();};phase="initial-models";Map<String,Model> models=new LinkedHashMap<>();for(Map.Entry<String,Schema> entry:schemas.entrySet())models.put(entry.getKey(),uniform(entry.getValue(),r,build));
+            phase="schema";Map<String,Schema> schemas=schema(x,cuts,checked,r);Runnable build=ContextGroundProductionRounds.budget(r.limits.searchWork),localAudit=ContextGroundProductionRounds.budget(r.limits.auditWork);Runnable auditWork=()->{localAudit.run();chargeAudit.run();};
+            phase="proposed-native-confirmation";
+            for(Map<String,Model> proposal:r.proposals){
+                interrupt();build.run();need(tried<r.limits.candidates,"Whole-family candidate-attempt bound");chargeCandidate.run();tried++;
+                try{return confirm(x,cuts,checked,r,family,proposal,tried,auditWork,chargeAudit);}
+                catch(ContextDependentModelAudit.Rejected rejected){/* A false proposed interpretation is only a failed guess. */}
+            }
+            phase="initial-models";Map<String,Model> models=new LinkedHashMap<>();for(Map.Entry<String,Schema> entry:schemas.entrySet())models.put(entry.getKey(),uniform(entry.getValue(),r,build));
             for(String cut:schemas.keySet()){
                 boolean found=false;Schema s=schemas.get(cut);
                 for(int pass=0;pass<2&&!found;pass++){
@@ -88,9 +102,20 @@ public final class ContextDependentModelSearchInspection {
                 }
                 if(!found)return Result.incomplete("search-space","No audited model found in the chosen bounded quotient; not a theory refutation",tried);
             }
-            phase="native-confirmation";ContextDependentModelAudit finalAudit=new ContextDependentModelAudit(x,cuts,checked,new ContextDependentModelInspection.Request(r.iteration,models,r.limits.points,r.limits.cells,r.limits.originalWork,r.limits.finalWork),auditWork);int originals=finalAudit.original(),finals=finalAudit.finalModel();interrupt();
-            phase="runtime-projection";ContextDependentRuntimeContinuationInspection.Projection p=r.projection;ContextDependentRuntimeInspection.Frame frame=ContextDependentRuntimeInspection.project(x,checked,new ContextDependentRuntimeInspection.Request(p.products,p.nodes,p.copyWork,p.auditWork));phase="runtime-shape";ContextDependentRuntimeModelAudit runtime=new ContextDependentRuntimeModelAudit(x,cuts,frame,models,r.limits.points,r.limits.cells,p.products,p.nodes,p.truthWork,ContextGroundProductionRounds.budget(p.shapeWork),chargeAudit);phase="runtime-truth";int obligations=runtime.truth();need(obligations==finals,"Every actual final occurrence must pass independent indexed truth");interrupt();
-            return new Result(Status.MODELLED_PENDING,"constructed-and-independently-audited","Constructed per-cut all-value interpretations passed native original/final and indexed truth; not runtime/write admission",models,family,frame,tried,originals,finals,obligations);
+            phase="native-confirmation";return confirm(x,cuts,checked,r,family,models,tried,auditWork,chargeAudit);
         }catch(InterruptedException interrupted){Thread.currentThread().interrupt();throw interrupted;}catch(Exception failure){interrupt();return Result.incomplete(phase,failure.getMessage(),tried);}
+    }
+    private static Result confirm(Member x,List<Cut> cuts,ContextDependentRoundInspection.Result checked,Request r,ContextDependentIterationInspection.Result family,Map<String,Model> models,int tried,Runnable auditWork,Runnable chargeAudit)throws Exception{
+        ContextDependentModelAudit finalAudit=new ContextDependentModelAudit(x,cuts,checked,new ContextDependentModelInspection.Request(r.iteration,models,r.limits.points,r.limits.cells,r.limits.originalWork,r.limits.finalWork),auditWork);
+        int originals=finalAudit.original(),finals=finalAudit.finalModel();interrupt();
+        String phase="runtime-projection";
+        try{
+            ContextDependentRuntimeContinuationInspection.Projection p=r.projection;
+            ContextDependentRuntimeInspection.Frame frame=ContextDependentRuntimeInspection.project(x,checked,new ContextDependentRuntimeInspection.Request(p.products,p.nodes,p.copyWork,p.auditWork));
+            phase="runtime-shape";ContextDependentRuntimeModelAudit runtime=new ContextDependentRuntimeModelAudit(x,cuts,frame,models,r.limits.points,r.limits.cells,p.products,p.nodes,p.truthWork,ContextGroundProductionRounds.budget(p.shapeWork),chargeAudit);
+            phase="runtime-truth";int obligations=runtime.truth();need(obligations==finals,"Every actual final occurrence must pass independent indexed truth");interrupt();
+            return new Result(Status.MODELLED_PENDING,"constructed-and-independently-audited","Proposed or constructed per-cut all-value interpretations passed native original/final and indexed truth; not runtime/write admission",models,family,frame,tried,originals,finals,obligations);
+        }catch(InterruptedException interrupted){Thread.currentThread().interrupt();throw interrupted;}
+        catch(Exception failure){interrupt();return Result.incomplete(phase,failure.getMessage(),tried);}
     }
 }
