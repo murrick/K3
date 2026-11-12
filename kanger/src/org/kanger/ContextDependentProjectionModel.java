@@ -86,15 +86,21 @@ final class ContextDependentProjectionModel {
     static Model propose(List<SemanticTermSnapshot> points,SemanticTermSnapshot other,Set<Signature> signatures,
                          Map<Function,Integer> declarations,List<Unit> units,List<Row> rows,
                          int projection,int choices,int cells,Runnable work)throws Exception{
+        return propose(points,other,signatures,declarations,units,rows,projection,0,choices,cells,work);
+    }
+    static Model propose(List<SemanticTermSnapshot> points,SemanticTermSnapshot other,Set<Signature> signatures,
+                         Map<Function,Integer> declarations,List<Unit> units,List<Row> rows,
+                         int projection,int independentClass,int choices,int cells,Runnable work)throws Exception{
         if(declarations.isEmpty())return null;
+        if(independentClass<0||independentClass>points.size())throw new IllegalArgumentException("Named or ALL-other nullary witness class required");
         Build b=new Build(points,choices,cells,work);
         try{
             for(Signature signature:signatures){b.cell();b.relations.put(signature,new LinkedHashMap<>());}
             for(Map.Entry<Function,Integer> entry:declarations.entrySet()){
                 ContextDependentRuntimeExecution.interrupt();b.cell();Map<List<Integer>,Integer> table=new LinkedHashMap<>();
-                // Try preceding-universal projections; independent witnesses use constant class zero.
+                // Preceding-universal projections retain their old semantics; nullary witnesses try a bounded palette class.
                 if(entry.getValue()>0){int selected=projection%entry.getValue();b.tuples(entry.getValue(),tuple->{if(tuple.get(selected)!=0){b.cell();table.put(Collections.unmodifiableList(new ArrayList<>(tuple)),tuple.get(selected));}});}
-                b.functions.put(entry.getKey(),new Choice(entry.getValue(),0,table));
+                b.functions.put(entry.getKey(),new Choice(entry.getValue(),entry.getValue()==0?independentClass:0,table));
             }
             for(Unit unit:units){work.run();b.unit(unit);}for(Row row:rows){work.run();b.row(row);}
             Map<Signature,Relation> relations=new LinkedHashMap<>();for(Map.Entry<Signature,Map<List<Integer>,Boolean>> entry:b.relations.entrySet()){work.run();relations.put(entry.getKey(),new Relation(false,entry.getValue()));}

@@ -850,8 +850,9 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
     }
 
     /** Explicit read-only local symbolic-cache qualification; no topology or primary-view activation. */
-    public synchronized SymbolicCacheStorageInspection inspectSymbolicCache(Mind source) throws Exception {
-        requireSymbolicCacheSource(source);Path location=symbolicCacheLocation();java.util.UUID identity=getContextId();long revision=getRevision();
+    public synchronized SymbolicCacheStorageInspection inspectSymbolicCache(Mind source) throws Exception {return inspectLocalSymbolicCache(source,true);}
+    private SymbolicCacheStorageInspection inspectLocalSymbolicCache(Mind source,boolean standalone) throws Exception {
+        if(standalone)requireSymbolicCacheSource(source);else requireSymbolicCacheOwner(source);Path location=symbolicCacheLocation();java.util.UUID identity=getContextId();long revision=getRevision();
         org.kanger.ContextProductionInventory inventory=org.kanger.ContextProductionInventory.inspect(source,identity,revision,true,java.util.Collections.emptyList(),1000);
         org.kanger.ContextDependentSymbolicCacheSnapshot.Result checked=org.kanger.ContextDependentSymbolicCacheSnapshot.capture(source,inventory);
         if(checked.status!=org.kanger.ContextDependentSymbolicCacheSnapshot.Status.BOUND)throw new IllegalStateException("Local symbolic cache is not qualified: "+checked.reason);
@@ -860,10 +861,26 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
             org.kanger.ContextDependentSymbolicCacheSnapshot.Result coldChecked=org.kanger.ContextDependentSymbolicCacheSnapshot.capture(view,replay);
             if(coldChecked.status!=org.kanger.ContextDependentSymbolicCacheSnapshot.Status.BOUND)throw new IllegalStateException("Cold symbolic cache is not qualified: "+coldChecked.reason);
             org.kanger.ContextDependentSymbolicCacheEquivalence.verify(source,checked.snapshot,view,coldChecked.snapshot);
-            SymbolicCacheStorageInspection result=new SymbolicCacheStorageInspection(this,location,identity,revision,checked.snapshot,coldChecked.snapshot);
+            SymbolicCacheStorageInspection result=new SymbolicCacheStorageInspection(this,location,identity,revision,checked.snapshot,coldChecked.snapshot,standalone);
             result.requireCurrent(this,source);return result;
         }
     }
+    /** Explicit read-only independent-cut composition; never a connect/write decision. */
+    public synchronized SymbolicCacheFamilyInspection inspectSymbolicCacheFamily(Mind source) throws Exception {
+        requireSymbolicCacheOwner(source);SymbolicCacheStorageInspection local=inspectLocalSymbolicCache(source,false);
+        java.util.List<SymbolicCacheConnectionInspection> evidence=new java.util.ArrayList<>();java.util.List<org.kanger.ContextDependentSymbolicFamilyInspection.Member> members=new java.util.ArrayList<>();
+        for(ContextConnection connection:new java.util.ArrayList<ContextConnection>(workingConnections.getConnections())){
+            SymbolicCacheConnectionInspection checked=inspectConnectedSymbolicCache(source,connection.getTargetLocation().toString());evidence.add(checked);members.add(new org.kanger.ContextDependentSymbolicFamilyInspection.Member(connection.runtime().mind,checked.working));
+        }
+        local.requireCurrent(this,source);for(SymbolicCacheConnectionInspection checked:evidence)checked.requireCurrent(this,source);
+        org.kanger.ContextDependentModelSearchInspection.Result result=org.kanger.ContextDependentSymbolicFamilyInspection.inspect(source,local.working,members);
+        SymbolicCacheFamilyInspection checked=new SymbolicCacheFamilyInspection(this,local,evidence,result);checked.requireCurrent(this,source);return checked;
+    }
+    synchronized void requireSymbolicFamilyInspectionCurrent(Mind source,SymbolicCacheFamilyInspection expected) throws Exception {
+        requireSymbolicCacheOwner(source);if(expected==null||expected.owner!=this||expected.members.size()!=workingConnections.getConnections().size())throw new IllegalStateException("Symbolic family owner or complete topology changed");
+        expected.local.requireCurrent(this,source);for(SymbolicCacheConnectionInspection member:expected.members)member.requireCurrent(this,source);
+    }
+
     /** Inspect exactly one direct ungrouped foreign pin and its full private recipe, without qualifying the family. */
     public synchronized SymbolicCacheConnectionInspection inspectConnectedSymbolicCache(Mind source,String locator) throws Exception {
         requireSymbolicCacheOwner(source);ContextConnection connection=connectedContext(resolveFederationLocator(locator),locator);
@@ -906,7 +923,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         if(!workingConnections.isEmpty()||federationSnapshot().hasWorkingChanges())throw new CommandErrorException("Local symbolic cache inspection requires a settled standalone physical Context");
     }
     synchronized void requireSymbolicCacheInspectionCurrent(Mind source,SymbolicCacheStorageInspection expected) throws Exception {
-        requireSymbolicCacheSource(source);if(expected==null||expected.owner!=this||!expected.location.equals(symbolicCacheLocation())||!expected.context.equals(getContextId())||expected.revision!=getRevision())throw new IllegalStateException("Symbolic cache owning provider pin changed");
+        if(expected!=null&&expected.standalone)requireSymbolicCacheSource(source);else requireSymbolicCacheOwner(source);if(expected==null||expected.owner!=this||!expected.location.equals(symbolicCacheLocation())||!expected.context.equals(getContextId())||expected.revision!=getRevision())throw new IllegalStateException("Symbolic cache owning provider pin changed");
         requireSymbolicPhysicalPin(expected.location,expected.context,expected.revision);expected.working.requireCurrent(source,expected.working.inventory);
     }
 

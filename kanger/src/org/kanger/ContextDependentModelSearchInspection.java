@@ -101,9 +101,11 @@ public final class ContextDependentModelSearchInspection {
                     if(dense&&!s.functions.isEmpty()){
                         phase="projection-search";
                         int projections=1;for(int rank:s.functions.values()){build.run();projections=Math.max(projections,rank);}
-                        for(int projection=0;projection<projections&&!found;projection++){
+                        boolean nullary=false;for(int rank:s.functions.values()){build.run();nullary|=rank==0;}
+                        int constantClasses=nullary?s.points.size()+1:1;
+                        for(int independentClass=0;independentClass<constantClasses&&!found;independentClass++)for(int projection=0;projection<projections&&!found;projection++){
                             interrupt();need(tried<r.limits.candidates,"Whole-family candidate-attempt bound");
-                            Model projected=ContextDependentProjectionModel.propose(s.points,r.otherRepresentative,s.relations,s.functions,s.units,s.carrier,projection,r.limits.choiceCells,r.limits.cells,build);
+                            Model projected=ContextDependentProjectionModel.propose(s.points,r.otherRepresentative,s.relations,s.functions,s.units,s.carrier,projection,independentClass,r.limits.choiceCells,r.limits.cells,build);
                             if(projected!=null){
                                 chargeCandidate.run();tried++;models.put(cut,projected);
                                 ContextDependentModelAudit nativeAudit=new ContextDependentModelAudit(x,cuts,checked,new ContextDependentModelInspection.Request(r.iteration,models,r.limits.points,r.limits.cells,r.limits.originalWork,r.limits.finalWork),auditWork);

@@ -11,6 +11,7 @@ public final class ContextDependentSymbolicCacheSnapshot {
         public final ContextProductionInventory inventory;
         public final ContextDependentCacheProofInspection.Result evidence;
         private Snapshot(Mind owner,ContextProductionInventory inventory,ContextDependentCacheProofInspection.Result evidence){this.owner=owner;this.inventory=inventory;this.evidence=evidence;}
+        ContextProductionInventory diagnosticPrimaryView(Mind actual)throws Exception{requireCurrent(actual,inventory);return inventory.symbolicDiagnosticView(this);}
         /** Only this actual runtime and exact inventory may reuse the immutable local check. */
         public void requireCurrent(Mind actual,ContextProductionInventory supplied)throws Exception{
             need(actual==owner,"Symbolic cache snapshot belongs to a different runtime");need(supplied!=null&&inventory.fingerprint.equals(supplied.fingerprint),"Symbolic cache snapshot inventory identity/configuration changed");current(actual,inventory);
@@ -30,7 +31,6 @@ public final class ContextDependentSymbolicCacheSnapshot {
     public static Result capture(Mind actual,ContextProductionInventory inventory)throws Exception{
         if(actual==null||inventory==null)throw new IllegalArgumentException("Actual runtime and complete inventory required");current(actual,inventory);
         try{try{
-            need(!inventory.primary.isEmpty(),"Nonempty primary declaration basis required for cache snapshot binding");
             ContextDependentCacheProofInspection.Result evidence=ContextDependentCacheProofInspection.inspect(actual,inventory);
             need(evidence.status==ContextDependentCacheProofInspection.Status.INSPECTED&&evidence.proof!=null&&evidence.ledger!=null,"Fresh complete primary-only cache proofs required: "+evidence.reason);
             need(inventory.fingerprint.equals(evidence.fingerprint)&&inventory.fingerprint.equals(evidence.ledger.fingerprint),"Proof and joint ledger must bind the exact full physical inventory");

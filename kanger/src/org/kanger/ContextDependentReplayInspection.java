@@ -70,6 +70,7 @@ public final class ContextDependentReplayInspection {
     static void currentMember(Mind mind,ContextProductionInventory expected,Policy policy)throws Exception {
         if(expected==null)throw new IllegalArgumentException("Actual physical member inventory required");
         if(expected.groundCacheProof()!=null&&!DmzTerminalRestriction.activeNoGoods(mind).isEmpty())throw new IllegalStateException("Restricted branch cannot reuse local ground-cache implication coverage");
+        if(expected.symbolicDiagnosticProof()!=null)expected.symbolicDiagnosticProof().requireCurrent(mind,expected);
         ContextProductionInventory now=ContextProductionInventory.inspect(mind,expected.context,expected.revision,expected.localX,expected.initialization,policy.rows);
         if(!expected.fingerprint.equals(now.fingerprint))throw new IllegalStateException("Changed local-X replay diagnostic inventory");
     }
