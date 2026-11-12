@@ -21,8 +21,10 @@ public final class ContextDependentSymbolicCacheSnapshot {
         private Result(Status status,String reason,Snapshot snapshot){this.status=status;this.reason=reason;this.snapshot=snapshot;}
     }
     private static void need(boolean yes,String reason){if(!yes)throw new IllegalStateException(reason);}
+    /** Scope guard only; it grants no proof or provider authority. */
+    public static void requireUnrestrictedRuntime(Mind runtime){if(runtime==null)throw new IllegalArgumentException("Actual runtime required");need(DmzTerminalRestriction.activeNoGoods(runtime).isEmpty(),"Restricted branch cannot reuse an unrestricted symbolic cache snapshot");}
     private static void current(Mind mind,ContextProductionInventory inventory)throws Exception{
-        need(DmzTerminalRestriction.activeNoGoods(mind).isEmpty(),"Restricted branch cannot reuse an unrestricted symbolic cache snapshot");
+        requireUnrestrictedRuntime(mind);
         need(inventory.fingerprint.equals(ContextProductionInventory.inspect(mind,inventory.context,inventory.revision,inventory.localX,inventory.initialization,1000).fingerprint),"Changed actual symbolic cache snapshot inventory");
     }
     public static Result capture(Mind actual,ContextProductionInventory inventory)throws Exception{

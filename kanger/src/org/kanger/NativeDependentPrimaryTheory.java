@@ -12,7 +12,7 @@ final class NativeDependentPrimaryTheory {
     /** Full fingerprint remains a guard. Only selected actual declarations are copied; generated data is never input knowledge. */
     static NativeDependentPrimaryTheory rebuild(Mind actual,ContextProductionInventory expected,Set<Long> selected)throws Exception{
         if(!DmzTerminalRestriction.activeNoGoods(actual).isEmpty())throw new IllegalStateException("Restricted branches require separate primary qualification");
-        ContextDependentReplayInspection.current(actual,expected,POLICY);User user=new User();Mind copy=new Mind(user);user.setCurrentMind(copy);Map<Long,Long> ids=new LinkedHashMap<>();Runnable work=ContextGroundProductionRounds.budget(POLICY.work);
+        ContextDependentReplayInspection.currentMember(actual,expected,POLICY);User user=new User();Mind copy=new Mind(user);user.setCurrentMind(copy);Map<Long,Long> ids=new LinkedHashMap<>();Runnable work=ContextGroundProductionRounds.budget(POLICY.work);
         try{
             for(ContextProductionInventory.Row row:expected.primary){
                 ContextDependentRuntimeExecution.interrupt();work.run();if(selected!=null&&!selected.contains(row.nativeRule))continue;
@@ -28,6 +28,6 @@ final class NativeDependentPrimaryTheory {
             }
             if(selected!=null&&!ids.keySet().equals(selected))throw new IllegalStateException("Every selected native chain original required");
             return new NativeDependentPrimaryTheory(copy,ContextProductionInventory.inspect(copy,expected.context,0,true,Collections.emptyList(),POLICY.rows),ids);
-        }finally{ContextDependentReplayInspection.current(actual,expected,POLICY);}
+        }finally{ContextDependentReplayInspection.currentMember(actual,expected,POLICY);}
     }
 }

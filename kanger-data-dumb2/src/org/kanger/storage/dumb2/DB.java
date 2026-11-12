@@ -864,17 +864,50 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
             result.requireCurrent(this,source);return result;
         }
     }
+    /** Inspect exactly one direct ungrouped foreign pin and its full private recipe, without qualifying the family. */
+    public synchronized SymbolicCacheConnectionInspection inspectConnectedSymbolicCache(Mind source,String locator) throws Exception {
+        requireSymbolicCacheOwner(source);ContextConnection connection=connectedContext(resolveFederationLocator(locator),locator);
+        if(connection.getTrustGroup()!=null||connection.commune()!=null)throw new CommandErrorException("Symbolic cache inspection requires a direct ungrouped physical connection");
+        org.kanger.ContextProductionInventory sourceInventory=org.kanger.ContextProductionInventory.inspect(source,getContextId(),getRevision(),true,java.util.Collections.emptyList(),1000);
+        Mind layer=connection.layer();org.kanger.ContextProductionInventory inventory=org.kanger.ContextProductionInventory.inspect(layer,connection.getTarget().getContextId(),connection.getTarget().getRevision(),false,connection.getInitialization(),1000);
+        org.kanger.ContextDependentSymbolicCacheSnapshot.Result checked=org.kanger.ContextDependentSymbolicCacheSnapshot.capture(layer,inventory);
+        if(checked.status!=org.kanger.ContextDependentSymbolicCacheSnapshot.Status.BOUND)throw new IllegalStateException("Foreign symbolic cache is not qualified: "+checked.reason);
+        ContextConnection cold=new ContextConnection(connection.getTargetLocation(),connection.getTarget(),connection.getCertificate(),connection.getInitialization(),null);
+        try{
+            Mind replay=cold.layer();org.kanger.ContextProductionInventory replayInventory=org.kanger.ContextProductionInventory.inspect(replay,connection.getTarget().getContextId(),connection.getTarget().getRevision(),false,cold.getInitialization(),1000);
+            org.kanger.ContextDependentSymbolicCacheSnapshot.Result coldChecked=org.kanger.ContextDependentSymbolicCacheSnapshot.capture(replay,replayInventory);
+            if(coldChecked.status!=org.kanger.ContextDependentSymbolicCacheSnapshot.Status.BOUND)throw new IllegalStateException("Cold foreign symbolic cache is not qualified: "+coldChecked.reason);
+            org.kanger.ContextDependentSymbolicCacheEquivalence.verify(layer,checked.snapshot,replay,coldChecked.snapshot);
+            SymbolicCacheConnectionInspection result=new SymbolicCacheConnectionInspection(this,source,symbolicCacheLocation(),sourceInventory,connection,checked.snapshot,coldChecked.snapshot);result.requireCurrent(this,source);return result;
+        }finally{cold.closeLayer();}
+    }
+    synchronized void requireSymbolicConnectionInspectionCurrent(Mind source,SymbolicCacheConnectionInspection expected) throws Exception {
+        requireSymbolicCacheOwner(source);
+        if(expected==null||expected.owner!=this||expected.source!=source||!expected.sourceLocation.equals(symbolicCacheLocation())||!expected.sourceContext.equals(getContextId())||expected.sourceRevision!=getRevision())throw new IllegalStateException("Symbolic connection source owner/pin changed");
+        if(!expected.sourceInventory.fingerprint.equals(org.kanger.ContextProductionInventory.inspect(source,getContextId(),getRevision(),true,java.util.Collections.emptyList(),1000).fingerprint))throw new IllegalStateException("Symbolic connection source inventory changed");
+        boolean present=false;for(ContextConnection candidate:workingConnections.getConnections())if(candidate==expected.connection)present=true;
+        if(!present||expected.connection.getTrustGroup()!=null||expected.connection.commune()!=null||expected.connection.runtime()==null||expected.connection.runtime().closed||!expected.targetContext.equals(expected.connection.getTarget().getContextId())||expected.targetRevision!=expected.connection.getTarget().getRevision()||!expected.initialization.equals(expected.connection.getInitialization()))throw new IllegalStateException("Symbolic connection pin, recipe or runtime changed");
+        requireSymbolicPhysicalPin(expected.sourceLocation,expected.sourceContext,expected.sourceRevision);requireSymbolicPhysicalPin(expected.connection.getTargetLocation(),expected.targetContext,expected.targetRevision);
+        expected.working.requireCurrent(expected.connection.runtime().mind,expected.working.inventory);
+    }
+
+    private void requireSymbolicPhysicalPin(Path location,java.util.UUID identity,long revision) throws Exception {
+        try(ContextSnapshot pinned=ContextSnapshot.open(location,revision)){if(!identity.equals(pinned.getContextId())||revision!=pinned.getRevision())throw new IllegalStateException("Symbolic cache physical Context identity changed");}
+    }
     private Path symbolicCacheLocation() throws Exception {
         Path stem=activeLocation().toAbsolutePath().normalize();return stem.getParent().toRealPath().resolve(stem.getFileName());
     }
-    private void requireSymbolicCacheSource(Mind source) throws Exception {
+    private void requireSymbolicCacheOwner(Mind source) throws Exception {
         requireOpen();if(source==null||source.getUser()!=user||user.getCurrentMind()!=source||((User)user).getData()!=this)throw new CommandErrorException("Symbolic cache inspection requires the owning active storage Mind");
-        org.kanger.DmzCandidateSession.requireSettledPhysicalQ(source);
+        org.kanger.DmzCandidateSession.requireSettledPhysicalQ(source);org.kanger.ContextDependentSymbolicCacheSnapshot.requireUnrestrictedRuntime(source);
+    }
+    private void requireSymbolicCacheSource(Mind source) throws Exception {
+        requireSymbolicCacheOwner(source);
         if(!workingConnections.isEmpty()||federationSnapshot().hasWorkingChanges())throw new CommandErrorException("Local symbolic cache inspection requires a settled standalone physical Context");
     }
     synchronized void requireSymbolicCacheInspectionCurrent(Mind source,SymbolicCacheStorageInspection expected) throws Exception {
         requireSymbolicCacheSource(source);if(expected==null||expected.owner!=this||!expected.location.equals(symbolicCacheLocation())||!expected.context.equals(getContextId())||expected.revision!=getRevision())throw new IllegalStateException("Symbolic cache owning provider pin changed");
-        expected.working.requireCurrent(source,expected.working.inventory);
+        requireSymbolicPhysicalPin(expected.location,expected.context,expected.revision);expected.working.requireCurrent(source,expected.working.inventory);
     }
 
     public synchronized long getRevision() {
