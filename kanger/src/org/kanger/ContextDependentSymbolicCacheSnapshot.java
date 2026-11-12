@@ -28,7 +28,7 @@ public final class ContextDependentSymbolicCacheSnapshot {
     public static Result capture(Mind actual,ContextProductionInventory inventory)throws Exception{
         if(actual==null||inventory==null)throw new IllegalArgumentException("Actual runtime and complete inventory required");current(actual,inventory);
         try{try{
-            need(!inventory.generated.isEmpty(),"Nonempty generated cache required for symbolic snapshot binding");
+            need(!inventory.primary.isEmpty(),"Nonempty primary declaration basis required for cache snapshot binding");
             ContextDependentCacheProofInspection.Result evidence=ContextDependentCacheProofInspection.inspect(actual,inventory);
             need(evidence.status==ContextDependentCacheProofInspection.Status.INSPECTED&&evidence.proof!=null&&evidence.ledger!=null,"Fresh complete primary-only cache proofs required: "+evidence.reason);
             need(inventory.fingerprint.equals(evidence.fingerprint)&&inventory.fingerprint.equals(evidence.ledger.fingerprint),"Proof and joint ledger must bind the exact full physical inventory");

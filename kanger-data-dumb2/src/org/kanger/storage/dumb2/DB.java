@@ -849,6 +849,34 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         return result;
     }
 
+    /** Explicit read-only local symbolic-cache qualification; no topology or primary-view activation. */
+    public synchronized SymbolicCacheStorageInspection inspectSymbolicCache(Mind source) throws Exception {
+        requireSymbolicCacheSource(source);Path location=symbolicCacheLocation();java.util.UUID identity=getContextId();long revision=getRevision();
+        org.kanger.ContextProductionInventory inventory=org.kanger.ContextProductionInventory.inspect(source,identity,revision,true,java.util.Collections.emptyList(),1000);
+        org.kanger.ContextDependentSymbolicCacheSnapshot.Result checked=org.kanger.ContextDependentSymbolicCacheSnapshot.capture(source,inventory);
+        if(checked.status!=org.kanger.ContextDependentSymbolicCacheSnapshot.Status.BOUND)throw new IllegalStateException("Local symbolic cache is not qualified: "+checked.reason);
+        try(SnapshotMindRuntime cold=SnapshotMindRuntime.open(location,new RevisionRef(identity,revision),getStorageName())){
+            Mind view=cold.getMind();org.kanger.ContextProductionInventory replay=org.kanger.ContextProductionInventory.inspect(view,identity,revision,true,java.util.Collections.emptyList(),1000);
+            org.kanger.ContextDependentSymbolicCacheSnapshot.Result coldChecked=org.kanger.ContextDependentSymbolicCacheSnapshot.capture(view,replay);
+            if(coldChecked.status!=org.kanger.ContextDependentSymbolicCacheSnapshot.Status.BOUND)throw new IllegalStateException("Cold symbolic cache is not qualified: "+coldChecked.reason);
+            org.kanger.ContextDependentSymbolicCacheEquivalence.verify(source,checked.snapshot,view,coldChecked.snapshot);
+            SymbolicCacheStorageInspection result=new SymbolicCacheStorageInspection(this,location,identity,revision,checked.snapshot,coldChecked.snapshot);
+            result.requireCurrent(this,source);return result;
+        }
+    }
+    private Path symbolicCacheLocation() throws Exception {
+        Path stem=activeLocation().toAbsolutePath().normalize();return stem.getParent().toRealPath().resolve(stem.getFileName());
+    }
+    private void requireSymbolicCacheSource(Mind source) throws Exception {
+        requireOpen();if(source==null||source.getUser()!=user||user.getCurrentMind()!=source||((User)user).getData()!=this)throw new CommandErrorException("Symbolic cache inspection requires the owning active storage Mind");
+        org.kanger.DmzCandidateSession.requireSettledPhysicalQ(source);
+        if(!workingConnections.isEmpty()||federationSnapshot().hasWorkingChanges())throw new CommandErrorException("Local symbolic cache inspection requires a settled standalone physical Context");
+    }
+    synchronized void requireSymbolicCacheInspectionCurrent(Mind source,SymbolicCacheStorageInspection expected) throws Exception {
+        requireSymbolicCacheSource(source);if(expected==null||expected.owner!=this||!expected.location.equals(symbolicCacheLocation())||!expected.context.equals(getContextId())||expected.revision!=getRevision())throw new IllegalStateException("Symbolic cache owning provider pin changed");
+        expected.working.requireCurrent(source,expected.working.inventory);
+    }
+
     public synchronized long getRevision() {
         return historical!=null ? historical.getRevision() : context==null ? -1L : context.getRevision();
     }
