@@ -337,6 +337,21 @@ public final class ContextDependentProductionInspection {
             return seen.get(start);
         }
     }
+    /** Fresh primary-only supported discovery; recipes are independently reconstructed, never imported from native cache. */
+    static List<Step> discoverPrimary(Mind actual,ContextProductionInventory expected,Request prefix,Set<Long> active)throws Exception {
+        if(actual==null||expected==null||prefix==null||active==null||!prefix.signed||expected.rows.size()!=expected.primary.size())throw new IllegalArgumentException("Whole signed primary-only discovery required");
+        ContextDependentReplayInspection.current(actual,expected,prefix.policy);
+        try{
+            Set<Integer> visible=new LinkedHashSet<>();for(int i=0;i<prefix.steps.size();i++)visible.add(i);
+            try(Candidate first=new Candidate(ContextDependentReplayInspection.project(actual,expected,prefix.policy,true),Originals.of(expected),prefix)){
+                List<Step> found=first.discover(active,visible);String digest=first.digest();
+                try(Candidate second=new Candidate(ContextDependentReplayInspection.project(actual,expected,prefix.policy,true),Originals.of(expected),prefix)){
+                    List<Step> again=second.discover(active,visible);if(!sameSteps(found,again)||!digest.equals(second.digest()))throw new IllegalStateException("Different fresh primary-only recipe discovery");
+                }
+                first.current();return Collections.unmodifiableList(new ArrayList<>(found));
+            }
+        }finally{ContextDependentReplayInspection.current(actual,expected,prefix.policy);}
+    }
     public static Result inspect(Mind actual,ContextProductionInventory expected,Request request)throws Exception {
         if(expected!=null&&expected.rows.size()!=expected.primary.size())throw new IllegalStateException("Portable production replay still requires a whole primary-only inventory");
         if(actual==null||request==null)throw new IllegalArgumentException("Actual candidate and complete supplied recipe required");
