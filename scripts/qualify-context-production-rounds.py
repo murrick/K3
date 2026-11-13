@@ -43,7 +43,7 @@ raise SystemExit(subprocess.call(['java', '-XX:-UsePerfData', '-Duser.home=' + s
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--mode', choices=('dependent-symbolic-family-contract', 'dependent-symbolic-cache-connection-contract', 'dependent-symbolic-cache-storage-contract', 'dependent-symbolic-cache-snapshot-contract', 'dependent-cache-proof-contract', 'dependent-cache-ledger-contract', 'dependent-root-cache-contract', 'dependent-cache-ancestry-contract', 'dependent-cache-alias-contract', 'native-dependent-chain-contract', 'dependent-cache-topology-contract', 'dependent-ground-cache-contract', 'dependent-topology-model-contract', 'combined-integration-contract', 'native-dependent-authoring-contract', 'contract', 'reference', 'witness-contract', 'independent-reopen-contract', 'ordinary-commit-contract', 'ordinary-ground-attachment-contract', 'ordinary-revision-switch-contract', 'ordinary-private-edit-contract', 'ordinary-topology-contract', 'ordinary-function-attachment-contract', 'native-function-pair-contract', 'closed-arithmetic-contract', 'arithmetic-expression-contract', 'arithmetic-rule-contract', 'arithmetic-step-contract', 'arithmetic-round-contract', 'arithmetic-family-round-contract', 'arithmetic-collision-contract', 'arithmetic-iteration-contract', 'arithmetic-model-contract', 'arithmetic-constraint-contract', 'private-witness-contract', 'universal-unit-contract'), default='contract')
+    parser.add_argument('--mode', choices=('dependent-symbolic-outcome-contract', 'dependent-symbolic-family-contract', 'dependent-symbolic-cache-connection-contract', 'dependent-symbolic-cache-storage-contract', 'dependent-symbolic-cache-snapshot-contract', 'dependent-cache-proof-contract', 'dependent-cache-ledger-contract', 'dependent-root-cache-contract', 'dependent-cache-ancestry-contract', 'dependent-cache-alias-contract', 'native-dependent-chain-contract', 'dependent-cache-topology-contract', 'dependent-ground-cache-contract', 'dependent-topology-model-contract', 'combined-integration-contract', 'native-dependent-authoring-contract', 'contract', 'reference', 'witness-contract', 'independent-reopen-contract', 'ordinary-commit-contract', 'ordinary-ground-attachment-contract', 'ordinary-revision-switch-contract', 'ordinary-private-edit-contract', 'ordinary-topology-contract', 'ordinary-function-attachment-contract', 'native-function-pair-contract', 'closed-arithmetic-contract', 'arithmetic-expression-contract', 'arithmetic-rule-contract', 'arithmetic-step-contract', 'arithmetic-round-contract', 'arithmetic-family-round-contract', 'arithmetic-collision-contract', 'arithmetic-iteration-contract', 'arithmetic-model-contract', 'arithmetic-constraint-contract', 'private-witness-contract', 'universal-unit-contract'), default='contract')
     parser.add_argument('--ordinary-integration-candidate', action='store_true',
                         help='Compile an isolated experimental default hook; never edit production sources')
     parser.add_argument('--ground-attachment-candidate', action='store_true',
@@ -73,6 +73,20 @@ def main():
                'kanger-data-dumb2', 'kanger-console')
     production = sorted(p for module in modules for p in (root / module / 'src').rglob('*.java'))
     names = [('org.kanger.storage.dumb2.ContextProductionRoundsContractRunner', 'CONTEXT_PRODUCTION_ROUNDS_CONTRACT_PASS')]
+    if args.mode == 'dependent-symbolic-outcome-contract':
+        names = [('org.kanger.ContextDependentFamilyOutcomeRunner', 'CONTEXT_DEPENDENT_FAMILY_OUTCOME_PASS'),
+                 ('org.kanger.storage.dumb2.SymbolicFamilyPublicationRunner', 'SYMBOLIC_FAMILY_PUBLICATION_PASS'),
+                 ('org.kanger.ContextDependentSymbolicFamilyInspectionRunner', 'CONTEXT_DEPENDENT_SYMBOLIC_FAMILY_INSPECTION_PASS'),
+                 ('org.kanger.storage.dumb2.SymbolicCacheFamilyInspectionRunner', 'SYMBOLIC_CACHE_FAMILY_INSPECTION_PASS'),
+                 ('org.kanger.storage.dumb2.SymbolicCacheConnectionInspectionRunner', 'SYMBOLIC_CACHE_CONNECTION_INSPECTION_PASS'),
+                 ('org.kanger.ContextDependentForeignCacheSnapshotRunner', 'CONTEXT_DEPENDENT_FOREIGN_CACHE_SNAPSHOT_PASS'),
+                 ('org.kanger.storage.dumb2.SymbolicCacheStorageInspectionRunner', 'SYMBOLIC_CACHE_STORAGE_INSPECTION_PASS'),
+                 ('org.kanger.ContextDependentSymbolicCacheSnapshotRunner', 'CONTEXT_DEPENDENT_SYMBOLIC_CACHE_SNAPSHOT_PASS'),
+                 ('org.kanger.ContextDependentCacheProofInspectionRunner', 'CONTEXT_DEPENDENT_CACHE_PROOF_INSPECTION_PASS'),
+                 ('org.kanger.ContextDependentCacheLedgerInspectionRunner', 'CONTEXT_DEPENDENT_CACHE_LEDGER_INSPECTION_PASS'),
+                 ('org.kanger.ContextDependentRootCacheInspectionRunner', 'CONTEXT_DEPENDENT_ROOT_CACHE_INSPECTION_PASS'),
+                 ('org.kanger.ContextDependentCacheAncestryInspectionRunner', 'CONTEXT_DEPENDENT_CACHE_ANCESTRY_INSPECTION_PASS'),
+                 ('org.kanger.ContextDependentCacheAliasInspectionRunner', 'CONTEXT_DEPENDENT_CACHE_ALIAS_INSPECTION_PASS')]
     if args.mode == 'dependent-symbolic-family-contract':
         names = [('org.kanger.ContextDependentSymbolicFamilyInspectionRunner', 'CONTEXT_DEPENDENT_SYMBOLIC_FAMILY_INSPECTION_PASS'),
                  ('org.kanger.storage.dumb2.SymbolicCacheFamilyInspectionRunner', 'SYMBOLIC_CACHE_FAMILY_INSPECTION_PASS'),
@@ -195,7 +209,8 @@ def main():
                   ('org.kanger.ContextDependentSymbolicCacheSnapshotRunner', 'CONTEXT_DEPENDENT_SYMBOLIC_CACHE_SNAPSHOT_PASS'),
                   ('org.kanger.storage.dumb2.SymbolicCacheStorageInspectionRunner', 'SYMBOLIC_CACHE_STORAGE_INSPECTION_PASS'),
                   ('org.kanger.ContextDependentForeignCacheSnapshotRunner', 'CONTEXT_DEPENDENT_FOREIGN_CACHE_SNAPSHOT_PASS'),
-                  ('org.kanger.ContextDependentSymbolicFamilyInspectionRunner', 'CONTEXT_DEPENDENT_SYMBOLIC_FAMILY_INSPECTION_PASS')]
+                  ('org.kanger.ContextDependentSymbolicFamilyInspectionRunner', 'CONTEXT_DEPENDENT_SYMBOLIC_FAMILY_INSPECTION_PASS'),
+                  ('org.kanger.ContextDependentFamilyOutcomeRunner', 'CONTEXT_DEPENDENT_FAMILY_OUTCOME_PASS')]
     if args.mode == 'ordinary-function-attachment-contract':
         names = [('org.kanger.storage.dumb2.ContextOrdinaryFunctionAttachmentRunner',
                   'CONTEXT_ORDINARY_FUNCTION_ATTACHMENT_PASS')]
@@ -1453,7 +1468,8 @@ def main():
     passed = all(result['passed'] for result in results)
     report = dict(ground_attachment_candidate=args.ground_attachment_candidate, ordinary_integration_candidate=args.ordinary_integration_candidate, head=head, production_sources=len(production), mode=args.mode, passed=passed, results=results,
                   dependent_authoring_candidate=args.dependent_authoring_candidate,
-                  scope={'dependent-symbolic-family-contract': 'Read-only independent-cut receiving/model composition using guarded internal checked symbolic projections; no admission authority',
+                  scope={'dependent-symbolic-outcome-contract': 'Typed named conflict/incomplete boundary and explicit freshly qualified connection save; default paths unchanged',
+                         'dependent-symbolic-family-contract': 'Read-only independent-cut receiving/model composition using guarded internal checked symbolic projections; no admission authority',
                          'dependent-symbolic-cache-connection-contract': 'Direct ungrouped foreign pins and full private-recipe cold qualification in the native connection profile; no family admission',
                          'dependent-symbolic-cache-storage-contract': 'Owning physical pin and independently checked cold symbolic cache reconstruction; no topology admission',
                          'dependent-symbolic-cache-snapshot-contract': 'Fresh primary-only proofs and matching joint identities frozen in an owner-bound local snapshot; no primary-view or admission authority',

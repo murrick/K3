@@ -50,7 +50,7 @@ import java.util.Queue;
  * Root settlement eventually reaches {@link #flush()}, where
  * {@link ContextStore} publishes one storage-wide revision.</p>
  */
-public final class DB implements IData, IContextFederation, org.kanger.interfaces.internal.IRevisionPublication {
+public final class DB implements IData, IContextFederation, org.kanger.interfaces.internal.IRevisionPublication, org.kanger.interfaces.internal.ISymbolicFamilyPublication {
 
     private IUser user;
     private ContextStore context;
@@ -865,6 +865,23 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
             result.requireCurrent(this,source);return result;
         }
     }
+    private java.util.Map<java.util.UUID,String> symbolicFamilyNames() throws Exception {
+        java.util.Map<java.util.UUID,String> names=new java.util.HashMap<>();names.put(getContextId(),getStorageName());for(ContextConnection member:workingConnections.getConnections())names.put(member.getTarget().getContextId(),displayFederationLocator(member.getTargetLocation()));return names;
+    }
+    synchronized void requireCurrentSymbolicFamilyModel(Mind source,SymbolicCacheFamilyInspection checked) throws Exception {
+        java.util.Map<java.util.UUID,String> names=symbolicFamilyNames();
+        try{requireSymbolicFamilyInspectionCurrent(source,checked);}catch(InterruptedException interrupted){Thread.currentThread().interrupt();throw interrupted;}catch(Exception stale){org.kanger.exception.StorageLifecycleException failure=org.kanger.ContextDependentFamilyOutcome.incomplete(org.kanger.ContextDependentFamilyOutcome.reason(stale),names);failure.initCause(stale);throw failure;}
+        java.util.Map<java.util.UUID,org.kanger.ContextProductionInventory> inventories=new java.util.HashMap<>();inventories.put(checked.local.context,checked.local.working.inventory);for(SymbolicCacheConnectionInspection member:checked.members)inventories.put(member.targetContext,member.working.inventory);
+        org.kanger.ContextDependentFamilyOutcome.requireModelled(checked.model,names,inventories);
+    }
+    /** Explicit checked save only; existing context save/query paths do not call this operation. */
+    @Override public synchronized long saveCheckedSymbolicConnections(IMind supplied) throws Exception {
+        requireWritable();if(!(supplied instanceof Mind))throw new CommandErrorException("Checked symbolic save requires the owning Mind");Mind source=(Mind)supplied;requireSymbolicCacheIdentity(source);
+        SymbolicCacheFamilyInspection checked;
+        try{checked=inspectSymbolicCacheFamily(source);}catch(InterruptedException interrupted){Thread.currentThread().interrupt();throw interrupted;}catch(Exception unsupported){org.kanger.exception.StorageLifecycleException failure=org.kanger.ContextDependentFamilyOutcome.incomplete(org.kanger.ContextDependentFamilyOutcome.reason(unsupported),symbolicFamilyNames());failure.initCause(unsupported);throw failure;}
+        requireCurrentSymbolicFamilyModel(source,checked);return saveConnections(source);
+    }
+
     /** Explicit read-only independent-cut composition; never a connect/write decision. */
     public synchronized SymbolicCacheFamilyInspection inspectSymbolicCacheFamily(Mind source) throws Exception {
         requireSymbolicCacheOwner(source);SymbolicCacheStorageInspection local=inspectLocalSymbolicCache(source,false);
@@ -914,10 +931,11 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
     private Path symbolicCacheLocation() throws Exception {
         Path stem=activeLocation().toAbsolutePath().normalize();return stem.getParent().toRealPath().resolve(stem.getFileName());
     }
-    private void requireSymbolicCacheOwner(Mind source) throws Exception {
+    private void requireSymbolicCacheIdentity(Mind source) throws Exception {
         requireOpen();if(source==null||source.getUser()!=user||user.getCurrentMind()!=source||((User)user).getData()!=this)throw new CommandErrorException("Symbolic cache inspection requires the owning active storage Mind");
-        org.kanger.DmzCandidateSession.requireSettledPhysicalQ(source);org.kanger.ContextDependentSymbolicCacheSnapshot.requireUnrestrictedRuntime(source);
+        org.kanger.DmzCandidateSession.requireSettledPhysicalQ(source);
     }
+    private void requireSymbolicCacheOwner(Mind source) throws Exception {requireSymbolicCacheIdentity(source);org.kanger.ContextDependentSymbolicCacheSnapshot.requireUnrestrictedRuntime(source);}
     private void requireSymbolicCacheSource(Mind source) throws Exception {
         requireSymbolicCacheOwner(source);
         if(!workingConnections.isEmpty()||federationSnapshot().hasWorkingChanges())throw new CommandErrorException("Local symbolic cache inspection requires a settled standalone physical Context");
