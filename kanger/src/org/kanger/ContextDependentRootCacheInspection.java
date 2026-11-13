@@ -46,7 +46,7 @@ public final class ContextDependentRootCacheInspection {
     public static Result inspect(Mind mind,ContextProductionInventory inventory)throws Exception{
         if(mind==null||inventory==null)throw new IllegalArgumentException("Actual root-cache inventory required");current(mind,inventory);
         try{try{
-            for(ContextProductionInventory.Row row:inventory.rows)need(!row.deleted&&!row.query,"Live assertion inventory required");
+            ContextDependentSymbolicCacheSnapshot.retiredCacheRows(inventory);
             NativeDependentPrimaryTheory theory=NativeDependentPrimaryTheory.rebuild(mind,inventory,null);Runnable work=ContextGroundProductionRounds.budget(1000000);
             Map<Long,NativePrenexUnitScope> roots=new LinkedHashMap<>();Set<Long> primary=new HashSet<>();List<Occurrence> occurrences=new ArrayList<>();
             for(ContextProductionInventory.Row row:inventory.primary){work.run();primary.add(row.nativeRule);Rule actual=(Rule)mind.getRules().get(row.nativeRule);if(!NativeDependentProductionRows.unit(actual))continue;

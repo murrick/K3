@@ -367,9 +367,9 @@ public class TValueFactory implements IFactory<TValue> {
             if (((IUnit) o).isDeleted(mind)) {
                 toDelete.add(o);
             } else {
-                boolean found = mind.getRules().hasActiveRuleWithTerm(
-                        ((TValue) o).getValue(mind).getId());
-                if (!found) {
+                // A cold substitution can outlive the term of a retired cache row.
+                ITerm value = ((TValue) o).getValue(mind);
+                if (value == null || !mind.getRules().hasActiveRuleWithTerm(value.getId())) {
                     toDelete.add(o);
                 }
             }

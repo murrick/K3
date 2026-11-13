@@ -240,6 +240,9 @@ public class Escalera implements ICache {
     }
 
     private IStep indexedStep(long id) throws Exception {
+        // Storage may hydrate another object for the same persistent head ID.
+        // Link mutation must update the head retained by this owning chain.
+        if (root != null && root.getId() == id) return root;
         IStep step = memoryById.get(id);
         if (step == null && persistentIds.contains(id) && mind.isStorageUsed()) {
             synchronized (((User) mind.getUser()).getStorage(schema)) {

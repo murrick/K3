@@ -26,10 +26,12 @@ public final class SymbolicFamilyCandidateRunner {
             try(SnapshotMindRuntime physical=SnapshotMindRuntime.open(location,new RevisionRef(db.getContextId(),db.getRevision()),"Local")){
                 ContextProductionInventory published=ContextProductionInventory.inspect(physical.getMind(),db.getContextId(),db.getRevision(),true,Collections.emptyList(),1000);int deleted=0;for(ContextProductionInventory.Row row:published.rows)if(row.deleted)deleted++;need(deleted>0,"exact published snapshot really contains cache deletion markers");
             }
-            boolean strict=false;try{db.inspectSymbolicCacheFamily(m);}catch(IllegalStateException unsupported){strict=unsupported.getMessage().contains("Live assertion inventory required");}need(strict,"published deletion markers remain an explicit cold-proof incomplete boundary");
+            db.inspectSymbolicCacheFamily(m).requireCurrentModelled(db,m);need(true,"fresh family qualification accepts independently checked cold deletion markers");
+            need(m.writeCheckedSymbolicContextAssertion("!safe(7);",false),"another actual append succeeds after symbolic products were retired");
+            long stable=db.getRevision();String state=fingerprint(db,m);boolean refused=false;try{refused=!m.writeCheckedSymbolicContextAssertion("!@u ~tail(u);",false);}catch(StorageLifecycleException conflict){refused=conflict.getErrorCode()==StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT;}need(refused&&stable==db.getRevision()&&state.equals(fingerprint(db,m)),"retired cache does not hide consequences of the still-live originals");
         }finally{close(m);}
         db=new DB();m=open(db,directory,"Local");try{
-            ContextProductionInventory cold=ContextProductionInventory.inspect(m,db.getContextId(),db.getRevision(),true,Collections.emptyList(),1000);boolean root=false;for(ContextProductionInventory.Row row:cold.primary)root|="!$u rel(1,u,1);".equals(row.origin);need(root&&cold.primary.size()==3,"successful existential original survives cold reopen");
+            ContextProductionInventory cold=ContextProductionInventory.inspect(m,db.getContextId(),db.getRevision(),true,Collections.emptyList(),1000);boolean root=false;for(ContextProductionInventory.Row row:cold.primary)root|="!$u rel(1,u,1);".equals(row.origin);need(root&&cold.primary.size()==4,"successful existential and following original survive cold reopen");db.inspectSymbolicCacheFamily(m).requireCurrentModelled(db,m);need(true,"family requalifies again after cold reopen");
         }finally{close(m);}
     }
     public static void main(String[] args)throws Exception{

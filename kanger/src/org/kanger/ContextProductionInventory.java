@@ -40,8 +40,8 @@ public final class ContextProductionInventory {
         for (Row row : rows) if (!row.deleted) { if (row.generated) generated.add(row); else primary.add(row); }
         this.primary = Collections.unmodifiableList(primary); this.generated = Collections.unmodifiableList(generated);
     }
-    /** Raw primary projection needs ground/cold checks; package-local symbolic model views carry a live snapshot guard. Deleted rows remain unsupported. */
-    public boolean dependentPrimaryView(){return rows.size()==primary.size()+generated.size()&&(generated.isEmpty()||groundCacheProof!=null||symbolicDiagnosticProof!=null)&&(initialization.isEmpty()||effectiveReplayVerified||symbolicDiagnosticProof!=null);}
+    /** Raw primary projection needs ground/cold checks; package-local symbolic model views carry a live snapshot guard. Deleted cache rows require a checked symbolic snapshot. */
+    public boolean dependentPrimaryView(){return rows.size()==primary.size()+generated.size()+(symbolicDiagnosticProof==null?0:symbolicDiagnosticProof.retiredCacheRows.size())&&(generated.isEmpty()||groundCacheProof!=null||symbolicDiagnosticProof!=null)&&(initialization.isEmpty()||effectiveReplayVerified||symbolicDiagnosticProof!=null);}
     public ContextDependentGroundCacheInspection.Result groundCacheProof(){return groundCacheProof;}
     ContextProductionInventory verifiedGroundCache(ContextDependentGroundCacheInspection.Result proof){
         if(proof==null||proof.status!=ContextDependentGroundCacheInspection.Status.VERIFIED||!fingerprint.equals(proof.fingerprint))throw new IllegalArgumentException("Exact verified ground-cache coverage required");

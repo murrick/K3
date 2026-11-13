@@ -10,7 +10,9 @@ public final class ContextDependentSymbolicCacheSnapshot {
         private final Mind owner;
         public final ContextProductionInventory inventory;
         public final ContextDependentCacheProofInspection.Result evidence;
-        private Snapshot(Mind owner,ContextProductionInventory inventory,ContextDependentCacheProofInspection.Result evidence){this.owner=owner;this.inventory=inventory;this.evidence=evidence;}
+        /** Inactive generated occurrences, retained in the full guarded inventory. */
+        public final Set<Long> retiredCacheRows;
+        private Snapshot(Mind owner,ContextProductionInventory inventory,ContextDependentCacheProofInspection.Result evidence){this.owner=owner;this.inventory=inventory;this.evidence=evidence;this.retiredCacheRows=retiredCacheRows(inventory);}
         ContextProductionInventory diagnosticPrimaryView(Mind actual)throws Exception{requireCurrent(actual,inventory);return inventory.symbolicDiagnosticView(this);}
         /** Only this actual runtime and exact inventory may reuse the immutable local check. */
         public void requireCurrent(Mind actual,ContextProductionInventory supplied)throws Exception{
@@ -28,9 +30,19 @@ public final class ContextDependentSymbolicCacheSnapshot {
         requireUnrestrictedRuntime(mind);
         need(inventory.fingerprint.equals(ContextProductionInventory.inspect(mind,inventory.context,inventory.revision,inventory.localX,inventory.initialization,1000).fingerprint),"Changed actual symbolic cache snapshot inventory");
     }
+    /** A deleted derived row is inactive, not an axiom or a demanded live product. */
+    static Set<Long> retiredCacheRows(ContextProductionInventory inventory){
+        Set<Long> retired=new LinkedHashSet<>();
+        for(ContextProductionInventory.Row row:inventory.rows){
+            need(!row.query,"Query rows require separate symbolic qualification");
+            if(row.deleted){need(row.generated,"Deleted original requires separate symbolic qualification");retired.add(row.nativeRule);}
+        }
+        return Collections.unmodifiableSet(retired);
+    }
     public static Result capture(Mind actual,ContextProductionInventory inventory)throws Exception{
         if(actual==null||inventory==null)throw new IllegalArgumentException("Actual runtime and complete inventory required");current(actual,inventory);
         try{try{
+            retiredCacheRows(inventory);
             ContextDependentCacheProofInspection.Result evidence=ContextDependentCacheProofInspection.inspect(actual,inventory);
             need(evidence.status==ContextDependentCacheProofInspection.Status.INSPECTED&&evidence.proof!=null&&evidence.ledger!=null,"Fresh complete primary-only cache proofs required: "+evidence.reason);
             need(inventory.fingerprint.equals(evidence.fingerprint)&&inventory.fingerprint.equals(evidence.ledger.fingerprint),"Proof and joint ledger must bind the exact full physical inventory");
