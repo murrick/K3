@@ -145,6 +145,21 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
 
     private final java.util.Set<ContextConnection> retiredLayers =
             java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<ContextConnection, Boolean>());
+    private ConnectionVector pendingPublishedActivation;
+    private RevisionRef pendingPublishedSource;
+    /** Retain the working vector qualified for an already published source. */
+    private void activatePublishedConnections(ConnectionVector candidate) throws Exception {
+        pendingPublishedActivation=candidate;
+        pendingPublishedSource=new RevisionRef(getContextId(),getRevision());
+        activateConnections(candidate);
+        pendingPublishedActivation=null;pendingPublishedSource=null;
+    }
+    private void recoverPublishedConnections() throws Exception {
+        if(pendingPublishedActivation==null)return;
+        if(!pendingPublishedSource.equals(new RevisionRef(getContextId(),getRevision())))
+            throw org.kanger.ContextDependentFamilyOutcome.incomplete("Published connection recovery belongs to another source revision",symbolicFamilyNames());
+        activatePublishedConnections(pendingPublishedActivation);
+    }
     private void activateConnections(ConnectionVector candidate) throws Exception {
         candidate.prepareCommunes(communeCache);
         workingConnections = candidate;
@@ -157,6 +172,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
 
     private void closeConnectionLayers() throws Exception {
         retiredLayers.addAll(workingConnections.getConnections());
+        if(pendingPublishedActivation!=null)retiredLayers.addAll(pendingPublishedActivation.getConnections());
         for (ContextConnection connection : retiredLayers) connection.closeLayer();
         retiredLayers.clear();
     }
@@ -231,6 +247,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         bases.clear();
         activateConnections(ConnectionVector.empty());
         context = null;
+        pendingPublishedActivation=null;pendingPublishedSource=null;
         storageName = "";
     }
 
@@ -699,6 +716,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         // session logout may flush without any persistent Context being open.
         if (isClosed()) return;
         if (isReadOnly()) return;
+        recoverPublishedConnections();
         long before = getRevision();
         ConnectionVector pending = workingConnections;
         try {
@@ -710,7 +728,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
             // Ordinary authoring advances X without implicitly saving session topology.
             // Requalify exact target pins against the new source revision.
             retiredLayers.addAll(workingConnections.getConnections());
-            activateConnections(context.getQualifiedWorkingConnections());
+            activatePublishedConnections(context.getQualifiedWorkingConnections());
         }
     }
 
@@ -954,6 +972,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
     private void requireSymbolicCacheIdentity(Mind source) throws Exception {
         requireOpen();if(source==null||source.getUser()!=user||user.getCurrentMind()!=source||((User)user).getData()!=this)throw new CommandErrorException("Symbolic cache inspection requires the owning active storage Mind");
         org.kanger.DmzCandidateSession.requireSettledPhysicalQ(source);
+        if(pendingPublishedActivation!=null)throw org.kanger.ContextDependentFamilyOutcome.incomplete("Published connections await activation; checkpoint storage before symbolic qualification",symbolicFamilyNames());
     }
     private void requireSymbolicCacheOwner(Mind source) throws Exception {requireSymbolicCacheIdentity(source);org.kanger.ContextDependentSymbolicCacheSnapshot.requireUnrestrictedRuntime(source);}
     private void requireSymbolicCacheSource(Mind source) throws Exception {
@@ -978,8 +997,9 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
     private String sourceLocator() { return historical==null ? storageName : displayFederationLocator(historicalLocation); }
 
     private Path activeLocation() { return historical!=null ? historicalLocation : context.getLocation(); }
-    private void requireWritable() throws CommandErrorException {
+    private void requireWritable() throws Exception {
         if (isReadOnly()) throw new CommandErrorException("Context " + storageName + " is an immutable revision; open CURRENT for authoring");
+        if(pendingPublishedActivation!=null)throw org.kanger.ContextDependentFamilyOutcome.incomplete("Published connections await activation; checkpoint storage before authoring",symbolicFamilyNames());
     }
 
     private ContextConnection configuredConnection(Path location, long revision, List<String> commands) throws Exception {
@@ -1412,16 +1432,17 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
 
     @Override
     public synchronized long saveConnections(IMind source) throws Exception {
-        requireWritable();
         requireOpen();
         if(source==null || source.getUser()!=user || source!=user.getCurrentMind()
                 || source.getTransactionLevel()!=0)
             throw new CommandErrorException("Context save requires the current settled root");
         // Local DUMB2 uses the same exclusively opened writable Context as
         // ordinary authoring. SMART ownership/ACL publication remains separate.
+        recoverPublishedConnections();
+        requireWritable();
         long revision=context.publishTopology(workingConnections,"Save explicit Context connections");
         retiredLayers.addAll(workingConnections.getConnections());
-        activateConnections(publishedConnections());
+        activatePublishedConnections(publishedConnections());
         return revision;
     }
 

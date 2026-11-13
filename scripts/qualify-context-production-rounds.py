@@ -43,7 +43,7 @@ raise SystemExit(subprocess.call(['java', '-XX:-UsePerfData', '-Duser.home=' + s
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--mode', choices=('dependent-symbolic-outcome-contract', 'dependent-symbolic-family-contract', 'dependent-symbolic-cache-connection-contract', 'dependent-symbolic-cache-storage-contract', 'dependent-symbolic-cache-snapshot-contract', 'dependent-cache-proof-contract', 'dependent-cache-ledger-contract', 'dependent-root-cache-contract', 'dependent-cache-ancestry-contract', 'dependent-cache-alias-contract', 'native-dependent-chain-contract', 'dependent-cache-topology-contract', 'dependent-ground-cache-contract', 'dependent-topology-model-contract', 'combined-integration-contract', 'native-dependent-authoring-contract', 'contract', 'reference', 'witness-contract', 'independent-reopen-contract', 'ordinary-commit-contract', 'ordinary-ground-attachment-contract', 'ordinary-revision-switch-contract', 'ordinary-private-edit-contract', 'ordinary-topology-contract', 'ordinary-function-attachment-contract', 'native-function-pair-contract', 'closed-arithmetic-contract', 'arithmetic-expression-contract', 'arithmetic-rule-contract', 'arithmetic-step-contract', 'arithmetic-round-contract', 'arithmetic-family-round-contract', 'arithmetic-collision-contract', 'arithmetic-iteration-contract', 'arithmetic-model-contract', 'arithmetic-constraint-contract', 'private-witness-contract', 'universal-unit-contract'), default='contract')
+    parser.add_argument('--mode', choices=('dependent-symbolic-recovery-contract', 'dependent-symbolic-outcome-contract', 'dependent-symbolic-family-contract', 'dependent-symbolic-cache-connection-contract', 'dependent-symbolic-cache-storage-contract', 'dependent-symbolic-cache-snapshot-contract', 'dependent-cache-proof-contract', 'dependent-cache-ledger-contract', 'dependent-root-cache-contract', 'dependent-cache-ancestry-contract', 'dependent-cache-alias-contract', 'native-dependent-chain-contract', 'dependent-cache-topology-contract', 'dependent-ground-cache-contract', 'dependent-topology-model-contract', 'combined-integration-contract', 'native-dependent-authoring-contract', 'contract', 'reference', 'witness-contract', 'independent-reopen-contract', 'ordinary-commit-contract', 'ordinary-ground-attachment-contract', 'ordinary-revision-switch-contract', 'ordinary-private-edit-contract', 'ordinary-topology-contract', 'ordinary-function-attachment-contract', 'native-function-pair-contract', 'closed-arithmetic-contract', 'arithmetic-expression-contract', 'arithmetic-rule-contract', 'arithmetic-step-contract', 'arithmetic-round-contract', 'arithmetic-family-round-contract', 'arithmetic-collision-contract', 'arithmetic-iteration-contract', 'arithmetic-model-contract', 'arithmetic-constraint-contract', 'private-witness-contract', 'universal-unit-contract'), default='contract')
     parser.add_argument('--ordinary-integration-candidate', action='store_true',
                         help='Compile an isolated experimental default hook; never edit production sources')
     parser.add_argument('--ground-attachment-candidate', action='store_true',
@@ -53,6 +53,8 @@ def main():
     parser.add_argument('--dependent-authoring-candidate', action='store_true',
                         help='Compile isolated dependent-pair authoring refutation hook')
     args = parser.parse_args()
+    if args.mode == 'dependent-symbolic-recovery-contract' and (args.ordinary_integration_candidate or args.ground_attachment_candidate or args.dependent_authoring_candidate):
+        parser.error('publication recovery uses the native profile with its test-only fault overlay')
     if args.dependent_authoring_candidate and args.mode not in ('native-dependent-authoring-contract','combined-integration-contract','dependent-cache-topology-contract','native-dependent-chain-contract'):
         parser.error('dependent authoring candidate requires its own contract')
     if args.mode in ('combined-integration-contract','dependent-cache-topology-contract'):
@@ -73,7 +75,7 @@ def main():
                'kanger-data-dumb2', 'kanger-console')
     production = sorted(p for module in modules for p in (root / module / 'src').rglob('*.java'))
     names = [('org.kanger.storage.dumb2.ContextProductionRoundsContractRunner', 'CONTEXT_PRODUCTION_ROUNDS_CONTRACT_PASS')]
-    if args.mode == 'dependent-symbolic-outcome-contract':
+    if args.mode in ('dependent-symbolic-outcome-contract','dependent-symbolic-recovery-contract'):
         names = [('org.kanger.storage.dumb2.PersistentCacheUnlinkRunner', 'PERSISTENT_CACHE_UNLINK_PASS'),
                  ('org.kanger.OrphanTValuePackRunner', 'ORPHAN_TVALUE_PACK_PASS'),
                  ('org.kanger.ContextDependentRetiredCacheRunner', 'CONTEXT_DEPENDENT_RETIRED_CACHE_PASS'),
@@ -91,6 +93,8 @@ def main():
                  ('org.kanger.ContextDependentRootCacheInspectionRunner', 'CONTEXT_DEPENDENT_ROOT_CACHE_INSPECTION_PASS'),
                  ('org.kanger.ContextDependentCacheAncestryInspectionRunner', 'CONTEXT_DEPENDENT_CACHE_ANCESTRY_INSPECTION_PASS'),
                  ('org.kanger.ContextDependentCacheAliasInspectionRunner', 'CONTEXT_DEPENDENT_CACHE_ALIAS_INSPECTION_PASS')]
+    if args.mode == 'dependent-symbolic-recovery-contract':
+        names.insert(0, ('org.kanger.storage.dumb2.SymbolicPublicationRecoveryRunner', 'SYMBOLIC_PUBLICATION_RECOVERY_PASS'))
     if args.mode == 'dependent-symbolic-family-contract':
         names = [('org.kanger.ContextDependentSymbolicFamilyInspectionRunner', 'CONTEXT_DEPENDENT_SYMBOLIC_FAMILY_INSPECTION_PASS'),
                  ('org.kanger.storage.dumb2.SymbolicCacheFamilyInspectionRunner', 'SYMBOLIC_CACHE_FAMILY_INSPECTION_PASS'),
@@ -1437,6 +1441,22 @@ def main():
         candidate = run / 'candidate/org/kanger/Linker.java'
         candidate.write_text(source.replace(marker,replacement), encoding='utf-8')
         production = [candidate if p == original else p for p in production]
+    if args.mode == 'dependent-symbolic-recovery-contract':
+        for filename in ('ContextStore.java','DB.java'):
+            original = root / 'kanger-data-dumb2/src/org/kanger/storage/dumb2' / filename
+            source = original.read_text(encoding='utf-8')
+            marker = ('            generationInstalled = true;' if filename == 'ContextStore.java'
+                      else '\n        candidate.prepareCommunes(communeCache);\n        workingConnections = candidate;')
+            expected = 3 if filename == 'ContextStore.java' else 1
+            if source.count(marker) != expected:
+                raise RuntimeError('Publication fault overlay does not match exact boundary: ' + filename)
+            call = ('            SymbolicPublicationFaults.beforeMarker(location);' if filename == 'ContextStore.java'
+                    else '        SymbolicPublicationFaults.activation(this);')
+            changed = source.replace(marker, marker + '\n' + call) if filename == 'ContextStore.java' else source.replace(marker, '\n' + call + marker)
+            candidate = run / 'publication-faults/org/kanger/storage/dumb2' / filename
+            candidate.parent.mkdir(parents=True, exist_ok=True)
+            candidate.write_text(changed, encoding='utf-8')
+            production = [candidate if p == original else p for p in production]
     listing = run / 'sources.list'
     listing.write_text(''.join('"' + str(p).replace('\\', '/') + '"\n'
                                for p in production + drivers), encoding='utf-8')
@@ -1475,7 +1495,9 @@ def main():
     passed = all(result['passed'] for result in results)
     report = dict(ground_attachment_candidate=args.ground_attachment_candidate, ordinary_integration_candidate=args.ordinary_integration_candidate, head=head, production_sources=len(production), mode=args.mode, passed=passed, results=results,
                   dependent_authoring_candidate=args.dependent_authoring_candidate,
-                  scope={'dependent-symbolic-outcome-contract': 'Typed outcomes, checked publication, retired-cache accounting and persistent-chain recovery; default writer selection unchanged',
+                  symbolic_publication_faults=args.mode == 'dependent-symbolic-recovery-contract',
+                  scope={'dependent-symbolic-recovery-contract': 'Test-only owner/thread-bound one-shot I/O faults before the marker and during connection activation; native publication and checkpoint recovery',
+                         'dependent-symbolic-outcome-contract': 'Typed outcomes, checked publication, retired-cache accounting and persistent-chain recovery; default writer selection unchanged',
                          'dependent-symbolic-family-contract': 'Read-only independent-cut receiving/model composition using guarded internal checked symbolic projections; no admission authority',
                          'dependent-symbolic-cache-connection-contract': 'Direct ungrouped foreign pins and full private-recipe cold qualification in the native connection profile; no family admission',
                          'dependent-symbolic-cache-storage-contract': 'Owning physical pin and independently checked cold symbolic cache reconstruction; no topology admission',

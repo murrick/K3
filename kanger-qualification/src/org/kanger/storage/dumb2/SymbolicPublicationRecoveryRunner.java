@@ -1,0 +1,44 @@
+/* MIT License. Copyright (c) 2026 Dmitry G. Quznetsov. */
+package org.kanger.storage.dumb2;
+import java.nio.file.*;import java.util.*;import java.io.IOException;
+import org.kanger.*;import org.kanger.exception.*;
+import org.kanger.storage.dumb2.SymbolicPublicationFaults.Point;
+
+/** Exact native settlement and real sealed disk revisions under isolated one-shot I/O injection. */
+public final class SymbolicPublicationRecoveryRunner {
+    private static int checks;
+    private static void need(boolean yes,String why){checks++;if(!yes)throw new AssertionError(why);}
+    private static Mind open(DB db,Path d,String name)throws Exception{User u=new User();u.setDatabaseDir(d.toString()+java.io.File.separator);db.init(u);Mind r=new Mind(u);u.setCurrentMind(r);Mind m=(Mind)r.useStorage(name);u.setCurrentMind(m);return m;}
+    private static void close(Mind m)throws Exception{((User)m.getUser()).setCurrentMind(m.closeStorage());}
+    private static void seed(Path d,String name,String text)throws Exception{DB db=new DB();Mind m=open(db,d,name);try{need(m.compile(text,null,false),"recovery fixture "+name);}finally{close(m);}}
+    private static List<String> originals(ContextProductionInventory inventory){List<String> out=new ArrayList<>();for(ContextProductionInventory.Row row:inventory.primary)out.add(row.nativeRule+":"+row.origin+":"+row.nativeDigest);return out;}
+    private static boolean has(Mind m,DB db,String text)throws Exception{for(ContextProductionInventory.Row row:ContextProductionInventory.inspect(m,db.getContextId(),db.getRevision(),true,Collections.emptyList(),1000).primary)if(text.equals(row.origin))return true;return false;}
+    private static boolean diskHas(Path location,java.util.UUID id,long revision,String text)throws Exception{try(SnapshotMindRuntime cold=SnapshotMindRuntime.open(location,new RevisionRef(id,revision),"Source")){for(ContextProductionInventory.Row row:ContextProductionInventory.inspect(cold.getMind(),id,revision,true,Collections.emptyList(),1000).primary)if(text.equals(row.origin))return true;return false;}}
+    private static boolean injected(Throwable error){for(Throwable t=error;t!=null;t=t.getCause())if(t instanceof IOException&&t.getMessage().startsWith("Injected symbolic publication failure"))return true;return false;}
+    private static void currentCertificate(DB db)throws Exception{for(ContextConnection c:db.dmzTopology())need(c.getCertificate().matches(new RevisionRef(db.getContextId(),db.getRevision()),c.getTarget(),c.getCertificate().getSemanticVersion()),"working certificate must bind the actually published source revision");}
+    private static void run(Point point,boolean writer)throws Exception{
+        Path d=Files.createTempDirectory("symbolic-recovery-");seed(d,"Source","!marker(9);");seed(d,"Rules","!@u rel(1,u,1)->middle(u); !@u middle(u)->tail(u);");DB db=new DB();Mind m=open(db,d,"Source");
+        try{db.connectContext("Rules");db.applyConnectionCommand(m,"Rules","!$u rel(1,u,1);");if(writer)m.saveCheckedSymbolicContextConnections();SymbolicCacheFamilyInspection old=db.inspectSymbolicCacheFamily(m);old.requireCurrentModelled(db,m);Path location=old.local.location;long revision=db.getRevision(),target=db.versionHistory("Rules").getCurrentRevision();List<String> before=originals(old.local.working.inventory);boolean failed=false;
+            try(SymbolicPublicationFaults fault=new SymbolicPublicationFaults(db,location,point)){
+                try{if(writer)m.writeCheckedSymbolicContextAssertion("!safe(8);",false);else m.saveCheckedSymbolicContextConnections();}
+                catch(TransactionSettlementException error){need(writer&&error.getOutcome()==TransactionSettlementException.Outcome.COMMITTED&&error.isReservationConsumed(),"native failure reports consumed COMMITTED settlement");failed=injected(error);}
+                catch(IOException error){need(!writer,"connection publication does not invent a child settlement");failed=injected(error);}
+                need(failed&&fault.hits==1,"exact one-shot fault reached the intended owning operation");
+            }
+            DmzCandidateSession.requireSettledPhysicalQ(m);need(true,"failed operation leaves no open child reservation");long disk=RevisionStore.read(ContextStore.revisionPath(location));need(db.getRevision()==disk&&disk==revision+(point==Point.ACTIVATION?1:0),"durable marker and provider cursor describe the exact failure boundary");
+            if(point==Point.BEFORE_MARKER){need(Files.isDirectory(ContextStore.generationPath(location,revision+1)),"installed unpublished generation is retained for exclusive retry");boolean hidden=false;try(ContextSnapshot future=ContextSnapshot.open(location,revision+1)){}catch(org.kanger.exception.StorageLifecycleException expected){hidden=true;}need(hidden,"unpublished orphan cannot be opened as an ordinary pinned revision");}
+            if(point==Point.ACTIVATION){boolean quarantined=false;try{db.inspectSymbolicCacheFamily(m);}catch(StorageLifecycleException expected){quarantined=expected.getErrorCode()==org.kanger.enums.StorageLifecycleErrorCode.STORAGE_CONTEXT_INCOMPLETE&&expected.getCollisions().isEmpty();}need(quarantined,"pending published activation cannot supply reusable symbolic authority");}
+            if(writer){need(has(m,db,"!safe(8);"),"native semantic delta remains applied after finalization failure");need(diskHas(location,db.getContextId(),disk,"!safe(8);")==(point==Point.ACTIVATION),"cold sealed generation distinguishes accepted memory from durable publication");}
+            else need(before.equals(originals(ContextProductionInventory.inspect(m,db.getContextId(),db.getRevision(),true,Collections.emptyList(),1000))),"save failure never changes any source original");
+            if(writer||point==Point.ACTIVATION){boolean stale=false;try{old.requireCurrentModelled(db,m);}catch(StorageLifecycleException expected){stale=expected.getErrorCode()==org.kanger.enums.StorageLifecycleErrorCode.STORAGE_CONTEXT_INCOMPLETE&&expected.getCollisions().isEmpty();}need(stale,"previous model receipt cannot authorize the changed source or pending activation");}else{old.requireCurrentModelled(db,m);need(true,"failed connection save preserves unchanged current diagnostic evidence");}
+            if(point==Point.ACTIVATION){boolean blocked=false;try{m.writeCheckedSymbolicContextAssertion("!forbidden(77);",false);}catch(StorageLifecycleException expected){blocked=expected.getErrorCode()==org.kanger.enums.StorageLifecycleErrorCode.STORAGE_CONTEXT_INCOMPLETE;}need(blocked&&db.getRevision()==disk,"pending activation blocks another checked assertion before opening a child");}
+            if(point==Point.ACTIVATION){boolean blocked=false;try{db.disconnectContext("Rules");}catch(StorageLifecycleException expected){blocked=expected.getErrorCode()==org.kanger.enums.StorageLifecycleErrorCode.STORAGE_CONTEXT_INCOMPLETE;}need(blocked&&db.dmzTopology().size()==1,"unrecovered published activation must not accept a topology edit that recovery would overwrite");}
+            if(writer||point==Point.ACTIVATION){((User)m.getUser()).checkpoint(m);need(db.getRevision()==revision+1,"checkpoint recovers without resubmitting or duplicating the accepted operation");}
+            else need(m.saveCheckedSymbolicContextConnections()==revision+1,"fresh explicit save retries only the uncommitted connection intent");
+            currentCertificate(db);need(db.versionHistory("Rules").getCurrentRevision()==target,"private initialized evidence never publishes into the physical target");db.inspectSymbolicCacheFamily(m).requireCurrentModelled(db,m);need(true,"fresh whole-family evidence is usable after recovery");
+            need(m.saveCheckedSymbolicContextConnections()==revision+1,"checked no-op after recovery creates no duplicate revision");if(writer)need(m.writeCheckedSymbolicContextAssertion("!safe(9);",false),"fresh independent write works after recovery");
+        }finally{close(m);}
+        db=new DB();m=open(db,d,"Source");try{db.inspectSymbolicCacheFamily(m).requireCurrentModelled(db,m);need(db.dmzTopology().size()==1&&db.dmzTopology().get(0).getInitialization().equals(Collections.singletonList("!$u rel(1,u,1);")),"cold reopen preserves exact target and complete private recipe");if(writer)need(has(m,db,"!safe(8);")&&has(m,db,"!safe(9);")&&ContextProductionInventory.inspect(m,db.getContextId(),db.getRevision(),true,Collections.emptyList(),1000).primary.size()==3,"exactly marker and both accepted assertions survive cold reopening");}finally{close(m);}
+    }
+    public static void main(String[] args)throws Exception{System.setProperty("user.home",Files.createTempDirectory("publication-recovery-home-").toString());for(boolean writer:new boolean[]{true,false})for(Point point:Point.values())run(point,writer);System.out.println("SYMBOLIC_PUBLICATION_RECOVERY_PASS checks="+checks);}
+}
