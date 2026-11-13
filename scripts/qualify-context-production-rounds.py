@@ -74,7 +74,8 @@ def main():
     production = sorted(p for module in modules for p in (root / module / 'src').rglob('*.java'))
     names = [('org.kanger.storage.dumb2.ContextProductionRoundsContractRunner', 'CONTEXT_PRODUCTION_ROUNDS_CONTRACT_PASS')]
     if args.mode == 'dependent-symbolic-outcome-contract':
-        names = [('org.kanger.ContextDependentFamilyOutcomeRunner', 'CONTEXT_DEPENDENT_FAMILY_OUTCOME_PASS'),
+        names = [('org.kanger.storage.dumb2.SymbolicFamilyCandidateRunner', 'SYMBOLIC_FAMILY_CANDIDATE_PASS'),
+                 ('org.kanger.ContextDependentFamilyOutcomeRunner', 'CONTEXT_DEPENDENT_FAMILY_OUTCOME_PASS'),
                  ('org.kanger.storage.dumb2.SymbolicFamilyPublicationRunner', 'SYMBOLIC_FAMILY_PUBLICATION_PASS'),
                  ('org.kanger.ContextDependentSymbolicFamilyInspectionRunner', 'CONTEXT_DEPENDENT_SYMBOLIC_FAMILY_INSPECTION_PASS'),
                  ('org.kanger.storage.dumb2.SymbolicCacheFamilyInspectionRunner', 'SYMBOLIC_CACHE_FAMILY_INSPECTION_PASS'),
@@ -1468,7 +1469,7 @@ def main():
     passed = all(result['passed'] for result in results)
     report = dict(ground_attachment_candidate=args.ground_attachment_candidate, ordinary_integration_candidate=args.ordinary_integration_candidate, head=head, production_sources=len(production), mode=args.mode, passed=passed, results=results,
                   dependent_authoring_candidate=args.dependent_authoring_candidate,
-                  scope={'dependent-symbolic-outcome-contract': 'Typed named conflict/incomplete boundary and explicit freshly qualified connection save; default paths unchanged',
+                  scope={'dependent-symbolic-outcome-contract': 'Typed named outcomes, fresh checked connection save and actual pending original append; default paths unchanged',
                          'dependent-symbolic-family-contract': 'Read-only independent-cut receiving/model composition using guarded internal checked symbolic projections; no admission authority',
                          'dependent-symbolic-cache-connection-contract': 'Direct ungrouped foreign pins and full private-recipe cold qualification in the native connection profile; no family admission',
                          'dependent-symbolic-cache-storage-contract': 'Owning physical pin and independently checked cold symbolic cache reconstruction; no topology admission',

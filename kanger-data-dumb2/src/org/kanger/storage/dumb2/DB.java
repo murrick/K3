@@ -431,6 +431,26 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         }
     }
 
+    /** Explicit owning append; ordinary query/Console writer selection is unchanged. */
+    @Override public synchronized boolean writeCheckedSymbolicCandidate(IMind supplied,String statement,boolean logging)throws Exception {
+        requireInitialized();requireWritable();if(!(supplied instanceof Mind))throw new CommandErrorException("Checked symbolic append requires the owning Mind");Mind source=(Mind)supplied;requireSymbolicCacheIdentity(source);
+        if(statement==null||!statement.startsWith("!"))throw new IllegalArgumentException("One exact original assertion required");
+        org.kanger.compiler.Token token=org.kanger.enums.Tools.extractLine(statement,null);
+        if(token==null||org.kanger.enums.Tools.extractLine(statement,token)!=null)throw new IllegalArgumentException("Exactly one original assertion required");
+        ContextPendingSymbolicWrite attempt=beginSymbolicWrite(source,statement);
+        try{return Boolean.TRUE.equals(source.query(statement,null,logging));}finally{endNativeWrite(attempt);}
+    }
+    synchronized ContextPendingSymbolicWrite beginSymbolicWrite(Mind source,String statement)throws Exception {
+        requireWritable();requireSymbolicCacheIdentity(source);
+        if(pendingNativeWrite!=null)throw new IllegalStateException("Nested native write attempt");
+        try{inspectSymbolicCacheFamily(source).requireCurrentModelled(this,source);}
+        catch(InterruptedException interrupted){Thread.currentThread().interrupt();throw interrupted;}
+        catch(org.kanger.exception.StorageLifecycleException refusal){throw refusal;}
+        catch(Exception unsupported){org.kanger.exception.StorageLifecycleException failure=org.kanger.ContextDependentFamilyOutcome.incomplete(org.kanger.ContextDependentFamilyOutcome.reason(unsupported),symbolicFamilyNames());failure.initCause(unsupported);throw failure;}
+        ContextPendingSymbolicWrite attempt=new ContextPendingSymbolicWrite(this,source,statement);
+        pendingNativeWrite=attempt;return attempt;
+    }
+
     private ContextPendingNativeWrite pendingNativeWrite;
     synchronized ContextPendingWitnessWrite beginWitnessWrite(Mind source,int rows,int rounds,int depth,int work,int events) throws Exception {
         if(pendingNativeWrite!=null) throw new IllegalStateException("Nested native write attempt");
@@ -865,7 +885,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
             result.requireCurrent(this,source);return result;
         }
     }
-    private java.util.Map<java.util.UUID,String> symbolicFamilyNames() throws Exception {
+    java.util.Map<java.util.UUID,String> symbolicFamilyNames() throws Exception {
         java.util.Map<java.util.UUID,String> names=new java.util.HashMap<>();names.put(getContextId(),getStorageName());for(ContextConnection member:workingConnections.getConnections())names.put(member.getTarget().getContextId(),displayFederationLocator(member.getTargetLocation()));return names;
     }
     synchronized void requireCurrentSymbolicFamilyModel(Mind source,SymbolicCacheFamilyInspection checked) throws Exception {

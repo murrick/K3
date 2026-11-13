@@ -35,6 +35,9 @@ final class ContextPendingProductionSnapshotSession implements AutoCloseable {
     private final ContextProductionInventory parentInventory,childInventory;
     private final List<ContextProductionInventory> foreign;
     private boolean closed;
+    private boolean symbolicFamilyQualified;
+    private ContextDependentSymbolicCacheSnapshot.Snapshot symbolicLocal;
+    private List<ContextDependentSymbolicFamilyInspection.Member> symbolicMembers;
     private ContextDependentRuntimeInspection.Frame dependentRuntime;
     private ContextDependentRuntimeModelInspection.Result dependentRuntimeModels;
     private ContextDependentRuntimeExecution.Result dependentRuntimeExecution;
@@ -71,6 +74,10 @@ final class ContextPendingProductionSnapshotSession implements AutoCloseable {
     void requireCurrent() throws Exception {
         synchronized(provider) {
             requireOwner();
+            if(symbolicFamilyQualified){
+                ContextDependentSymbolicCacheSnapshot.requireUnrestrictedRuntime(parent);symbolicLocal.requireCurrent(child,childInventory);
+                for(int n=0;n<topology.size();n++){ContextDependentSymbolicFamilyInspection.Member member=symbolicMembers.get(n);if(topology.get(n).layer()!=member.actual)throw new IllegalStateException("Qualified symbolic member runtime replaced");member.snapshot.requireCurrent(member.actual,foreign.get(n));}
+            }
             if(retained!=null && !retainedInventory.fingerprint.equals(inventory(retained,rows).fingerprint)) throw new IllegalStateException("Retained rollback child inventory changed");
             List<ContextConnection> current=provider.dmzTopology();
             if(!source.getContextId().equals(provider.getContextId()) || source.getRevision()!=provider.getRevision() || !topology.equals(current)) throw new IllegalStateException("Pending physical source revision/topology changed");
@@ -130,6 +137,44 @@ final class ContextPendingProductionSnapshotSession implements AutoCloseable {
             }
         }
         if(!routed.equals(expected.keySet()))throw new IllegalStateException("Incomplete qualified native runtime mapping");
+    }
+    /** Fresh proof of the actual append and all independent physical members under this live lease. */
+    int requireSymbolicFamily(String statement) throws Exception {
+        synchronized(provider) {
+            requireCurrent();
+            try {
+                Map<Long,ContextProductionInventory.Row> originals=new LinkedHashMap<>();
+                for(ContextProductionInventory.Row row:parentInventory.primary)originals.put(row.nativeRule,row);
+                int additions=0;
+                for(ContextProductionInventory.Row row:childInventory.primary){
+                    ContextProductionInventory.Row old=originals.remove(row.nativeRule);
+                    if(old==null){if(!statement.equals(row.origin))throw new IllegalStateException("Different pending original assertion");additions++;}
+                    else if(!Objects.equals(old.origin,row.origin)||!old.nativeDigest.equals(row.nativeDigest))throw new IllegalStateException("Pending append changed an existing original");
+                }
+                if(!originals.isEmpty()||additions!=1)throw new IllegalStateException("Exactly one preserved-original append required");
+                ContextDependentSymbolicCacheSnapshot.Result local=ContextDependentSymbolicCacheSnapshot.capture(child,childInventory);
+                if(local.status!=ContextDependentSymbolicCacheSnapshot.Status.BOUND)throw new IllegalStateException("Pending local symbolic proof incomplete: "+local.reason);
+                List<ContextDependentSymbolicFamilyInspection.Member> members=new ArrayList<>();
+                Map<UUID,ContextProductionInventory> inventories=new HashMap<>();inventories.put(childInventory.context,childInventory);
+                for(int n=0;n<topology.size();n++){
+                    ContextConnection connection=topology.get(n);
+                    if(connection.getTrustGroup()!=null||connection.commune()!=null)throw new IllegalStateException("Pending symbolic qualification requires independent direct members");
+                    Mind actual=connection.layer();ContextProductionInventory inventory=foreign.get(n);
+                    ContextDependentSymbolicCacheSnapshot.Result warm=ContextDependentSymbolicCacheSnapshot.capture(actual,inventory);
+                    if(warm.status!=ContextDependentSymbolicCacheSnapshot.Status.BOUND)throw new IllegalStateException("Pending foreign symbolic proof incomplete: "+warm.reason);
+                    ContextConnection cold=new ContextConnection(connection.getTargetLocation(),connection.getTarget(),connection.getCertificate(),connection.getInitialization(),null);
+                    try{
+                        Mind replay=cold.layer();ContextProductionInventory coldInventory=ContextProductionInventory.inspect(replay,inventory.context,inventory.revision,false,cold.getInitialization(),rows);
+                        ContextDependentSymbolicCacheSnapshot.Result proof=ContextDependentSymbolicCacheSnapshot.capture(replay,coldInventory);
+                        if(proof.status!=ContextDependentSymbolicCacheSnapshot.Status.BOUND)throw new IllegalStateException("Pending cold member proof incomplete: "+proof.reason);
+                        ContextDependentSymbolicCacheEquivalence.verify(actual,warm.snapshot,replay,proof.snapshot);
+                    }finally{cold.closeLayer();}
+                    members.add(new ContextDependentSymbolicFamilyInspection.Member(actual,warm.snapshot));inventories.put(inventory.context,inventory);
+                }
+                ContextDependentModelSearchInspection.Result result=ContextDependentSymbolicFamilyInspection.inspect(child,local.snapshot,members);
+                requireCurrent();ContextDependentFamilyOutcome.requireModelled(result,provider.symbolicFamilyNames(),inventories);symbolicLocal=local.snapshot;symbolicMembers=Collections.unmodifiableList(new ArrayList<>(members));symbolicFamilyQualified=true;return childInventory.generated.size();
+            }finally{requireCurrent();}
+        }
     }
     /** Read-only dependent proof of this actual local child, not family qualification or writer authority.
      * All existing parent/retained/physical-member guards remain strict. Arena substitutions do not mutate the child. */

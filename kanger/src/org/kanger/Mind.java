@@ -1945,6 +1945,15 @@ public class Mind implements IMind {
         }
     }
 
+    /** Explicit opt-in original append, with fresh family qualification before native settlement. */
+    public boolean writeCheckedSymbolicContextAssertion(String statement,boolean logging)throws Exception {
+        synchronized(locker){
+            if(next!=null||transactionCounter!=0||user.getCurrentMind()!=this)throw new org.kanger.exception.CommandErrorException("Checked symbolic append requires the settled current root");
+            IData data=user.getData();if(!(data instanceof org.kanger.interfaces.internal.ISymbolicFamilyPublication))throw new org.kanger.exception.CommandErrorException("Checked symbolic family publication is unavailable");
+            return ((org.kanger.interfaces.internal.ISymbolicFamilyPublication)data).writeCheckedSymbolicCandidate(this,statement,logging);
+        }
+    }
+
     private boolean isolateQueryRuntime() throws Exception {
         return isStorageUsed() && user.getData() instanceof org.kanger.interfaces.internal.IRevisionPublication;
     }
