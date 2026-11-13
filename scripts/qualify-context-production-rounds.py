@@ -95,6 +95,8 @@ def main():
                  ('org.kanger.ContextDependentCacheAliasInspectionRunner', 'CONTEXT_DEPENDENT_CACHE_ALIAS_INSPECTION_PASS')]
     if args.mode == 'dependent-symbolic-recovery-contract':
         names.insert(0, ('org.kanger.storage.dumb2.SymbolicPublicationRecoveryRunner', 'SYMBOLIC_PUBLICATION_RECOVERY_PASS'))
+        names.insert(0, ('org.kanger.storage.dumb2.SymbolicPublicationReadWindowRunner', 'SYMBOLIC_PUBLICATION_READ_WINDOW_PASS'))
+        names.insert(1, ('org.kanger.storage.dumb2.SymbolicUnsavedRecoveryRunner', 'SYMBOLIC_UNSAVED_RECOVERY_PASS'))
     if args.mode == 'dependent-symbolic-family-contract':
         names = [('org.kanger.ContextDependentSymbolicFamilyInspectionRunner', 'CONTEXT_DEPENDENT_SYMBOLIC_FAMILY_INSPECTION_PASS'),
                  ('org.kanger.storage.dumb2.SymbolicCacheFamilyInspectionRunner', 'SYMBOLIC_CACHE_FAMILY_INSPECTION_PASS'),
@@ -1453,6 +1455,11 @@ def main():
             call = ('            SymbolicPublicationFaults.beforeMarker(location);' if filename == 'ContextStore.java'
                     else '        SymbolicPublicationFaults.activation(this);')
             changed = source.replace(marker, marker + '\n' + call) if filename == 'ContextStore.java' else source.replace(marker, '\n' + call + marker)
+            if filename == 'DB.java':
+                read_marker = '    private ConnectionVector publishedConnections()\n            throws Exception {'
+                if changed.count(read_marker) != 1:
+                    raise RuntimeError('Publication metadata-read boundary changed')
+                changed = changed.replace(read_marker, read_marker + '\n        SymbolicPublicationFaults.publishedRead(this);')
             candidate = run / 'publication-faults/org/kanger/storage/dumb2' / filename
             candidate.parent.mkdir(parents=True, exist_ok=True)
             candidate.write_text(changed, encoding='utf-8')

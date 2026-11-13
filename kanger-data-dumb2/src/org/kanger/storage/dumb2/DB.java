@@ -1442,7 +1442,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         requireWritable();
         long revision=context.publishTopology(workingConnections,"Save explicit Context connections");
         retiredLayers.addAll(workingConnections.getConnections());
-        activatePublishedConnections(publishedConnections());
+        activatePublishedConnections(context.getQualifiedWorkingConnections());
         return revision;
     }
 

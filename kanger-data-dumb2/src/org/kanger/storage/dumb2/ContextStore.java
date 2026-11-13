@@ -594,6 +594,7 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
     private synchronized long publishGeneration(Path preparedGeneration,
             ConnectionVector desiredConnections, String description, boolean forceRevision) throws Exception {
         requireOpen();
+        qualifiedWorkingConnections = null;
         if (desiredConnections == null
                 || description == null) {
             throw new NullPointerException();
@@ -629,6 +630,7 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
                         currentConnections),
                 RevisionManifestStore.dependencyDigest(
                         desiredConnections))) {
+            qualifiedWorkingConnections = currentConnections;
             return revision;
         }
 
@@ -733,6 +735,7 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
                                 + "; expected " + next);
             }
             revision = published;
+            qualifiedWorkingConnections = publishedConnections;
             return revision;
         } finally {
             if (!generationInstalled

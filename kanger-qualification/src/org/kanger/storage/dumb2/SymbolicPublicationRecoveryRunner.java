@@ -40,5 +40,5 @@ public final class SymbolicPublicationRecoveryRunner {
         }finally{close(m);}
         db=new DB();m=open(db,d,"Source");try{db.inspectSymbolicCacheFamily(m).requireCurrentModelled(db,m);need(db.dmzTopology().size()==1&&db.dmzTopology().get(0).getInitialization().equals(Collections.singletonList("!$u rel(1,u,1);")),"cold reopen preserves exact target and complete private recipe");if(writer)need(has(m,db,"!safe(8);")&&has(m,db,"!safe(9);")&&ContextProductionInventory.inspect(m,db.getContextId(),db.getRevision(),true,Collections.emptyList(),1000).primary.size()==3,"exactly marker and both accepted assertions survive cold reopening");}finally{close(m);}
     }
-    public static void main(String[] args)throws Exception{System.setProperty("user.home",Files.createTempDirectory("publication-recovery-home-").toString());for(boolean writer:new boolean[]{true,false})for(Point point:Point.values())run(point,writer);System.out.println("SYMBOLIC_PUBLICATION_RECOVERY_PASS checks="+checks);}
+    public static void main(String[] args)throws Exception{System.setProperty("user.home",Files.createTempDirectory("publication-recovery-home-").toString());for(boolean writer:new boolean[]{true,false})for(Point point:new Point[]{Point.BEFORE_MARKER,Point.ACTIVATION})run(point,writer);System.out.println("SYMBOLIC_PUBLICATION_RECOVERY_PASS checks="+checks);}
 }
