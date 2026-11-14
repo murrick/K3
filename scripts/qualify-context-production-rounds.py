@@ -97,6 +97,9 @@ def main():
         names.insert(0, ('org.kanger.storage.dumb2.SymbolicPublicationRecoveryRunner', 'SYMBOLIC_PUBLICATION_RECOVERY_PASS'))
         names.insert(0, ('org.kanger.storage.dumb2.SymbolicPublicationReadWindowRunner', 'SYMBOLIC_PUBLICATION_READ_WINDOW_PASS'))
         names.insert(1, ('org.kanger.storage.dumb2.SymbolicUnsavedRecoveryRunner', 'SYMBOLIC_UNSAVED_RECOVERY_PASS'))
+        names.insert(0, ('org.kanger.storage.dumb2.SymbolicMarkerSaveRunner', 'SYMBOLIC_MARKER_SAVE_PASS'))
+        names.insert(0, ('org.kanger.storage.dumb2.SymbolicMarkerNativeRunner', 'SYMBOLIC_MARKER_NATIVE_PASS'))
+        names.insert(0, ('org.kanger.storage.dumb2.SymbolicMarkerVerificationRunner', 'SYMBOLIC_MARKER_VERIFICATION_PASS'))
     if args.mode == 'dependent-symbolic-family-contract':
         names = [('org.kanger.ContextDependentSymbolicFamilyInspectionRunner', 'CONTEXT_DEPENDENT_SYMBOLIC_FAMILY_INSPECTION_PASS'),
                  ('org.kanger.storage.dumb2.SymbolicCacheFamilyInspectionRunner', 'SYMBOLIC_CACHE_FAMILY_INSPECTION_PASS'),
@@ -1464,6 +1467,22 @@ def main():
             candidate.parent.mkdir(parents=True, exist_ok=True)
             candidate.write_text(changed, encoding='utf-8')
             production = [candidate if p == original else p for p in production]
+    if args.mode == 'dependent-symbolic-recovery-contract':
+        original = root / 'kanger-data-dumb2/src/org/kanger/storage/dumb2/RevisionStore.java'
+        source = original.read_text(encoding='utf-8')
+        move = 'Files.move(temporary, path,'
+        cleanup = 'Files.deleteIfExists(temporary)'
+        if source.count(move) != 1 or source.count(cleanup) != 1:
+            raise RuntimeError('Marker fault overlay does not match exact move/cleanup boundaries')
+        source = source.replace(move, 'SymbolicMarkerFaults.move(temporary, path,').replace(cleanup, 'SymbolicMarkerFaults.cleanup(temporary)')
+        verification = 'try { return read(path) == next; }'
+        if source.count(verification) != 1:
+            raise RuntimeError('Marker confirmation read boundary changed')
+        source = source.replace(verification, 'try { return SymbolicMarkerFaults.verifyRead(path) == next; }')
+        candidate = run / 'publication-faults/org/kanger/storage/dumb2/RevisionStore.java'
+        candidate.parent.mkdir(parents=True, exist_ok=True)
+        candidate.write_text(source, encoding='utf-8')
+        production = [candidate if p == original else p for p in production]
     listing = run / 'sources.list'
     listing.write_text(''.join('"' + str(p).replace('\\', '/') + '"\n'
                                for p in production + drivers), encoding='utf-8')

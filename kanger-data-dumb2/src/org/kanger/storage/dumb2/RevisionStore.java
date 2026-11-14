@@ -121,7 +121,12 @@ final class RevisionStore {
      * @param path exact revision sidecar path
      * @param expectedRevision revision observed by the caller
      * @return newly persisted revision
-     * @throws IOException if the replacement cannot be published atomically
+     * <p>An I/O error from the move is reconciled only when the ordinary
+     * marker reader confirms the exact next revision. If confirmation also
+     * fails, the exception does not prove that the marker stayed unchanged.
+     * The caller owns exclusive Context publication and subsequent recovery.</p>
+     *
+     * @throws IOException if replacement fails or its outcome cannot be confirmed
      * @throws StorageLifecycleException when the current marker is invalid
      * @throws IllegalStateException when the expected revision is stale or the
      *         revision space is exhausted
@@ -140,6 +145,8 @@ final class RevisionStore {
 
         long next = current + 1L;
         Path temporary = temporarySibling(path);
+        boolean published = false;
+        Throwable primaryFailure = null;
         try {
             Files.write(temporary, encode(next),
                     StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
@@ -147,13 +154,37 @@ final class RevisionStore {
                     temporary, StandardOpenOption.WRITE)) {
                 channel.force(true);
             }
-            Files.move(temporary, path,
-                    StandardCopyOption.ATOMIC_MOVE,
-                    StandardCopyOption.REPLACE_EXISTING);
+            try {
+                Files.move(temporary, path,
+                        StandardCopyOption.ATOMIC_MOVE,
+                        StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException moveFailure) {
+                // The owner holds the Context lock; verify an ambiguous move result.
+                if (!confirmsPublication(path, next, moveFailure)) throw moveFailure;
+            }
+            published = true;
+            return next;
+        } catch (IOException | RuntimeException | Error failure) {
+            primaryFailure = failure;
+            throw failure;
         } finally {
-            Files.deleteIfExists(temporary);
+            // A successful move already consumed the temporary pathname.
+            if (!published) {
+                try { Files.deleteIfExists(temporary); }
+                catch (IOException | RuntimeException | Error cleanupFailure) {
+                    if (primaryFailure == null) throw cleanupFailure;
+                    if (cleanupFailure != primaryFailure) primaryFailure.addSuppressed(cleanupFailure);
+                }
+            }
         }
-        return next;
+    }
+
+    private static boolean confirmsPublication(Path path, long next, IOException moveFailure) {
+        try { return read(path) == next; }
+        catch (IOException | StorageLifecycleException verificationFailure) {
+            if (verificationFailure != moveFailure) moveFailure.addSuppressed(verificationFailure);
+            return false;
+        }
     }
 
     private static Path temporarySibling(Path path) {
