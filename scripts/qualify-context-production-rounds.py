@@ -102,6 +102,7 @@ def main():
         names.insert(0, ('org.kanger.storage.dumb2.SymbolicMarkerVerificationRunner', 'SYMBOLIC_MARKER_VERIFICATION_PASS'))
         names.insert(0, ('org.kanger.storage.dumb2.SymbolicUnconfirmedSaveRunner', 'SYMBOLIC_UNCONFIRMED_SAVE_PASS'))
         names.insert(0, ('org.kanger.storage.dumb2.SymbolicUnconfirmedNativeRunner', 'SYMBOLIC_UNCONFIRMED_NATIVE_PASS'))
+        names.insert(0, ('org.kanger.storage.dumb2.SymbolicReindexRecoveryRunner', 'SYMBOLIC_REINDEX_RECOVERY_PASS'))
     if args.mode == 'dependent-symbolic-family-contract':
         names = [('org.kanger.ContextDependentSymbolicFamilyInspectionRunner', 'CONTEXT_DEPENDENT_SYMBOLIC_FAMILY_INSPECTION_PASS'),
                  ('org.kanger.storage.dumb2.SymbolicCacheFamilyInspectionRunner', 'SYMBOLIC_CACHE_FAMILY_INSPECTION_PASS'),

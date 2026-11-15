@@ -834,7 +834,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         context.reindex(reactor, (Mind) mind);
         if (getRevision() != before) {
             retiredLayers.addAll(workingConnections.getConnections());
-            activateConnections(publishedConnections());
+            activatePublishedConnections(context.getQualifiedWorkingConnections());
         }
     }
 

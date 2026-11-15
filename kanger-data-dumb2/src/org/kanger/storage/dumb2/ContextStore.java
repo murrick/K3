@@ -423,6 +423,7 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
     private static final class UnconfirmedPublication {
         final long previous,next;final ConnectionVector qualified;
         final Map<String,TreeMap<Long,byte[]>> written;
+        Map<String,TreeMap<Long,byte[]>> canonical;
         UnconfirmedPublication(long previous,long next,ConnectionVector qualified,Map<String,TreeMap<Long,byte[]>> written){this.previous=previous;this.next=next;this.qualified=qualified;this.written=written;}
     }
     private UnconfirmedPublication unconfirmedPublication;
@@ -450,6 +451,11 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
             if(!contextId.equals(snapshot.getContextId()))throw new StorageLifecycleException(StorageLifecycleErrorCode.STORAGE_CONTEXT_INCOMPLETE,"Pending publication Context identity changed");
         }
         if(observed==pending.next){
+            if(pending.canonical!=null)for(Map.Entry<String,TreeMap<Long,byte[]>> entry:pending.written.entrySet()){
+                ContextBase base=bases.get(entry.getKey());
+                if(base==null||!base.sameRecords(entry.getValue()))throw new StorageLifecycleException(StorageLifecycleErrorCode.STORAGE_CONTEXT_INCOMPLETE,"Reindex working image changed before publication reconciliation");
+            }
+            if(pending.canonical!=null)for(Map.Entry<String,TreeMap<Long,byte[]>> entry:pending.canonical.entrySet())bases.get(entry.getKey()).installPublishedRecords(entry.getValue());
             revision=observed;qualifiedWorkingConnections=pending.qualified;
             for(Map.Entry<String,TreeMap<Long,byte[]>> entry:pending.written.entrySet()){
                 ContextBase base=bases.get(entry.getKey());if(base!=null&&base.sameRecords(entry.getValue()))base.markPublished();
@@ -798,6 +804,7 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
     synchronized long reindex(IReactor<String> reactor, Mind mind)
             throws Exception {
         requireOpen();
+        requireConfirmedPublication();
         if (mind == null) {
             throw new IllegalArgumentException("mind is required");
         }
@@ -883,7 +890,7 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
                     currentConnections,
                     "");
 
-            qualifyAndStageConnectionTransition(
+            ConnectionVector qualified = qualifyAndStageConnectionTransition(
                     staging,
                     next,
                     currentConnections);
@@ -901,8 +908,19 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
             }
             generationInstalled = true;
 
-            long published =
-                    RevisionStore.advance(revisionPath(location), revision);
+            long published;
+            try {
+                published = advanceQualifiedMarker(next, qualified, false);
+            } catch (UnconfirmedRevisionException failure) {
+                // Reindex never dirties the live bases before the marker. Retain both
+                // images so reconciliation can adopt canonical bytes without losing edits.
+                if (unconfirmedPublication != null) {
+                    unconfirmedPublication.canonical = canonical;
+                    for (Map.Entry<String, ContextBase> entry : bases.entrySet())
+                        unconfirmedPublication.written.put(entry.getKey(), entry.getValue().publicationImage());
+                }
+                throw failure;
+            }
             if (published != next) {
                 throw new IllegalStateException(
                         "Unexpected DUMB2 reindex revision " + published
@@ -910,6 +928,7 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
             }
 
             revision = published;
+            qualifiedWorkingConnections = qualified;
             for (Map.Entry<String, TreeMap<Long, byte[]>> entry
                     : canonical.entrySet()) {
                 ContextBase base = bases.get(entry.getKey());
@@ -923,10 +942,9 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
                 deleteRecursively(staging);
             }
             /*
-             * If the generation was installed but revision publication failed,
-             * it remains an unpublished orphan while the visible marker still
-             * names the previous authoritative revision. A later publication
-             * rebuilds the same target under the exclusive Context lock.
+             * An installed generation may be unpublished or have an unconfirmed
+             * marker outcome. The latter remains fenced until checkpoint validates
+             * the marker and generation; a known failed move leaves an orphan.
              */
         }
     }
@@ -940,7 +958,7 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
      * stops or the process crashes, while R+1 already has a fully qualified
      * vector waiting when the revision marker moves.</p>
      */
-    private void qualifyAndStageConnectionTransition(
+    private ConnectionVector qualifyAndStageConnectionTransition(
             Path staging,
             long next,
             ConnectionVector currentConnections)
@@ -958,7 +976,7 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
                 ConnectionStore.path(location);
         if (currentConnections.isEmpty()
                 && !Files.exists(connectionsPath)) {
-            return;
+            return ConnectionVector.empty();
         }
 
         RevisionRef currentSource =
@@ -978,7 +996,7 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
                     currentConnections,
                     candidateSource,
                     ConnectionVector.empty());
-            return;
+            return ConnectionVector.empty();
         }
 
         ContextCandidate candidate =
@@ -1018,6 +1036,7 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
                 currentConnections,
                 candidateSource,
                 candidateConnections);
+        return candidateConnections;
     }
 
     private ConnectionVector publishedConnections()
