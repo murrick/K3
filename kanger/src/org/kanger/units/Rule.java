@@ -810,7 +810,12 @@ public class Rule implements IUnit<IRule>, IRule {
         return terms.contains(id);
     }
 
-    public boolean containsPredicate(long id) {
+    public boolean containsPredicate(long id) throws Exception {
+        // Legacy layouts have tree IDs but no persisted reference indexes.
+        // Absence from an unbuilt index cannot authorize predicate collection.
+        if (!persistentTermIndexComplete) {
+            checkTreeIsLoaded();
+        }
         return predicates.contains(id);
     }
 

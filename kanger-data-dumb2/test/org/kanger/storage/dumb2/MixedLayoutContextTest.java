@@ -100,6 +100,8 @@ public class MixedLayoutContextTest {
             // V1 had no stored acceleration indexes; it can derive them lazily.
             assertTrue(oldRestored.getPredicates().isEmpty());
             assertTrue(oldRestored.getTerms().isEmpty());
+            assertTrue(oldRestored.containsPredicate(fixture.oldPredicate.getId()),
+                    "historical rule must retain its live predicate before canonical rewrite");
             oldRestored.ensurePersistentReferenceIndexes(fixture.mind);
             assertRuleIndexes(oldRestored, fixture.oldPredicate,
                     fixture.oldPayload, fixture.origin);
