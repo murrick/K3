@@ -420,6 +420,44 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
      */
     private ConnectionVector qualifiedWorkingConnections;
 
+    private static final class UnconfirmedPublication {
+        final long previous,next;final ConnectionVector qualified;
+        final Map<String,TreeMap<Long,byte[]>> written;
+        UnconfirmedPublication(long previous,long next,ConnectionVector qualified,Map<String,TreeMap<Long,byte[]>> written){this.previous=previous;this.next=next;this.qualified=qualified;this.written=written;}
+    }
+    private UnconfirmedPublication unconfirmedPublication;
+    synchronized boolean hasUnconfirmedPublication(){return unconfirmedPublication!=null;}
+    synchronized void requireConfirmedPublication() throws StorageLifecycleException {
+        if(unconfirmedPublication!=null)throw new StorageLifecycleException(StorageLifecycleErrorCode.STORAGE_CONTEXT_INCOMPLETE,"Revision publication is unconfirmed; checkpoint storage before using CURRENT");
+    }
+    private long advanceQualifiedMarker(long next,ConnectionVector qualified,boolean data) throws Exception {
+        try{return RevisionStore.advance(revisionPath(location),revision);}
+        catch(UnconfirmedRevisionException failure){
+            if(failure.previous!=revision||failure.next!=next)throw failure;
+            Map<String,TreeMap<Long,byte[]>> written=new LinkedHashMap<String,TreeMap<Long,byte[]>>();
+            if(data)for(Map.Entry<String,ContextBase> entry:bases.entrySet())if(entry.getValue().isDirty())written.put(entry.getKey(),entry.getValue().publicationImage());
+            unconfirmedPublication=new UnconfirmedPublication(revision,next,qualified,written);
+            throw failure;
+        }
+    }
+    /** Only explicit quiescent checkpoint recovery calls this; no optimistic CURRENT authority. */
+    synchronized void reconcilePublication() throws Exception {
+        requireOpen();UnconfirmedPublication pending=unconfirmedPublication;if(pending==null)return;
+        long observed = RevisionStore.read(revisionPath(location));
+        if(revision!=pending.previous||(observed!=pending.previous&&observed!=pending.next))
+            throw new StorageLifecycleException(StorageLifecycleErrorCode.STORAGE_CONTEXT_INCOMPLETE,"Marker does not match the pending publication transition");
+        try(ContextSnapshot snapshot=ContextSnapshot.open(location,observed)){
+            if(!contextId.equals(snapshot.getContextId()))throw new StorageLifecycleException(StorageLifecycleErrorCode.STORAGE_CONTEXT_INCOMPLETE,"Pending publication Context identity changed");
+        }
+        if(observed==pending.next){
+            revision=observed;qualifiedWorkingConnections=pending.qualified;
+            for(Map.Entry<String,TreeMap<Long,byte[]>> entry:pending.written.entrySet()){
+                ContextBase base=bases.get(entry.getKey());if(base!=null&&base.sameRecords(entry.getValue()))base.markPublished();
+            }
+        }
+        unconfirmedPublication=null;
+    }
+
     synchronized ConnectionVector getQualifiedWorkingConnections() {
         return qualifiedWorkingConnections;
     }
@@ -434,6 +472,7 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
 
     synchronized long flush(ConnectionVector working, String description) throws Exception {
         requireOpen();
+        requireConfirmedPublication();
         qualifiedWorkingConnections = null;
 
         boolean dirty = false;
@@ -535,7 +574,7 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
             }
             generationInstalled = true;
 
-            long published = RevisionStore.advance(revisionPath(location), revision);
+            long published = advanceQualifiedMarker(next, qualifiedWorking, true);
             if (published != next) {
                 throw new IllegalStateException(
                         "Unexpected DUMB2 published revision " + published
@@ -594,6 +633,7 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
     private synchronized long publishGeneration(Path preparedGeneration,
             ConnectionVector desiredConnections, String description, boolean forceRevision) throws Exception {
         requireOpen();
+        requireConfirmedPublication();
         qualifiedWorkingConnections = null;
         if (desiredConnections == null
                 || description == null) {
@@ -725,9 +765,7 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
             generationInstalled = true;
 
             long published =
-                    RevisionStore.advance(
-                            revisionPath(location),
-                            revision);
+                    advanceQualifiedMarker(next, publishedConnections, false);
             if (published != next) {
                 throw new IllegalStateException(
                         "Unexpected DUMB2 topology revision "

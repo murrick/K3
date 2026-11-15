@@ -99,6 +99,12 @@ final class ContextBase implements IBase {
         return dirty;
     }
 
+    TreeMap<Long,byte[]> publicationImage() {
+        TreeMap<Long,byte[]> copy=new TreeMap<Long,byte[]>();
+        for(Map.Entry<Long,byte[]> row:records.entrySet())copy.put(row.getKey(),row.getValue().clone());
+        return copy;
+    }
+
     void markPublished() {
         dirty = false;
     }

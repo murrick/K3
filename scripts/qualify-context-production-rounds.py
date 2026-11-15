@@ -100,6 +100,8 @@ def main():
         names.insert(0, ('org.kanger.storage.dumb2.SymbolicMarkerSaveRunner', 'SYMBOLIC_MARKER_SAVE_PASS'))
         names.insert(0, ('org.kanger.storage.dumb2.SymbolicMarkerNativeRunner', 'SYMBOLIC_MARKER_NATIVE_PASS'))
         names.insert(0, ('org.kanger.storage.dumb2.SymbolicMarkerVerificationRunner', 'SYMBOLIC_MARKER_VERIFICATION_PASS'))
+        names.insert(0, ('org.kanger.storage.dumb2.SymbolicUnconfirmedSaveRunner', 'SYMBOLIC_UNCONFIRMED_SAVE_PASS'))
+        names.insert(0, ('org.kanger.storage.dumb2.SymbolicUnconfirmedNativeRunner', 'SYMBOLIC_UNCONFIRMED_NATIVE_PASS'))
     if args.mode == 'dependent-symbolic-family-contract':
         names = [('org.kanger.ContextDependentSymbolicFamilyInspectionRunner', 'CONTEXT_DEPENDENT_SYMBOLIC_FAMILY_INSPECTION_PASS'),
                  ('org.kanger.storage.dumb2.SymbolicCacheFamilyInspectionRunner', 'SYMBOLIC_CACHE_FAMILY_INSPECTION_PASS'),
@@ -1458,6 +1460,11 @@ def main():
             call = ('            SymbolicPublicationFaults.beforeMarker(location);' if filename == 'ContextStore.java'
                     else '        SymbolicPublicationFaults.activation(this);')
             changed = source.replace(marker, marker + '\n' + call) if filename == 'ContextStore.java' else source.replace(marker, '\n' + call + marker)
+            if filename == 'ContextStore.java':
+                recovery_read = 'long observed = RevisionStore.read(revisionPath(location));'
+                if changed.count(recovery_read) != 1:
+                    raise RuntimeError('Publication recovery read boundary changed')
+                changed = changed.replace(recovery_read, 'long observed = SymbolicMarkerFaults.verifyRead(revisionPath(location));')
             if filename == 'DB.java':
                 read_marker = '    private ConnectionVector publishedConnections()\n            throws Exception {'
                 if changed.count(read_marker) != 1:
@@ -1475,10 +1482,10 @@ def main():
         if source.count(move) != 1 or source.count(cleanup) != 1:
             raise RuntimeError('Marker fault overlay does not match exact move/cleanup boundaries')
         source = source.replace(move, 'SymbolicMarkerFaults.move(temporary, path,').replace(cleanup, 'SymbolicMarkerFaults.cleanup(temporary)')
-        verification = 'try { return read(path) == next; }'
+        verification = 'try { observed = read(path); }'
         if source.count(verification) != 1:
             raise RuntimeError('Marker confirmation read boundary changed')
-        source = source.replace(verification, 'try { return SymbolicMarkerFaults.verifyRead(path) == next; }')
+        source = source.replace(verification, 'try { observed = SymbolicMarkerFaults.verifyRead(path); }')
         candidate = run / 'publication-faults/org/kanger/storage/dumb2/RevisionStore.java'
         candidate.parent.mkdir(parents=True, exist_ok=True)
         candidate.write_text(source, encoding='utf-8')

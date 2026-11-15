@@ -511,7 +511,12 @@ public class Mind implements IMind {
     }
 
     final boolean checkpointStorageState() throws Exception {
-        return commitOperationalChild(new Mind(this));
+        synchronized(locker){
+            requirePublicationQuiescence();
+            if(user.getData() instanceof org.kanger.interfaces.internal.IRevisionPublication)
+                ((org.kanger.interfaces.internal.IRevisionPublication)user.getData()).prepareStorageCheckpoint(this);
+            return commitOperationalChild(new Mind(this));
+        }
     }
 
     private Thread operationalCommitOwner;

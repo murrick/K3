@@ -160,7 +160,7 @@ final class RevisionStore {
                         StandardCopyOption.REPLACE_EXISTING);
             } catch (IOException moveFailure) {
                 // The owner holds the Context lock; verify an ambiguous move result.
-                if (!confirmsPublication(path, next, moveFailure)) throw moveFailure;
+                if (!confirmsPublication(path, current, next, moveFailure)) throw moveFailure;
             }
             published = true;
             return next;
@@ -179,12 +179,17 @@ final class RevisionStore {
         }
     }
 
-    private static boolean confirmsPublication(Path path, long next, IOException moveFailure) {
-        try { return read(path) == next; }
+    private static boolean confirmsPublication(Path path, long previous, long next, IOException moveFailure) throws UnconfirmedRevisionException {
+        long observed;
+        try { observed = read(path); }
         catch (IOException | StorageLifecycleException verificationFailure) {
             if (verificationFailure != moveFailure) moveFailure.addSuppressed(verificationFailure);
-            return false;
+            throw new UnconfirmedRevisionException(previous,next,moveFailure);
         }
+        if(observed==next)return true;
+        if(observed==previous)return false;
+        moveFailure.addSuppressed(new IOException("Marker is outside the attempted revision transition"));
+        throw new UnconfirmedRevisionException(previous,next,moveFailure);
     }
 
     private static Path temporarySibling(Path path) {

@@ -13,6 +13,8 @@ public interface IRevisionPublication {
     default void validateStorageOpen(IMind source, String name) throws Exception { }
     /** Reject incompatible proposed live state before native parent settlement. */
     default void validateCommit(IMind proposed) throws Exception { }
+    /** Recover a publication outcome before a checkpoint reserves any child. */
+    default void prepareStorageCheckpoint(IMind source) throws Exception { }
     long getRevision();
     void setNextRevisionDescription(String description) throws Exception;
     IMind publishContext(IMind source, String description) throws Exception;

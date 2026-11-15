@@ -683,6 +683,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
 
     @Override
     public synchronized void validateCommit(IMind proposed) throws Exception {
+        if(context!=null)context.requireConfirmedPublication();
         if(pendingNativeWrite!=null) pendingNativeWrite.validate((Mind)proposed);
         if (validatingCommit || isClosed() || isReadOnly() || workingConnections.isEmpty()) return;
         validatingCommit = true;
@@ -709,6 +710,16 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
                 "Proposed Context introduces an X-anchored composition conflict", composition.getCollisions());
     }
 
+    @Override public synchronized void prepareStorageCheckpoint(IMind supplied) throws Exception {
+        requireInitialized();
+        if(isClosed()||isReadOnly()||!context.hasUnconfirmedPublication())return;
+        if(!(supplied instanceof Mind)||supplied.getUser()!=user||user.getCurrentMind()!=supplied||((User)user).getData()!=this)
+            throw new CommandErrorException("Publication recovery requires the owning current root");
+        org.kanger.DmzCandidateSession.requireSettledPhysicalQ((Mind)supplied);
+        long before=getRevision();context.reconcilePublication();
+        if(getRevision()!=before){retiredLayers.addAll(workingConnections.getConnections());activatePublishedConnections(context.getQualifiedWorkingConnections());}
+    }
+
     @Override
     public synchronized void flush() throws Exception {
         requireInitialized();
@@ -716,6 +727,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         // session logout may flush without any persistent Context being open.
         if (isClosed()) return;
         if (isReadOnly()) return;
+        context.requireConfirmedPublication();
         recoverPublishedConnections();
         long before = getRevision();
         ConnectionVector pending = workingConnections;
@@ -984,6 +996,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         requireSymbolicPhysicalPin(expected.location,expected.context,expected.revision);expected.working.requireCurrent(source,expected.working.inventory);
     }
 
+    /** Last confirmed cursor; CURRENT authority is fenced during unconfirmed publication. */
     public synchronized long getRevision() {
         return historical!=null ? historical.getRevision() : context==null ? -1L : context.getRevision();
     }
@@ -998,6 +1011,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
 
     private Path activeLocation() { return historical!=null ? historicalLocation : context.getLocation(); }
     private void requireWritable() throws Exception {
+        if(context!=null)context.requireConfirmedPublication();
         if (isReadOnly()) throw new CommandErrorException("Context " + storageName + " is an immutable revision; open CURRENT for authoring");
         if(pendingPublishedActivation!=null)throw org.kanger.ContextDependentFamilyOutcome.incomplete("Published connections await activation; checkpoint storage before authoring",symbolicFamilyNames());
     }
@@ -2434,11 +2448,12 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         }
     }
 
-    private void requireOpen() {
+    private void requireOpen() throws StorageLifecycleException {
         requireInitialized();
         if (isClosed()) {
             throw new IllegalStateException("DUMB2 Context is not open");
         }
+        if(context!=null)context.requireConfirmedPublication();
     }
 
     private void pruneEmptyParents(Path location) {
