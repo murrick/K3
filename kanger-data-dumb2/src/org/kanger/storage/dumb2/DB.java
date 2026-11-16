@@ -712,12 +712,16 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
 
     @Override public synchronized void prepareStorageCheckpoint(IMind supplied) throws Exception {
         requireInitialized();
-        if(isClosed()||isReadOnly()||!context.hasUnconfirmedPublication())return;
-        if(!(supplied instanceof Mind)||supplied.getUser()!=user||user.getCurrentMind()!=supplied||((User)user).getData()!=this)
-            throw new CommandErrorException("Publication recovery requires the owning current root");
+        if(isClosed()||isReadOnly())return;
+        if(!(supplied instanceof Mind)||supplied.getUser()!=user||((User)user).getData()!=this)
+            throw new CommandErrorException("Storage checkpoint requires an owning root");
         org.kanger.DmzCandidateSession.requireSettledPhysicalQ((Mind)supplied);
-        long before=getRevision();context.reconcilePublication();
-        if(getRevision()!=before){retiredLayers.addAll(workingConnections.getConnections());activatePublishedConnections(context.getQualifiedWorkingConnections());}
+        if(context.hasUnconfirmedPublication()){
+            if(user.getCurrentMind()!=supplied)throw new CommandErrorException("Publication recovery requires the owning current root");
+            long before=getRevision();context.reconcilePublication();
+            if(getRevision()!=before){retiredLayers.addAll(workingConnections.getConnections());activatePublishedConnections(context.getQualifiedWorkingConnections());}
+        }
+        context.reclaimInterruptedPublicationFiles();
     }
 
     @Override

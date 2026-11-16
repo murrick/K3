@@ -61,8 +61,9 @@ public final class SymbolicProcessDeathRunner {
         Properties plan=new Properties();try(InputStream in=Files.newInputStream(dir.resolve("plan.properties"))){plan.load(in);}
         long before=Long.parseLong(plan.getProperty("revision")),expected=before+(beforeMarker(point)?0:1);Path location=dir.resolve("Source");
         need(RevisionStore.read(ContextStore.revisionPath(location))==expected,"actual marker names the exact durable side of cut");
+        Path interruptedArtifact=null;
         if(preparation(point)){
-            Properties artifact=new Properties();try(InputStream in=Files.newInputStream(dir.resolve("artifact.properties"))){artifact.load(in);}Path path=Paths.get(artifact.getProperty("artifact"));long full=Long.parseLong(artifact.getProperty("fullLength"));
+            Properties artifact=new Properties();try(InputStream in=Files.newInputStream(dir.resolve("artifact.properties"))){artifact.load(in);}Path path=Paths.get(artifact.getProperty("artifact"));interruptedArtifact=path;long full=Long.parseLong(artifact.getProperty("fullLength"));
             need(path.startsWith(dir)&&Files.exists(path),"exact preparation artifact remains inside this fixture");
             if(point.equals("STAGING_COPY"))need(Files.isDirectory(path),"copied hidden staging directory really exists");
             else if(point.endsWith("PARTIAL"))need(Files.size(path)>0&&Files.size(path)<full,"actual file is incomplete, not a synthetic post-write exception");
@@ -84,6 +85,7 @@ public final class SymbolicProcessDeathRunner {
             if(saved){ContextConnection c=db.dmzTopology().get(0);need(c.getInitialization().equals(Collections.singletonList("!$u rel(1,u,1);")),"full private recipe replays after restart");need(c.getCertificate().matches(new RevisionRef(db.getContextId(),expected),c.getTarget(),c.getCertificate().getSemanticVersion()),"cold certificate binds actual source");db.inspectSymbolicCacheFamily(m).requireCurrentModelled(db,m);need(true,"fresh whole-family evidence qualifies after restart");}
             if(operation.equals("reindex")){ContextStore s=store(db);ContextBase b=(ContextBase)db.getBase("rules");String layout=s.resolveType(((ContextStep)b.get(Long.parseLong(plan.getProperty("original")))).getPersistentRecord().getTypeCode()).getDescriptor().getName();need(layout.equals(beforeMarker(point)?"Rule-v1":"Rule-v2"),"cold physical layout matches selected marker");}
             ((User)m.getUser()).checkpoint(m);need(db.getRevision()==expected,"plain checkpoint never publishes abandoned memory or orphan generation");
+            if(interruptedArtifact!=null)need(!Files.exists(interruptedArtifact,LinkOption.NOFOLLOW_LINKS),"validated quiescent checkpoint reclaims this interrupted artifact before retry");
             if(beforeMarker(point)){
                 if(operation.equals("native"))m.writeCheckedSymbolicContextAssertion("!safe(8);",false);
                 else if(operation.equals("save")){connect(db,m);m.saveCheckedSymbolicContextConnections();}

@@ -464,6 +464,21 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
         unconfirmedPublication=null;
     }
 
+    /** Only quiescent checkpoint calls this; never a revision/generation reclamation API. */
+    synchronized int reclaimInterruptedPublicationFiles() throws IOException, StorageLifecycleException {
+        requireOpen();
+        requireConfirmedPublication();
+        if(!contextLock.lock.isValid())throw new IllegalStateException("Context writer lock is no longer held");
+        if(RevisionStore.read(revisionPath(location))!=revision)
+            throw new StorageLifecycleException(StorageLifecycleErrorCode.STORAGE_CONTEXT_INCOMPLETE,"Context revision changed before interrupted-file reclamation");
+        try(ContextSnapshot snapshot=ContextSnapshot.open(location,revision)){
+            if(!contextId.equals(snapshot.getContextId()))throw new StorageLifecycleException(StorageLifecycleErrorCode.STORAGE_CONTEXT_INCOMPLETE,"Context identity changed before interrupted-file reclamation");
+        }
+        // R0 has no generation manifest, but its metadata and connection owner still matter.
+        ConnectionStore.read(location,new RevisionRef(contextId,revision));
+        return InterruptedPublicationReclaimer.reclaim(location,revision);
+    }
+
     synchronized ConnectionVector getQualifiedWorkingConnections() {
         return qualifiedWorkingConnections;
     }
