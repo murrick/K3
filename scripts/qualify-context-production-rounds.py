@@ -103,6 +103,7 @@ def main():
         names.insert(0, ('org.kanger.storage.dumb2.SymbolicUnconfirmedSaveRunner', 'SYMBOLIC_UNCONFIRMED_SAVE_PASS'))
         names.insert(0, ('org.kanger.storage.dumb2.SymbolicUnconfirmedNativeRunner', 'SYMBOLIC_UNCONFIRMED_NATIVE_PASS'))
         names.insert(0, ('org.kanger.storage.dumb2.SymbolicReindexRecoveryRunner', 'SYMBOLIC_REINDEX_RECOVERY_PASS'))
+        names.insert(0, ('org.kanger.storage.dumb2.SymbolicProcessDeathRunner', 'SYMBOLIC_PROCESS_DEATH_PASS'))
     if args.mode == 'dependent-symbolic-family-contract':
         names = [('org.kanger.ContextDependentSymbolicFamilyInspectionRunner', 'CONTEXT_DEPENDENT_SYMBOLIC_FAMILY_INSPECTION_PASS'),
                  ('org.kanger.storage.dumb2.SymbolicCacheFamilyInspectionRunner', 'SYMBOLIC_CACHE_FAMILY_INSPECTION_PASS'),
@@ -1512,7 +1513,7 @@ def main():
     for name, marker in names:
         try:
             result = subprocess.run(['java', '-XX:-UsePerfData', '-cp', runtime_cp, name], cwd=root,
-                                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=120)
+                                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=900 if name == 'org.kanger.storage.dumb2.SymbolicProcessDeathRunner' else 120)
             code, log = result.returncode, result.stdout
         except subprocess.TimeoutExpired as failure:
             code = 124

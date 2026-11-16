@@ -1,0 +1,89 @@
+/* MIT License. Copyright (c) 2026 Dmitry G. Quznetsov. */
+package org.kanger.storage.dumb2;
+
+import java.nio.file.*;
+import java.util.*;
+import java.io.*;
+import java.util.concurrent.TimeUnit;
+import org.kanger.*;
+import org.kanger.units.Rule;
+import org.kanger.storage.dumb2.adapter.RuleV1Adapter;
+import org.kanger.storage.dumb2.descriptor.*;
+
+/** Real child JVM termination: no Java finally/close/shutdown recovery before cold reopening. */
+public final class SymbolicProcessDeathRunner {
+    private static int checks;
+    private static void need(boolean yes,String why){checks++;if(!yes)throw new AssertionError(why);}
+    static void halt(String point){System.err.println("KANGER_PROCESS_CUT point="+point);System.err.flush();Runtime.getRuntime().halt(83);}
+    private static Mind open(DB db,Path dir,String name)throws Exception{User u=new User();u.setDatabaseDir(dir.toString()+File.separator);db.init(u);Mind root=new Mind(u);u.setCurrentMind(root);Mind m=(Mind)root.useStorage(name);u.setCurrentMind(m);return m;}
+    private static void close(Mind m)throws Exception{((User)m.getUser()).setCurrentMind(m.closeStorage());}
+    private static void seed(Path d,String name,String text)throws Exception{DB db=new DB();Mind m=open(db,d,name);try{if(!m.compile(text,null,false))throw new AssertionError("seed");}finally{close(m);}}
+    private static ContextStore store(DB db)throws Exception{java.lang.reflect.Field f=DB.class.getDeclaredField("context");f.setAccessible(true);return (ContextStore)f.get(db);}
+    private static Set<String> originals(Mind m,DB db)throws Exception{Set<String> out=new HashSet<>();for(ContextProductionInventory.Row row:ContextProductionInventory.inspect(m,db.getContextId(),db.getRevision(),true,Collections.emptyList(),1000).primary){if(!out.add(row.origin))throw new AssertionError("duplicate original");}return out;}
+    private static String digest(Path generation)throws Exception{
+        java.security.MessageDigest hash=java.security.MessageDigest.getInstance("SHA-256");
+        List<Path> files=new ArrayList<>();try(java.util.stream.Stream<Path> stream=Files.walk(generation)){stream.filter(Files::isRegularFile).forEach(files::add);}Collections.sort(files);
+        for(Path file:files){byte[] name=generation.relativize(file).toString().getBytes(java.nio.charset.StandardCharsets.UTF_8),bytes=Files.readAllBytes(file);hash.update(java.nio.ByteBuffer.allocate(4).putInt(name.length).array());hash.update(name);hash.update(java.nio.ByteBuffer.allocate(8).putLong(bytes.length).array());hash.update(bytes);}
+        return Base64.getEncoder().encodeToString(hash.digest());
+    }
+    private static void connect(DB db,Mind m)throws Exception{db.connectContext("Rules");db.applyConnectionCommand(m,"Rules","!$u rel(1,u,1);");}
+    private static void child(Path dir,String operation,String point)throws Exception{
+        System.setProperty("user.home",dir.resolve("home").toString());
+        seed(dir,"Source","!marker(9);");seed(dir,"Rules","!@u rel(1,u,1)->middle(u); !@u middle(u)->tail(u);");
+        DB db=new DB();Mind m=open(db,dir,"Source");long original=-1;
+        if(operation.equals("reindex")){
+            ContextStore s=store(db);ContextBase b=(ContextBase)db.getBase("rules");Rule rule=null;for(org.kanger.interfaces.IRule r:m.getRules())if(!r.isGenerated())rule=(Rule)r;
+            original=rule.getId();PersistentRecord row=((ContextStep)b.get(original)).getPersistentRecord();TypeDefinition type=s.registerType(RuleV1Adapter.TYPE_NAME,RuleV1Adapter.INSTANCE.getDescriptor());
+            b.update(new ContextStep(b,new PersistentRecord(original,row.getHash(),row.getNextId(),type.getTypeCode(),StructuralValueCodec.encode(type.getDescriptor(),RuleV1Adapter.INSTANCE.project(rule,m)))));db.flush();
+        }
+        connect(db,m);if(!operation.equals("save"))m.saveCheckedSymbolicContextConnections();
+        Properties plan=new Properties();plan.setProperty("revision",Long.toString(db.getRevision()));plan.setProperty("target",Long.toString(db.versionHistory("Rules").getCurrentRevision()));plan.setProperty("identity",db.getContextId().toString());plan.setProperty("original",Long.toString(original));
+        plan.setProperty("sourceDigest",digest(ContextStore.generationPath(dir.resolve("Source"),db.getRevision())));plan.setProperty("targetDigest",digest(ContextStore.generationPath(dir.resolve("Rules"),Long.parseLong(plan.getProperty("target")))));
+        try(OutputStream out=Files.newOutputStream(dir.resolve("plan.properties"))){plan.store(out,"pre-cut observations");}
+        try(SymbolicPublicationFaults publication=point.equals("AFTER_MARKER")?null:new SymbolicPublicationFaults(db,dir.resolve("Source"),point.equals("BEFORE_MARKER")?SymbolicPublicationFaults.Point.HALT_BEFORE_MARKER:SymbolicPublicationFaults.Point.HALT_ACTIVATION);
+            SymbolicMarkerFaults marker=point.equals("AFTER_MARKER")?new SymbolicMarkerFaults(ContextStore.revisionPath(dir.resolve("Source")),SymbolicMarkerFaults.Point.HALT_AFTER_MOVE):null){
+            if(operation.equals("native"))m.writeCheckedSymbolicContextAssertion("!safe(8);",false);
+            else if(operation.equals("save"))m.saveCheckedSymbolicContextConnections();
+            else ((User)m.getUser()).reindex(null,m,"Source");
+        }
+        throw new AssertionError("requested cut was not reached");
+    }
+    private static void run(String operation,String point)throws Exception{
+        Path dir=Files.createTempDirectory("process-death-"+operation+"-");Path log=dir.resolve("child.log");
+        String executable=Paths.get(System.getProperty("java.home"),"bin","java").toString();
+        Process child=new ProcessBuilder(executable,"-XX:-UsePerfData","-cp",System.getProperty("java.class.path"),SymbolicProcessDeathRunner.class.getName(),"child",dir.toString(),operation,point).redirectErrorStream(true).redirectOutput(log.toFile()).start();
+        if(!child.waitFor(90,TimeUnit.SECONDS)){child.destroyForcibly();child.waitFor();throw new AssertionError("child cut timed out: "+log);}
+        String trace=new String(Files.readAllBytes(log),java.nio.charset.StandardCharsets.UTF_8);
+        need(child.exitValue()==83&&trace.contains("KANGER_PROCESS_CUT point="+point),"exact child halt boundary "+operation+" "+point+": "+log);
+        Properties plan=new Properties();try(InputStream in=Files.newInputStream(dir.resolve("plan.properties"))){plan.load(in);}
+        long before=Long.parseLong(plan.getProperty("revision")),expected=before+(point.equals("BEFORE_MARKER")?0:1);Path location=dir.resolve("Source");
+        need(RevisionStore.read(ContextStore.revisionPath(location))==expected,"actual marker names the exact durable side of cut");
+        if(point.equals("BEFORE_MARKER")){need(Files.isDirectory(ContextStore.generationPath(location,before+1)),"unpublished generation really installed before death");boolean hidden=false;try(ContextSnapshot future=ContextSnapshot.open(location,before+1)){}catch(org.kanger.exception.StorageLifecycleException e){hidden=true;}need(hidden,"orphan cannot be read as published pinned revision");}
+        DB db=new DB();Mind m=open(db,dir,"Source");
+        try{
+            need(db.getContextId().toString().equals(plan.getProperty("identity"))&&db.getRevision()==expected,"cold open reacquires OS lock and exact published identity/cursor");
+            boolean saved=!operation.equals("save")||!point.equals("BEFORE_MARKER");need(db.dmzTopology().size()==(saved?1:0),"only published topology survives process death");
+            Set<String> wanted=new HashSet<>(Collections.singletonList("!marker(9);"));if(operation.equals("native")&&!point.equals("BEFORE_MARKER"))wanted.add("!safe(8);");need(originals(m,db).equals(wanted),"exact durable originals; unpersisted accepted memory is not fabricated");
+            if(saved){ContextConnection c=db.dmzTopology().get(0);need(c.getInitialization().equals(Collections.singletonList("!$u rel(1,u,1);")),"full private recipe replays after restart");need(c.getCertificate().matches(new RevisionRef(db.getContextId(),expected),c.getTarget(),c.getCertificate().getSemanticVersion()),"cold certificate binds actual source");db.inspectSymbolicCacheFamily(m).requireCurrentModelled(db,m);need(true,"fresh whole-family evidence qualifies after restart");}
+            if(operation.equals("reindex")){ContextStore s=store(db);ContextBase b=(ContextBase)db.getBase("rules");String layout=s.resolveType(((ContextStep)b.get(Long.parseLong(plan.getProperty("original")))).getPersistentRecord().getTypeCode()).getDescriptor().getName();need(layout.equals(point.equals("BEFORE_MARKER")?"Rule-v1":"Rule-v2"),"cold physical layout matches selected marker");}
+            ((User)m.getUser()).checkpoint(m);need(db.getRevision()==expected,"plain checkpoint never publishes abandoned memory or orphan generation");
+            if(point.equals("BEFORE_MARKER")){
+                if(operation.equals("native"))m.writeCheckedSymbolicContextAssertion("!safe(8);",false);
+                else if(operation.equals("save")){connect(db,m);m.saveCheckedSymbolicContextConnections();}
+                else db.reindex(null,m);
+            }
+            need(db.getRevision()==before+1,"fresh explicit retry or adopted publication has exactly one next revision");need(m.saveCheckedSymbolicContextConnections()==before+1,"recovered no-op cannot duplicate publication");
+            need(db.versionHistory("Rules").getCurrentRevision()==Long.parseLong(plan.getProperty("target")),"private recovery leaves physical target unchanged");
+        }finally{close(m);}
+        db=new DB();m=open(db,dir,"Source");try{need(db.getRevision()==before+1,"second cold open retains recovered revision");need(originals(m,db).equals(operation.equals("native")?new HashSet<>(Arrays.asList("!marker(9);","!safe(8);")):Collections.singleton("!marker(9);")),"second cold open has exact original set");db.inspectSymbolicCacheFamily(m).requireCurrentModelled(db,m);need(true,"recovered family remains usable after another reopen");}finally{close(m);}
+        need(digest(ContextStore.generationPath(location,before)).equals(plan.getProperty("sourceDigest")),"previous published source generation is byte-identical after death and retry");
+        need(digest(ContextStore.generationPath(dir.resolve("Rules"),Long.parseLong(plan.getProperty("target")))).equals(plan.getProperty("targetDigest")),"physical target generation is byte-identical after death and replay");
+        System.out.println("PROCESS_DEATH_CASE operation="+operation+" point="+point+" passed");
+    }
+    public static void main(String[] args)throws Exception{
+        if(args.length>0&&args[0].equals("child")){child(Paths.get(args[1]),args[2],args[3]);return;}
+        System.setProperty("user.home",Files.createTempDirectory("process-death-home-").toString());
+        for(String operation:new String[]{"native","save","reindex"})for(String point:new String[]{"BEFORE_MARKER","AFTER_MARKER","ACTIVATION"})run(operation,point);
+        System.out.println("SYMBOLIC_PROCESS_DEATH_PASS checks="+checks);
+    }
+}
