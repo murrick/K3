@@ -232,7 +232,7 @@ public class Rule implements IUnit<IRule>, IRule {
             for (Domain d : t) {
                 for (IRule r : mind.getRules()) {
                     if (r != null) {
-                        if (!r.isDeleted(mind) && ((Rule) r).getPredicates().contains(d.getPredicateId())) {
+                        if (!r.isDeleted(mind) && ((Rule) r).containsPredicate(d.getPredicateId())) {
                             list.add((Rule) r);
                         }
                     } else {

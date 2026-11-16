@@ -41,6 +41,58 @@ public class MixedLayoutContextTest {
     Path root;
 
     @Test
+    void nativeLookupDoesNotDependOnLegacyIndexHydration() throws Exception {
+        for (boolean firstLegacy : new boolean[]{false, true}) {
+            User user = new User();
+            Mind mind = new Mind(user);
+            user.setCurrentMind(mind);
+            assertTrue(mind.compile("!alpha(1); !alpha(2); !beta(3);", null, false));
+            java.lang.reflect.Field field = org.kanger.factory.RuleFactory.class.getDeclaredField("cache");
+            field.setAccessible(true);
+            org.kanger.storage.Escalera cache = (org.kanger.storage.Escalera) field.get(mind.getRules());
+            ContextStore store = ContextStore.create(root.resolve("native-" + firstLegacy));
+            try {
+                ContextBase base = (ContextBase) store.getBase("rules");
+                java.util.Set<Long> expected = new HashSet<>();
+                java.util.List<java.util.List<Long>> probeTree = null;
+                for (org.kanger.interfaces.internal.IStep step = cache.getRoot(); step != null; step = step.getNext()) {
+                    Rule rule = (Rule) step.getData(mind);
+                    String origin = rule.getOrigin();
+                    if (origin.startsWith("!alpha(")) expected.add(rule.getId());
+                    if (origin.equals("!alpha(1);")) probeTree = rule.getPersistentTreeIds();
+                    boolean legacy = origin.equals("!alpha(1);") ? firstLegacy : !firstLegacy;
+                    TypeDefinition type = store.registerType(RuleV1Adapter.TYPE_NAME,
+                            legacy ? RuleV1Adapter.INSTANCE.getDescriptor() : RuleAdapter.INSTANCE.getDescriptor());
+                    StructuralValue value = legacy ? RuleV1Adapter.INSTANCE.project(rule, mind) : RuleAdapter.INSTANCE.project(rule, mind);
+                    base.add(new ContextStep(base, new PersistentRecord(rule.getId(), step.getHash(), step.getNextId(),
+                            type.getTypeCode(), StructuralValueCodec.encode(type.getDescriptor(), value))));
+                }
+                // Real lazy ContextStep nodes, rather than eager memory Step.setMind hydration.
+                java.lang.reflect.Field storage = User.class.getDeclaredField("storage");
+                storage.setAccessible(true);
+                ((java.util.Map<String, IBase>) storage.get(user)).put("rules", base);
+                cache.setRoot(base.getRoot());
+                java.lang.reflect.Field views = org.kanger.factory.RuleFactory.class.getDeclaredField("inferenceViews");
+                views.setAccessible(true);
+                ((java.util.Map<?, ?>) views.get(mind.getRules())).clear();
+                assertEquals(2, expected.size());
+                Rule probe = new Rule(mind);
+                probe.setPersistentTreeIds(probeTree);
+                java.util.Set<Long> actual = new HashSet<>();
+                for (Rule rule : probe.getNatives()) actual.add(rule.getId());
+                assertEquals(expected, actual,
+                        "native lookup must include both layouts before legacy candidates are hydrated");
+                for (org.kanger.interfaces.IRule rule : mind.getRules()) ((Rule) rule).getTree();
+                actual.clear();
+                for (Rule rule : probe.getNatives()) actual.add(rule.getId());
+                assertEquals(expected, actual, "lookup must be stable after hydration");
+            } finally {
+                store.close();
+            }
+        }
+    }
+
+    @Test
     void ruleV1AndRuleV2CoexistAndDecodeByRecordTypeCode() throws Exception {
         Fixture fixture = fixture();
         Path location = root.resolve("mixed");
