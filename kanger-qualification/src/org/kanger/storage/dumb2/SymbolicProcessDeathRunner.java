@@ -13,6 +13,8 @@ import org.kanger.storage.dumb2.descriptor.*;
 /** Real child JVM termination: no Java finally/close/shutdown recovery before cold reopening. */
 public final class SymbolicProcessDeathRunner {
     private static int checks;
+    private static boolean beforeMarker(String point){return !point.equals("AFTER_MARKER")&&!point.equals("ACTIVATION");}
+    private static boolean preparation(String point){return !point.equals("BEFORE_MARKER")&&beforeMarker(point);}
     private static void need(boolean yes,String why){checks++;if(!yes)throw new AssertionError(why);}
     static void halt(String point){System.err.println("KANGER_PROCESS_CUT point="+point);System.err.flush();Runtime.getRuntime().halt(83);}
     private static Mind open(DB db,Path dir,String name)throws Exception{User u=new User();u.setDatabaseDir(dir.toString()+File.separator);db.init(u);Mind root=new Mind(u);u.setCurrentMind(root);Mind m=(Mind)root.useStorage(name);u.setCurrentMind(m);return m;}
@@ -40,7 +42,8 @@ public final class SymbolicProcessDeathRunner {
         Properties plan=new Properties();plan.setProperty("revision",Long.toString(db.getRevision()));plan.setProperty("target",Long.toString(db.versionHistory("Rules").getCurrentRevision()));plan.setProperty("identity",db.getContextId().toString());plan.setProperty("original",Long.toString(original));
         plan.setProperty("sourceDigest",digest(ContextStore.generationPath(dir.resolve("Source"),db.getRevision())));plan.setProperty("targetDigest",digest(ContextStore.generationPath(dir.resolve("Rules"),Long.parseLong(plan.getProperty("target")))));
         try(OutputStream out=Files.newOutputStream(dir.resolve("plan.properties"))){plan.store(out,"pre-cut observations");}
-        try(SymbolicPublicationFaults publication=point.equals("AFTER_MARKER")?null:new SymbolicPublicationFaults(db,dir.resolve("Source"),point.equals("BEFORE_MARKER")?SymbolicPublicationFaults.Point.HALT_BEFORE_MARKER:SymbolicPublicationFaults.Point.HALT_ACTIVATION);
+        try(SymbolicPreparationFaults prepared=preparation(point)?new SymbolicPreparationFaults(dir.resolve("Source"),dir.resolve("artifact.properties"),point):null;
+            SymbolicPublicationFaults publication=point.equals("AFTER_MARKER")||preparation(point)?null:new SymbolicPublicationFaults(db,dir.resolve("Source"),point.equals("BEFORE_MARKER")?SymbolicPublicationFaults.Point.HALT_BEFORE_MARKER:SymbolicPublicationFaults.Point.HALT_ACTIVATION);
             SymbolicMarkerFaults marker=point.equals("AFTER_MARKER")?new SymbolicMarkerFaults(ContextStore.revisionPath(dir.resolve("Source")),SymbolicMarkerFaults.Point.HALT_AFTER_MOVE):null){
             if(operation.equals("native"))m.writeCheckedSymbolicContextAssertion("!safe(8);",false);
             else if(operation.equals("save"))m.saveCheckedSymbolicContextConnections();
@@ -56,18 +59,32 @@ public final class SymbolicProcessDeathRunner {
         String trace=new String(Files.readAllBytes(log),java.nio.charset.StandardCharsets.UTF_8);
         need(child.exitValue()==83&&trace.contains("KANGER_PROCESS_CUT point="+point),"exact child halt boundary "+operation+" "+point+": "+log);
         Properties plan=new Properties();try(InputStream in=Files.newInputStream(dir.resolve("plan.properties"))){plan.load(in);}
-        long before=Long.parseLong(plan.getProperty("revision")),expected=before+(point.equals("BEFORE_MARKER")?0:1);Path location=dir.resolve("Source");
+        long before=Long.parseLong(plan.getProperty("revision")),expected=before+(beforeMarker(point)?0:1);Path location=dir.resolve("Source");
         need(RevisionStore.read(ContextStore.revisionPath(location))==expected,"actual marker names the exact durable side of cut");
+        if(preparation(point)){
+            Properties artifact=new Properties();try(InputStream in=Files.newInputStream(dir.resolve("artifact.properties"))){artifact.load(in);}Path path=Paths.get(artifact.getProperty("artifact"));long full=Long.parseLong(artifact.getProperty("fullLength"));
+            need(path.startsWith(dir)&&Files.exists(path),"exact preparation artifact remains inside this fixture");
+            if(point.equals("STAGING_COPY"))need(Files.isDirectory(path),"copied hidden staging directory really exists");
+            else if(point.endsWith("PARTIAL"))need(Files.size(path)>0&&Files.size(path)<full,"actual file is incomplete, not a synthetic post-write exception");
+            else {
+                need(Files.size(path)==full&&full>0,"complete forced temporary file exists before atomic replacement");
+                byte[] bytes=Files.readAllBytes(path);java.util.zip.CRC32 crc=new java.util.zip.CRC32();crc.update(bytes,0,bytes.length-4);
+                need((int)crc.getValue()==java.nio.ByteBuffer.wrap(bytes,bytes.length-4,4).getInt(),"complete temporary file has a valid on-disk CRC");
+                if(point.equals("MARKER_TEMP"))need(RevisionStore.read(path)==before+1,"valid future temporary marker cannot authorize the unpublished revision");
+            }
+            need(Files.isDirectory(ContextStore.generationPath(location,before+1))==point.startsWith("MARKER_"),"generation installation agrees with exact preparation boundary");
+        }
+        if(beforeMarker(point)){boolean hidden=false;try(ContextSnapshot future=ContextSnapshot.open(location,before+1)){}catch(org.kanger.exception.StorageLifecycleException e){hidden=true;}need(hidden,"unpublished next revision remains hidden at every pre-marker cut");}
         if(point.equals("BEFORE_MARKER")){need(Files.isDirectory(ContextStore.generationPath(location,before+1)),"unpublished generation really installed before death");boolean hidden=false;try(ContextSnapshot future=ContextSnapshot.open(location,before+1)){}catch(org.kanger.exception.StorageLifecycleException e){hidden=true;}need(hidden,"orphan cannot be read as published pinned revision");}
         DB db=new DB();Mind m=open(db,dir,"Source");
         try{
             need(db.getContextId().toString().equals(plan.getProperty("identity"))&&db.getRevision()==expected,"cold open reacquires OS lock and exact published identity/cursor");
-            boolean saved=!operation.equals("save")||!point.equals("BEFORE_MARKER");need(db.dmzTopology().size()==(saved?1:0),"only published topology survives process death");
-            Set<String> wanted=new HashSet<>(Collections.singletonList("!marker(9);"));if(operation.equals("native")&&!point.equals("BEFORE_MARKER"))wanted.add("!safe(8);");need(originals(m,db).equals(wanted),"exact durable originals; unpersisted accepted memory is not fabricated");
+            boolean saved=!operation.equals("save")||!beforeMarker(point);need(db.dmzTopology().size()==(saved?1:0),"only published topology survives process death");
+            Set<String> wanted=new HashSet<>(Collections.singletonList("!marker(9);"));if(operation.equals("native")&&!beforeMarker(point))wanted.add("!safe(8);");need(originals(m,db).equals(wanted),"exact durable originals; unpersisted accepted memory is not fabricated");
             if(saved){ContextConnection c=db.dmzTopology().get(0);need(c.getInitialization().equals(Collections.singletonList("!$u rel(1,u,1);")),"full private recipe replays after restart");need(c.getCertificate().matches(new RevisionRef(db.getContextId(),expected),c.getTarget(),c.getCertificate().getSemanticVersion()),"cold certificate binds actual source");db.inspectSymbolicCacheFamily(m).requireCurrentModelled(db,m);need(true,"fresh whole-family evidence qualifies after restart");}
-            if(operation.equals("reindex")){ContextStore s=store(db);ContextBase b=(ContextBase)db.getBase("rules");String layout=s.resolveType(((ContextStep)b.get(Long.parseLong(plan.getProperty("original")))).getPersistentRecord().getTypeCode()).getDescriptor().getName();need(layout.equals(point.equals("BEFORE_MARKER")?"Rule-v1":"Rule-v2"),"cold physical layout matches selected marker");}
+            if(operation.equals("reindex")){ContextStore s=store(db);ContextBase b=(ContextBase)db.getBase("rules");String layout=s.resolveType(((ContextStep)b.get(Long.parseLong(plan.getProperty("original")))).getPersistentRecord().getTypeCode()).getDescriptor().getName();need(layout.equals(beforeMarker(point)?"Rule-v1":"Rule-v2"),"cold physical layout matches selected marker");}
             ((User)m.getUser()).checkpoint(m);need(db.getRevision()==expected,"plain checkpoint never publishes abandoned memory or orphan generation");
-            if(point.equals("BEFORE_MARKER")){
+            if(beforeMarker(point)){
                 if(operation.equals("native"))m.writeCheckedSymbolicContextAssertion("!safe(8);",false);
                 else if(operation.equals("save")){connect(db,m);m.saveCheckedSymbolicContextConnections();}
                 else db.reindex(null,m);
@@ -79,6 +96,14 @@ public final class SymbolicProcessDeathRunner {
         need(digest(ContextStore.generationPath(location,before)).equals(plan.getProperty("sourceDigest")),"previous published source generation is byte-identical after death and retry");
         need(digest(ContextStore.generationPath(dir.resolve("Rules"),Long.parseLong(plan.getProperty("target")))).equals(plan.getProperty("targetDigest")),"physical target generation is byte-identical after death and replay");
         System.out.println("PROCESS_DEATH_CASE operation="+operation+" point="+point+" passed");
+    }
+    static void preparationMatrix()throws Exception{
+        System.setProperty("user.home",Files.createTempDirectory("preparation-death-home-").toString());
+        for(String operation:new String[]{"native","save","reindex"})for(String point:new String[]{"STAGING_COPY","SCHEMA_PARTIAL","SIDECAR_PARTIAL","SIDECAR_TEMP","MARKER_PARTIAL","MARKER_TEMP"}){
+            if(operation.equals("save")&&point.equals("SCHEMA_PARTIAL"))continue;
+            run(operation,point);
+        }
+        System.out.println("SYMBOLIC_PREPARATION_DEATH_PASS checks="+checks);
     }
     public static void main(String[] args)throws Exception{
         if(args.length>0&&args[0].equals("child")){child(Paths.get(args[1]),args[2],args[3]);return;}

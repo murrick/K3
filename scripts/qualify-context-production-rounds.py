@@ -52,7 +52,10 @@ def main():
                         help='Prepare a disposable Console with the isolated topology candidate')
     parser.add_argument('--dependent-authoring-candidate', action='store_true',
                         help='Compile isolated dependent-pair authoring refutation hook')
+    parser.add_argument('--preparation-only', action='store_true', help='Run only the subprocess preparation matrix within the native recovery overlay')
     args = parser.parse_args()
+    if args.preparation_only and args.mode != 'dependent-symbolic-recovery-contract':
+        parser.error('--preparation-only requires the native recovery profile')
     if args.mode == 'dependent-symbolic-recovery-contract' and (args.ordinary_integration_candidate or args.ground_attachment_candidate or args.dependent_authoring_candidate):
         parser.error('publication recovery uses the native profile with its test-only fault overlay')
     if args.dependent_authoring_candidate and args.mode not in ('native-dependent-authoring-contract','combined-integration-contract','dependent-cache-topology-contract','native-dependent-chain-contract'):
@@ -104,6 +107,7 @@ def main():
         names.insert(0, ('org.kanger.storage.dumb2.SymbolicUnconfirmedNativeRunner', 'SYMBOLIC_UNCONFIRMED_NATIVE_PASS'))
         names.insert(0, ('org.kanger.storage.dumb2.SymbolicReindexRecoveryRunner', 'SYMBOLIC_REINDEX_RECOVERY_PASS'))
         names.insert(0, ('org.kanger.storage.dumb2.SymbolicProcessDeathRunner', 'SYMBOLIC_PROCESS_DEATH_PASS'))
+        names.insert(0, ('org.kanger.storage.dumb2.SymbolicPreparationDeathRunner', 'SYMBOLIC_PREPARATION_DEATH_PASS'))
     if args.mode == 'dependent-symbolic-family-contract':
         names = [('org.kanger.ContextDependentSymbolicFamilyInspectionRunner', 'CONTEXT_DEPENDENT_SYMBOLIC_FAMILY_INSPECTION_PASS'),
                  ('org.kanger.storage.dumb2.SymbolicCacheFamilyInspectionRunner', 'SYMBOLIC_CACHE_FAMILY_INSPECTION_PASS'),
@@ -1059,6 +1063,8 @@ def main():
     if args.mode == 'reference': names += [('org.kanger.storage.dumb2.ContextDependentConstructedIterationOwnershipRunner', 'CONTEXT_DEPENDENT_CONSTRUCTED_ITERATION_OWNERSHIP_PASS')]
     if args.prepare_arithmetic_console:
         names = []
+    if args.preparation_only:
+        names = [('org.kanger.storage.dumb2.SymbolicPreparationDeathRunner', 'SYMBOLIC_PREPARATION_DEATH_PASS')]
     drivers = [root / 'kanger-qualification/src' / (name.replace('.', '/') + '.java') for name, _ in names]
     if args.ordinary_integration_candidate:
         original = root / 'kanger-data-dumb2/src/org/kanger/storage/dumb2/DB.java'
@@ -1463,6 +1469,14 @@ def main():
                     else '        SymbolicPublicationFaults.activation(this);')
             changed = source.replace(marker, marker + '\n' + call) if filename == 'ContextStore.java' else source.replace(marker, '\n' + call + marker)
             if filename == 'ContextStore.java':
+                copied = '                Files.createDirectories(staging);\n            }\n\n            for ('
+                if changed.count(copied) != 2:
+                    raise RuntimeError('Preparation copy boundary changed')
+                changed = changed.replace(copied, '                Files.createDirectories(staging);\n            }\n            SymbolicPreparationFaults.staged(location, staging);\n\n            for (')
+                topology_copy = '                copyDirectory(previous, staging);\n            }\n\n            RevisionManifestStore.seal('
+                if changed.count(topology_copy) != 1:
+                    raise RuntimeError('Topology preparation copy boundary changed')
+                changed = changed.replace(topology_copy, '                copyDirectory(previous, staging);\n            }\n            SymbolicPreparationFaults.staged(location, staging);\n\n            RevisionManifestStore.seal(')
                 recovery_read = 'long observed = RevisionStore.read(revisionPath(location));'
                 if changed.count(recovery_read) != 1:
                     raise RuntimeError('Publication recovery read boundary changed')
@@ -1484,6 +1498,11 @@ def main():
         if source.count(move) != 1 or source.count(cleanup) != 1:
             raise RuntimeError('Marker fault overlay does not match exact move/cleanup boundaries')
         source = source.replace(move, 'SymbolicMarkerFaults.move(temporary, path,').replace(cleanup, 'SymbolicMarkerFaults.cleanup(temporary)')
+        write = 'Files.write(temporary, encode(next),'
+        if source.count(write) != 1:
+            raise RuntimeError('Marker preparation write boundary changed')
+        source = source.replace(write, 'SymbolicPreparationFaults.markerWrite(temporary, encode(next),')
+        source = source.replace('SymbolicMarkerFaults.move(temporary, path,', 'SymbolicPreparationFaults.markerMove(temporary, path,')
         verification = 'try { observed = read(path); }'
         if source.count(verification) != 1:
             raise RuntimeError('Marker confirmation read boundary changed')
@@ -1492,6 +1511,21 @@ def main():
         candidate.parent.mkdir(parents=True, exist_ok=True)
         candidate.write_text(source, encoding='utf-8')
         production = [candidate if p == original else p for p in production]
+    if args.mode == 'dependent-symbolic-recovery-contract':
+        for filename in ('ContextBase.java', 'ConnectionStore.java'):
+            original = root / 'kanger-data-dumb2/src/org/kanger/storage/dumb2' / filename
+            source = original.read_text(encoding='utf-8')
+            replacements = [('output.write(body);', 'SymbolicPreparationFaults.schemaBody(path, output, file, body);')] if filename == 'ContextBase.java' else [
+                ('channel.write(buffer);', 'SymbolicPreparationFaults.connectionWrite(channel, buffer, temp, path);'),
+                ('Files.move(\n                        temp,', 'SymbolicPreparationFaults.connectionMove(\n                        temp,')]
+            for marker, replacement in replacements:
+                if source.count(marker) != 1:
+                    raise RuntimeError('Preparation write boundary changed: ' + filename)
+                source = source.replace(marker, replacement)
+            candidate = run / 'publication-faults/org/kanger/storage/dumb2' / filename
+            candidate.parent.mkdir(parents=True, exist_ok=True)
+            candidate.write_text(source, encoding='utf-8')
+            production = [candidate if p == original else p for p in production]
     listing = run / 'sources.list'
     listing.write_text(''.join('"' + str(p).replace('\\', '/') + '"\n'
                                for p in production + drivers), encoding='utf-8')
@@ -1513,7 +1547,7 @@ def main():
     for name, marker in names:
         try:
             result = subprocess.run(['java', '-XX:-UsePerfData', '-cp', runtime_cp, name], cwd=root,
-                                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=900 if name == 'org.kanger.storage.dumb2.SymbolicProcessDeathRunner' else 120)
+                                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=1800 if name == 'org.kanger.storage.dumb2.SymbolicPreparationDeathRunner' else 900 if name == 'org.kanger.storage.dumb2.SymbolicProcessDeathRunner' else 120)
             code, log = result.returncode, result.stdout
         except subprocess.TimeoutExpired as failure:
             code = 124
@@ -1530,8 +1564,8 @@ def main():
     passed = all(result['passed'] for result in results)
     report = dict(ground_attachment_candidate=args.ground_attachment_candidate, ordinary_integration_candidate=args.ordinary_integration_candidate, head=head, production_sources=len(production), mode=args.mode, passed=passed, results=results,
                   dependent_authoring_candidate=args.dependent_authoring_candidate,
-                  symbolic_publication_faults=args.mode == 'dependent-symbolic-recovery-contract',
-                  scope={'dependent-symbolic-recovery-contract': 'Test-only owner/thread-bound one-shot I/O faults before the marker and during connection activation; native publication and checkpoint recovery',
+                  preparation_only=args.preparation_only, symbolic_publication_faults=args.mode == 'dependent-symbolic-recovery-contract',
+                  scope={'dependent-symbolic-recovery-contract': 'Exact-source/thread-bound preparation/publication cuts, actual subprocess death and living-session recovery',
                          'dependent-symbolic-outcome-contract': 'Typed outcomes, checked publication, retired-cache accounting and persistent-chain recovery; default writer selection unchanged',
                          'dependent-symbolic-family-contract': 'Read-only independent-cut receiving/model composition using guarded internal checked symbolic projections; no admission authority',
                          'dependent-symbolic-cache-connection-contract': 'Direct ungrouped foreign pins and full private-recipe cold qualification in the native connection profile; no family admission',
