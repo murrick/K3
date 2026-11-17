@@ -1,0 +1,31 @@
+{
+  "scope": "Two JVMs; one producer-name persistence projection; no physical power loss",
+  "head": "75c164872534594910ab33171eb882427d2d82a0",
+  "source_dirty": true,
+  "producer_overlay": "Only pause after successful real marker replacement, before final producer barrier",
+  "consumer_unmodified_packaged_provider": true,
+  "matching_provider_classes": 171,
+  "producer_marker_replacement_line": 812,
+  "consumer_acknowledgement_line": 2537,
+  "successful_producer_parent_barriers_before_consumer_ack": 0,
+  "rollback_admissible": true,
+  "consumer_revision": 2,
+  "pinned_revision": 2,
+  "producer_recovered_revision": 1,
+  "exact_pin_readable": false,
+  "exported_pin_namespace_gate_passed": false,
+  "full_power_loss_acceptance": false,
+  "projection": "Lose only an unforced producer CURRENT replacement; retain all other files and acknowledged consumer",
+  "artifacts_sha256": {
+    "/tmp/k3-stage607/kanger-console/target/kanger-console-3.3-SNAPSHOT.jar": "a21602405597cd7f2f71ef18d456cfcfe835442248f64782b0aee8b3f227ec4b",
+    "/tmp/k3-stage607/kanger-data-dumb2/src/org/kanger/storage/dumb2/RevisionStore.java": "1cf7b1aefc9d54759a9cfda5247c602c414ad34e9e692557528071f2b7ab0f0b",
+    "/tmp/k3-stage607/target/context-exported-pin-durability/run-offmaywz/RevisionStore.java": "f3988604d9cf892c30e217000539a51347569b8c72b19496b1d669f8f6389172",
+    "/tmp/k3-stage607/target/context-exported-pin-durability/run-offmaywz/syscalls.log": "50289c63be6af582952e409f4cd1005a7ab41b6bba60a23c7327b860fe6e8217",
+    "/tmp/k3-stage607/target/context-exported-pin-durability/run-offmaywz/fixture.log": "f011d30a73a61feb32ccf0053cbe27508a4c9b130981bb41c7ab102ee32842e9",
+    "/tmp/k3-stage607/target/context-exported-pin-durability/run-offmaywz/probe.log": "2a5433d5dfb0a3256fe9457788bdf0d8d9373f18c3d8762f5e605ae60bb3464b",
+    "/tmp/k3-stage607/scripts/qualify-context-exported-pin-durability.py": "fffe5cebe58deaba803b860826f6b0fa3ea4611f1d5bb17b5e8107ec16b2258a",
+    "/tmp/k3-stage607/kanger-qualification/src/org/kanger/storage/dumb2/ExportedPinPause.java": "013de22ba8be4b89aabb4e66d351793a9af66c84edcd3285a9d180a9e9ff5919",
+    "/tmp/k3-stage607/kanger-qualification/src/org/kanger/storage/dumb2/ExportedPinDurabilityRunner.java": "807893759cd4596ea0febb7a2cc860b6b4366125c2c8dfc6d34ee79e05e6c4b3",
+    "/tmp/k3-stage607/kanger-qualification/src/org/kanger/storage/dumb2/ExportedPinCrashProbe.java": "3c5d562eff5d5eedda0ad7da189dcfb65e067cef382f4dbf50c303b2ac12cf53"
+  }
+}

@@ -449,3 +449,20 @@ frames use the same primitives. The namespace model now passes, with actual
 own-frame barriers checked in the trace. The earlier RED remains historical.
 This does not yet qualify modular exported pins or a filesystem/device profile;
 full power-loss acceptance is still open. See the protocol linked above.
+
+
+### Stage 651 — direct pins and initial publication errors
+
+A successful publication now stabilizes the exact direct target revisions it
+persists. This may refuse when target persistence barriers cannot be established;
+no weaker successful fallback is used. Target knowledge and revisions do not
+change, and target advisory dependencies are not recursively attached.
+
+After an initial-create/fork marker becomes visible, a later confirmation error
+can leave that Context present. It is retained because another module may already
+have pinned it. Reopen the existing Context to retry own-frame/marker confirmation;
+failed confirmation must not be treated as proof that creation rolled back.
+This supersedes stage 650's failed-fresh-marker cleanup description.
+[Current protocol and proofs](architecture/3.8.0-context-durable-pins.md) distinguish
+the live-filesystem initial-retraction test from the explicit namespace model.
+Supported FS/device profile and full power-loss acceptance remain open.

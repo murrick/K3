@@ -19,10 +19,11 @@ public final class SymbolicMarkerVerificationRunner {
         }
         Path fresh=directory.resolve("fresh.revision");
         try(SymbolicMarkerFaults fault=new SymbolicMarkerFaults(fresh,Point.PRE_MARKER_BARRIER_FAILURE)){
-            boolean refused=false;try{RevisionStore.create(fresh);}catch(IOException expected){refused=true;}
-            need(refused&&!Files.exists(fresh),"failed initial durability removes only its own fresh marker");
+            boolean refused=false;try{RevisionStore.create(fresh);}catch(UnconfirmedRevisionException expected){refused=expected.previous==-1&&expected.next==0;}
+            need(refused&&Files.exists(fresh),"visible initial revision cannot be retracted after confirmation failure");
         }
-        need(RevisionStore.create(fresh)==0,"fresh marker can be retried after barrier refusal");
+        RevisionStore.confirmDurable(fresh);
+        need(RevisionStore.read(fresh)==0,"initial confirmation can be retried without replacing the visible marker");
         Path location=directory.resolve("Frame");
         try(ContextStore store=ContextStore.create(location)){
             store.getBase("terms"); // A published generation must contain at least one schema image.

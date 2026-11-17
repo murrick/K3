@@ -1,0 +1,21 @@
+{
+  "scope": "Final runtime: full 32-driver native recovery gate plus packaged-provider namespace/live-initial tests",
+  "head": "75c164872534594910ab33171eb882427d2d82a0",
+  "source_dirty": true,
+  "native_recovery_passed": true,
+  "native_drivers": 32,
+  "native_checks": 2485,
+  "console_package_selected_unit_tests": 110,
+  "focused_revision_suite_tests": 10,
+  "unique_unit_tests_across_runs": 111,
+  "full_power_loss_acceptance": false,
+  "artifacts_sha256": {
+    "target/context-production-rounds/run-mtv53sig/report.json": "de88667ef3859e57a619b64e686500753982ed97ab977252cd331201449e3f2c",
+    "/tmp/k3-651-package-final.log": "19b0054f052efba537310152efc3021d54def2464bdaf0bc1a6815275f0adaba",
+    "/tmp/k3-651-revision-final.log": "b58f17aa0bfb5be46d7ad2ca686649f549ed655323927b5cbe38976eea63768b",
+    "kanger-data-dumb2/src/org/kanger/storage/dumb2/ContextStore.java": "e8182bf10544241b26f0019300e4bc3546c302821d81e225f100005e67aefbc4",
+    "kanger-data-dumb2/src/org/kanger/storage/dumb2/DurablePins.java": "91a68ba992193fd649291a8ae3ac410de21a9e77e4b512676f3ca9e3bc8c9c01",
+    "kanger-data-dumb2/src/org/kanger/storage/dumb2/RevisionStore.java": "1dc25e87f3eb4cddee3d48c36b1d9228f174bf280dc59b60c1861731a066e021",
+    "kanger-data-dumb2/src/org/kanger/storage/dumb2/UnconfirmedRevisionException.java": "9c52d52ddcd5eb1b6b9c293c35ef08396ee03135c6dc33c886a18a5b79672f38"
+  }
+}

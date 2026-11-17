@@ -68,19 +68,52 @@ final class RevisionStore {
         if (parent != null) {
             Files.createDirectories(parent);
         }
-        Files.write(path, encode(revision),
-                StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
+        Path temporary = temporarySibling(path);
+        boolean temporaryCreated = false, linkAttempted = false, visible = false;
+        Throwable primaryFailure = null;
         try {
-            confirmDurable(path);
-        } catch (IOException | RuntimeException | Error failure) {
-            // CREATE_NEW succeeded in this call: no existing marker is removed.
-            try { Files.delete(path); }
-            catch (IOException | RuntimeException | Error cleanupFailure) {
-                if (cleanupFailure != failure) failure.addSuppressed(cleanupFailure);
+            // Publish only complete, forced bytes. A hard link provides atomic no-replace
+            // installation; ATOMIC_MOVE alone does not specify no-replace semantics.
+            try (FileChannel channel = FileChannel.open(temporary,
+                    StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)) {
+                temporaryCreated = true;
+                ByteBuffer bytes = ByteBuffer.wrap(encode(revision));
+                while (bytes.hasRemaining()) channel.write(bytes);
+                channel.force(true);
             }
+            linkAttempted = true;
+            Files.createLink(path, temporary);
+            visible = true;
+            Files.delete(temporary);
+            temporaryCreated = false;
+            confirmDurable(path);
+            return revision;
+        } catch (IOException | RuntimeException failure) {
+            IOException result = failure instanceof IOException ? (IOException) failure
+                    : new IOException("Initial marker installation is unavailable at " + path, failure);
+            if (visible || (linkAttempted && !(failure instanceof java.nio.file.FileAlreadyExistsException)
+                    && !Files.notExists(path, java.nio.file.LinkOption.NOFOLLOW_LINKS)))
+                result = new UnconfirmedRevisionException(-1L, revision, result);
+            primaryFailure = result;
+            // A consumer may have already stabilized and pinned this visible revision.
+            // Never retract the final name, even though our own acknowledgement failed.
+            throw result;
+        } catch (Error failure) {
+            primaryFailure = failure;
             throw failure;
+        } finally {
+            if (temporaryCreated) {
+                try { discardInitialTemporary(temporary); }
+                catch (IOException | RuntimeException | Error cleanupFailure) {
+                    if (primaryFailure == null) throw cleanupFailure;
+                    if (cleanupFailure != primaryFailure) primaryFailure.addSuppressed(cleanupFailure);
+                }
+            }
         }
-        return revision;
+    }
+
+    private static void discardInitialTemporary(Path path) throws IOException {
+        Files.deleteIfExists(path);
     }
 
     /**

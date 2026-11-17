@@ -90,8 +90,9 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
     /**
      * Creates a new empty Context and acquires its mutable lifecycle lock.
      *
-     * <p>If revision creation fails after a fresh identity has been created,
-     * that fresh identity is removed again. Existing metadata is never deleted
+     * <p>If revision creation fails before any marker can be observed,
+     * that fresh identity is removed again. A visible initial revision is retained
+     * after an unconfirmed result. Existing metadata is never deleted
      * or repaired implicitly.</p>
      */
     static ContextStore create(Path location) throws IOException, StorageLifecycleException {
@@ -99,16 +100,18 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
         Path contextPath = contextPath(normalized);
         Path revisionPath = revisionPath(normalized);
 
+        if (!Files.notExists(revisionPath, java.nio.file.LinkOption.NOFOLLOW_LINKS))
+            throw new java.nio.file.FileAlreadyExistsException(revisionPath.toString());
         ContextManifestStore.Manifest manifest = ContextManifestStore.create(contextPath);
         UUID contextId = manifest.getContextId();
         long revision;
         try {
             revision = RevisionStore.create(revisionPath);
         } catch (IOException | RuntimeException | Error failure) {
-            try {
-                Files.deleteIfExists(contextPath);
-            } catch (IOException cleanupFailure) {
-                failure.addSuppressed(cleanupFailure);
+            // Once an initial marker is visible, another module may already pin it.
+            if (Files.notExists(revisionPath, java.nio.file.LinkOption.NOFOLLOW_LINKS)) {
+                try { Files.deleteIfExists(contextPath); }
+                catch (IOException cleanupFailure) { failure.addSuppressed(cleanupFailure); }
             }
             throw failure;
         }
@@ -174,6 +177,11 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
             if (revision > RevisionStore.INITIAL_REVISION) {
                 store.validatePublishedGeneration();
             }
+            ConnectionStore.read(normalized,new RevisionRef(contextId,revision));
+            // Reopening also resolves an earlier unconfirmed initial creation/fork.
+            // The selected own frame must be stable before returning a mutable owner.
+            DurableFiles.forceContextFrame(normalized,revision);
+            RevisionStore.confirmDurable(revisionPath);
             return store;
         } catch (NoSuchFileException failure) {
             StorageLifecycleException incomplete = incomplete(normalized);
@@ -330,12 +338,14 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
             }
 
             DurableFiles.forceContextFrame(normalized,forkRevision);
+            DurablePins.stabilize(ConnectionStore.read(normalized,
+                    new RevisionRef(targetManifest.getContextId(),forkRevision)));
             RevisionStore.create(
                     targetRevision,
                     forkRevision);
             return ContextStore.open(normalized);
         } catch (Exception | Error failure) {
-            if (manifestCreated) {
+            if (manifestCreated && Files.notExists(targetRevision, java.nio.file.LinkOption.NOFOLLOW_LINKS)) {
                 try {
                     deleteRecursively(targetState);
                 } catch (IOException cleanupFailure) {
@@ -434,6 +444,11 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
     }
     private long advanceQualifiedMarker(long next,ConnectionVector qualified,boolean data) throws Exception {
         DurableFiles.forceContextFrame(location,next);
+        // Only the vector sealed into this revision is durable intent. Working-only
+        // connections are deliberately excluded from publication and from this barrier.
+        ConnectionVector dependencies=ConnectionStore.read(location,new RevisionRef(contextId,next));
+        RevisionManifestStore.validateDependencyVector(generationPath(location,next),dependencies);
+        DurablePins.stabilize(dependencies);
         try{return RevisionStore.advance(revisionPath(location),revision);}
         catch(UnconfirmedRevisionException failure){
             if(failure.previous!=revision||failure.next!=next)throw failure;
@@ -455,6 +470,7 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
         // Rereading CURRENT establishes visibility, not persistence. Never clear the fence
         // until the selected frame and marker namespace have both been stabilized.
         DurableFiles.forceContextFrame(location,observed);
+        DurablePins.stabilize(ConnectionStore.read(location,new RevisionRef(contextId,observed)));
         RevisionStore.confirmDurable(revisionPath(location));
         if(observed==pending.next){
             if(pending.canonical!=null)for(Map.Entry<String,TreeMap<Long,byte[]>> entry:pending.written.entrySet()){

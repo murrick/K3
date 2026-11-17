@@ -54,8 +54,11 @@ def main():
                         help='Compile isolated dependent-pair authoring refutation hook')
     parser.add_argument('--preparation-only', action='store_true', help='Run only the subprocess preparation matrix within the native recovery overlay')
     parser.add_argument('--reclamation-only', action='store_true', help='Run only the two-stage orphan reclamation subprocess matrix')
+    parser.add_argument('--pin-durability-only', action='store_true', help='Run only direct exported-pin barrier failures within the native recovery overlay')
     parser.add_argument('--sidecar-pruning-only', action='store_true', help='Run only the interrupted sidecar pruning matrix')
     args = parser.parse_args()
+    if args.pin_durability_only and (args.mode != 'dependent-symbolic-recovery-contract' or args.preparation_only or args.reclamation_only or args.sidecar_pruning_only):
+        parser.error('--pin-durability-only requires the native recovery profile without other focused flags')
     if args.sidecar_pruning_only and (args.mode != 'dependent-symbolic-recovery-contract' or args.preparation_only or args.reclamation_only):
         parser.error('--sidecar-pruning-only requires the native recovery profile without other focused flags')
     if args.reclamation_only and (args.mode != 'dependent-symbolic-recovery-contract' or args.preparation_only):
@@ -103,6 +106,7 @@ def main():
                  ('org.kanger.ContextDependentCacheAncestryInspectionRunner', 'CONTEXT_DEPENDENT_CACHE_ANCESTRY_INSPECTION_PASS'),
                  ('org.kanger.ContextDependentCacheAliasInspectionRunner', 'CONTEXT_DEPENDENT_CACHE_ALIAS_INSPECTION_PASS')]
     if args.mode == 'dependent-symbolic-recovery-contract':
+        names.insert(0, ('org.kanger.storage.dumb2.SymbolicPinDurabilityRunner', 'SYMBOLIC_PIN_DURABILITY_PASS'))
         names.insert(0, ('org.kanger.storage.dumb2.SymbolicPublicationRecoveryRunner', 'SYMBOLIC_PUBLICATION_RECOVERY_PASS'))
         names.insert(0, ('org.kanger.storage.dumb2.SymbolicPublicationReadWindowRunner', 'SYMBOLIC_PUBLICATION_READ_WINDOW_PASS'))
         names.insert(1, ('org.kanger.storage.dumb2.SymbolicUnsavedRecoveryRunner', 'SYMBOLIC_UNSAVED_RECOVERY_PASS'))
@@ -1078,6 +1082,8 @@ def main():
         names = [('org.kanger.storage.dumb2.SymbolicOrphanReclamationDeathRunner', 'SYMBOLIC_ORPHAN_RECLAMATION_DEATH_PASS')]
     if args.sidecar_pruning_only:
         names = [('org.kanger.storage.dumb2.SymbolicSidecarPruningDeathRunner', 'SYMBOLIC_SIDECAR_PRUNING_DEATH_PASS')]
+    if args.pin_durability_only:
+        names = [('org.kanger.storage.dumb2.SymbolicPinDurabilityRunner', 'SYMBOLIC_PIN_DURABILITY_PASS')]
     drivers = [root / 'kanger-qualification/src' / (name.replace('.', '/') + '.java') for name, _ in names]
     if args.ordinary_integration_candidate:
         original = root / 'kanger-data-dumb2/src/org/kanger/storage/dumb2/DB.java'
@@ -1598,7 +1604,7 @@ def main():
     passed = all(result['passed'] for result in results)
     report = dict(ground_attachment_candidate=args.ground_attachment_candidate, ordinary_integration_candidate=args.ordinary_integration_candidate, head=head, production_sources=len(production), mode=args.mode, passed=passed, results=results,
                   dependent_authoring_candidate=args.dependent_authoring_candidate,
-                  preparation_only=args.preparation_only, reclamation_only=args.reclamation_only, sidecar_pruning_only=args.sidecar_pruning_only, symbolic_publication_faults=args.mode == 'dependent-symbolic-recovery-contract',
+                  pin_durability_only=args.pin_durability_only, preparation_only=args.preparation_only, reclamation_only=args.reclamation_only, sidecar_pruning_only=args.sidecar_pruning_only, symbolic_publication_faults=args.mode == 'dependent-symbolic-recovery-contract',
                   scope={'dependent-symbolic-recovery-contract': 'Exact-source/thread-bound preparation/publication cuts, actual subprocess death and living-session recovery',
                          'dependent-symbolic-outcome-contract': 'Typed outcomes, checked publication, retired-cache accounting and persistent-chain recovery; default writer selection unchanged',
                          'dependent-symbolic-family-contract': 'Read-only independent-cut receiving/model composition using guarded internal checked symbolic projections; no admission authority',

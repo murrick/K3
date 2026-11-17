@@ -14,7 +14,7 @@ import zipfile
 ROOT = Path(__file__).resolve().parents[1]
 DRIVER = 'org.kanger.storage.dumb2.ContextPublicationDurabilityTraceRunner'
 CALLS = ('openat,close,write,pwrite64,fsync,fdatasync,rename,renameat,renameat2,'
-         'mkdir,mkdirat,unlink,unlinkat,copy_file_range,sendfile,msync,sync,syncfs')
+         'mkdir,mkdirat,link,linkat,unlink,unlinkat,copy_file_range,sendfile,msync,sync,syncfs')
 
 
 def git(*args):
@@ -127,7 +127,7 @@ def main():
                   fixture_checks=int(completed[1]) if completed else 0,
                   java_version=subprocess.run(['java', '-version'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, env=environment).stdout.strip())
     with zipfile.ZipFile(jar) as packaged:
-        names = ('ContextStore', 'ContextSnapshot', 'ContextBase', 'ContextManifestStore', 'ConnectionStore', 'RevisionStore', 'RevisionManifestStore', 'DurableFiles', 'UnconfirmedRevisionException')
+        names = ('ContextStore', 'ContextSnapshot', 'ContextBase', 'ContextManifestStore', 'ConnectionStore', 'RevisionStore', 'RevisionManifestStore', 'DurableFiles', 'DurablePins', 'UnconfirmedRevisionException')
         report['matches_built_provider_classes'] = all(
             (ROOT / 'kanger-data-dumb2/target/classes/org/kanger/storage/dumb2' / (name + '.class')).is_file()
             and packaged.read('org/kanger/storage/dumb2/' + name + '.class') ==

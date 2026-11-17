@@ -1,0 +1,37 @@
+{
+  "scope": "Two JVMs, living filesystem, no power-cut projection",
+  "head": "75c164872534594910ab33171eb882427d2d82a0",
+  "source_dirty": true,
+  "matching_provider_classes": 172,
+  "cases": [
+    {
+      "operation": "create",
+      "consumer_revision": 2,
+      "pinned_revision": 0,
+      "exact_pin_readable": true,
+      "passed": true
+    },
+    {
+      "operation": "fork",
+      "consumer_revision": 2,
+      "pinned_revision": 1,
+      "exact_pin_readable": true,
+      "passed": true
+    }
+  ],
+  "initial_export_gate_passed": true,
+  "full_power_loss_acceptance": false,
+  "producer_overlay": "Pause then return IO error before initial confirmation; consumer uses unmodified packaged provider",
+  "artifacts_sha256": {
+    "/tmp/k3-stage607/kanger-console/target/kanger-console-3.3-SNAPSHOT.jar": "31940f421f9ea2d591dcf466ee768f2bece4ab760ad5e05deaca056dedb95c9d",
+    "/tmp/k3-stage607/kanger-data-dumb2/src/org/kanger/storage/dumb2/RevisionStore.java": "1dc25e87f3eb4cddee3d48c36b1d9228f174bf280dc59b60c1861731a066e021",
+    "/tmp/k3-stage607/target/context-initial-pin-durability/run-21mxxedf/RevisionStore.java": "e9d40723b4bd475dcc29ad817ea1bebafa62b631f31402ec5ff29af0f675547b",
+    "/tmp/k3-stage607/scripts/qualify-context-initial-pin-durability.py": "41ae4cba431556925b93b364b0fb9b26ee9b6795d16e719a959d067cebb28e7a",
+    "/tmp/k3-stage607/kanger-qualification/src/org/kanger/storage/dumb2/InitialPinPause.java": "957a64c5b5aeec593a21d348527a32cc7d0551b5ca07ee6712c6f3ad7f4a03de",
+    "/tmp/k3-stage607/kanger-qualification/src/org/kanger/storage/dumb2/InitialPinDurabilityRunner.java": "db26734f3e0d8bbc4ba9c4e4bade6c652790ae1d9d90ef2485410bd3e1f9dd41",
+    "/tmp/k3-stage607/target/context-initial-pin-durability/run-21mxxedf/create.log": "b33f538d0be573e52ec3f486b2bea6e8584d2a3af6f0e086f2b1ad72b224d72a",
+    "/tmp/k3-stage607/target/context-initial-pin-durability/run-21mxxedf/create/producer.log": "f4706d140b4ec798b62613356fa7cf7e8d37bcc9f0db46369c792a4a43c3f582",
+    "/tmp/k3-stage607/target/context-initial-pin-durability/run-21mxxedf/fork.log": "89dacf08dc6d99b1acc6f39221aafb69940f29be5c29d7b97103e57464987cae",
+    "/tmp/k3-stage607/target/context-initial-pin-durability/run-21mxxedf/fork/producer.log": "f4706d140b4ec798b62613356fa7cf7e8d37bcc9f0db46369c792a4a43c3f582"
+  }
+}

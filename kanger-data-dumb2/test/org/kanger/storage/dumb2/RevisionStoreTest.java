@@ -36,6 +36,20 @@ public class RevisionStoreTest {
     }
 
     @Test
+    void unsupportedInitialInstallationCannotExposeAPartialMarker() throws Exception {
+        java.net.URI uri = java.net.URI.create("jar:" + root.resolve("unsupported.zip").toUri());
+        try (java.nio.file.FileSystem zip = java.nio.file.FileSystems.newFileSystem(uri,
+                java.util.Collections.singletonMap("create", "true"))) {
+            Path marker = zip.getPath("/initial.revision");
+            assertThrows(java.io.IOException.class, () -> RevisionStore.create(marker));
+            org.junit.jupiter.api.Assertions.assertFalse(Files.exists(marker));
+            try (java.nio.file.DirectoryStream<Path> files = Files.newDirectoryStream(zip.getPath("/"))) {
+                org.junit.jupiter.api.Assertions.assertFalse(files.iterator().hasNext(), "owned temporary must be removed");
+            }
+        }
+    }
+
+    @Test
     void advanceIsMonotonicAndReopenable() throws Exception {
         Path sidecar = root.resolve("advance.revision");
         RevisionStore.create(sidecar);
