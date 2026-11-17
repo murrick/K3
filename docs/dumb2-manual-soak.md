@@ -205,6 +205,14 @@ can take time for a long history. Later connection changes keep those bindings.
 Opening history does not rewrite metadata. An already incomplete legacy connection
 file is not automatically interpreted as empty history.
 
+The history listing is a catalog of retained generations, rather than a guarantee
+that every old revision's connection metadata remains readable. An exact pin with
+unavailable local revision/connection metadata is rejected before switching away
+from the active storage. A previously
+unqualified fork `@0` view is not made empty automatically. Once CURRENT is positive,
+the listing enumerates positive generations; a selectable initial empty view need
+not be a separate catalog entry.
+
 Qualification for this history follow-up: changed runtime classes compile;
 all 316 DUMB2 tests pass, including two added history/publication regressions.
 Real Console confirms history with storage closed and with another Context

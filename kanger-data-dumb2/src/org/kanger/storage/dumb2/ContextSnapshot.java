@@ -297,6 +297,11 @@ final class ContextSnapshot implements AutoCloseable, PersistentTypeResolver {
 
     private void validatePublishedGeneration()
             throws IOException, StorageLifecycleException {
+        // Even R0 and pre-dependency-digest generations need a selectable exact
+        // topology. Header/data presence alone must not pass historical preflight.
+        ConnectionVector dependencies = candidateDependencies != null
+                ? candidateDependencies
+                : ConnectionStore.read(location, new RevisionRef(contextId, revision));
         if (revision == RevisionStore.INITIAL_REVISION) {
             return;
         }
@@ -377,14 +382,6 @@ final class ContextSnapshot implements AutoCloseable, PersistentTypeResolver {
                             revision,
                             revision - 1L);
             if (revisionManifest.hasDependencyDigest()) {
-                ConnectionVector dependencies =
-                        candidateDependencies != null
-                                ? candidateDependencies
-                                : ConnectionStore.read(
-                                        location,
-                                        new RevisionRef(
-                                                contextId,
-                                                revision));
                 RevisionManifestStore.validateDependencyVector(
                         revisionManifest,
                         dependencies,

@@ -85,7 +85,8 @@ final class ConnectionStore {
             throw new StorageLifecycleException(
                     StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT,
                     "No DUMB2 connection vector is qualified for "
-                            + source + " at " + path(location));
+                            + location.getFileName() + "@" + source.getRevision()
+                            + " at " + path(location));
         }
         return vector;
     }
