@@ -47,8 +47,11 @@ def parse_trace(path, data):
         if 'O_DIRECTORY' in body:
             directories.update(re.findall(r'\d+<([^>]+)>', body))
     syncs, installs, markers, topology_writes = [], [], [], []
-    global_flushes = []
+    global_flushes, acknowledgements = [], []
     for ordinal, body in events:
+        ack = re.search(r'DURABILITY_TRACE_ACK_SOURCE previous=(\d+) revision=(\d+)', body) if body.startswith('write(') else None
+        if ack:
+            acknowledgements.append(dict(line=ordinal, previous=int(ack[1]), revision=int(ack[2])))
         if re.match(r'(sync|syncfs|msync)\(', body):
             global_flushes.append(dict(line=ordinal, call=body))
         sync = re.match(r'(fsync|fdatasync)\(\d+<([^>]+)>\)\s*=\s*(.*)', body)
@@ -74,6 +77,7 @@ def parse_trace(path, data):
         source_topology_base_sync_count=sum('/Source.dumb2/.topology-' in s['path'] and s['path'].endswith('.base') for s in syncs),
         initial_marker_path_sync_count=sum(s['path'] in {str(data / (n + '.revision')) for n in ('Source', 'Rules', 'Fork')} for s in syncs),
         global_flush_calls=global_flushes,
+        source_acknowledgements=acknowledgements,
         unfinished_sync_calls=[body for _, body in pending.values() if re.match(r'(fsync|fdatasync|sync|syncfs|msync)\(', body)],
     )
 

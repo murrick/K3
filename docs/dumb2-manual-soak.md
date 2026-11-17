@@ -427,3 +427,14 @@ inference causes. `rule structure <id>` displays the internal rule structure for
 debugging. These modifiers also work through `ctx rules` and `ctx ask`.
 The historical `base` command is kept for compatibility and omitted from
 canonical help; predicate inspection uses `predicates` and `predicate <id|name>`.
+
+
+## Durability decision — stage 649
+
+D07 is accepted: modular systems require acknowledged publication to survive
+power loss/reboot on a supported local filesystem, with explicit refusal where
+unavailable. This requirement is not yet an implemented/qualified guarantee.
+The [protocol](architecture/3.8.0-context-durable-publication-protocol.md) records
+the CURRENT namespace counterexample and implementation order; the model gate
+is RED and does not simulate a physical power cut. Earlier process-death PASS
+is limited to its recorded scope.

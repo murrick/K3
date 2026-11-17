@@ -1,0 +1,30 @@
+{
+  "scope": "One marker-name persistence projection; not full power-loss acceptance",
+  "runtime_head": "bc105c14bb8b95c23a2be28bf5a2762bc529b30b",
+  "source_dirty": true,
+  "jar_sha256": "cc3e0a32fae44634030a3c7bcda7b5bbf0b078902df640b9efdb6cb666e3449d",
+  "audit_report": "/tmp/k3-stage607/target/context-marker-durability/run-r6c47kz9/audit/run-69v_wutd/report.json",
+  "rename_line": 2871,
+  "acknowledgement_line": 2872,
+  "successful_parent_barriers_before_ack": 0,
+  "projection_assumptions": "Unforced directory rename may be lost; all other acknowledged-image files persist; runtime atomicity is retained",
+  "old_marker_rollback_admissible": true,
+  "unmodified_ack_image_control": true,
+  "previous": 4,
+  "acknowledged": 5,
+  "recovered": 4,
+  "acknowledged_revision_readable": false,
+  "marker_namespace_gate_passed": false,
+  "full_power_loss_acceptance": false,
+  "production_tree_dirty": false,
+  "fixture_checks": 13,
+  "matches_built_provider_classes": true,
+  "artifacts_sha256": {
+    "target/context-marker-durability/run-1d18uvk6/report.json": "26b3bfc716c30cf466a73d4765a8cd8bcf6645eeee9c8c716e7c8f2c234823a2",
+    "/tmp/k3-stage607/target/context-marker-durability/run-r6c47kz9/audit/run-69v_wutd/report.json": "84a8220e6e633221a3514dc0a402fcaf3ada4fe00ee453e15c02e0ef5e4b4198",
+    "scripts/qualify-context-marker-durability.py": "3df8ed5278e422830893f6934f2655793b67b19083e0c30cef41092f5e5b23df",
+    "scripts/audit-context-durability.py": "ce84944ace92d3e8933b509034151d6bd504b1af077d3e746dac782d27c3cbef",
+    "kanger-qualification/src/org/kanger/storage/dumb2/ContextMarkerCrashImageProbe.java": "c6328988f7a20a57d98b2e1fcfdc65d08e8907a18e209c13a7c91542ccc0b80a",
+    "kanger-qualification/src/org/kanger/storage/dumb2/ContextPublicationDurabilityTraceRunner.java": "e8e7080805dbc9a3a60f7bdad31a483dc0e3e975f72aef3d303cd66cf2b4d199"
+  }
+}

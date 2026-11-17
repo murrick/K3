@@ -21,6 +21,21 @@ public final class ContextPublicationDurabilityTraceRunner {
     private static ContextStore store(DB db)throws Exception {
         java.lang.reflect.Field f=DB.class.getDeclaredField("context");f.setAccessible(true);return (ContextStore)f.get(db);
     }
+    static void copyOwnContext(Path source,Path destinationRoot)throws Exception {
+        Files.createDirectory(destinationRoot);Path destination=destinationRoot.resolve(source.getFileName());
+        for(Path p:new Path[]{ContextStore.contextPath(source),ContextStore.revisionPath(source),ConnectionStore.path(source)})
+            if(Files.exists(p))Files.copy(p,destinationRoot.resolve(p.getFileName()));
+        copyTree(ContextStore.stateRoot(source),ContextStore.stateRoot(destination));
+    }
+    private static void copyTree(Path source,Path destination)throws Exception {
+        if(Files.isSymbolicLink(source))throw new java.io.IOException("Unexpected fixture link");
+        if(Files.isDirectory(source,LinkOption.NOFOLLOW_LINKS)) {
+            Files.createDirectory(destination);
+            try(DirectoryStream<Path> entries=Files.newDirectoryStream(source)){
+                for(Path entry:entries)copyTree(entry,destination.resolve(entry.getFileName()));
+            }
+        }else Files.copy(source,destination);
+    }
     public static void main(String[] args)throws Exception {
         if(args.length!=1)throw new IllegalArgumentException("A fresh audit output directory is required");
         Path audit=Paths.get(args[0]).toAbsolutePath();Files.createDirectory(audit);
@@ -41,8 +56,13 @@ public final class ContextPublicationDurabilityTraceRunner {
             TypeDefinition type=s.registerType(RuleV1Adapter.TYPE_NAME,RuleV1Adapter.INSTANCE.getDescriptor());
             b.update(new ContextStep(b,new PersistentRecord(row.getId(),row.getHash(),row.getNextId(),type.getTypeCode(),
                     StructuralValueCodec.encode(type.getDescriptor(),RuleV1Adapter.INSTANCE.project(rule,m)))));
-            db.flush();before=db.getRevision();db.reindex(null,m);
+            db.flush();before=db.getRevision();byte[] previousMarker=Files.readAllBytes(ContextStore.revisionPath(data.resolve("Source")));
+            db.reindex(null,m);
             need(db.getRevision()==before+1,"reindex actually publishes");published=db.getRevision();
+            System.out.println("DURABILITY_TRACE_ACK_SOURCE previous="+before+" revision="+published);
+            // Immutable witness captured before later module operations; never restore it into Source.
+            copyOwnContext(data.resolve("Source"),audit.resolve("ack-image"));
+            Files.write(audit.resolve("previous-marker.bin"),previousMarker);
             org.kanger.interfaces.internal.IContextFederation.Revision fork=m.forkContext("Fork");
             need(fork.getRevision()==1,"positive source forks at one");
             need(db.getRevision()==published,"fork leaves source selected");
