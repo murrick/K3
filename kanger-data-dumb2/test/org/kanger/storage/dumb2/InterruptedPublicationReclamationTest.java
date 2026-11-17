@@ -98,7 +98,7 @@ class InterruptedPublicationReclamationTest {
         java.net.URI uri=java.net.URI.create("jar:"+directory.resolve("retention.zip").toUri());
         try(FileSystem fs=FileSystems.newFileSystem(uri,Collections.singletonMap("create","true"))){
             Path location=fs.getPath("/Source"),artifact=fs.getPath("/Source.revision.next-"+UUID.randomUUID());Files.write(artifact,new byte[]{1});
-            assertEquals(0,InterruptedPublicationReclaimer.reclaim(location,0));assertArrayEquals(new byte[]{1},Files.readAllBytes(artifact));
+            assertEquals(0,InterruptedPublicationReclaimer.reclaim(location,UUID.randomUUID(),0));assertArrayEquals(new byte[]{1},Files.readAllBytes(artifact));
         }
     }
     @Test void historicalReadOnlyCheckpointDoesNotReclaimMutableContextFiles()throws Exception{
@@ -123,5 +123,72 @@ class InterruptedPublicationReclamationTest {
             assertThrows(org.kanger.exception.StorageLifecycleException.class,empty::reclaimInterruptedPublicationFiles);assertTrue(Files.exists(artifact));
             Files.write(context,valid);assertEquals(1,empty.reclaimInterruptedPublicationFiles());assertFalse(Files.exists(artifact));
         }finally{Files.write(context,valid);empty.close();}
+    }
+    private void copyGeneration(Path source,Path target)throws Exception{
+        Files.createDirectory(target);try(DirectoryStream<Path> entries=Files.newDirectoryStream(source)){for(Path p:entries)Files.copy(p,target.resolve(p.getFileName()));}
+    }
+    @Test void checkpointReclaimsOnlySealedOwnedImmediateSuccessor()throws Exception{
+        open();try{
+            assertTrue(mind.compile("!second(1);",null,false));long current=db.getRevision();Path location=directory.resolve("Source");
+            Path retained=ContextStore.generationPath(location,1),published=ContextStore.generationPath(location,current),orphan=ContextStore.generationPath(location,current+1);
+            Map<String,byte[]> old=image(retained),now=image(published);copyGeneration(published,orphan);
+            RevisionManifestStore.seal(orphan,db.getContextId(),current+1,current);
+            try(ContextSnapshot pinned=ContextSnapshot.open(location,1)){
+                user.checkpoint(mind);assertFalse(Files.exists(orphan),"sealed owned unpublished next generation must be reclaimed");
+                assertEquals(current,db.getRevision());assertEquals(1,pinned.getRevision());unchanged(retained,old);unchanged(published,now);
+            }
+            user.checkpoint(mind);assertEquals(current,db.getRevision());
+        }finally{close();}
+    }
+    @Test void ambiguousOrForeignNumericGenerationsAreRetainedWhole()throws Exception{
+        open();try{
+            assertTrue(mind.compile("!second(1);",null,false));long current=db.getRevision();Path location=directory.resolve("Source"),published=ContextStore.generationPath(location,current);Map<String,byte[]> stable=image(published);
+            for(String kind:Arrays.asList("foreign","wrong-revision","wrong-parent","manifest-crc","base-digest","missing-manifest","unknown","nested","manifest-link","base-link","format","noncanonical-base","far","leading-zero","directory-link")){
+                String name=kind.equals("far")?"revision-"+(current+2):kind.equals("leading-zero")?"revision-0"+(current+1):"revision-"+(current+1);
+                Path orphan=ContextStore.stateRoot(location).resolve(name),extra=directory.resolve("manifest-copy-"+kind);
+                if(kind.equals("directory-link"))Files.createSymbolicLink(orphan,published);
+                else{
+                    copyGeneration(published,orphan);
+                    RevisionManifestStore.seal(orphan,kind.equals("foreign")?UUID.randomUUID():db.getContextId(),kind.equals("wrong-revision")?current+2:current+1,kind.equals("wrong-parent")?current-1:current);
+                    Path manifest=RevisionManifestStore.path(orphan),base;
+                    try(java.util.stream.Stream<Path> files=Files.list(orphan)){base=files.filter(p->p.getFileName().toString().endsWith(".base")).findFirst().get();}
+                    if(kind.equals("manifest-crc")){byte[] bytes=Files.readAllBytes(manifest);bytes[bytes.length-1]^=1;Files.write(manifest,bytes);}
+                    if(kind.equals("base-digest")){byte[] bytes=Files.readAllBytes(base);bytes[0]^=1;Files.write(base,bytes);}
+                    if(kind.equals("missing-manifest"))Files.delete(manifest);
+                    if(kind.equals("unknown"))Files.write(orphan.resolve("notes.txt"),new byte[]{1});
+                    if(kind.equals("nested"))Files.createDirectory(orphan.resolve("nested"));
+                    if(kind.equals("manifest-link")){Files.move(manifest,extra);Files.createSymbolicLink(manifest,extra);}
+                    if(kind.equals("base-link")){Files.delete(base);Files.createSymbolicLink(base,published.resolve(base.getFileName()));}
+                    if(kind.equals("format")){byte[] bytes=Files.readAllBytes(manifest);java.nio.ByteBuffer.wrap(bytes).putInt(8,RevisionManifestStore.STORAGE_FORMAT_VERSION+1);java.util.zip.CRC32 crc=new java.util.zip.CRC32();crc.update(bytes,0,bytes.length-4);java.nio.ByteBuffer.wrap(bytes).putInt(bytes.length-4,(int)crc.getValue());Files.write(manifest,bytes);}
+                    if(kind.equals("noncanonical-base")){Files.write(orphan.resolve("unknown?.base"),new byte[]{1});RevisionManifestStore.seal(orphan,db.getContextId(),current+1,current);}
+                }
+                Map<String,byte[]> before=image(orphan);user.checkpoint(mind);
+                assertTrue(Files.exists(orphan,LinkOption.NOFOLLOW_LINKS),kind);unchanged(orphan,before);assertEquals(current,db.getRevision());unchanged(published,stable);
+                ContextStore.deleteRecursively(orphan);Files.deleteIfExists(extra);
+            }
+        }finally{close();}
+    }
+    @Test void sealedFirstGenerationCanBeReclaimedWithoutInventingAnInitialRevision()throws Exception{
+        try(DirectoryStream<Path> entries=Files.newDirectoryStream(directory)){org.junit.jupiter.api.Assumptions.assumeTrue(entries instanceof SecureDirectoryStream);}
+        Path location=directory.resolve("EmptyNext");ContextStore empty=ContextStore.create(location);
+        try{
+            Path orphan=ContextStore.generationPath(location,1);Files.createDirectories(orphan);Files.write(orphan.resolve("rules.base"),new byte[]{1,2,3});
+            RevisionManifestStore.seal(orphan,empty.getContextId(),1,0);
+            assertTrue(empty.reclaimInterruptedPublicationFiles()>0);assertFalse(Files.exists(orphan));assertEquals(0,empty.getRevision());
+            try(ContextSnapshot initial=ContextSnapshot.open(location,0)){assertEquals(empty.getContextId(),initial.getContextId());assertEquals(0,initial.getRevision());}
+        }finally{empty.close();}
+    }
+    @Test void nonRegularManifestIsRetainedWithoutOpeningABlockingStream()throws Exception{
+        org.junit.jupiter.api.Assumptions.assumeTrue(Files.isExecutable(Paths.get("/usr/bin/mkfifo")));
+        open();Path location=directory.resolve("Source"),orphan=ContextStore.generationPath(location,db.getRevision()+1);Files.createDirectory(orphan);Path fifo=RevisionManifestStore.path(orphan);
+        java.util.concurrent.ExecutorService executor=java.util.concurrent.Executors.newSingleThreadExecutor();
+        try{
+            Process maker=new ProcessBuilder("/usr/bin/mkfifo",fifo.toString()).start();assertTrue(maker.waitFor(5,java.util.concurrent.TimeUnit.SECONDS));assertEquals(0,maker.exitValue());
+            java.util.concurrent.Future<Integer> result=executor.submit(()->InterruptedPublicationReclaimer.reclaim(location,db.getContextId(),db.getRevision()));
+            boolean blocked=false;int removed;
+            try{removed=result.get(5,java.util.concurrent.TimeUnit.SECONDS);}
+            catch(java.util.concurrent.TimeoutException timeout){blocked=true;try(java.io.OutputStream writer=Files.newOutputStream(fifo,StandardOpenOption.WRITE)){}removed=result.get(5,java.util.concurrent.TimeUnit.SECONDS);}
+            assertFalse(blocked,"unknown manifest entry must be classified before opening its byte stream");assertEquals(0,removed);assertTrue(Files.exists(orphan));
+        }finally{Files.deleteIfExists(fifo);executor.shutdownNow();close();}
     }
 }

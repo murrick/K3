@@ -146,7 +146,11 @@ final class RevisionManifestStore {
     static Manifest read(Path generation)
             throws IOException, StorageLifecycleException {
         Path path = path(generation);
-        byte[] bytes = Files.readAllBytes(path);
+        return decode(Files.readAllBytes(path), path);
+    }
+
+    private static Manifest decode(byte[] bytes, Path path)
+            throws IOException, StorageLifecycleException {
         if (bytes.length < 4 * 6 + 8 * 4 + DIGEST_LENGTH) {
             throw corruption(
                     "Invalid DUMB2 revision manifest length "
@@ -282,8 +286,49 @@ final class RevisionManifestStore {
                              long expectedParentRevision)
             throws IOException, StorageLifecycleException {
         Manifest manifest = read(generation);
-        Path path = path(generation);
+        validateIdentity(manifest, path(generation), expectedContextId, expectedRevision, expectedParentRevision);
+        validateDigest(manifest, digestGeneration(generation), path(generation));
 
+        return manifest;
+    }
+
+    /** Descriptor-relative validation for an unpublished candidate; no path-following reads. */
+    static Manifest validate(java.nio.file.SecureDirectoryStream<Path> directory,
+                             Path displayPath, UUID expectedContextId,
+                             long expectedRevision, long expectedParentRevision)
+            throws IOException, StorageLifecycleException {
+        Manifest manifest = decode(readRelative(directory, displayPath.getFileSystem().getPath(FILE_NAME)), path(displayPath));
+        validateIdentity(manifest, path(displayPath), expectedContextId, expectedRevision, expectedParentRevision);
+        List<Path> bases = new ArrayList<Path>();
+        for (Path entry : directory) {
+            Path name = entry.getFileName();
+            java.nio.file.attribute.BasicFileAttributes attributes = directory.getFileAttributeView(
+                    name, java.nio.file.attribute.BasicFileAttributeView.class, LinkOption.NOFOLLOW_LINKS).readAttributes();
+            if (!attributes.isRegularFile()) throw corruption("Unexpected non-regular generation entry at " + displayPath.resolve(name));
+            if (FILE_NAME.equals(name.toString())) continue;
+            if (!name.toString().endsWith(".base")) throw corruption("Unexpected generation entry at " + displayPath.resolve(name));
+            bases.add(name);
+        }
+        if (bases.isEmpty()) throw corruption("Generation has no schema snapshots at " + displayPath);
+        validateDigest(manifest, digestBases(bases, name -> readRelative(directory, name)), path(displayPath));
+        return manifest;
+    }
+
+    private static byte[] readRelative(java.nio.file.SecureDirectoryStream<Path> directory, Path name) throws IOException {
+        if(!directory.getFileAttributeView(name,java.nio.file.attribute.BasicFileAttributeView.class,LinkOption.NOFOLLOW_LINKS).readAttributes().isRegularFile())
+            throw new IOException("Generation entry is not a regular file: " + name);
+        java.util.Set<java.nio.file.OpenOption> options = new java.util.HashSet<java.nio.file.OpenOption>();
+        options.add(StandardOpenOption.READ); options.add(LinkOption.NOFOLLOW_LINKS);
+        try (java.io.InputStream input = java.nio.channels.Channels.newInputStream(directory.newByteChannel(name, options))) {
+            ByteArrayOutputStream output = new ByteArrayOutputStream(); byte[] buffer = new byte[8192]; int length;
+            while ((length = input.read(buffer)) != -1) output.write(buffer, 0, length);
+            return output.toByteArray();
+        }
+    }
+
+    private static void validateIdentity(Manifest manifest, Path path, UUID expectedContextId,
+                                         long expectedRevision, long expectedParentRevision)
+            throws StorageLifecycleException {
         if (!expectedContextId.equals(manifest.getContextId())) {
             throw corruption(
                     "DUMB2 revision manifest ContextId mismatch at "
@@ -314,8 +359,10 @@ final class RevisionManifestStore {
                             + path + ": "
                             + manifest.getStorageFormatVersion());
         }
-        GenerationDigest actual =
-                digestGeneration(generation);
+    }
+
+    private static void validateDigest(Manifest manifest, GenerationDigest actual, Path path)
+            throws StorageLifecycleException {
         if (actual.baseCount != manifest.getBaseCount()
                 || !Arrays.equals(
                         actual.digest,
@@ -325,7 +372,6 @@ final class RevisionManifestStore {
                             + path);
         }
 
-        return manifest;
     }
 
     static void validateDependencyVector(
@@ -456,6 +502,12 @@ final class RevisionManifestStore {
                             + generation);
         }
 
+        return digestBases(bases, Files::readAllBytes);
+    }
+
+    private interface BaseReader { byte[] read(Path path) throws IOException; }
+
+    private static GenerationDigest digestBases(List<Path> bases, BaseReader reader) throws IOException {
         Collections.sort(
                 bases,
                 new Comparator<Path>() {
@@ -472,7 +524,7 @@ final class RevisionManifestStore {
             byte[] name =
                     base.getFileName().toString()
                             .getBytes(StandardCharsets.UTF_8);
-            byte[] data = Files.readAllBytes(base);
+            byte[] data = reader.read(base);
             updateInt(digest, name.length);
             digest.update(name);
             updateLong(digest, data.length);

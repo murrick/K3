@@ -14,7 +14,8 @@ import org.kanger.storage.dumb2.descriptor.*;
 public final class SymbolicProcessDeathRunner {
     private static int checks;
     private static boolean beforeMarker(String point){return !point.equals("AFTER_MARKER")&&!point.equals("ACTIVATION");}
-    private static boolean preparation(String point){return !point.equals("BEFORE_MARKER")&&beforeMarker(point);}
+    private static boolean reclamation(String point){return point.startsWith("RECLAIM_");}
+    private static boolean preparation(String point){return !point.equals("BEFORE_MARKER")&&beforeMarker(point)&&!reclamation(point);}
     private static void need(boolean yes,String why){checks++;if(!yes)throw new AssertionError(why);}
     static void halt(String point){System.err.println("KANGER_PROCESS_CUT point="+point);System.err.flush();Runtime.getRuntime().halt(83);}
     private static Mind open(DB db,Path dir,String name)throws Exception{User u=new User();u.setDatabaseDir(dir.toString()+File.separator);db.init(u);Mind root=new Mind(u);u.setCurrentMind(root);Mind m=(Mind)root.useStorage(name);u.setCurrentMind(m);return m;}
@@ -51,13 +52,22 @@ public final class SymbolicProcessDeathRunner {
         }
         throw new AssertionError("requested cut was not reached");
     }
+    private static int executeChild(Path log,String... arguments)throws Exception{
+        String executable=Paths.get(System.getProperty("java.home"),"bin","java").toString();List<String> command=new ArrayList<>(Arrays.asList(executable,"-XX:-UsePerfData","-cp",System.getProperty("java.class.path"),SymbolicProcessDeathRunner.class.getName()));command.addAll(Arrays.asList(arguments));
+        Process child=new ProcessBuilder(command).redirectErrorStream(true).redirectOutput(log.toFile()).start();
+        if(!child.waitFor(90,TimeUnit.SECONDS)){child.destroyForcibly();child.waitFor();throw new AssertionError("child cut timed out: "+log);}return child.exitValue();
+    }
     private static void run(String operation,String point)throws Exception{
         Path dir=Files.createTempDirectory("process-death-"+operation+"-");Path log=dir.resolve("child.log");
-        String executable=Paths.get(System.getProperty("java.home"),"bin","java").toString();
-        Process child=new ProcessBuilder(executable,"-XX:-UsePerfData","-cp",System.getProperty("java.class.path"),SymbolicProcessDeathRunner.class.getName(),"child",dir.toString(),operation,point).redirectErrorStream(true).redirectOutput(log.toFile()).start();
-        if(!child.waitFor(90,TimeUnit.SECONDS)){child.destroyForcibly();child.waitFor();throw new AssertionError("child cut timed out: "+log);}
+        String seedPoint=reclamation(point)?"BEFORE_MARKER":point;
+        int exit=executeChild(log,"child",dir.toString(),operation,seedPoint);
         String trace=new String(Files.readAllBytes(log),java.nio.charset.StandardCharsets.UTF_8);
-        need(child.exitValue()==83&&trace.contains("KANGER_PROCESS_CUT point="+point),"exact child halt boundary "+operation+" "+point+": "+log);
+        need(exit==83&&trace.contains("KANGER_PROCESS_CUT point="+seedPoint),"exact child halt boundary "+operation+" "+seedPoint+": "+log);
+        if(reclamation(point)){
+            Path cleanupLog=dir.resolve("reclaimer.log");exit=executeChild(cleanupLog,"reclaim",dir.toString(),point);
+            trace=new String(Files.readAllBytes(cleanupLog),java.nio.charset.StandardCharsets.UTF_8);
+            need(exit==83&&trace.contains("KANGER_PROCESS_CUT point="+point),"second process really dies inside reclamation: "+cleanupLog);
+        }
         Properties plan=new Properties();try(InputStream in=Files.newInputStream(dir.resolve("plan.properties"))){plan.load(in);}
         long before=Long.parseLong(plan.getProperty("revision")),expected=before+(beforeMarker(point)?0:1);Path location=dir.resolve("Source");
         need(RevisionStore.read(ContextStore.revisionPath(location))==expected,"actual marker names the exact durable side of cut");
@@ -75,6 +85,14 @@ public final class SymbolicProcessDeathRunner {
             }
             need(Files.isDirectory(ContextStore.generationPath(location,before+1))==point.startsWith("MARKER_"),"generation installation agrees with exact preparation boundary");
         }
+        if(reclamation(point)){
+            Properties evidence=new Properties();try(InputStream input=Files.newInputStream(dir.resolve("reclaim.properties"))){evidence.load(input);}
+            interruptedArtifact=Paths.get(evidence.getProperty("artifact"));long count=Long.parseLong(evidence.getProperty("before")),remaining=Long.parseLong(evidence.getProperty("remaining"));
+            need(interruptedArtifact.startsWith(ContextStore.stateRoot(location))&&interruptedArtifact.getFileName().toString().startsWith(".reclaim-")&&Files.isDirectory(interruptedArtifact),"retired generation is in the reserved cleanup namespace");
+            need(!Files.exists(ContextStore.generationPath(location,before+1)),"retirement removes only the unpublished canonical name");
+            need(count>1&&(point.equals("RECLAIM_RETIRED")?remaining==count:remaining>0&&remaining<count),"real unlink occurred only at the selected cleanup boundary");
+            if(point.equals("RECLAIM_PARTIAL")){boolean broken=false;try{RevisionManifestStore.validate(interruptedArtifact,UUID.fromString(plan.getProperty("identity")),before+1,before);}catch(IOException|org.kanger.exception.StorageLifecycleException e){broken=true;}need(broken,"partial deletion destroys the original seal, requiring resumable retirement ownership");}
+        }
         if(beforeMarker(point)){boolean hidden=false;try(ContextSnapshot future=ContextSnapshot.open(location,before+1)){}catch(org.kanger.exception.StorageLifecycleException e){hidden=true;}need(hidden,"unpublished next revision remains hidden at every pre-marker cut");}
         if(point.equals("BEFORE_MARKER")){need(Files.isDirectory(ContextStore.generationPath(location,before+1)),"unpublished generation really installed before death");boolean hidden=false;try(ContextSnapshot future=ContextSnapshot.open(location,before+1)){}catch(org.kanger.exception.StorageLifecycleException e){hidden=true;}need(hidden,"orphan cannot be read as published pinned revision");}
         DB db=new DB();Mind m=open(db,dir,"Source");
@@ -86,6 +104,7 @@ public final class SymbolicProcessDeathRunner {
             if(operation.equals("reindex")){ContextStore s=store(db);ContextBase b=(ContextBase)db.getBase("rules");String layout=s.resolveType(((ContextStep)b.get(Long.parseLong(plan.getProperty("original")))).getPersistentRecord().getTypeCode()).getDescriptor().getName();need(layout.equals(beforeMarker(point)?"Rule-v1":"Rule-v2"),"cold physical layout matches selected marker");}
             ((User)m.getUser()).checkpoint(m);need(db.getRevision()==expected,"plain checkpoint never publishes abandoned memory or orphan generation");
             if(interruptedArtifact!=null)need(!Files.exists(interruptedArtifact,LinkOption.NOFOLLOW_LINKS),"validated quiescent checkpoint reclaims this interrupted artifact before retry");
+            if(point.equals("BEFORE_MARKER")||point.startsWith("MARKER_"))need(!Files.exists(ContextStore.generationPath(location,before+1)),"checkpoint reclaims the sealed owned immediate-successor generation without publishing it");
             if(beforeMarker(point)){
                 if(operation.equals("native"))m.writeCheckedSymbolicContextAssertion("!safe(8);",false);
                 else if(operation.equals("save")){connect(db,m);m.saveCheckedSymbolicContextConnections();}
@@ -107,8 +126,17 @@ public final class SymbolicProcessDeathRunner {
         }
         System.out.println("SYMBOLIC_PREPARATION_DEATH_PASS checks="+checks);
     }
+    static void reclamationMatrix()throws Exception{
+        System.setProperty("user.home",Files.createTempDirectory("reclamation-death-home-").toString());
+        for(String point:new String[]{"RECLAIM_RETIRED","RECLAIM_PARTIAL"})run("native",point);
+        System.out.println("SYMBOLIC_ORPHAN_RECLAMATION_DEATH_PASS checks="+checks);
+    }
     public static void main(String[] args)throws Exception{
         if(args.length>0&&args[0].equals("child")){child(Paths.get(args[1]),args[2],args[3]);return;}
+        if(args.length>0&&args[0].equals("reclaim")){
+            Path dir=Paths.get(args[1]);System.setProperty("user.home",dir.resolve("home").toString());DB db=new DB();Mind m=open(db,dir,"Source");
+            try(SymbolicReclamationFaults cut=new SymbolicReclamationFaults(dir.resolve("Source"),dir.resolve("reclaim.properties"),args[2])){((User)m.getUser()).checkpoint(m);}throw new AssertionError("reclamation cut not reached");
+        }
         System.setProperty("user.home",Files.createTempDirectory("process-death-home-").toString());
         for(String operation:new String[]{"native","save","reindex"})for(String point:new String[]{"BEFORE_MARKER","AFTER_MARKER","ACTIVATION"})run(operation,point);
         System.out.println("SYMBOLIC_PROCESS_DEATH_PASS checks="+checks);

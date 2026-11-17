@@ -10,11 +10,11 @@ import java.util.regex.*;
 
 /** Reserved temporary namespaces only; caller owns the validated Context writer lock. */
 final class InterruptedPublicationReclaimer {
-    private static final Pattern STAGING=Pattern.compile("\\.(staging|topology|reindex)-([1-9][0-9]*)-([0-9a-f-]{36})");
+    private static final Pattern STAGING=Pattern.compile("\\.(staging|topology|reindex|reclaim)-([1-9][0-9]*)-([0-9a-f-]{36})");
     private static final Pattern BASE=Pattern.compile("(?:[a-zA-Z0-9_.-]|%[0-9A-F]{2})+\\.base");
     private InterruptedPublicationReclaimer(){}
 
-    static int reclaim(Path location,long revision)throws IOException {
+    static int reclaim(Path location,UUID contextId,long revision)throws IOException {
         int removed=0;
         try(DirectoryStream<Path> entries=Files.newDirectoryStream(location.getParent())){
             // Retention is preferable to path-based traversal when secure relative operations are unavailable.
@@ -29,9 +29,12 @@ final class InterruptedPublicationReclaimer {
                     if(attributes(parent,name).isRegularFile()){parent.deleteFile(name);removed++;}
                 }else if(text.equals(state)&&attributes(parent,name).isDirectory()){
                     try(SecureDirectoryStream<Path> root=parent.newDirectoryStream(name,LinkOption.NOFOLLOW_LINKS)){
-                        for(Path candidate:root){
-                            Path relative=candidate.getFileName();
-                            if(staging(relative.toString(),revision)&&attributes(root,relative).isDirectory())removed+=removeStaging(root,relative);
+                        List<Path> candidates=new ArrayList<>();for(Path candidate:root)candidates.add(candidate.getFileName());
+                        for(Path relative:candidates){
+                            String candidate=relative.toString();
+                            if(staging(candidate,revision)&&attributes(root,relative).isDirectory())removed+=removeStaging(root,relative,location);
+                            else if(revision<Long.MAX_VALUE&&candidate.equals("revision-"+(revision+1))&&attributes(root,relative).isDirectory())
+                                removed+=removeOrphan(root,relative,location,contextId,revision);
                         }
                     }
                 }
@@ -39,7 +42,19 @@ final class InterruptedPublicationReclaimer {
         }
         return removed;
     }
-    private static int removeStaging(SecureDirectoryStream<Path> root,Path name)throws IOException {
+    private static int removeOrphan(SecureDirectoryStream<Path> root,Path name,Path location,UUID contextId,long revision)throws IOException {
+        try(SecureDirectoryStream<Path> candidate=root.newDirectoryStream(name,LinkOption.NOFOLLOW_LINKS)){
+            RevisionManifestStore.validate(candidate,ContextStore.stateRoot(location).resolve(name),contextId,revision+1,revision);
+        }catch(IOException|org.kanger.exception.StorageLifecycleException uncertain){return 0;}
+        try(SecureDirectoryStream<Path> candidate=root.newDirectoryStream(name,LinkOption.NOFOLLOW_LINKS)){
+            for(Path child:candidate){String text=child.getFileName().toString();if(!(text.equals(RevisionManifestStore.FILE_NAME)||BASE.matcher(text).matches())||!attributes(candidate,child.getFileName()).isRegularFile())return 0;}
+        }
+        // A retirement rename preserves the ownership decision across partial deletion or process death.
+        Path retired=name.getFileSystem().getPath(".reclaim-"+(revision+1)+"-"+UUID.randomUUID());
+        root.move(name,root,retired);
+        return removeStaging(root,retired,location);
+    }
+    private static int removeStaging(SecureDirectoryStream<Path> root,Path name,Path location)throws IOException {
         List<Path> files=new ArrayList<>();
         try(SecureDirectoryStream<Path> staging=root.newDirectoryStream(name,LinkOption.NOFOLLOW_LINKS)){
             for(Path entry:staging){

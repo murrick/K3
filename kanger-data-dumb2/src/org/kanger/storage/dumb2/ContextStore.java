@@ -464,7 +464,7 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
         unconfirmedPublication=null;
     }
 
-    /** Only quiescent checkpoint calls this; never a revision/generation reclamation API. */
+    /** Only quiescent checkpoint calls this; never a historical-revision pruning API. */
     synchronized int reclaimInterruptedPublicationFiles() throws IOException, StorageLifecycleException {
         requireOpen();
         requireConfirmedPublication();
@@ -476,7 +476,7 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
         }
         // R0 has no generation manifest, but its metadata and connection owner still matter.
         ConnectionStore.read(location,new RevisionRef(contextId,revision));
-        return InterruptedPublicationReclaimer.reclaim(location,revision);
+        return InterruptedPublicationReclaimer.reclaim(location,contextId,revision);
     }
 
     synchronized ConnectionVector getQualifiedWorkingConnections() {
