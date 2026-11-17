@@ -37,7 +37,7 @@ class DisconnectedHistoryTest {
             }
             assertArrayEquals(sidecar,Files.readAllBytes(ConnectionStore.path(location)));
             assertEquals(3,source.getRevision());
-            assertThrows(StorageLifecycleException.class,()->ConnectionStore.read(location,new RevisionRef(source.getContextId(),0)));
+            assertTrue(ConnectionStore.read(location,new RevisionRef(source.getContextId(),0)).isEmpty());
         }
     }
     @Test void unpublishedFirstSidecarAndSuccessorPruningKeepDisconnectedHistory()throws Exception {
@@ -90,6 +90,11 @@ class DisconnectedHistoryTest {
         try(ContextStore source=ContextStore.create(location);ContextStore target=ContextStore.create(root.resolve("Target"))) {
             publish(source,0);publish(source,1);publish(target,0);
             source.publishTopology(connection(source,target),"first connection");
+            // Reproduce a pre-644 first sidecar containing only R2/R3.
+            RevisionRef current=new RevisionRef(source.getContextId(),3);
+            ConnectionVector saved=ConnectionStore.read(location,current);
+            Files.delete(ConnectionStore.path(location));
+            ConnectionStore.writeTransition(location,new RevisionRef(source.getContextId(),2),ConnectionVector.empty(),current,saved);
             Path manifest=RevisionManifestStore.path(ContextStore.generationPath(location,1));
             byte[] good=Files.readAllBytes(manifest);Files.delete(manifest);
             assertThrows(Exception.class,()->ConnectionStore.read(location,new RevisionRef(source.getContextId(),1)));

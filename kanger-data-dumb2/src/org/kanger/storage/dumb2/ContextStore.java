@@ -765,7 +765,7 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
             RevisionManifestStore.validateDependencyVector(
                     staging,
                     publishedConnections);
-            ConnectionStore.writeTransition(
+            ConnectionStore.writeTransitionPreservingHistory(
                     location,
                     new RevisionRef(contextId, revision),
                     currentConnections,
@@ -1008,7 +1008,7 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
             RevisionManifestStore.validateDependencyVector(
                     staging,
                     ConnectionVector.empty());
-            ConnectionStore.writeTransition(
+            ConnectionStore.writeTransitionPreservingHistory(
                     location,
                     currentSource,
                     currentConnections,
@@ -1048,7 +1048,7 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
                 staging,
                 candidateConnections);
 
-        ConnectionStore.writeTransition(
+        ConnectionStore.writeTransitionPreservingHistory(
                 location,
                 currentSource,
                 currentConnections,

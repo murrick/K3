@@ -198,6 +198,13 @@ Historical `use X@8` is immutable even when CURRENT is 10. `ctx publish` rejects
 before asking for a description; it neither overwrites 10 nor creates 11.
 `use X` returns to CURRENT for ordinary authoring and publication.
 
+The first saved connection preserves previously readable disconnected revisions,
+including an initial `X@0` and older supported pre-seal views. First creation of
+connection metadata validates retained history and records its old bindings; this
+can take time for a long history. Later connection changes keep those bindings.
+Opening history does not rewrite metadata. An already incomplete legacy connection
+file is not automatically interpreted as empty history.
+
 Qualification for this history follow-up: changed runtime classes compile;
 all 316 DUMB2 tests pass, including two added history/publication regressions.
 Real Console confirms history with storage closed and with another Context

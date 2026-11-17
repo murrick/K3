@@ -195,6 +195,8 @@ final class ConnectionStore {
     /**
      * Publishes a crash-safe transition sidecar before Context R+1 becomes
      * visible. Both vectors remain selectable by exact source revision.
+     * This raw codec/fixture entry point does not discover implicit history;
+     * mutable Context publications use writeTransitionPreservingHistory instead.
      */
     static void writeTransition(
             Path location,
@@ -202,6 +204,52 @@ final class ConnectionStore {
             ConnectionVector currentVector,
             RevisionRef candidateSource,
             ConnectionVector candidateVector)
+            throws IOException, StorageLifecycleException {
+        writeTransition(location, currentSource, currentVector, candidateSource,
+                candidateVector, null);
+    }
+
+    /**
+     * Caller owns the Context writer lock. At first sidecar creation preserve
+     * the exact previously readable history, including R0 and pre-seal views.
+     * Absence is interpreted only while it is still the published contract,
+     * never as a repair rule for an existing incomplete sidecar.
+     */
+    static void writeTransitionPreservingHistory(
+            Path location, RevisionRef currentSource, ConnectionVector currentVector,
+            RevisionRef candidateSource, ConnectionVector candidateVector)
+            throws IOException, StorageLifecycleException {
+        Map<Long, ConnectionVector> history = null;
+        if (!Files.exists(path(location))) {
+            if (!currentVector.isEmpty()
+                    || currentSource.getRevision() == Long.MAX_VALUE
+                    || RevisionStore.read(ContextStore.revisionPath(location))
+                            != currentSource.getRevision()) {
+                throw corruption("Cannot preserve unpublished connection history at " + location);
+            }
+            history = new TreeMap<Long, ConnectionVector>();
+            for (long revision = 0; revision < currentSource.getRevision(); revision++) {
+                try (ContextSnapshot snapshot = ContextSnapshot.open(location, revision)) {
+                    if (!currentSource.getContextId().equals(snapshot.getContextId())) {
+                        throw corruption("Connection history owner changed at " + location);
+                    }
+                    ConnectionVector previous = read(location,
+                            new RevisionRef(snapshot.getContextId(), revision));
+                    if (!previous.isEmpty()) {
+                        throw corruption("Connection history changed during first transition at " + location);
+                    }
+                    history.put(revision, previous);
+                }
+            }
+        }
+        writeTransition(location, currentSource, currentVector, candidateSource,
+                candidateVector, history);
+    }
+
+    private static void writeTransition(
+            Path location, RevisionRef currentSource, ConnectionVector currentVector,
+            RevisionRef candidateSource, ConnectionVector candidateVector,
+            Map<Long, ConnectionVector> history)
             throws IOException, StorageLifecycleException {
         if (currentSource == null
                 || currentVector == null
@@ -228,6 +276,11 @@ final class ConnectionStore {
                 location, currentSource.getContextId());
         if (state == null) {
             state = new State(currentSource.getContextId());
+            if (history != null) {
+                state.byRevision.putAll(history);
+            }
+        } else if (history != null) {
+            throw corruption("Connection sidecar appeared during first transition at " + path(location));
         }
 
         Long currentRevision =

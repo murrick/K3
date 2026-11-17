@@ -22,9 +22,11 @@ public final class SymbolicDisconnectedHistoryProbe {
             need(m.compile("!marker(9);",null,false),"first revision");first=db.getRevision();
             need(m.compile("!second(1);",null,false),"second revision");
             need(db.exists("Source@"+first),"history readable before first sidecar");
+            need(db.exists("Source@0"),"initial revision readable before first sidecar");
             need(!Files.exists(ConnectionStore.path(dir.resolve("Source"))),"history starts without sidecar");
             db.connectContext("Rules");m.saveCheckedSymbolicContextConnections();current=db.getRevision();
             need(db.exists("Source@"+first),"history readable after first sidecar");
+            need(db.exists("Source@0"),"initial revision readable after first sidecar");
             byte[] sidecar=Files.readAllBytes(ConnectionStore.path(dir.resolve("Source")));
             try(ContextSnapshot old=ContextSnapshot.open(dir.resolve("Source"),first)){
                 need(old.getRevision()==first,"historical snapshot remains pinned");
@@ -42,6 +44,13 @@ public final class SymbolicDisconnectedHistoryProbe {
             need(!Boolean.TRUE.equals(old.query("?second(1);")),"later facts do not leak");
             need(!Boolean.TRUE.equals(old.query("?target(1);")),"later connections do not leak");
         } finally {close(old);}
+        DB zero=new DB();Mind initial=open(zero,dir,"Source@0");
+        try {
+            need(zero.getRevision()==0,"initial public reopen stays pinned");
+            need(!Boolean.TRUE.equals(initial.query("?marker(9);")),"initial view has no later marker");
+            need(!Boolean.TRUE.equals(initial.query("?second(1);")),"initial view has no later second fact");
+            need(!Boolean.TRUE.equals(initial.query("?target(1);")),"initial view has no later connection");
+        } finally {close(initial);}
         DB latest=new DB();Mind now=open(latest,dir,"Source");
         try {
             need(latest.getRevision()==current,"historical read did not publish");
