@@ -54,7 +54,10 @@ def main():
                         help='Compile isolated dependent-pair authoring refutation hook')
     parser.add_argument('--preparation-only', action='store_true', help='Run only the subprocess preparation matrix within the native recovery overlay')
     parser.add_argument('--reclamation-only', action='store_true', help='Run only the two-stage orphan reclamation subprocess matrix')
+    parser.add_argument('--sidecar-pruning-only', action='store_true', help='Run only the interrupted sidecar pruning matrix')
     args = parser.parse_args()
+    if args.sidecar_pruning_only and (args.mode != 'dependent-symbolic-recovery-contract' or args.preparation_only or args.reclamation_only):
+        parser.error('--sidecar-pruning-only requires the native recovery profile without other focused flags')
     if args.reclamation_only and (args.mode != 'dependent-symbolic-recovery-contract' or args.preparation_only):
         parser.error('--reclamation-only requires the native recovery profile without --preparation-only')
     if args.preparation_only and args.mode != 'dependent-symbolic-recovery-contract':
@@ -112,6 +115,7 @@ def main():
         names.insert(0, ('org.kanger.storage.dumb2.SymbolicProcessDeathRunner', 'SYMBOLIC_PROCESS_DEATH_PASS'))
         names.insert(0, ('org.kanger.storage.dumb2.SymbolicPreparationDeathRunner', 'SYMBOLIC_PREPARATION_DEATH_PASS'))
         names.insert(0, ('org.kanger.storage.dumb2.SymbolicOrphanReclamationDeathRunner', 'SYMBOLIC_ORPHAN_RECLAMATION_DEATH_PASS'))
+        names.insert(0, ('org.kanger.storage.dumb2.SymbolicSidecarPruningDeathRunner', 'SYMBOLIC_SIDECAR_PRUNING_DEATH_PASS'))
     if args.mode == 'dependent-symbolic-family-contract':
         names = [('org.kanger.ContextDependentSymbolicFamilyInspectionRunner', 'CONTEXT_DEPENDENT_SYMBOLIC_FAMILY_INSPECTION_PASS'),
                  ('org.kanger.storage.dumb2.SymbolicCacheFamilyInspectionRunner', 'SYMBOLIC_CACHE_FAMILY_INSPECTION_PASS'),
@@ -1071,6 +1075,8 @@ def main():
         names = [('org.kanger.storage.dumb2.SymbolicPreparationDeathRunner', 'SYMBOLIC_PREPARATION_DEATH_PASS')]
     if args.reclamation_only:
         names = [('org.kanger.storage.dumb2.SymbolicOrphanReclamationDeathRunner', 'SYMBOLIC_ORPHAN_RECLAMATION_DEATH_PASS')]
+    if args.sidecar_pruning_only:
+        names = [('org.kanger.storage.dumb2.SymbolicSidecarPruningDeathRunner', 'SYMBOLIC_SIDECAR_PRUNING_DEATH_PASS')]
     drivers = [root / 'kanger-qualification/src' / (name.replace('.', '/') + '.java') for name, _ in names]
     if args.ordinary_integration_candidate:
         original = root / 'kanger-data-dumb2/src/org/kanger/storage/dumb2/DB.java'
@@ -1522,8 +1528,8 @@ def main():
             original = root / 'kanger-data-dumb2/src/org/kanger/storage/dumb2' / filename
             source = original.read_text(encoding='utf-8')
             replacements = [('output.write(body);', 'SymbolicPreparationFaults.schemaBody(path, output, file, body);')] if filename == 'ContextBase.java' else [
-                ('channel.write(buffer);', 'SymbolicPreparationFaults.connectionWrite(channel, buffer, temp, path);'),
-                ('Files.move(\n                        temp,', 'SymbolicPreparationFaults.connectionMove(\n                        temp,')]
+                ('channel.write(buffer);', 'SymbolicSidecarPruneFaults.write(channel, buffer, temp, path);'),
+                ('Files.move(\n                        temp,', 'SymbolicSidecarPruneFaults.move(\n                        temp,')]
             for marker, replacement in replacements:
                 if source.count(marker) != 1:
                     raise RuntimeError('Preparation write boundary changed: ' + filename)
@@ -1566,7 +1572,7 @@ def main():
     for name, marker in names:
         try:
             result = subprocess.run(['java', '-XX:-UsePerfData', '-cp', runtime_cp, name], cwd=root,
-                                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=1800 if name == 'org.kanger.storage.dumb2.SymbolicPreparationDeathRunner' else 900 if name in ('org.kanger.storage.dumb2.SymbolicProcessDeathRunner','org.kanger.storage.dumb2.SymbolicOrphanReclamationDeathRunner') else 120)
+                                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=1800 if name == 'org.kanger.storage.dumb2.SymbolicPreparationDeathRunner' else 900 if name in ('org.kanger.storage.dumb2.SymbolicProcessDeathRunner','org.kanger.storage.dumb2.SymbolicOrphanReclamationDeathRunner','org.kanger.storage.dumb2.SymbolicSidecarPruningDeathRunner') else 120)
             code, log = result.returncode, result.stdout
         except subprocess.TimeoutExpired as failure:
             code = 124
@@ -1583,7 +1589,7 @@ def main():
     passed = all(result['passed'] for result in results)
     report = dict(ground_attachment_candidate=args.ground_attachment_candidate, ordinary_integration_candidate=args.ordinary_integration_candidate, head=head, production_sources=len(production), mode=args.mode, passed=passed, results=results,
                   dependent_authoring_candidate=args.dependent_authoring_candidate,
-                  preparation_only=args.preparation_only, reclamation_only=args.reclamation_only, symbolic_publication_faults=args.mode == 'dependent-symbolic-recovery-contract',
+                  preparation_only=args.preparation_only, reclamation_only=args.reclamation_only, sidecar_pruning_only=args.sidecar_pruning_only, symbolic_publication_faults=args.mode == 'dependent-symbolic-recovery-contract',
                   scope={'dependent-symbolic-recovery-contract': 'Exact-source/thread-bound preparation/publication cuts, actual subprocess death and living-session recovery',
                          'dependent-symbolic-outcome-contract': 'Typed outcomes, checked publication, retired-cache accounting and persistent-chain recovery; default writer selection unchanged',
                          'dependent-symbolic-family-contract': 'Read-only independent-cut receiving/model composition using guarded internal checked symbolic projections; no admission authority',

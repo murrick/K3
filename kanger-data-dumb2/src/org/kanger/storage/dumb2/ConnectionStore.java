@@ -229,6 +229,19 @@ final class ConnectionStore {
         writeState(location, state);
     }
 
+    /** Caller holds the confirmed Context writer lock and has excluded unresolved next-generation artifacts. */
+    static boolean pruneUnpublishedSuccessor(Path location,RevisionRef current)
+            throws IOException,StorageLifecycleException {
+        if(current.getRevision()==Long.MAX_VALUE||!Files.isRegularFile(path(location),java.nio.file.LinkOption.NOFOLLOW_LINKS))return false;
+        State state=readState(location,current.getContextId());
+        if(state==null||!state.byRevision.containsKey(current.getRevision()))
+            throw corruption("Current connection vector is unavailable before sidecar reclamation at " + path(location));
+        if(state.byRevision.remove(current.getRevision()+1)==null)return false;
+        // Keep explicit empty current/historical vectors too; removing the entire sidecar would lose their bindings.
+        writeState(location,state);
+        return true;
+    }
+
     static void delete(Path location) throws IOException {
         Files.deleteIfExists(path(location));
     }

@@ -476,7 +476,10 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
         }
         // R0 has no generation manifest, but its metadata and connection owner still matter.
         ConnectionStore.read(location,new RevisionRef(contextId,revision));
-        return InterruptedPublicationReclaimer.reclaim(location,contextId,revision);
+        int removed=InterruptedPublicationReclaimer.reclaim(location,contextId,revision);
+        if(InterruptedPublicationReclaimer.mayPruneFutureVector(location,revision)
+                &&ConnectionStore.pruneUnpublishedSuccessor(location,new RevisionRef(contextId,revision)))removed++;
+        return removed;
     }
 
     synchronized ConnectionVector getQualifiedWorkingConnections() {

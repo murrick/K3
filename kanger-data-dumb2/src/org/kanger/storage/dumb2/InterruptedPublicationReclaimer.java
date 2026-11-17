@@ -42,6 +42,29 @@ final class InterruptedPublicationReclaimer {
         }
         return removed;
     }
+    /** Retain transition evidence if any immediate-successor artifact could not be reclaimed. */
+    static boolean mayPruneFutureVector(Path location,long revision)throws IOException {
+        if(revision==Long.MAX_VALUE)return false;
+        try(DirectoryStream<Path> entries=Files.newDirectoryStream(location.getParent())){
+            if(!(entries instanceof SecureDirectoryStream))return false;
+            SecureDirectoryStream<Path> parent=(SecureDirectoryStream<Path>)entries;
+            for(Path entry:entries){String name=entry.getFileName().toString();
+                if(name.startsWith(ContextStore.revisionPath(location).getFileName()+".next-")||name.startsWith(ConnectionStore.path(location).getFileName()+".tmp-"))return false;
+            }
+            Path state=ContextStore.stateRoot(location).getFileName();
+            BasicFileAttributes info;
+            try{info=attributes(parent,state);}catch(NoSuchFileException absent){return true;}
+            if(!info.isDirectory())return false;
+            try(SecureDirectoryStream<Path> root=parent.newDirectoryStream(state,LinkOption.NOFOLLOW_LINKS)){
+                String next=Long.toString(revision+1);
+                for(Path entry:root){String name=entry.getFileName().toString();
+                    if(name.equals("revision-"+next))return false;
+                    for(String kind:new String[]{"staging","topology","reindex","reclaim"})if(name.startsWith("."+kind+"-"+next+"-"))return false;
+                }
+            }
+            return true;
+        }
+    }
     private static int removeOrphan(SecureDirectoryStream<Path> root,Path name,Path location,UUID contextId,long revision)throws IOException {
         try(SecureDirectoryStream<Path> candidate=root.newDirectoryStream(name,LinkOption.NOFOLLOW_LINKS)){
             RevisionManifestStore.validate(candidate,ContextStore.stateRoot(location).resolve(name),contextId,revision+1,revision);

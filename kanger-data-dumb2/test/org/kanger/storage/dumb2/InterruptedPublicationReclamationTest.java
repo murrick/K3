@@ -191,4 +191,52 @@ class InterruptedPublicationReclamationTest {
             assertFalse(blocked,"unknown manifest entry must be classified before opening its byte stream");assertEquals(0,removed);assertTrue(Files.exists(orphan));
         }finally{Files.deleteIfExists(fifo);executor.shutdownNow();close();}
     }
+    @Test void checkpointPrunesOnlyImmediateFutureConnectionVector()throws Exception{
+        open();try{
+            long current=db.getRevision();assertEquals(1,current);Path location=directory.resolve("Source");UUID owner=db.getContextId();ConnectionVector empty=ConnectionVector.empty();
+            ConnectionStore.writeTransition(location,new RevisionRef(owner,0),empty,new RevisionRef(owner,1),empty);
+            ConnectionStore.writeTransition(location,new RevisionRef(owner,1),empty,new RevisionRef(owner,2),empty);
+            ConnectionStore.writeTransition(location,new RevisionRef(owner,2),empty,new RevisionRef(owner,3),empty);
+            byte[] marker=Files.readAllBytes(ContextStore.revisionPath(location));
+            user.checkpoint(mind);
+            assertTrue(Files.exists(ConnectionStore.path(location)));assertEquals(empty,ConnectionStore.read(location,new RevisionRef(owner,0)));assertEquals(empty,ConnectionStore.read(location,new RevisionRef(owner,current)));assertEquals(empty,ConnectionStore.read(location,new RevisionRef(owner,3)));
+            assertThrows(org.kanger.exception.StorageLifecycleException.class,()->ConnectionStore.read(location,new RevisionRef(owner,2)),"unpublished immediate successor vector must be pruned");
+            byte[] once=Files.readAllBytes(ConnectionStore.path(location));user.checkpoint(mind);assertArrayEquals(once,Files.readAllBytes(ConnectionStore.path(location)));assertArrayEquals(marker,Files.readAllBytes(ContextStore.revisionPath(location)));assertEquals(current,db.getRevision());
+        }finally{close();}
+    }
+    @Test void futureVectorIsRetainedWithUnresolvedArtifactsOrLinkedSidecar()throws Exception{
+        open();try{
+            Path location=directory.resolve("Source");long current=db.getRevision();UUID owner=db.getContextId();ConnectionVector empty=ConnectionVector.empty();RevisionRef next=new RevisionRef(owner,current+1);
+            ConnectionStore.writeTransition(location,new RevisionRef(owner,current),empty,next,empty);
+            Path orphan=ContextStore.generationPath(location,current+1);Files.createDirectory(orphan);Files.write(orphan.resolve("evidence"),new byte[]{1});
+            user.checkpoint(mind);assertEquals(empty,ConnectionStore.read(location,next));assertTrue(Files.exists(orphan.resolve("evidence")));ContextStore.deleteRecursively(orphan);
+            Path unknown=staging("staging",current+1,"rules.base","notes.txt");user.checkpoint(mind);assertEquals(empty,ConnectionStore.read(location,next));assertTrue(Files.exists(unknown.resolve("rules.base")));ContextStore.deleteRecursively(unknown);
+            Path dubious=directory.resolve("Source.connections.tmp-unrecognized");Files.write(dubious,new byte[]{1});user.checkpoint(mind);assertTrue(Files.exists(dubious));assertEquals(empty,ConnectionStore.read(location,next));Files.delete(dubious);
+            Path official=ConnectionStore.path(location),saved=directory.resolve("connections.saved");byte[] before=Files.readAllBytes(official);Files.move(official,saved);Files.createSymbolicLink(official,saved);
+            try{user.checkpoint(mind);assertTrue(Files.isSymbolicLink(official));assertArrayEquals(before,Files.readAllBytes(saved));assertEquals(empty,ConnectionStore.read(location,next));}
+            finally{Files.delete(official);Files.move(saved,official);}
+            user.checkpoint(mind);assertThrows(org.kanger.exception.StorageLifecycleException.class,()->ConnectionStore.read(location,next));assertEquals(current,db.getRevision());
+        }finally{close();}
+    }
+    @Test void corruptForeignOrMissingCurrentVectorBlocksAllCheckpointCleanup()throws Exception{
+        open();Path location=directory.resolve("Source"),official=ConnectionStore.path(location);long current=db.getRevision();UUID owner=db.getContextId();ConnectionVector empty=ConnectionVector.empty();
+        ConnectionStore.writeTransition(location,new RevisionRef(owner,current),empty,new RevisionRef(owner,current+1),empty);byte[] valid=Files.readAllBytes(official);
+        try{
+            Path artifact=temp("Source.revision.next-");byte[] bad=valid.clone();bad[bad.length-1]^=1;Files.write(official,bad);
+            assertThrows(org.kanger.exception.StorageLifecycleException.class,()->user.checkpoint(mind));assertTrue(Files.exists(artifact));assertArrayEquals(bad,Files.readAllBytes(official));DmzCandidateSession.requireSettledPhysicalQ(mind);
+            Files.delete(official);UUID foreign=UUID.randomUUID();ConnectionStore.writeTransition(location,new RevisionRef(foreign,current),empty,new RevisionRef(foreign,current+1),empty);byte[] foreignBytes=Files.readAllBytes(official);
+            assertThrows(org.kanger.exception.StorageLifecycleException.class,()->user.checkpoint(mind));assertTrue(Files.exists(artifact));assertArrayEquals(foreignBytes,Files.readAllBytes(official));DmzCandidateSession.requireSettledPhysicalQ(mind);
+            Files.delete(official);ConnectionStore.writeTransition(location,new RevisionRef(owner,current+1),empty,new RevisionRef(owner,current+2),empty);byte[] missingCurrent=Files.readAllBytes(official);
+            assertThrows(org.kanger.exception.StorageLifecycleException.class,()->user.checkpoint(mind));assertTrue(Files.exists(artifact));assertArrayEquals(missingCurrent,Files.readAllBytes(official));DmzCandidateSession.requireSettledPhysicalQ(mind);
+            Files.write(official,valid);user.checkpoint(mind);assertFalse(Files.exists(artifact));assertEquals(current,db.getRevision());
+        }finally{Files.write(official,valid);close();}
+    }
+    @Test void firstFutureVectorCanBePrunedWhileKeepingAnExplicitEmptyR0()throws Exception{
+        try(DirectoryStream<Path> entries=Files.newDirectoryStream(directory)){org.junit.jupiter.api.Assumptions.assumeTrue(entries instanceof SecureDirectoryStream);}
+        Path location=directory.resolve("EmptyVectors");ContextStore emptyStore=ContextStore.create(location);
+        try{
+            UUID owner=emptyStore.getContextId();ConnectionVector empty=ConnectionVector.empty();ConnectionStore.writeTransition(location,new RevisionRef(owner,0),empty,new RevisionRef(owner,1),empty);
+            assertTrue(emptyStore.reclaimInterruptedPublicationFiles()>0);assertTrue(Files.exists(ConnectionStore.path(location)));assertEquals(empty,ConnectionStore.read(location,new RevisionRef(owner,0)));assertThrows(org.kanger.exception.StorageLifecycleException.class,()->ConnectionStore.read(location,new RevisionRef(owner,1)));assertEquals(0,emptyStore.getRevision());assertEquals(0,emptyStore.reclaimInterruptedPublicationFiles());
+        }finally{emptyStore.close();}
+    }
 }
