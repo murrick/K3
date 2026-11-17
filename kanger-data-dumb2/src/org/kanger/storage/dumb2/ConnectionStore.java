@@ -105,6 +105,11 @@ final class ConnectionStore {
             return false;
         }
         Path generation = ContextStore.generationPath(location, revision);
+        // Legacy generations may legitimately have no seal. Absence proves
+        // nothing about their missing vector; retain the typed refusal below.
+        if (!RevisionManifestStore.exists(generation)) {
+            return false;
+        }
         RevisionManifestStore.Manifest manifest = RevisionManifestStore.validate(
                 generation, source.getContextId(), revision, revision - 1L);
         return manifest.hasDependencyDigest()

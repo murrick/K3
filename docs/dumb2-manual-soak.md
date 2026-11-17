@@ -213,6 +213,15 @@ unqualified fork `@0` view is not made empty automatically. Once CURRENT is posi
 the listing enumerates positive generations; a selectable initial empty view need
 not be a separate catalog entry.
 
+For incomplete historical connection metadata, a valid seal can prove an empty
+positive historical vector; it cannot reconstruct a lost nonempty recipe.
+A missing row in existing legacy metadata is refused without switching storage.
+Whole-file absence has an older compatibility meaning: without a dependency seal,
+it may be impossible to tell an originally disconnected state from a lost file.
+An opened empty legacy view therefore does not authenticate that lost history.
+Exact historical recovery requires original consistent recovery data; this does
+not introduce an online repair command or authorize guessing old pins/recipes.
+
 Qualification for this history follow-up: changed runtime classes compile;
 all 316 DUMB2 tests pass, including two added history/publication regressions.
 Real Console confirms history with storage closed and with another Context
