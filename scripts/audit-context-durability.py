@@ -127,7 +127,7 @@ def main():
                   fixture_checks=int(completed[1]) if completed else 0,
                   java_version=subprocess.run(['java', '-version'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, env=environment).stdout.strip())
     with zipfile.ZipFile(jar) as packaged:
-        names = ('ContextStore', 'ContextSnapshot', 'ContextBase', 'ContextManifestStore', 'ConnectionStore', 'RevisionStore', 'RevisionManifestStore')
+        names = ('ContextStore', 'ContextSnapshot', 'ContextBase', 'ContextManifestStore', 'ConnectionStore', 'RevisionStore', 'RevisionManifestStore', 'DurableFiles', 'UnconfirmedRevisionException')
         report['matches_built_provider_classes'] = all(
             (ROOT / 'kanger-data-dumb2/target/classes/org/kanger/storage/dumb2' / (name + '.class')).is_file()
             and packaged.read('org/kanger/storage/dumb2/' + name + '.class') ==

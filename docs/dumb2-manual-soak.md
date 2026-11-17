@@ -438,3 +438,14 @@ The [protocol](architecture/3.8.0-context-durable-publication-protocol.md) recor
 the CURRENT namespace counterexample and implementation order; the model gate
 is RED and does not simulate a physical power cut. Earlier process-death PASS
 is limited to its recorded scope.
+
+
+### Stage 650 — scoped durability implementation
+
+Own publication now forces its frame before CURRENT and marker/parent entries
+before acknowledging success. If the final barrier fails, CURRENT is fenced
+until checkpoint repeats the barriers successfully. Initial markers and fork
+frames use the same primitives. The namespace model now passes, with actual
+own-frame barriers checked in the trace. The earlier RED remains historical.
+This does not yet qualify modular exported pins or a filesystem/device profile;
+full power-loss acceptance is still open. See the protocol linked above.

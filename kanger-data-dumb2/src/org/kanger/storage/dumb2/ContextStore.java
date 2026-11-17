@@ -329,6 +329,7 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
                 }
             }
 
+            DurableFiles.forceContextFrame(normalized,forkRevision);
             RevisionStore.create(
                     targetRevision,
                     forkRevision);
@@ -432,6 +433,7 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
         if(unconfirmedPublication!=null)throw new StorageLifecycleException(StorageLifecycleErrorCode.STORAGE_CONTEXT_INCOMPLETE,"Revision publication is unconfirmed; checkpoint storage before using CURRENT");
     }
     private long advanceQualifiedMarker(long next,ConnectionVector qualified,boolean data) throws Exception {
+        DurableFiles.forceContextFrame(location,next);
         try{return RevisionStore.advance(revisionPath(location),revision);}
         catch(UnconfirmedRevisionException failure){
             if(failure.previous!=revision||failure.next!=next)throw failure;
@@ -450,6 +452,10 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
         try(ContextSnapshot snapshot=ContextSnapshot.open(location,observed)){
             if(!contextId.equals(snapshot.getContextId()))throw new StorageLifecycleException(StorageLifecycleErrorCode.STORAGE_CONTEXT_INCOMPLETE,"Pending publication Context identity changed");
         }
+        // Rereading CURRENT establishes visibility, not persistence. Never clear the fence
+        // until the selected frame and marker namespace have both been stabilized.
+        DurableFiles.forceContextFrame(location,observed);
+        RevisionStore.confirmDurable(revisionPath(location));
         if(observed==pending.next){
             if(pending.canonical!=null)for(Map.Entry<String,TreeMap<Long,byte[]>> entry:pending.written.entrySet()){
                 ContextBase base=bases.get(entry.getKey());

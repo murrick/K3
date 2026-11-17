@@ -2,7 +2,7 @@
 package org.kanger.storage.dumb2;
 import java.io.IOException;
 
-/** The move failed and its visible outcome could not be established. Never proof of rollback. */
+/** Marker visibility or persistence could not be confirmed. Never proof of rollback. */
 final class UnconfirmedRevisionException extends IOException {
     private static final long serialVersionUID=1L;
     final long previous,next;

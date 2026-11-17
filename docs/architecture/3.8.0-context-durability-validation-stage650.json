@@ -1,0 +1,26 @@
+{
+  "scope": "31-driver recovery coverage with one corrected-fixture focused retry; not a single green full-run report",
+  "source_head": "bf00aad6f438e82ede5ffa3a425da1e4d5d375a3",
+  "source_dirty": true,
+  "full_attempt_passed": false,
+  "full_attempt_passed_drivers": 30,
+  "full_attempt_drivers": 31,
+  "failed_driver": "org.kanger.storage.dumb2.SymbolicMarkerVerificationRunner",
+  "failure": "Invalid new fixture had no schema; publication integrity refused it before the intended barrier",
+  "fixture_fix": "Acquire terms schema before publishing the initially empty Context",
+  "focused_retry_passed": true,
+  "focused_retry_checks": 17,
+  "effective_covered_drivers": 31,
+  "effective_checks": 2426,
+  "production_changed_after_full_attempt_compilation": false,
+  "console_package_selected_unit_tests": 80,
+  "additional_create_fork_base_tests": 26,
+  "full_power_loss_acceptance": false,
+  "artifacts_sha256": {
+    "target/context-production-rounds/run-i6l5iifj/report.json": "11e1d8918ace4bde1015c70b9de25393be3e59e1e21aad6e251d62b8547e0207",
+    "target/context-production-rounds/stage650-verification-retry/verification.log": "30e02f99b3ef1736eeba633b58b691378f134eaa51066c0435add63abfaeb58e",
+    "kanger-qualification/src/org/kanger/storage/dumb2/SymbolicMarkerVerificationRunner.java": "441c1a6f48b3d43c22c0eea33ef1015c4bc494d218e6af7f74f2bb89159bdcd4",
+    "/tmp/k3-650-package-final2.log": "cc43b7f372b3f4c9c9b1084c06f9e6217fff826d811ef13da9ee3d18d6dbf98c",
+    "/tmp/k3-650-create-fork.log": "c476b392b3d8cd012baaac708cd4a039c158cc0d5ed62468dd651ec41e05e3e6"
+  }
+}

@@ -1504,6 +1504,14 @@ def main():
             candidate.write_text(changed, encoding='utf-8')
             production = [candidate if p == original else p for p in production]
     if args.mode == 'dependent-symbolic-recovery-contract':
+        original = root / 'kanger-data-dumb2/src/org/kanger/storage/dumb2/DurableFiles.java'
+        source = original.read_text(encoding='utf-8')
+        marker = '    static void forceDirectory(Path path) throws IOException {'
+        if source.count(marker) != 1:
+            raise RuntimeError('Directory durability fault boundary changed')
+        candidate = run / 'publication-faults/org/kanger/storage/dumb2/DurableFiles.java'
+        candidate.write_text(source.replace(marker, marker + '\n        SymbolicMarkerFaults.directory(path);'), encoding='utf-8')
+        production = [candidate if p == original else p for p in production]
         original = root / 'kanger-data-dumb2/src/org/kanger/storage/dumb2/RevisionStore.java'
         source = original.read_text(encoding='utf-8')
         move = 'Files.move(temporary, path,'

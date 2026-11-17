@@ -70,6 +70,16 @@ final class RevisionStore {
         }
         Files.write(path, encode(revision),
                 StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
+        try {
+            confirmDurable(path);
+        } catch (IOException | RuntimeException | Error failure) {
+            // CREATE_NEW succeeded in this call: no existing marker is removed.
+            try { Files.delete(path); }
+            catch (IOException | RuntimeException | Error cleanupFailure) {
+                if (cleanupFailure != failure) failure.addSuppressed(cleanupFailure);
+            }
+            throw failure;
+        }
         return revision;
     }
 
@@ -122,7 +132,7 @@ final class RevisionStore {
      * @param expectedRevision revision observed by the caller
      * @return newly persisted revision
      * <p>An I/O error from the move is reconciled only when the ordinary
-     * marker reader confirms the exact next revision. If confirmation also
+     * marker reader confirms the exact next revision and persistence barriers complete. If confirmation also
      * fails, the exception does not prove that the marker stayed unchanged.
      * The caller owns exclusive Context publication and subsequent recovery.</p>
      *
@@ -162,6 +172,12 @@ final class RevisionStore {
                 // The owner holds the Context lock; verify an ambiguous move result.
                 if (!confirmsPublication(path, current, next, moveFailure)) throw moveFailure;
             }
+            // A visible next marker is not yet a durable acknowledgement.
+            try {
+                confirmDurable(path);
+            } catch (IOException barrierFailure) {
+                throw new UnconfirmedRevisionException(current, next, barrierFailure);
+            }
             published = true;
             return next;
         } catch (IOException | RuntimeException | Error failure) {
@@ -177,6 +193,12 @@ final class RevisionStore {
                 }
             }
         }
+    }
+
+    /** Recovery must repeat barriers even when CURRENT already reads as the next revision. */
+    static void confirmDurable(Path path) throws IOException {
+        DurableFiles.forceFile(path);
+        DurableFiles.forceParents(path);
     }
 
     private static boolean confirmsPublication(Path path, long previous, long next, IOException moveFailure) throws UnconfirmedRevisionException {
