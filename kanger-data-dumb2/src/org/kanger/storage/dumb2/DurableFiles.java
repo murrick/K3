@@ -4,6 +4,7 @@ package org.kanger.storage.dumb2;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.file.*;
+import org.kanger.exception.StorageLifecycleException;
 
 /** Necessary local persistence barriers. Successful calls alone do not qualify a device profile. */
 final class DurableFiles {
@@ -45,7 +46,11 @@ final class DurableFiles {
     }
 
     /** Own frame only; dependencies are exact references, not recursively acquired knowledge. */
-    static void forceContextFrame(Path location, long revision) throws IOException {
+    static void forceContextFrame(Path location, long revision) throws IOException, StorageLifecycleException {
+        DurabilityProfile.Inspection profile=DurabilityProfile.inspect();
+        profile.requireContext(location);
+        if(revision>RevisionStore.INITIAL_REVISION)
+            profile.requireTree(ContextStore.generationPath(location,revision),location.getFileName()+"@"+revision);
         forceFile(ContextStore.contextPath(location));
         Path connections = ConnectionStore.path(location);
         if (Files.exists(connections, LinkOption.NOFOLLOW_LINKS)) forceFile(connections);

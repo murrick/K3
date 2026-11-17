@@ -466,3 +466,21 @@ This supersedes stage 650's failed-fresh-marker cleanup description.
 [Current protocol and proofs](architecture/3.8.0-context-durable-pins.md) distinguish
 the live-filesystem initial-retraction test from the explicit namespace model.
 Supported FS/device profile and full power-loss acceptance remain open.
+
+
+### Stage 652 — unsupported durability storage
+
+Durable DUMB2 ownership/publication currently requires the necessary profile
+`linux-ext4-ordered-barriers-v1`. Unsupported media or unverifiable active kernel
+settings return `STORAGE_DURABILITY_UNSUPPORTED` with action
+`SELECT_SUPPORTED_DURABILITY_STORAGE`; success does not silently mean a weaker
+process-only contract. The guard checks the effective path mount, not just its
+parent filesystem. It admits writable ext4 bind views under a read-only root.
+
+Valid legacy snapshots on unsupported media remain inspectable read-only. A
+self-contained explicit import/fork onto eligible storage is supported; persisting
+a pin to the unsupported locator is refused. A late eligibility failure after
+marker visibility remains unconfirmed and needs successful checkpoint recovery.
+The [current profile](architecture/3.8.0-context-durability-profile.md) lists exact
+conditions and the still-open device/power-loss qualification. It is not a
+general certificate for any disk whose mount happens to say ext4.

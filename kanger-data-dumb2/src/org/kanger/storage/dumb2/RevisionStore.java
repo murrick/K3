@@ -232,6 +232,12 @@ final class RevisionStore {
     static void confirmDurable(Path path) throws IOException {
         DurableFiles.forceFile(path);
         DurableFiles.forceParents(path);
+        try {
+            // Fresh kernel evidence after the barriers, without an operation-global cache.
+            DurabilityProfile.requireMarker(path);
+        } catch (StorageLifecycleException unsupported) {
+            throw new IOException("Marker durability eligibility is unconfirmed at " + path.getFileName(), unsupported);
+        }
     }
 
     private static boolean confirmsPublication(Path path, long previous, long next, IOException moveFailure) throws UnconfirmedRevisionException {

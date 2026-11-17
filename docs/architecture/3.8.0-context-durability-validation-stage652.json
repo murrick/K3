@@ -1,0 +1,45 @@
+{
+  "scope": "Necessary software eligibility, not device power-loss certification",
+  "head": "f1378ba38e9b45606604acb0c95da4283fdf29b2",
+  "source_dirty": true,
+  "selected_package_unit_tests": 115,
+  "native_recovery": {
+    "drivers": 32,
+    "checks": 2485,
+    "passed": true
+  },
+  "focused_marker_confirmation": {
+    "drivers": 3,
+    "checks": 413,
+    "passed": true,
+    "overlaps_full_recovery": true
+  },
+  "necessary_profile_gate_passed": true,
+  "other_gates": {
+    "own_namespace": {
+      "report": "/tmp/k3-stage607/target/context-marker-durability/run-b20i1e1q/report.json",
+      "sha256": "04de431f07a78905d6e36e140beca2c9a4c50c655f7b69611e06f49d7b25baeb"
+    },
+    "exported_pin": {
+      "report": "/tmp/k3-stage607/target/context-exported-pin-durability/run-6p81u1u6/report.json",
+      "sha256": "4dde3b35508b1f22972fce1953ecb9bf4a281389f05a5e29912d06202eb554c7"
+    },
+    "initial_pin": {
+      "report": "/tmp/k3-stage607/target/context-initial-pin-durability/run-x6_dbzg9/report.json",
+      "sha256": "114863d27f35fe7a5dc2a37ae990451f06702b001c22fcc72c7552ad2a74c8fe"
+    }
+  },
+  "full_power_loss_acceptance": false,
+  "artifacts_sha256": {
+    "/tmp/k3-stage607/target/context-durability-profile/run-pltz7udz/report.json": "65ce6f7efde929c8cf2750bdb364b9c1b92c0cbed94e0d2f3d18c51c6c1bbeaf",
+    "/tmp/k3-stage607/target/context-production-rounds/run-1u7q7sw0/report.json": "101bf955b0734e7cfcf53d2eb363844fd500ffb859b37485789fcd69785bb669",
+    "/tmp/k3-stage607/target/context-production-rounds/run-tzjyykrs/report.json": "15ea76ecddd0ad5e976431985d3128c342b86e6b102c8f9f6cb7982c8a100348",
+    "/tmp/k3-stage607/kanger-console/target/kanger-console-3.3-SNAPSHOT.jar": "ca5cce279f6e7a9e36760ae4c3545902b205b677585fa38cacde348d88225f23",
+    "/tmp/k3-652-package-final.log": "c8d52b6884e21758f4a0d9692788d87931f0a1195e8ff9a5af057bcb346749e9",
+    "/tmp/k3-stage607/kanger-data-dumb2/src/org/kanger/storage/dumb2/DurabilityProfile.java": "333634b831fef77e6faa89cb634e90a1d54033e964c01e0204940c21871ed7a1",
+    "/tmp/k3-stage607/kanger-data-dumb2/src/org/kanger/storage/dumb2/DurableFiles.java": "05b78cfa1dec8e4373cd956945ca2718795fc905e9c0ad004e1d7d726e983b11",
+    "/tmp/k3-stage607/kanger-data-dumb2/src/org/kanger/storage/dumb2/RevisionStore.java": "ff4333da9f74708b23b44545880134a3ff6e9334ecc97f8b2354706aeece37d9",
+    "/tmp/k3-stage607/kanger-data-dumb2/src/org/kanger/storage/dumb2/ContextStore.java": "e94f39424f9d6cebe490dc3bd6722cc52eead3e6c4078bd335191a2dbc33f3de",
+    "/tmp/k3-stage607/kanger/src/org/kanger/enums/StorageLifecycleErrorCode.java": "fc9f57c6cc2a572ee4fe9446381288a744bfbe1d98bfa1a0d621a82034832c97"
+  }
+}

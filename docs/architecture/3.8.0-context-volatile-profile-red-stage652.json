@@ -1,0 +1,15 @@
+{
+  "scope": "Actual tmpfs successful publication; documented volatile-medium boundary, no reboot performed",
+  "runtime": "f1378ba38e9b45606604acb0c95da4283fdf29b2",
+  "filesystem": "tmpfs",
+  "acknowledged_revision": 1,
+  "typed_refusal": false,
+  "necessary_profile_gate_passed": false,
+  "full_power_loss_acceptance": false,
+  "source": "https://docs.kernel.org/filesystems/tmpfs.html",
+  "artifacts_sha256": {
+    "/tmp/k3-stage607/kanger-console/target/kanger-console-3.3-SNAPSHOT.jar": "31940f421f9ea2d591dcf466ee768f2bece4ab760ad5e05deaca056dedb95c9d",
+    "/tmp/k3-652-tmpfs-red.log": "1ce6232e6c9f12f01fec70ca5ff7f1a17815f3c41a3b51e41bb8560a2c4a81c7",
+    "/tmp/k3-stage607/kanger-qualification/src/org/kanger/storage/dumb2/ContextVolatileProfileRunner.java": "1424c4e0691d8c4bf81ea0ba936ff11b89eb268d726aa92d57c8b6ae74f8e383"
+  }
+}

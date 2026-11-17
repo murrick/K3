@@ -54,9 +54,12 @@ def main():
                         help='Compile isolated dependent-pair authoring refutation hook')
     parser.add_argument('--preparation-only', action='store_true', help='Run only the subprocess preparation matrix within the native recovery overlay')
     parser.add_argument('--reclamation-only', action='store_true', help='Run only the two-stage orphan reclamation subprocess matrix')
+    parser.add_argument('--marker-confirmation-only', action='store_true', help='Run unconfirmed native/save/reindex marker and final-profile recovery controls')
     parser.add_argument('--pin-durability-only', action='store_true', help='Run only direct exported-pin barrier failures within the native recovery overlay')
     parser.add_argument('--sidecar-pruning-only', action='store_true', help='Run only the interrupted sidecar pruning matrix')
     args = parser.parse_args()
+    if args.marker_confirmation_only and (args.mode != 'dependent-symbolic-recovery-contract' or args.preparation_only or args.reclamation_only or args.sidecar_pruning_only or args.pin_durability_only):
+        parser.error('--marker-confirmation-only requires native recovery without other focused flags')
     if args.pin_durability_only and (args.mode != 'dependent-symbolic-recovery-contract' or args.preparation_only or args.reclamation_only or args.sidecar_pruning_only):
         parser.error('--pin-durability-only requires the native recovery profile without other focused flags')
     if args.sidecar_pruning_only and (args.mode != 'dependent-symbolic-recovery-contract' or args.preparation_only or args.reclamation_only):
@@ -1084,6 +1087,10 @@ def main():
         names = [('org.kanger.storage.dumb2.SymbolicSidecarPruningDeathRunner', 'SYMBOLIC_SIDECAR_PRUNING_DEATH_PASS')]
     if args.pin_durability_only:
         names = [('org.kanger.storage.dumb2.SymbolicPinDurabilityRunner', 'SYMBOLIC_PIN_DURABILITY_PASS')]
+    if args.marker_confirmation_only:
+        names = [('org.kanger.storage.dumb2.SymbolicUnconfirmedNativeRunner', 'SYMBOLIC_UNCONFIRMED_NATIVE_PASS'),
+                 ('org.kanger.storage.dumb2.SymbolicUnconfirmedSaveRunner', 'SYMBOLIC_UNCONFIRMED_SAVE_PASS'),
+                 ('org.kanger.storage.dumb2.SymbolicReindexRecoveryRunner', 'SYMBOLIC_REINDEX_RECOVERY_PASS')]
     drivers = [root / 'kanger-qualification/src' / (name.replace('.', '/') + '.java') for name, _ in names]
     if args.ordinary_integration_candidate:
         original = root / 'kanger-data-dumb2/src/org/kanger/storage/dumb2/DB.java'
@@ -1518,6 +1525,14 @@ def main():
         candidate = run / 'publication-faults/org/kanger/storage/dumb2/DurableFiles.java'
         candidate.write_text(source.replace(marker, marker + '\n        SymbolicMarkerFaults.directory(path);'), encoding='utf-8')
         production = [candidate if p == original else p for p in production]
+        original = root / 'kanger-data-dumb2/src/org/kanger/storage/dumb2/DurabilityProfile.java'
+        source = original.read_text(encoding='utf-8')
+        marker = '    static void requireMarker(Path marker) throws StorageLifecycleException {'
+        if source.count(marker) != 1:
+            raise RuntimeError('Final profile confirmation boundary changed')
+        candidate = run / 'publication-faults/org/kanger/storage/dumb2/DurabilityProfile.java'
+        candidate.write_text(source.replace(marker, marker + '\n        SymbolicMarkerFaults.profile(marker);'), encoding='utf-8')
+        production = [candidate if p == original else p for p in production]
         original = root / 'kanger-data-dumb2/src/org/kanger/storage/dumb2/RevisionStore.java'
         source = original.read_text(encoding='utf-8')
         move = 'Files.move(temporary, path,'
@@ -1604,7 +1619,7 @@ def main():
     passed = all(result['passed'] for result in results)
     report = dict(ground_attachment_candidate=args.ground_attachment_candidate, ordinary_integration_candidate=args.ordinary_integration_candidate, head=head, production_sources=len(production), mode=args.mode, passed=passed, results=results,
                   dependent_authoring_candidate=args.dependent_authoring_candidate,
-                  pin_durability_only=args.pin_durability_only, preparation_only=args.preparation_only, reclamation_only=args.reclamation_only, sidecar_pruning_only=args.sidecar_pruning_only, symbolic_publication_faults=args.mode == 'dependent-symbolic-recovery-contract',
+                  marker_confirmation_only=args.marker_confirmation_only, pin_durability_only=args.pin_durability_only, preparation_only=args.preparation_only, reclamation_only=args.reclamation_only, sidecar_pruning_only=args.sidecar_pruning_only, symbolic_publication_faults=args.mode == 'dependent-symbolic-recovery-contract',
                   scope={'dependent-symbolic-recovery-contract': 'Exact-source/thread-bound preparation/publication cuts, actual subprocess death and living-session recovery',
                          'dependent-symbolic-outcome-contract': 'Typed outcomes, checked publication, retired-cache accounting and persistent-chain recovery; default writer selection unchanged',
                          'dependent-symbolic-family-contract': 'Read-only independent-cut receiving/model composition using guarded internal checked symbolic projections; no admission authority',

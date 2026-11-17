@@ -102,6 +102,7 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
 
         if (!Files.notExists(revisionPath, java.nio.file.LinkOption.NOFOLLOW_LINKS))
             throw new java.nio.file.FileAlreadyExistsException(revisionPath.toString());
+        DurabilityProfile.requireContext(normalized);
         ContextManifestStore.Manifest manifest = ContextManifestStore.create(contextPath);
         UUID contextId = manifest.getContextId();
         long revision;
@@ -156,6 +157,7 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
             throw incomplete(normalized);
         }
 
+        DurabilityProfile.requireContext(normalized);
         ContextLock lock = acquireLock(normalized);
         try {
             ContextManifestStore.Manifest manifest = ContextManifestStore.read(contextPath);
@@ -231,6 +233,8 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
             throw new java.nio.file.FileAlreadyExistsException(
                     "DUMB2 fork target already exists: " + normalized);
         }
+
+        DurabilityProfile.requireContext(normalized);
 
         RevisionRef sourceRef =
                 new RevisionRef(
