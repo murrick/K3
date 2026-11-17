@@ -116,6 +116,7 @@ def main():
         names.insert(0, ('org.kanger.storage.dumb2.SymbolicPreparationDeathRunner', 'SYMBOLIC_PREPARATION_DEATH_PASS'))
         names.insert(0, ('org.kanger.storage.dumb2.SymbolicOrphanReclamationDeathRunner', 'SYMBOLIC_ORPHAN_RECLAMATION_DEATH_PASS'))
         names.insert(0, ('org.kanger.storage.dumb2.SymbolicSidecarPruningDeathRunner', 'SYMBOLIC_SIDECAR_PRUNING_DEATH_PASS'))
+        names.insert(0, ('org.kanger.storage.dumb2.SymbolicDisconnectedHistoryProbe', 'SYMBOLIC_DISCONNECTED_HISTORY_PASS'))
     if args.mode == 'dependent-symbolic-family-contract':
         names = [('org.kanger.ContextDependentSymbolicFamilyInspectionRunner', 'CONTEXT_DEPENDENT_SYMBOLIC_FAMILY_INSPECTION_PASS'),
                  ('org.kanger.storage.dumb2.SymbolicCacheFamilyInspectionRunner', 'SYMBOLIC_CACHE_FAMILY_INSPECTION_PASS'),

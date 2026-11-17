@@ -78,6 +78,9 @@ final class ConnectionStore {
         }
         ConnectionVector vector =
                 state.byRevision.get(Long.valueOf(source.getRevision()));
+        if (vector == null && hasSealedEmptyHistory(location, source)) {
+            return ConnectionVector.empty();
+        }
         if (vector == null) {
             throw new StorageLifecycleException(
                     StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT,
@@ -85,6 +88,27 @@ final class ConnectionStore {
                             + source + " at " + path(location));
         }
         return vector;
+    }
+
+    /**
+     * Before the first transition sidecar, disconnected revisions have no rows.
+     * Their immutable seal can prove an empty vector without rewriting metadata.
+     * A missing current/future row, unsealed history, or a seal without dependency
+     * identity never authorizes this inference.
+     */
+    private static boolean hasSealedEmptyHistory(Path location, RevisionRef source)
+            throws IOException, StorageLifecycleException {
+        long revision = source.getRevision();
+        if (revision <= RevisionStore.INITIAL_REVISION
+                || revision >= RevisionStore.read(ContextStore.revisionPath(location))) {
+            return false;
+        }
+        Path generation = ContextStore.generationPath(location, revision);
+        RevisionManifestStore.Manifest manifest = RevisionManifestStore.validate(
+                generation, source.getContextId(), revision, revision - 1L);
+        return manifest.hasDependencyDigest()
+                && java.util.Arrays.equals(manifest.getDependencyDigest(),
+                        RevisionManifestStore.dependencyDigest(ConnectionVector.empty()));
     }
 
     /**
