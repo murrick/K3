@@ -222,6 +222,12 @@ An opened empty legacy view therefore does not authenticate that lost history.
 Exact historical recovery requires original consistent recovery data; this does
 not introduce an online repair command or authorize guessing old pins/recipes.
 
+Current engineering recovery evidence covers named process-termination and I/O
+failure cases on a running filesystem. It is not a qualified power-loss/reboot
+guarantee. The required durability profile is under explicit review (D07); the
+syscall audit in the architecture notes is an observation, not acceptance of a
+stronger storage guarantee.
+
 Qualification for this history follow-up: changed runtime classes compile;
 all 316 DUMB2 tests pass, including two added history/publication regressions.
 Real Console confirms history with storage closed and with another Context
