@@ -531,3 +531,19 @@ and actual Rule-v1 migration. This is one-device ordinal coverage; marker-visibl
 and distinct-device pin cases remain separate. `--java-profile c1` is an explicit
 experimental diagnostic option; its unreproduced TERM observation is OPEN and
 must not be folded into baseline acceptance or treated as a proved runtime bug.
+
+
+## Stage 657 — exact visible marker and exported direct pin
+
+Run `python3 scripts/persistence_vm/prepare_pins.py`, then
+`python3 scripts/qualify-context-device-pins.py` on the owned apparatus.
+Audit the resulting report with
+`python3 scripts/audit-context-device-pins.py PATH/TO/report.json`.
+Producer and Consumer use different ext4/NBD devices. Four positive exports
+must recover the exact referenced revision even before Producer's own ACK.
+No-export initial windows have a separate strict oracle; a partial namespace
+with typed read-only refusal is recorded as an unresolved observation, not a
+valid empty Context or a successful absent-or-complete recovery. The coordinator
+retains those failed receipts, runs remaining controls and returns nonzero for
+an incomplete aggregate. Audit success validates evidence, not matrix acceptance.
+See the [protocol and scope](architecture/3.8.0-context-device-pins.md).

@@ -1,0 +1,1547 @@
+{
+  "scope": "Four marker-visible producer windows and exact direct-pin export on distinct guest devices; two sensitivity controls",
+  "head": "c4b4da4c569a3f82c83e3885b0cb3dbfb879e866",
+  "production_baseline": "fb0171fa3ed2fdc520ca26f86089b1a88cc612dc",
+  "production_code_changed": false,
+  "prepared_inputs": {
+    "prepared_basis": {
+      "java_profile": "baseline",
+      "qemu_version": "QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)",
+      "kernel": "target/persistence-vm/tools/boot/vmlinuz-6.8.0-149-generic",
+      "template": "target/persistence-vm/template.ext4",
+      "packages": [
+        "Package: ipxe-qemu\nVersion: 1.21.1+git-20220113.fbbdc3926-0ubuntu2\nArchitecture: all",
+        "Package: libdaxctl1\nVersion: 77-2ubuntu2\nArchitecture: amd64",
+        "Package: libfdt1\nVersion: 1.7.0-2build1\nArchitecture: amd64",
+        "Package: libndctl6\nVersion: 77-2ubuntu2\nArchitecture: amd64",
+        "Package: libpmem1\nVersion: 1.13.1-1.1ubuntu2\nArchitecture: amd64",
+        "Package: librdmacm1t64\nVersion: 50.0-2ubuntu0.2\nArchitecture: amd64",
+        "Package: libslirp0\nVersion: 4.7.0-1ubuntu3.1\nArchitecture: amd64",
+        "Package: linux-image-unsigned-6.8.0-149-generic\nVersion: 6.8.0-149.149\nArchitecture: amd64",
+        "Package: qemu-system-common\nVersion: 1:8.2.2+ds-0ubuntu1.18\nArchitecture: amd64",
+        "Package: qemu-system-data\nVersion: 1:8.2.2+ds-0ubuntu1.18\nArchitecture: all",
+        "Package: qemu-system-x86\nVersion: 1:8.2.2+ds-0ubuntu1.18\nArchitecture: amd64",
+        "Package: seabios\nVersion: 1.16.3-2\nArchitecture: all"
+      ],
+      "sha256": {
+        "target/persistence-vm/tools/boot/vmlinuz-6.8.0-149-generic": "c2b4577c780c2cbd15dda13b6c890bf655fb4d1e1434a801e6e79e88e8c9a2e1",
+        "target/persistence-vm/template.ext4": "ab44a7ba2067eb5b656b028f51f13d0bd7a610100369926d599e750959754e2c",
+        "kanger-console/target/kanger-console-3.3-SNAPSHOT.jar": "ca5cce279f6e7a9e36760ae4c3545902b205b677585fa38cacde348d88225f23",
+        "kanger-qualification/src/org/kanger/storage/dumb2/ContextBlockDeviceRunner.java": "4561781ebfb2134170c30d0ee937375b11098641d29f6d8bd142980f6578e6f3",
+        "target/persistence-vm/tools/usr/bin/qemu-system-x86_64": "8a35ccba41582fc6c38b9df85fc9e35fa1d42f414d2d7d8090ee9b2f5e7c0854",
+        "scripts/persistence_vm/prepare.py": "2ba458b2b71ad66b17e7ed39073c917c811bcd716d7c06ca0886f36c24da6c2a",
+        "scripts/persistence_vm/tool-packages.json": "32dbfb10f6adc4a9d4ba2e2a500c8d3b4e528870d09752bc19fee92fee2e45a1",
+        "target/persistence-vm/debs/ipxe-qemu_1.21.1+git-20220113.fbbdc3926-0ubuntu2_all.deb": "1f1612934b6ddaf4dd633760dfe5ef2a79ea2507341fd5efe394ff589a044707",
+        "target/persistence-vm/debs/libdaxctl1_77-2ubuntu2_amd64.deb": "c6629b49c79343fb11ae404aeaa3156f051168da6c6d3d9d8d516acd94705061",
+        "target/persistence-vm/debs/libfdt1_1.7.0-2build1_amd64.deb": "274d20dfab9d6b216b5de85446a93f6ce5b2cd82c847b8dfdc508577f76eb96a",
+        "target/persistence-vm/debs/libndctl6_77-2ubuntu2_amd64.deb": "4eab53588a8fa9e3192635e118c2d91bc069cde46a4a3785c77a0bb1ae001d02",
+        "target/persistence-vm/debs/libpmem1_1.13.1-1.1ubuntu2_amd64.deb": "8f1be1cc834a98f0cf5c0950153f7f939a0c2c92095e98cd7bb40c752c545c1b",
+        "target/persistence-vm/debs/librdmacm1t64_50.0-2ubuntu0.2_amd64.deb": "7b7cc2fa16564bf301751b43d05d16f0846288b080d9a25a92a691d0df33fc68",
+        "target/persistence-vm/debs/libslirp0_4.7.0-1ubuntu3.1_amd64.deb": "4efa2d1c509de4d10fe965e86a3d864bf542996caf476d9111fd882c73857164",
+        "target/persistence-vm/debs/linux-image-unsigned-6.8.0-149-generic_6.8.0-149.149_amd64.deb": "a82f22e04caa71f07f2a30e060f79d6221612f8f7abd6f4b791ca515cbec8157",
+        "target/persistence-vm/debs/qemu-system-common_1%3a8.2.2+ds-0ubuntu1.18_amd64.deb": "0a0b744f31e87d72dd0465436b8dfbb1ef9f574ecd0d5a2e9dd8c5cb7d0fef1f",
+        "target/persistence-vm/debs/qemu-system-data_1%3a8.2.2+ds-0ubuntu1.18_all.deb": "a14b88d864859bd61c8a3274971da4ecb7da6cec15be6c265d0d411f783d5f2e",
+        "target/persistence-vm/debs/qemu-system-x86_1%3a8.2.2+ds-0ubuntu1.18_amd64.deb": "14602e262627adac030329d2cecfee5f6c0938b34566ff2ea2d4c9a9eb02430d",
+        "target/persistence-vm/debs/seabios_1.16.3-2_all.deb": "cac4e59a66c834d19cae751c22ab3a0391c22f78010fd11aa2e3fe630e6bc0e0"
+      }
+    },
+    "java_profile": "baseline",
+    "kernel": "target/persistence-vm/tools/boot/vmlinuz-6.8.0-149-generic",
+    "qemu_version": "QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)",
+    "os_template": "target/persistence-pin-vm/template.ext4",
+    "data_templates": {
+      "producer": "target/persistence-pin-vm/data.ext4",
+      "consumer": "target/persistence-pin-vm/consumer.ext4"
+    },
+    "consumer_provider_unmodified": true,
+    "producer_overlay": "Two pause calls only: after successful marker replacement / visible initial link before confirmation",
+    "sha256": {
+      "scripts/persistence_vm/prepare_pins.py": "2e5685b4efe6af3b314daf94570db0692ee944ae3d84e0472eb5e27d2ee47900",
+      "kanger-console/target/kanger-console-3.3-SNAPSHOT.jar": "ca5cce279f6e7a9e36760ae4c3545902b205b677585fa38cacde348d88225f23",
+      "kanger-data-dumb2/src/org/kanger/storage/dumb2/RevisionStore.java": "ff4333da9f74708b23b44545880134a3ff6e9334ecc97f8b2354706aeece37d9",
+      "target/persistence-pin-vm/RevisionStore.java": "80b0ec5abd284a87ae5fbf6cb1461e7e0032e5ab2c93f9bce92c653ab7ca8896",
+      "target/persistence-pin-vm/DurablePins.java": "7b2fe589c9128710dc80a743bbcd022a008dde4d61685aaffa150fa640ca3822",
+      "target/persistence-pin-vm/rootfs/sbin/init": "dc83f2cae2be236726f7ba71329274bc0634451b588fb5525617769973bd2924",
+      "target/persistence-pin-vm/template.ext4": "9155bea334daac423e1eb739a33499a0d89fd91e127c49b37925ea21fc573e33",
+      "target/persistence-pin-vm/data.ext4": "8df1c73a172395c907896371de44b1950f8b5c90b050f0170ae643be474f673c",
+      "target/persistence-pin-vm/consumer.ext4": "5cb169a1785656ada082718465ac233949ff698e49ccfa0514843c9dfbbaa846",
+      "target/persistence-vm/manifest.json": "35204430ed549e508c7860513a78cd04f4a871f77c543a9252090848527632be",
+      "target/persistence-vm/tools/boot/vmlinuz-6.8.0-149-generic": "c2b4577c780c2cbd15dda13b6c890bf655fb4d1e1434a801e6e79e88e8c9a2e1",
+      "target/persistence-vm/tools/usr/bin/qemu-system-x86_64": "8a35ccba41582fc6c38b9df85fc9e35fa1d42f414d2d7d8090ee9b2f5e7c0854",
+      "kanger-qualification/src/org/kanger/storage/dumb2/ContextDevicePinRunner.java": "d2b85c8cd8cf3d9722057b2aab5039f7e3f1390cb5c4c08f638f80869bc7321c",
+      "kanger-qualification/src/org/kanger/storage/dumb2/DevicePinPause.java": "d4995691b72d8dcb6fc634dec9638101f9182e68ccd3fbd008c404c9aac11a61",
+      "target/persistence-pin-vm/rootfs/app/classes/org/kanger/storage/dumb2/ContextBlockDeviceRunner.class": "4ef261391424a651d73e42ba6d0d555cdbef131fe777399118f855abcf1fb973",
+      "target/persistence-pin-vm/rootfs/app/classes/org/kanger/storage/dumb2/ContextDevicePinRunner.class": "b2cf3b4105a3ff9e425b66aa87676f71dcaeb49289b1bca3643e90ec23991806",
+      "target/persistence-pin-vm/rootfs/app/classes/org/kanger/storage/dumb2/DevicePinPause.class": "bb4b29f934ae342042097da3aaa84ae783e0aa253745453ca4b153a658f78df7",
+      "target/persistence-pin-vm/rootfs/app/producer-overlay/org/kanger/storage/dumb2/RevisionStore.class": "6aa1a9873f32d6479ea4bf369337bcb801119c76cbaf70dfdc5ac6837a49ebd3",
+      "target/persistence-pin-vm/rootfs/app/consumer-negative-overlay/org/kanger/storage/dumb2/DurablePins.class": "d2a97605de134a4aa8d7f1e35f7dfed9ff142f6e0e6052b0f56b3310ab92bd55"
+    }
+  },
+  "wire_controls": {
+    "cut_freezes_new_commands": true,
+    "unflushed_ack_is_lost": true,
+    "fua_does_not_flush_unrelated_writes": true,
+    "flush_covers_completed_prefix": true,
+    "later_writes_are_lost": true,
+    "out_of_range_refused": true
+  },
+  "cases": {
+    "append-export": {
+      "write": {
+        "marker": "PIN_CONSUMER_ACK mode=append consumer=2 target=2",
+        "failure": null,
+        "exit_code": -9,
+        "block_stats": {
+          "os": {
+            "reads": 823,
+            "writes": 28,
+            "flushes": 13,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "producer": {
+            "reads": 12,
+            "writes": 69,
+            "flushes": 61,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "consumer": {
+            "reads": 12,
+            "writes": 65,
+            "flushes": 49,
+            "fua": 0,
+            "dropped_sectors": 0
+          }
+        },
+        "visible_stats": {
+          "os": {
+            "reads": 819,
+            "writes": 20,
+            "flushes": 9,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "producer": {
+            "reads": 12,
+            "writes": 65,
+            "flushes": 52,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "consumer": {
+            "reads": 10,
+            "writes": 1,
+            "flushes": 1,
+            "fua": 0,
+            "dropped_sectors": 0
+          }
+        },
+        "post_visible_stats": {
+          "os": {
+            "reads": 4,
+            "writes": 8,
+            "flushes": 4,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "producer": {
+            "reads": 0,
+            "writes": 4,
+            "flushes": 9,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "consumer": {
+            "reads": 2,
+            "writes": 64,
+            "flushes": 48,
+            "fua": 0,
+            "dropped_sectors": 0
+          }
+        },
+        "journal_recovery": {
+          "vda": false,
+          "vdb": false,
+          "vdc": false
+        },
+        "honour_barriers": {
+          "os": true,
+          "producer": true,
+          "consumer": true
+        },
+        "consumer_provider_unmodified": true,
+        "negative": null,
+        "producer_only_cut": false
+      },
+      "cold_read": {
+        "marker": "PIN_COLD_RECOVERED mode=append consumer=2 target=2",
+        "failure": null,
+        "exit_code": -9,
+        "block_stats": {
+          "os": {
+            "reads": 665,
+            "writes": 15,
+            "flushes": 6,
+            "fua": 0,
+            "dropped_sectors": 8
+          },
+          "producer": {
+            "reads": 104,
+            "writes": 9,
+            "flushes": 4,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "consumer": {
+            "reads": 120,
+            "writes": 9,
+            "flushes": 4,
+            "fua": 0,
+            "dropped_sectors": 0
+          }
+        },
+        "visible_stats": null,
+        "post_visible_stats": null,
+        "journal_recovery": {
+          "vda": true,
+          "vdb": true,
+          "vdc": true
+        },
+        "honour_barriers": {
+          "os": true,
+          "producer": true,
+          "consumer": true
+        },
+        "consumer_provider_unmodified": true,
+        "negative": null,
+        "producer_only_cut": false
+      },
+      "passed": true
+    },
+    "append-window": {
+      "write": {
+        "marker": "PIN_VISIBLE mode=append target=2",
+        "failure": null,
+        "exit_code": -9,
+        "block_stats": {
+          "os": {
+            "reads": 819,
+            "writes": 20,
+            "flushes": 9,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "producer": {
+            "reads": 12,
+            "writes": 65,
+            "flushes": 52,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "consumer": {
+            "reads": 10,
+            "writes": 1,
+            "flushes": 1,
+            "fua": 0,
+            "dropped_sectors": 0
+          }
+        },
+        "visible_stats": {
+          "os": {
+            "reads": 819,
+            "writes": 20,
+            "flushes": 9,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "producer": {
+            "reads": 12,
+            "writes": 65,
+            "flushes": 52,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "consumer": {
+            "reads": 10,
+            "writes": 1,
+            "flushes": 1,
+            "fua": 0,
+            "dropped_sectors": 0
+          }
+        },
+        "post_visible_stats": {
+          "os": {
+            "reads": 0,
+            "writes": 0,
+            "flushes": 0,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "producer": {
+            "reads": 0,
+            "writes": 0,
+            "flushes": 0,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "consumer": {
+            "reads": 0,
+            "writes": 0,
+            "flushes": 0,
+            "fua": 0,
+            "dropped_sectors": 0
+          }
+        },
+        "journal_recovery": {
+          "vda": false,
+          "vdb": false,
+          "vdc": false
+        },
+        "honour_barriers": {
+          "os": true,
+          "producer": true,
+          "consumer": true
+        },
+        "consumer_provider_unmodified": true,
+        "negative": null,
+        "producer_only_cut": true
+      },
+      "cold_read": {
+        "marker": "PIN_PRODUCER_ONLY_RECOVERED mode=append selected=1",
+        "failure": null,
+        "exit_code": -9,
+        "block_stats": {
+          "os": {
+            "reads": 628,
+            "writes": 13,
+            "flushes": 6,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "producer": {
+            "reads": 164,
+            "writes": 9,
+            "flushes": 4,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "consumer": {
+            "reads": 10,
+            "writes": 1,
+            "flushes": 1,
+            "fua": 0,
+            "dropped_sectors": 0
+          }
+        },
+        "visible_stats": null,
+        "post_visible_stats": null,
+        "journal_recovery": {
+          "vda": true,
+          "vdb": true,
+          "vdc": true
+        },
+        "honour_barriers": {
+          "os": true,
+          "producer": true,
+          "consumer": true
+        },
+        "consumer_provider_unmodified": true,
+        "negative": null,
+        "producer_only_cut": false
+      },
+      "passed": true
+    },
+    "reindex-export": {
+      "write": {
+        "marker": "PIN_CONSUMER_ACK mode=reindex consumer=2 target=4",
+        "failure": null,
+        "exit_code": -9,
+        "block_stats": {
+          "os": {
+            "reads": 826,
+            "writes": 34,
+            "flushes": 13,
+            "fua": 0,
+            "dropped_sectors": 8
+          },
+          "producer": {
+            "reads": 12,
+            "writes": 159,
+            "flushes": 143,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "consumer": {
+            "reads": 12,
+            "writes": 67,
+            "flushes": 49,
+            "fua": 0,
+            "dropped_sectors": 0
+          }
+        },
+        "visible_stats": {
+          "os": {
+            "reads": 826,
+            "writes": 23,
+            "flushes": 9,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "producer": {
+            "reads": 12,
+            "writes": 154,
+            "flushes": 133,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "consumer": {
+            "reads": 10,
+            "writes": 1,
+            "flushes": 1,
+            "fua": 0,
+            "dropped_sectors": 0
+          }
+        },
+        "post_visible_stats": {
+          "os": {
+            "reads": 0,
+            "writes": 11,
+            "flushes": 4,
+            "fua": 0,
+            "dropped_sectors": 8
+          },
+          "producer": {
+            "reads": 0,
+            "writes": 5,
+            "flushes": 10,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "consumer": {
+            "reads": 2,
+            "writes": 66,
+            "flushes": 48,
+            "fua": 0,
+            "dropped_sectors": 0
+          }
+        },
+        "journal_recovery": {
+          "vda": false,
+          "vdb": false,
+          "vdc": false
+        },
+        "honour_barriers": {
+          "os": true,
+          "producer": true,
+          "consumer": true
+        },
+        "consumer_provider_unmodified": true,
+        "negative": null,
+        "producer_only_cut": false
+      },
+      "cold_read": {
+        "marker": "PIN_COLD_RECOVERED mode=reindex consumer=2 target=4",
+        "failure": null,
+        "exit_code": -9,
+        "block_stats": {
+          "os": {
+            "reads": 675,
+            "writes": 15,
+            "flushes": 6,
+            "fua": 0,
+            "dropped_sectors": 8
+          },
+          "producer": {
+            "reads": 102,
+            "writes": 10,
+            "flushes": 4,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "consumer": {
+            "reads": 126,
+            "writes": 9,
+            "flushes": 4,
+            "fua": 0,
+            "dropped_sectors": 0
+          }
+        },
+        "visible_stats": null,
+        "post_visible_stats": null,
+        "journal_recovery": {
+          "vda": true,
+          "vdb": true,
+          "vdc": true
+        },
+        "honour_barriers": {
+          "os": true,
+          "producer": true,
+          "consumer": true
+        },
+        "consumer_provider_unmodified": true,
+        "negative": null,
+        "producer_only_cut": false
+      },
+      "passed": true
+    },
+    "reindex-window": {
+      "write": {
+        "marker": "PIN_VISIBLE mode=reindex target=4",
+        "failure": null,
+        "exit_code": -9,
+        "block_stats": {
+          "os": {
+            "reads": 826,
+            "writes": 23,
+            "flushes": 11,
+            "fua": 0,
+            "dropped_sectors": 24
+          },
+          "producer": {
+            "reads": 12,
+            "writes": 164,
+            "flushes": 137,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "consumer": {
+            "reads": 10,
+            "writes": 1,
+            "flushes": 1,
+            "fua": 0,
+            "dropped_sectors": 0
+          }
+        },
+        "visible_stats": {
+          "os": {
+            "reads": 826,
+            "writes": 23,
+            "flushes": 11,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "producer": {
+            "reads": 12,
+            "writes": 164,
+            "flushes": 137,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "consumer": {
+            "reads": 10,
+            "writes": 1,
+            "flushes": 1,
+            "fua": 0,
+            "dropped_sectors": 0
+          }
+        },
+        "post_visible_stats": {
+          "os": {
+            "reads": 0,
+            "writes": 0,
+            "flushes": 0,
+            "fua": 0,
+            "dropped_sectors": 24
+          },
+          "producer": {
+            "reads": 0,
+            "writes": 0,
+            "flushes": 0,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "consumer": {
+            "reads": 0,
+            "writes": 0,
+            "flushes": 0,
+            "fua": 0,
+            "dropped_sectors": 0
+          }
+        },
+        "journal_recovery": {
+          "vda": false,
+          "vdb": false,
+          "vdc": false
+        },
+        "honour_barriers": {
+          "os": true,
+          "producer": true,
+          "consumer": true
+        },
+        "consumer_provider_unmodified": true,
+        "negative": null,
+        "producer_only_cut": true
+      },
+      "cold_read": {
+        "marker": "PIN_PRODUCER_ONLY_RECOVERED mode=reindex selected=3",
+        "failure": null,
+        "exit_code": -9,
+        "block_stats": {
+          "os": {
+            "reads": 652,
+            "writes": 14,
+            "flushes": 6,
+            "fua": 0,
+            "dropped_sectors": 8
+          },
+          "producer": {
+            "reads": 103,
+            "writes": 10,
+            "flushes": 4,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "consumer": {
+            "reads": 10,
+            "writes": 1,
+            "flushes": 1,
+            "fua": 0,
+            "dropped_sectors": 0
+          }
+        },
+        "visible_stats": null,
+        "post_visible_stats": null,
+        "journal_recovery": {
+          "vda": true,
+          "vdb": true,
+          "vdc": true
+        },
+        "honour_barriers": {
+          "os": true,
+          "producer": true,
+          "consumer": true
+        },
+        "consumer_provider_unmodified": true,
+        "negative": null,
+        "producer_only_cut": false
+      },
+      "passed": true
+    },
+    "create-export": {
+      "write": {
+        "marker": "PIN_CONSUMER_ACK mode=create consumer=2 target=0",
+        "failure": null,
+        "exit_code": -9,
+        "block_stats": {
+          "os": {
+            "reads": 826,
+            "writes": 35,
+            "flushes": 11,
+            "fua": 0,
+            "dropped_sectors": 32
+          },
+          "producer": {
+            "reads": 12,
+            "writes": 14,
+            "flushes": 8,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "consumer": {
+            "reads": 12,
+            "writes": 73,
+            "flushes": 53,
+            "fua": 0,
+            "dropped_sectors": 0
+          }
+        },
+        "visible_stats": {
+          "os": {
+            "reads": 640,
+            "writes": 29,
+            "flushes": 9,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "producer": {
+            "reads": 12,
+            "writes": 9,
+            "flushes": 5,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "consumer": {
+            "reads": 10,
+            "writes": 1,
+            "flushes": 1,
+            "fua": 0,
+            "dropped_sectors": 0
+          }
+        },
+        "post_visible_stats": {
+          "os": {
+            "reads": 186,
+            "writes": 6,
+            "flushes": 2,
+            "fua": 0,
+            "dropped_sectors": 32
+          },
+          "producer": {
+            "reads": 0,
+            "writes": 5,
+            "flushes": 3,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "consumer": {
+            "reads": 2,
+            "writes": 72,
+            "flushes": 52,
+            "fua": 0,
+            "dropped_sectors": 0
+          }
+        },
+        "journal_recovery": {
+          "vda": false,
+          "vdb": false,
+          "vdc": false
+        },
+        "honour_barriers": {
+          "os": true,
+          "producer": true,
+          "consumer": true
+        },
+        "consumer_provider_unmodified": true,
+        "negative": null,
+        "producer_only_cut": false
+      },
+      "cold_read": {
+        "marker": "PIN_COLD_RECOVERED mode=create consumer=2 target=0",
+        "failure": null,
+        "exit_code": -9,
+        "block_stats": {
+          "os": {
+            "reads": 645,
+            "writes": 15,
+            "flushes": 6,
+            "fua": 0,
+            "dropped_sectors": 8
+          },
+          "producer": {
+            "reads": 33,
+            "writes": 7,
+            "flushes": 4,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "consumer": {
+            "reads": 147,
+            "writes": 9,
+            "flushes": 4,
+            "fua": 0,
+            "dropped_sectors": 0
+          }
+        },
+        "visible_stats": null,
+        "post_visible_stats": null,
+        "journal_recovery": {
+          "vda": true,
+          "vdb": true,
+          "vdc": true
+        },
+        "honour_barriers": {
+          "os": true,
+          "producer": true,
+          "consumer": true
+        },
+        "consumer_provider_unmodified": true,
+        "negative": null,
+        "producer_only_cut": false
+      },
+      "passed": true
+    },
+    "create-window": {
+      "write": {
+        "marker": "PIN_VISIBLE mode=create target=0",
+        "failure": null,
+        "exit_code": -9,
+        "block_stats": {
+          "os": {
+            "reads": 640,
+            "writes": 14,
+            "flushes": 5,
+            "fua": 0,
+            "dropped_sectors": 80
+          },
+          "producer": {
+            "reads": 12,
+            "writes": 9,
+            "flushes": 5,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "consumer": {
+            "reads": 10,
+            "writes": 1,
+            "flushes": 1,
+            "fua": 0,
+            "dropped_sectors": 0
+          }
+        },
+        "visible_stats": {
+          "os": {
+            "reads": 640,
+            "writes": 14,
+            "flushes": 5,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "producer": {
+            "reads": 12,
+            "writes": 9,
+            "flushes": 5,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "consumer": {
+            "reads": 10,
+            "writes": 1,
+            "flushes": 1,
+            "fua": 0,
+            "dropped_sectors": 0
+          }
+        },
+        "post_visible_stats": {
+          "os": {
+            "reads": 0,
+            "writes": 0,
+            "flushes": 0,
+            "fua": 0,
+            "dropped_sectors": 80
+          },
+          "producer": {
+            "reads": 0,
+            "writes": 0,
+            "flushes": 0,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "consumer": {
+            "reads": 0,
+            "writes": 0,
+            "flushes": 0,
+            "fua": 0,
+            "dropped_sectors": 0
+          }
+        },
+        "journal_recovery": {
+          "vda": false,
+          "vdb": false,
+          "vdc": false
+        },
+        "honour_barriers": {
+          "os": true,
+          "producer": true,
+          "consumer": true
+        },
+        "consumer_provider_unmodified": true,
+        "negative": null,
+        "producer_only_cut": true
+      },
+      "cold_read": {
+        "marker": null,
+        "failure": "Guest failed before PIN_PRODUCER_ONLY_RECOVERED; inspect /tmp/k3-stage607/target/context-device-pins/run-xrzr550g/create-window/read-producer-create-serial.log",
+        "exit_code": -9,
+        "block_stats": {
+          "os": {
+            "reads": 513,
+            "writes": 12,
+            "flushes": 6,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "producer": {
+            "reads": 41,
+            "writes": 7,
+            "flushes": 4,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "consumer": {
+            "reads": 10,
+            "writes": 1,
+            "flushes": 1,
+            "fua": 0,
+            "dropped_sectors": 0
+          }
+        },
+        "visible_stats": null,
+        "post_visible_stats": null,
+        "journal_recovery": {
+          "vda": true,
+          "vdb": true,
+          "vdc": true
+        },
+        "honour_barriers": {
+          "os": true,
+          "producer": true,
+          "consumer": true
+        },
+        "consumer_provider_unmodified": true,
+        "negative": null,
+        "producer_only_cut": false
+      },
+      "passed": false
+    },
+    "fork-export": {
+      "write": {
+        "marker": "PIN_CONSUMER_ACK mode=fork consumer=2 target=1",
+        "failure": null,
+        "exit_code": -9,
+        "block_stats": {
+          "os": {
+            "reads": 826,
+            "writes": 34,
+            "flushes": 13,
+            "fua": 0,
+            "dropped_sectors": 8
+          },
+          "producer": {
+            "reads": 12,
+            "writes": 77,
+            "flushes": 57,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "consumer": {
+            "reads": 12,
+            "writes": 67,
+            "flushes": 49,
+            "fua": 0,
+            "dropped_sectors": 0
+          }
+        },
+        "visible_stats": {
+          "os": {
+            "reads": 824,
+            "writes": 23,
+            "flushes": 9,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "producer": {
+            "reads": 12,
+            "writes": 71,
+            "flushes": 49,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "consumer": {
+            "reads": 10,
+            "writes": 1,
+            "flushes": 1,
+            "fua": 0,
+            "dropped_sectors": 0
+          }
+        },
+        "post_visible_stats": {
+          "os": {
+            "reads": 2,
+            "writes": 11,
+            "flushes": 4,
+            "fua": 0,
+            "dropped_sectors": 8
+          },
+          "producer": {
+            "reads": 0,
+            "writes": 6,
+            "flushes": 8,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "consumer": {
+            "reads": 2,
+            "writes": 66,
+            "flushes": 48,
+            "fua": 0,
+            "dropped_sectors": 0
+          }
+        },
+        "journal_recovery": {
+          "vda": false,
+          "vdb": false,
+          "vdc": false
+        },
+        "honour_barriers": {
+          "os": true,
+          "producer": true,
+          "consumer": true
+        },
+        "consumer_provider_unmodified": true,
+        "negative": null,
+        "producer_only_cut": false
+      },
+      "cold_read": {
+        "marker": "PIN_COLD_RECOVERED mode=fork consumer=2 target=1",
+        "failure": null,
+        "exit_code": -9,
+        "block_stats": {
+          "os": {
+            "reads": 651,
+            "writes": 15,
+            "flushes": 6,
+            "fua": 0,
+            "dropped_sectors": 8
+          },
+          "producer": {
+            "reads": 157,
+            "writes": 9,
+            "flushes": 4,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "consumer": {
+            "reads": 143,
+            "writes": 9,
+            "flushes": 4,
+            "fua": 0,
+            "dropped_sectors": 0
+          }
+        },
+        "visible_stats": null,
+        "post_visible_stats": null,
+        "journal_recovery": {
+          "vda": true,
+          "vdb": true,
+          "vdc": true
+        },
+        "honour_barriers": {
+          "os": true,
+          "producer": true,
+          "consumer": true
+        },
+        "consumer_provider_unmodified": true,
+        "negative": null,
+        "producer_only_cut": false
+      },
+      "passed": true
+    },
+    "fork-window": {
+      "write": {
+        "marker": "PIN_VISIBLE mode=fork target=1",
+        "failure": null,
+        "exit_code": -9,
+        "block_stats": {
+          "os": {
+            "reads": 824,
+            "writes": 23,
+            "flushes": 9,
+            "fua": 0,
+            "dropped_sectors": 24
+          },
+          "producer": {
+            "reads": 12,
+            "writes": 66,
+            "flushes": 48,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "consumer": {
+            "reads": 10,
+            "writes": 1,
+            "flushes": 1,
+            "fua": 0,
+            "dropped_sectors": 0
+          }
+        },
+        "visible_stats": {
+          "os": {
+            "reads": 824,
+            "writes": 23,
+            "flushes": 9,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "producer": {
+            "reads": 12,
+            "writes": 66,
+            "flushes": 48,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "consumer": {
+            "reads": 10,
+            "writes": 1,
+            "flushes": 1,
+            "fua": 0,
+            "dropped_sectors": 0
+          }
+        },
+        "post_visible_stats": {
+          "os": {
+            "reads": 0,
+            "writes": 0,
+            "flushes": 0,
+            "fua": 0,
+            "dropped_sectors": 24
+          },
+          "producer": {
+            "reads": 0,
+            "writes": 0,
+            "flushes": 0,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "consumer": {
+            "reads": 0,
+            "writes": 0,
+            "flushes": 0,
+            "fua": 0,
+            "dropped_sectors": 0
+          }
+        },
+        "journal_recovery": {
+          "vda": false,
+          "vdb": false,
+          "vdc": false
+        },
+        "honour_barriers": {
+          "os": true,
+          "producer": true,
+          "consumer": true
+        },
+        "consumer_provider_unmodified": true,
+        "negative": null,
+        "producer_only_cut": true
+      },
+      "cold_read": {
+        "marker": null,
+        "failure": "Guest failed before PIN_PRODUCER_ONLY_RECOVERED; inspect /tmp/k3-stage607/target/context-device-pins/run-xrzr550g/fork-window/read-producer-fork-serial.log",
+        "exit_code": -9,
+        "block_stats": {
+          "os": {
+            "reads": 648,
+            "writes": 13,
+            "flushes": 6,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "producer": {
+            "reads": 144,
+            "writes": 9,
+            "flushes": 4,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "consumer": {
+            "reads": 10,
+            "writes": 1,
+            "flushes": 1,
+            "fua": 0,
+            "dropped_sectors": 0
+          }
+        },
+        "visible_stats": null,
+        "post_visible_stats": null,
+        "journal_recovery": {
+          "vda": true,
+          "vdb": true,
+          "vdc": true
+        },
+        "honour_barriers": {
+          "os": true,
+          "producer": true,
+          "consumer": true
+        },
+        "consumer_provider_unmodified": true,
+        "negative": null,
+        "producer_only_cut": false
+      },
+      "passed": false
+    },
+    "append-bypass": {
+      "write": {
+        "marker": "PIN_CONSUMER_ACK mode=append consumer=2 target=2",
+        "failure": null,
+        "exit_code": -9,
+        "block_stats": {
+          "os": {
+            "reads": 829,
+            "writes": 36,
+            "flushes": 15,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "producer": {
+            "reads": 12,
+            "writes": 67,
+            "flushes": 52,
+            "fua": 0,
+            "dropped_sectors": 24
+          },
+          "consumer": {
+            "reads": 12,
+            "writes": 62,
+            "flushes": 49,
+            "fua": 0,
+            "dropped_sectors": 0
+          }
+        },
+        "visible_stats": {
+          "os": {
+            "reads": 824,
+            "writes": 24,
+            "flushes": 9,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "producer": {
+            "reads": 12,
+            "writes": 65,
+            "flushes": 52,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "consumer": {
+            "reads": 10,
+            "writes": 1,
+            "flushes": 1,
+            "fua": 0,
+            "dropped_sectors": 0
+          }
+        },
+        "post_visible_stats": {
+          "os": {
+            "reads": 5,
+            "writes": 12,
+            "flushes": 6,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "producer": {
+            "reads": 0,
+            "writes": 2,
+            "flushes": 0,
+            "fua": 0,
+            "dropped_sectors": 24
+          },
+          "consumer": {
+            "reads": 2,
+            "writes": 61,
+            "flushes": 48,
+            "fua": 0,
+            "dropped_sectors": 0
+          }
+        },
+        "journal_recovery": {
+          "vda": false,
+          "vdb": false,
+          "vdc": false
+        },
+        "honour_barriers": {
+          "os": true,
+          "producer": true,
+          "consumer": true
+        },
+        "consumer_provider_unmodified": false,
+        "negative": "bypass",
+        "producer_only_cut": false
+      },
+      "cold_read": {
+        "marker": "PIN_COLD_MISSING mode=append consumer=2 target=2",
+        "failure": null,
+        "exit_code": -9,
+        "block_stats": {
+          "os": {
+            "reads": 679,
+            "writes": 15,
+            "flushes": 6,
+            "fua": 0,
+            "dropped_sectors": 8
+          },
+          "producer": {
+            "reads": 142,
+            "writes": 9,
+            "flushes": 4,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "consumer": {
+            "reads": 148,
+            "writes": 9,
+            "flushes": 4,
+            "fua": 0,
+            "dropped_sectors": 0
+          }
+        },
+        "visible_stats": null,
+        "post_visible_stats": null,
+        "journal_recovery": {
+          "vda": true,
+          "vdb": true,
+          "vdc": true
+        },
+        "honour_barriers": {
+          "os": true,
+          "producer": true,
+          "consumer": true
+        },
+        "consumer_provider_unmodified": true,
+        "negative": "bypass",
+        "producer_only_cut": false
+      },
+      "passed": true
+    },
+    "append-lying": {
+      "write": {
+        "marker": "PIN_CONSUMER_ACK mode=append consumer=2 target=2",
+        "failure": null,
+        "exit_code": -9,
+        "block_stats": {
+          "os": {
+            "reads": 822,
+            "writes": 31,
+            "flushes": 13,
+            "fua": 0,
+            "dropped_sectors": 48
+          },
+          "producer": {
+            "reads": 12,
+            "writes": 69,
+            "flushes": 61,
+            "fua": 0,
+            "dropped_sectors": 1520
+          },
+          "consumer": {
+            "reads": 12,
+            "writes": 76,
+            "flushes": 53,
+            "fua": 0,
+            "dropped_sectors": 0
+          }
+        },
+        "visible_stats": {
+          "os": {
+            "reads": 818,
+            "writes": 21,
+            "flushes": 9,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "producer": {
+            "reads": 12,
+            "writes": 65,
+            "flushes": 52,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "consumer": {
+            "reads": 10,
+            "writes": 1,
+            "flushes": 1,
+            "fua": 0,
+            "dropped_sectors": 0
+          }
+        },
+        "post_visible_stats": {
+          "os": {
+            "reads": 4,
+            "writes": 10,
+            "flushes": 4,
+            "fua": 0,
+            "dropped_sectors": 48
+          },
+          "producer": {
+            "reads": 0,
+            "writes": 4,
+            "flushes": 9,
+            "fua": 0,
+            "dropped_sectors": 1520
+          },
+          "consumer": {
+            "reads": 2,
+            "writes": 75,
+            "flushes": 52,
+            "fua": 0,
+            "dropped_sectors": 0
+          }
+        },
+        "journal_recovery": {
+          "vda": false,
+          "vdb": false,
+          "vdc": false
+        },
+        "honour_barriers": {
+          "os": true,
+          "producer": false,
+          "consumer": true
+        },
+        "consumer_provider_unmodified": true,
+        "negative": "lying",
+        "producer_only_cut": false
+      },
+      "cold_read": {
+        "marker": "PIN_COLD_MISSING mode=append consumer=2 target=2",
+        "failure": null,
+        "exit_code": -9,
+        "block_stats": {
+          "os": {
+            "reads": 682,
+            "writes": 14,
+            "flushes": 6,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "producer": {
+            "reads": 11,
+            "writes": 1,
+            "flushes": 1,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "consumer": {
+            "reads": 208,
+            "writes": 9,
+            "flushes": 4,
+            "fua": 0,
+            "dropped_sectors": 0
+          }
+        },
+        "visible_stats": null,
+        "post_visible_stats": null,
+        "journal_recovery": {
+          "vda": true,
+          "vdb": false,
+          "vdc": true
+        },
+        "honour_barriers": {
+          "os": true,
+          "producer": true,
+          "consumer": true
+        },
+        "consumer_provider_unmodified": true,
+        "negative": "lying",
+        "producer_only_cut": false
+      },
+      "passed": true
+    }
+  },
+  "device_isolation": "Separate NBD stable files and volatile caches for OS, producer and consumer; ext4 commit=3600 only in guest",
+  "producer_pause_overlay": true,
+  "positive_consumers_unmodified": true,
+  "full_operation_matrix": false,
+  "physical_device_power_loss_acceptance": false,
+  "artifacts_sha256": {
+    "/tmp/k3-stage607/scripts/qualify-context-device-pins.py": "dbe53ae26dfab1cd4103ce3931102eeabe3f106107376ca81041959da75e305e",
+    "/tmp/k3-stage607/scripts/persistence_vm/prepare_pins.py": "2e5685b4efe6af3b314daf94570db0692ee944ae3d84e0472eb5e27d2ee47900",
+    "/tmp/k3-stage607/target/persistence-pin-vm/manifest.json": "1aa42621225eafc8ebc13d9c4b96bb683229e0e5729997a7131fe33242480327",
+    "/tmp/k3-stage607/scripts/persistence_vm/volatile_nbd.py": "20fbe6c8ffe0fbb06cffdfe83dbe93de9174fce29bdeaa8cd4904d85f4aed9b4",
+    "/tmp/k3-stage607/scripts/qualify-context-block-device.py": "b299653db0d1644f0dc6b809a99482279e97391f9d9febbc35dcd62b373bc6a9",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/reindex-export/read-reindex-serial.log": "edc973aec17cab59349bb7e19bcc2a34f6ec770746bee7fc29832de9255aa972",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/reindex-export/write-reindex-serial.log": "a0d451336060a2979c6709940ac1e66872ef4f43675d3d6bb8426ac3c314568c",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/append-bypass/read-missing-append-serial.log": "783dcf1b2a04ed89e827d9b78956190e3255dc65c19b1ba366ae6657ddc4ee80",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/append-bypass/write-negative-append-serial.log": "f3769281f6f330b06334eb98cefd1f7f25dcaec7e2fd41f926329900a99095e4",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/append-export/read-append-serial.log": "01bd6d4963177a14139c99d1fd68f75cf21131b235513a1b9428c5f68e3e9e6e",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/append-export/write-append-serial.log": "3bc94869070cb0766a6b43275c888e97b47a990b989d28bdf081000e0824204e",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/fork-window/write-fork-serial.log": "fab96f69b58d814c880862b70bb962733a0adeb8000c032f5b9271e0e6886241",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/fork-window/read-producer-fork-serial.log": "6a202b1a3f80a0bf2cd467aff495919e0dd1e42ecad2d89222bc0bc177abe165",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/append-window/read-producer-append-serial.log": "b5869c0fea3602ad62ba592b37362cec19e5dbd0b18ea00a1c97c1490d15a879",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/append-window/write-append-serial.log": "33ae6db730f2214f72470c47d2bd3cbdbb642578495d9f5478108a30dfec09fe",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/create-window/write-create-serial.log": "8b217ecebe5ef59b63d58f1e69428134ac1bd38d4680fe2b0b2b51864a30bed2",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/create-window/read-producer-create-serial.log": "5bd186137be3b541a67b2bd82c1e1ca5d09d53370ebc4ced8ccdf6f02f5a912d",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/reindex-window/read-producer-reindex-serial.log": "3f3177c6a4740a2a7e56ebb7f37e219df1b690b98fadda8ec2028098d0fea6cf",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/reindex-window/write-reindex-serial.log": "bd1922404556aac99b7245d7e1bdf5920a8eb23ef529a1b28679599417f0365f",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/fork-export/write-fork-serial.log": "64334653317eda6969465dea2c506ef65fab1a3cfc92cb928163d931794282dc",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/fork-export/read-fork-serial.log": "4523f1101992fa66ed13aadd3ed1628137e87f3633a875b5ac7a31306df61901",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/create-export/write-create-serial.log": "c7bb2325fefd52e6b1e3b697ef029a559393640a8f86c4485f8a66982da9a01e",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/create-export/read-create-serial.log": "9136536ff3c7daea7aaace6c4e3614331758c899adbcaa2b580fe9897a32bc68",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/append-lying/read-missing-append-serial.log": "e2c9824bf69166f1f2badc55f7373c196b965ed74ec8a55097c0244870839781",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/append-lying/write-append-serial.log": "da12ea9bf43dabac61fe84e3207a350ea96bc24b9fdf07d292bb7ddf32f7230c",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/cut-freeze.jsonl": "cc8d8ccd265998a5e85867b234354f3550bb4be7682fc6978fef5ea5f2978584",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/fua.jsonl": "8446d7f50b0dcbea1ed344af3d9d82a2d3408bfbc7f4dc3ea7969a7e0da0081e",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/unflushed.jsonl": "dcb174f5a919c838d71895f5e1bb59951d9d5002da49c5ea5d3075eea85962f5",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/flush.jsonl": "14d97e30a6781da3d8413ce944839dbca12e907df8ed55c5c87a1f72e6334413",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/reindex-export/write-reindex-os.jsonl": "256a26d744fff351bfe0d2b745e32e1de294dd8c5c70df83cfbb7c53ed817c99",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/reindex-export/read-reindex-os.jsonl": "e356e51fa67c4402b949f2a0e53ce58c8812417a68c247dafb85fd7a739918f5",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/reindex-export/write-reindex-producer.jsonl": "398d8f176ab0932a795b99128eeb407b0c27b6bf1f85838cc6d3fcc7d166e599",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/reindex-export/write-reindex-consumer.jsonl": "34433a57850ff99d0278764287d809572794bb5dcd11a084427dce6019f8f2f9",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/reindex-export/read-reindex-producer.jsonl": "9941be8282570dbbdcdf954785f3877e3b9a8780583eec4b6b0b0713cfab111c",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/reindex-export/read-reindex-consumer.jsonl": "5ebf6ef2ecada5e4e78321771b597f6409e92ffdd70d3d98ca7ea7f53bc48ef2",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/append-bypass/read-missing-append-os.jsonl": "7ef8c1967d3c1de0fa775d8d6fec2f60def4856305ecfba099c8287ecd36c37d",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/append-bypass/write-negative-append-consumer.jsonl": "77e8fcd3c32ae465ed0b42957274d26c6615caf140ca1893dcbc81ab1e07e843",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/append-bypass/read-missing-append-producer.jsonl": "5ebf6ef2ecada5e4e78321771b597f6409e92ffdd70d3d98ca7ea7f53bc48ef2",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/append-bypass/write-negative-append-os.jsonl": "3483abb4dfdd4675c726271ce322a4d9f0680e2f44365fe38362c29392e0ee8a",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/append-bypass/read-missing-append-consumer.jsonl": "5ebf6ef2ecada5e4e78321771b597f6409e92ffdd70d3d98ca7ea7f53bc48ef2",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/append-bypass/write-negative-append-producer.jsonl": "109d7c5704278cad718e33c335f84d01bc812e5b1f5f79bfea829ac36d320c67",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/append-export/read-append-os.jsonl": "7ef8c1967d3c1de0fa775d8d6fec2f60def4856305ecfba099c8287ecd36c37d",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/append-export/read-append-consumer.jsonl": "5ebf6ef2ecada5e4e78321771b597f6409e92ffdd70d3d98ca7ea7f53bc48ef2",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/append-export/read-append-producer.jsonl": "5ebf6ef2ecada5e4e78321771b597f6409e92ffdd70d3d98ca7ea7f53bc48ef2",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/append-export/write-append-consumer.jsonl": "9be4ccdf5153d9e66b31b18d0ba58b133e8d39a7bbe92372ae9a1f681a1d7b44",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/append-export/write-append-os.jsonl": "8a29b996f0d55f25aa3564f0b8d8cf28d9b8420ae9ce085a117394cf0e63a58f",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/append-export/write-append-producer.jsonl": "f1aad8d7584620fed0df69d0b03fc7257fe41b2d0b4d67f5ad20d022b5862ca6",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/fork-window/read-producer-fork-consumer.jsonl": "7912d15daff9753cdbcfb3ae6d19de56530f318b0792d527013e8e83d2fb593d",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/fork-window/write-fork-os.jsonl": "a5df8fe3f86a04d0e3743e11ee1bcc2370d64720a6689bebb7cbc88d483ff3e3",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/fork-window/write-fork-consumer.jsonl": "7912d15daff9753cdbcfb3ae6d19de56530f318b0792d527013e8e83d2fb593d",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/fork-window/read-producer-fork-producer.jsonl": "f62ecbb185e2afb047ad1d0a1e316acb84fe8f04546401bf066a96d3aab6a7be",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/fork-window/read-producer-fork-os.jsonl": "e052f17e20d9b816968ed8ea0b6e3972c2870119a7fb0d5933e6352e0e8e7a37",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/fork-window/write-fork-producer.jsonl": "2017e23f539643b645eda15d7c23290a8a494b27f280616cbefdb47a53f476fa",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/append-window/read-producer-append-os.jsonl": "e052f17e20d9b816968ed8ea0b6e3972c2870119a7fb0d5933e6352e0e8e7a37",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/append-window/write-append-consumer.jsonl": "7912d15daff9753cdbcfb3ae6d19de56530f318b0792d527013e8e83d2fb593d",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/append-window/write-append-os.jsonl": "7e319f152dd6fb2444d4d0dd1314366b918c4e1c54978295df10907c335ce87d",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/append-window/read-producer-append-producer.jsonl": "5ebf6ef2ecada5e4e78321771b597f6409e92ffdd70d3d98ca7ea7f53bc48ef2",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/append-window/read-producer-append-consumer.jsonl": "7912d15daff9753cdbcfb3ae6d19de56530f318b0792d527013e8e83d2fb593d",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/append-window/write-append-producer.jsonl": "15cbc3478c0ac5722cb42806bceeb755cf258a4827781889e7882998ffaf1fc5",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/create-window/read-producer-create-consumer.jsonl": "7912d15daff9753cdbcfb3ae6d19de56530f318b0792d527013e8e83d2fb593d",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/create-window/read-producer-create-os.jsonl": "e1e33a685bff6bb3acc0ebaf08bfebfbb2cb37be6b431a48feb16e57fcfa94d7",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/create-window/write-create-producer.jsonl": "88c1f3ffd1b6d09db7f5b102df2e937473e12e73ddb93c0dd94220b92edab8a3",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/create-window/write-create-consumer.jsonl": "7912d15daff9753cdbcfb3ae6d19de56530f318b0792d527013e8e83d2fb593d",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/create-window/read-producer-create-producer.jsonl": "d2271b78e345d76458a809c97e79ff104c88427920f40aa010439848e6326766",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/create-window/write-create-os.jsonl": "3a17a427b78cb82eb27c0a22d5cb754c9eacc848c2d8b488b1c7193fdc5e50fc",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/reindex-window/read-producer-reindex-producer.jsonl": "9941be8282570dbbdcdf954785f3877e3b9a8780583eec4b6b0b0713cfab111c",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/reindex-window/read-producer-reindex-consumer.jsonl": "7912d15daff9753cdbcfb3ae6d19de56530f318b0792d527013e8e83d2fb593d",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/reindex-window/write-reindex-os.jsonl": "e8d959cb3e2f2e84cf745a3b1ff9084fe9ef1d6ee4a7ecd478b6af8085fd4439",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/reindex-window/write-reindex-producer.jsonl": "3fd5de628546ee83ff2d2d868dbd99266148b389eceb15f6d9e94a93cfe8f9b8",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/reindex-window/write-reindex-consumer.jsonl": "7912d15daff9753cdbcfb3ae6d19de56530f318b0792d527013e8e83d2fb593d",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/reindex-window/read-producer-reindex-os.jsonl": "fd5bb1682b628ac057f6675b66bc1c237e6106d785571ce3800c830b9ff10b0c",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/fork-export/write-fork-os.jsonl": "a3c3f6fddc4bb4328fe081993f0fe9cbdf3cad8fa81eb2341403c2e93ecaac53",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/fork-export/write-fork-consumer.jsonl": "d9c3d2c9175263d44a9f3efa663b0cf5a32bc6955a8e22156dad8476c9bfe0ee",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/fork-export/read-fork-consumer.jsonl": "5ebf6ef2ecada5e4e78321771b597f6409e92ffdd70d3d98ca7ea7f53bc48ef2",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/fork-export/read-fork-os.jsonl": "e356e51fa67c4402b949f2a0e53ce58c8812417a68c247dafb85fd7a739918f5",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/fork-export/read-fork-producer.jsonl": "f62ecbb185e2afb047ad1d0a1e316acb84fe8f04546401bf066a96d3aab6a7be",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/fork-export/write-fork-producer.jsonl": "5da1896ea17bd5b2064cb659cc46379549c2b4bf86b6cfe6e05e6b1599481ce0",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/create-export/read-create-os.jsonl": "d8b174be825759438bf0ad9009f5a5b4eb80fb353f8d63f58b4b27d843d6eee5",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/create-export/write-create-producer.jsonl": "8aa7cbaa976739da0091875e3a16c17f310d38b4f1199fb25dd74a10c5c00831",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/create-export/read-create-producer.jsonl": "d2271b78e345d76458a809c97e79ff104c88427920f40aa010439848e6326766",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/create-export/write-create-consumer.jsonl": "fa0418d489fb5f3675fe1c089fccb8ec2d082862ec31b7b8d669ce2ea871c8c0",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/create-export/read-create-consumer.jsonl": "5ebf6ef2ecada5e4e78321771b597f6409e92ffdd70d3d98ca7ea7f53bc48ef2",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/create-export/write-create-os.jsonl": "677d1a25ce0a825cf60c24f44f86ead490afe1a877fa516bb23f4ec60e0c7425",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/append-lying/write-append-consumer.jsonl": "bfee36c13fc6077ac8183ea26d1e0be7904e02c698e617301e8e73d75e96c4d1",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/append-lying/write-append-os.jsonl": "57c256a5b09eed56445860c9d32bea887a83ded8f92902a4ef8981f60368d622",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/append-lying/read-missing-append-os.jsonl": "7686206b3207ff50128243e03ca7ecced29acf6156e2d6c45d9127dff41f9ed5",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/append-lying/read-missing-append-producer.jsonl": "7912d15daff9753cdbcfb3ae6d19de56530f318b0792d527013e8e83d2fb593d",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/append-lying/read-missing-append-consumer.jsonl": "5ebf6ef2ecada5e4e78321771b597f6409e92ffdd70d3d98ca7ea7f53bc48ef2",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/append-lying/write-append-producer.jsonl": "51e613b522e3a1e5f5a533e34c481aef61159cfcafad0306b4839251f0b33885",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/reindex-export/read-reindex-command.json": "8da11b45f286e958051756624c08b184e792708802e99f6594c3a3a12ed5521e",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/reindex-export/write-reindex-command.json": "35c4c4c5f99733927c82dc860760fd2ff0c7596aa41beafd4382339e70d44b2b",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/append-bypass/write-negative-append-command.json": "f8fc2f1e41a3a69baa91b602a48c86a789332d1e9fc58ae8a0c0557987bbc53a",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/append-bypass/read-missing-append-command.json": "3fe5c5c7e6470408ca7fb4e6c3429cf7dbab1e9251204549a9a50a0de4940219",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/append-export/read-append-command.json": "d9ece2b3772fd120784be8d4d1e5b176f75eeea67736bb81bc1825765016c55f",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/append-export/write-append-command.json": "4bfbb88b388775d5ada635e6158f7d9dad33da9f1b4db9408f673ee9a7bf6cae",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/fork-window/write-fork-command.json": "0147b2c78ec819163afce489690c330f6a127b1e5ef23fe27b0a04250a3da7ec",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/fork-window/read-producer-fork-command.json": "01bfdef2dfc6fababbdc83e03107af259a76c23a7229a24054f272bf851865a0",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/append-window/read-producer-append-command.json": "bc9074f8fd689e43a635ad530fbce9876940ac97d1930f9e4ce677ababbad068",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/append-window/write-append-command.json": "2fd39fbe558d09d65ee8052e1248915978e3aa3654101a0b106ec9efd06f7040",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/create-window/write-create-command.json": "66d4d07d2f3374f486839c8c08495ce85b7449e263eef4d15f790acb0aac23ef",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/create-window/read-producer-create-command.json": "f168f4ba994cdadd10997ddd152f0877ae9a5269f788ae6f62f7da9903856c32",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/reindex-window/write-reindex-command.json": "6845818fe60304d8b1badb9fc12335ad8aba19659a2812365f6af448ca09748d",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/reindex-window/read-producer-reindex-command.json": "630b218f962d1d4b291f916aaee1fc176a7bef68e4da9dcf76bbea0c81c035ab",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/fork-export/write-fork-command.json": "9a5f01ea9b0f4048c24e1131787b41d25d191b9cc7aa0a9566ea939118cf17a5",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/fork-export/read-fork-command.json": "f2234ff89cd974cee8a4b2d28ffdd8e01510e9b7fc5c2a587cb2fd25ad5bd50c",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/create-export/write-create-command.json": "c05f16ba9153271088ca5aabf8664be1c340c3a90c5369e0fc75004fa54ca95f",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/create-export/read-create-command.json": "dd363ceb913920108d956f80c116057c2c65162c49ab02aeafe051ef3e0abfe5",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/append-lying/read-missing-append-command.json": "009cfba3f5a219b7c184a09a62943692dc904a17316a3728d37c026dbd8a3029",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/append-lying/write-append-command.json": "a9986be7b40218ec20b12a45b2b073557526604ebcc6ebe9b5da309fec9c8010",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/reindex-export/result.json": "7f2d050f4bba4bd67d0257d788e2450ea0c5c1e077e61c7a4640c1951bc0002e",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/append-bypass/result.json": "782a8b4726bd368de88d6c0a4451fcffb54fd0d71fd4249d943904b2d1314515",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/append-export/result.json": "525b12abd10239e8e0266eda2e419b8a41deda2e594b4b2837e3fa74ae1bb292",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/fork-window/result.json": "aa56c9a300b12708c0a520edab82344d12bccc2b4c3153e8298db6cdd137c4a8",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/append-window/result.json": "c5be960f0523547faea2b2894b8ff6839cbe42406f3f8619fb60e3154f6b46de",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/create-window/result.json": "1c797f4e0658d5c21ff800c4a6d8b92c60c0bb33e791384668cb58178032eef7",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/reindex-window/result.json": "d94bc337bf5c58371d1e56d09863e01f7dc3589820924f154e1d308644f45cfd",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/fork-export/result.json": "f1ecf6dc89673868b84ed079214a1e78c89c35670db9a62ceb178a5f77fd61a6",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/create-export/result.json": "0eec7a97ab13b990b3a52678f1bda892fe90881adf65fdac0f9f11d0a4a4747d",
+    "/tmp/k3-stage607/target/context-device-pins/run-xrzr550g/append-lying/result.json": "acacc7e60f8f6c5015b9a5cbffa7588be09ef343b721b51a14aea67680f7ad6f"
+  },
+  "passed": false
+}
