@@ -38,7 +38,11 @@ for op,revisions in d['operations'].items():
   assert w['post_previous_ack_stats']['flushes']>=fault['ordinal']-(fault['edge']=='before') if fault['command']==3 else True
   count+=1
  summary[op]=dict(cases=len(cases),old=sum(c['selected_revision']==previous for c in cases.values()),new=sum(c['selected_revision']==next_revision for c in cases.values()),flushes=n)
-cold(d['checked_topology_control']);assert d['checked_topology_control']['selected_revision']==2
+if set(d['operations'])=={'repin','disconnect'}:
+ assert d['checked_topology_control'] is None
+else:
+ assert set(d['operations'])=={'topology','reindex'}
+ cold(d['checked_topology_control']);assert d['checked_topology_control']['selected_revision']==2
 for name,c in d['append_helper_regression'].items():
  cold(c);assert c['selected_revision'] in (1,2)
  if name=='ack':assert c['selected_revision']==2 and c['write']['next_application_ack_observed']

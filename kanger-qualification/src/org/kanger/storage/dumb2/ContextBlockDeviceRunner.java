@@ -15,8 +15,8 @@ import org.kanger.exception.StorageLifecycleException;
 public final class ContextBlockDeviceRunner {
     public static void main(String[] args)throws Exception{
         System.setProperty("user.home","/root");Path location=Paths.get("/store/Source");
-        if(args[0].endsWith("-native-topology")||args[0].endsWith("-native-reindex")){
-            String operation=args[0].endsWith("topology")?"topology":"reindex";
+        if(args[0].matches(".*-native-(topology|reindex|repin|disconnect)")){
+            String operation=args[0].substring(args[0].lastIndexOf("-native-")+8);
             nativeOperation(args[0].startsWith("write-"),operation,location,args[0].startsWith("write-resume-"),args[0].contains("-checked-"));
             for(;;)Thread.sleep(1000);
         }else if("write-interrupt".equals(args[0])){
@@ -118,16 +118,19 @@ public final class ContextBlockDeviceRunner {
         need(found!=null,"Original rule missing");return found;
     }
     private static void vector(ContextSnapshot snapshot,int count)throws Exception{
+        vector(snapshot,count,1);
+    }
+    private static void vector(ContextSnapshot snapshot,int count,long revision)throws Exception{
         ConnectionVector dependencies=ConnectionStore.read(snapshot.getLocation(),
                 new RevisionRef(snapshot.getContextId(),snapshot.getRevision()));
         need(dependencies.size()==count,"Historical dependency vector changed");
         if(count==1){
             ContextConnection pin=dependencies.getConnections().get(0);
             need(pin.getTargetLocation().equals(Paths.get("/store/Rules")),"Pin locator changed");
-            need(pin.getTarget().getRevision()==1,"Exact target revision changed");
-            try(ContextSnapshot target=ContextSnapshot.open(pin.getTargetLocation(),1)){
+            need(pin.getTarget().getRevision()==revision,"Exact target revision changed");
+            try(ContextSnapshot target=ContextSnapshot.open(pin.getTargetLocation(),revision)){
                 need(target.getContextId().equals(pin.getTarget().getContextId()),"Target identity changed");
-                original(target,"Rule-v2");
+                if(revision==1)original(target,"Rule-v2");
             }
         }
     }
@@ -148,16 +151,26 @@ public final class ContextBlockDeviceRunner {
             need(entry.getValue().equals(newValue.asStruct().get(entry.getKey())),"Rule meaning changed: "+entry.getKey());
     }
     private static void nativeOperation(boolean write,String operation,Path location,boolean resume,boolean checked)throws Exception{
-        boolean reindex="reindex".equals(operation);long previous=reindex?3:1,next=previous+1;
+        boolean reindex="reindex".equals(operation);boolean repin="repin".equals(operation);
+        boolean disconnect="disconnect".equals(operation);
+        boolean savedPin=reindex||repin||disconnect;
+        long previous=reindex?3:(savedPin?2:1),next=previous+1;
         if(write){
             DB db;Mind mind;
             if(resume){
                 db=new DB();mind=open(db,"Source");
-                if(!reindex)db.connectContext("Rules");
+                if(repin)db.switchContextRevision("Rules",2);
+                else if(disconnect)db.disconnectContext("Rules");
+                else if(!reindex)db.connectContext("Rules");
             }else{
             DB targetDB=new DB();Mind target=open(targetDB,"Rules");
             need(target.compile("!remote(7);",null,false),"Target original");targetDB.flush();
             need(targetDB.getRevision()==1,"Target R1");
+            if(repin){
+                need(target.compile("!remoteNext(8);",null,false),"Target R2 original");
+                targetDB.flush();
+                need(targetDB.getRevision()==2,"Target R2");
+            }
             ((User)target.getUser()).setCurrentMind(target.closeStorage());
             db=new DB();mind=open(db,"Source");
             need(mind.compile("!anchor(1);",null,false),"Source original");db.flush();need(db.getRevision()==1,"Source R1");
@@ -171,11 +184,12 @@ public final class ContextBlockDeviceRunner {
                 db.flush();need(db.getRevision()==2,"Legacy Rule-v1 publication R2");
             }
             db.connectContext("Rules");
-            if(reindex)need(db.saveConnections(mind)==previous,"Persisted legacy dependency R3");
+            if(repin)db.switchContextRevision("Rules",1);
+            if(savedPin)need(db.saveConnections(mind)==previous,"Persisted predecessor pin");
             }
             need(db.getRevision()==previous,"Actual previous ACK cursor");
             if(resume)try(ContextSnapshot snapshot=ContextSnapshot.open(location,previous)){
-                original(snapshot,reindex?"Rule-v1":"Rule-v2");vector(snapshot,reindex?1:0);
+                original(snapshot,reindex?"Rule-v1":"Rule-v2");vector(snapshot,savedPin?1:0);
             }
             System.out.println("KANGER_BLOCK_PREVIOUS_ACK operation="+operation+" previous="+previous);
             if(System.in.read()<0)throw new AssertionError("Host release required");
@@ -189,7 +203,10 @@ public final class ContextBlockDeviceRunner {
             try(ContextSnapshot old=ContextSnapshot.open(location,previous);ContextSnapshot selected=ContextSnapshot.open(location)){
                 selectedRevision=selected.getRevision();
                 need(selectedRevision==previous||selectedRevision==next,"CURRENT outside attempted transition");
-                vector(old,reindex?1:0);vector(selected,reindex||selectedRevision==next?1:0);
+                vector(old,savedPin?1:0);
+                if(selectedRevision==previous)vector(selected,savedPin?1:0);
+                else if(disconnect)vector(selected,0);
+                else vector(selected,1,repin?2:1);
                 sameContent(old,selected,reindex);
             }
             if(reindex){

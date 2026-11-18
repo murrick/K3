@@ -21,6 +21,7 @@ block=interrupt.block
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--workers',type=int,choices=range(1,5),default=2)
+    parser.add_argument('--saved-topology',action='store_true',help='Qualify repin and disconnect from an acknowledged nonempty vector')
     args=parser.parse_args()
     manifest=json.loads((ROOT/'target/persistence-vm/manifest.json').read_text())
     for name,digest in manifest['sha256'].items():
@@ -41,6 +42,8 @@ def main():
         append_regression[name]=dict(write=write,cold_read=read,selected_revision=selected)
     print('APPEND_HELPER_REGRESSION_PASS',flush=True)
     operations={'topology':dict(previous=1,next=2),'reindex':dict(previous=3,next=4)}
+    if args.saved_topology:
+        operations={name:dict(previous=2,next=3) for name in ('repin','disconnect')}
     for operation in operations:(run/operation).mkdir()
     def one(operation,name,fault,initial_image=None,release_previous=True,checked=False):
         revisions=operations[operation];previous=revisions['previous'];next_revision=revisions['next']
@@ -75,9 +78,11 @@ def main():
         print('WITNESS_PASS',operation,'flushes='+str(count),flush=True)
         return operation,dict(result=result,flushes=count)
     with ThreadPoolExecutor(max_workers=min(2,args.workers)) as pool:witnesses=dict(pool.map(witness,operations))
-    checked_control=one('topology','checked-control',None,initial_image=seed_image('topology'),checked=True)
-    if checked_control['selected_revision']!=2:raise ValueError('Checked full-entry control lost')
-    print('CHECKED_TOPOLOGY_CONTROL_PASS',flush=True)
+    checked_control=None
+    if not args.saved_topology:
+        checked_control=one('topology','checked-control',None,initial_image=seed_image('topology'),checked=True)
+        if checked_control['selected_revision']!=2:raise ValueError('Checked full-entry control lost')
+        print('CHECKED_TOPOLOGY_CONTROL_PASS',flush=True)
     specs=[]
     for operation in operations:
         for ordinal in range(1,witnesses[operation]['flushes']+1):
@@ -101,7 +106,7 @@ def main():
     files += [seed_image(operation) for operation in operations]
     files+=sorted(run.rglob('result.json'))
     files+=sorted(run.rglob('*.log'))+sorted(run.rglob('*.jsonl'))+sorted(run.rglob('*-command.json'))
-    report=dict(scope='Finite FLUSH ordinal cuts of DB.saveConnections topology connect and Rule-v1 to Rule-v2 reindex; separate checked topology control, same device',
+    report=dict(scope=('Finite FLUSH ordinal cuts of saved repin/disconnect, same device' if args.saved_topology else 'Finite FLUSH ordinal cuts of DB.saveConnections topology connect and Rule-v1 to Rule-v2 reindex; separate checked topology control, same device'),
         head=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),
         source_dirty=bool(subprocess.check_output(['git','status','--porcelain'],cwd=ROOT,text=True)),
         production_baseline='fb0171fa3ed2fdc520ca26f86089b1a88cc612dc',production_code_changed=False,

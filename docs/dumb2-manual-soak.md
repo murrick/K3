@@ -547,3 +547,14 @@ valid empty Context or a successful absent-or-complete recovery. The coordinator
 retains those failed receipts, runs remaining controls and returns nonzero for
 an incomplete aggregate. Audit success validates evidence, not matrix acceptance.
 See the [protocol and scope](architecture/3.8.0-context-device-pins.md).
+
+## Saved repin and disconnect on the block-device harness
+
+Prepare the baseline guest with `python3 scripts/persistence_vm/prepare.py`,
+then run `python3 scripts/qualify-context-native-block-device.py --saved-topology`.
+Each case starts from acknowledged Source R2 with a direct Rules R1 pin.
+Repin prepares a second Rules revision and switches to it. Disconnect removes
+the sole pin. Both publish through ordinary `DB.saveConnections`. The cold
+reader checks exact historical and CURRENT pins against their target identities
+and compares Source content. Audit the report with
+`python3 scripts/audit-context-native-block-device.py PATH/TO/report.json`.
