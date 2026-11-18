@@ -8,7 +8,26 @@ import org.kanger.exception.StorageLifecycleException;
 public final class ContextBlockDeviceRunner {
     public static void main(String[] args)throws Exception{
         System.setProperty("user.home","/root");Path location=Paths.get("/store/Source");
-        if(args[0].contains("-")){
+        if("write-interrupt".equals(args[0])){
+            ContextStore store=ContextStore.create(location);add(store,0,42L);
+            if(store.flush()!=1)throw new AssertionError("R1 ACK required");
+            System.out.println("KANGER_BLOCK_PREVIOUS_ACK revision=1 value=42");
+            if(System.in.read()<0)throw new AssertionError("Host release required");
+            add(store,1,84L);if(store.flush()!=2)throw new AssertionError("R2 ACK");
+            System.out.println("KANGER_BLOCK_NEXT_ACK revision=2 value=84");
+            for(;;)Thread.sleep(1000);
+        }else if("read-interrupt".equals(args[0])){
+            // Snapshot reads must precede mutable open or any explicit persistence repair.
+            try(ContextSnapshot previous=ContextSnapshot.open(location,1)){check(previous,0,42L);}
+            long selected;
+            try(ContextSnapshot current=ContextSnapshot.open(location)){
+                selected=current.getRevision();
+                if(selected!=1&&selected!=2)throw new AssertionError("Invalid recovered CURRENT "+selected);
+                check(current,0,42L);if(selected==2)check(current,1,84L);
+            }
+            System.out.println("KANGER_BLOCK_PREVIOUS_RECOVERED revision=1 selected="+selected);
+            for(;;)Thread.sleep(1000);
+        }else if(args[0].contains("-")){
             String[] parts=args[0].split("-",2);String operation=parts[1];
             if(!java.util.Arrays.asList("create","append2","fork").contains(operation))
                 throw new IllegalArgumentException(operation);

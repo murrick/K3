@@ -61,7 +61,7 @@ def controls(run):
                 flush_covers_completed_prefix=True,later_writes_are_lost=True,out_of_range_refused=True)
 
 
-def boot(run,image,phase,manifest,honour_barriers=True,expect_missing=False,expected_marker=None):
+def boot(run,image,phase,manifest,honour_barriers=True,expect_missing=False,expected_marker=None,fault=None,expected_prefix=False):
     base=ROOT/'target/persistence-vm';tools=base/'tools';sock=run/(phase+'.sock')
     server=nbd.VolatileNbd(image,sock,run/(phase+'-block.jsonl'),honour_barriers=honour_barriers)
     env=os.environ.copy();env['LD_LIBRARY_PATH']=str(tools/'usr/lib/x86_64-linux-gnu');env['QEMU_MODULE_DIR']=str(tools/'usr/lib/x86_64-linux-gnu/qemu')
@@ -73,7 +73,7 @@ def boot(run,image,phase,manifest,honour_barriers=True,expect_missing=False,expe
              '-blockdev','driver=nbd,node-name=os,server.type=unix,server.path='+str(sock),
              '-device','virtio-blk-pci,drive=os,write-cache=on']
     (run/(phase+'-command.json')).write_text(json.dumps(command,indent=2)+'\n')
-    process=subprocess.Popen(command,cwd=ROOT,env=env,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True,errors='replace',bufsize=1)
+    process=subprocess.Popen(command,cwd=ROOT,env=env,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True,errors='replace',bufsize=1)
     lines=queue.Queue();log_path=run/(phase+'-serial.log')
     def consume():
         with log_path.open('w') as log:
@@ -83,25 +83,36 @@ def boot(run,image,phase,manifest,honour_barriers=True,expect_missing=False,expe
     expected='KANGER_BLOCK_ACK revision=1 value=42' if phase=='write' else 'KANGER_BLOCK_RECOVERED revision=1 value=42'
     if expect_missing:expected='KANGER_BLOCK_MISSING revision=1 code=STORAGE_NOT_FOUND'
     if expected_marker is not None:expected=expected_marker
-    observed=False;deadline=time.monotonic()+240
+    observed=False;previous_ack=None;deadline=time.monotonic()+240
     try:
         while time.monotonic()<deadline:
+            if fault is not None and server.fault_seen.is_set():observed=True;break
             try:line=lines.get(timeout=1)
             except queue.Empty:continue
             if line is None:break
-            if line==expected:observed=True;break
+            if line=='KANGER_BLOCK_PREVIOUS_ACK revision=1 value=42':
+                if previous_ack is not None:raise RuntimeError('Duplicate previous ACK')
+                previous_ack=dict(server.stats)
+                if fault is not None:server.arm_fault(**fault)
+                process.stdin.write('\n');process.stdin.flush()
+            if line==expected or (expected_prefix and line.startswith(expected)):observed=True;break
             if 'KANGER_GUEST_FAILED' in line or 'Kernel panic' in line:break
     finally:
         server.arm_cut()
         if process.poll() is None:process.kill()
         process.wait(timeout=20);reader.join(timeout=10);stats=server.stop()
+    if fault is not None:
+        observed=server.fault_seen.is_set() and previous_ack is not None
+        if 'KANGER_BLOCK_NEXT_ACK' in log_path.read_text():raise RuntimeError('Cut followed the next application ACK')
     if not observed:raise RuntimeError('Guest did not reach '+expected+'; inspect '+str(log_path))
     if phase.startswith('write') and stats['flushes']+stats['fua']==0:raise RuntimeError('No stable barrier reached NBD backend')
     if phase.startswith('write') and stats['writes']<=stats['fua']:raise RuntimeError('VM did not exercise cacheable writes')
     recovery_seen='EXT4-fs (vda): recovery complete' in log_path.read_text()
     if phase.startswith('read') and not expect_missing and not recovery_seen:raise RuntimeError('Cold journal recovery was not observed')
     return dict(expected_marker=expected,observed=True,exit_code=process.returncode,block_stats=stats,
-                honour_barriers=honour_barriers,journal_recovery_seen=recovery_seen)
+                honour_barriers=honour_barriers,journal_recovery_seen=recovery_seen,
+                previous_ack_stats=previous_ack,cut=fault,cut_reached=server.fault_seen.is_set(),
+                post_previous_ack_stats=None if previous_ack is None else {k:stats[k]-previous_ack[k] for k in stats})
 
 
 def main():

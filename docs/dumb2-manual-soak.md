@@ -505,3 +505,16 @@ boots: the original append/negative controls plus create R0, two appends with
 retained R1, and fork. All cold reads verify exact snapshots before any mutable
 reopen. See [scope and evidence](architecture/3.8.0-context-block-device-harness.md).
 Intermediate publication cuts and distinct-device pins remain separate work.
+
+
+## Stage 655 — previous ACK and interrupted append
+
+After `python3 scripts/persistence_vm/prepare.py`, run
+`python3 scripts/qualify-context-interrupted-block-device.py` on the owned
+QEMU/NBD apparatus. The actual R1 ACK is established before arming a cut and
+releasing the attempt at R2. A no-cut witness measures FLUSH count; each ordinal
+is cut before/after, plus first WRITE. Cold read-only snapshots must retain R1
+and validate CURRENT R1 or complete R2. See the
+[protocol, results and limits](architecture/3.8.0-context-interrupted-block-device.md).
+Stage 655 passed 21 cut cases and 44 VM boots; it does not close topology,
+reindex, initial-publication, distinct-device pin or physical-device acceptance.

@@ -26,13 +26,31 @@ class VolatileNbd:
         self.fd=os.open(image,os.O_RDWR);self.size=os.fstat(self.fd).st_size
         self.dirty={};self.stats=dict(reads=0,writes=0,flushes=0,fua=0,dropped_sectors=0)
         self.errors=[];self.cutting=False;self.peer=None
+        self.event_lock=threading.RLock();self.fault=None;self.fault_seen=threading.Event()
         self.log=open(ledger,'w',buffering=1);self.sequence=0
         self.listener=socket.socket(socket.AF_UNIX,socket.SOCK_STREAM)
         self.listener.bind(str(socket_path));self.listener.listen(1);self.listener.settimeout(1)
         self.thread=threading.Thread(target=self.serve,daemon=True);self.thread.start()
 
     def event(self,kind,**values):
-        self.sequence+=1;self.log.write(json.dumps(dict(sequence=self.sequence,event=kind,**values))+'\n')
+        with self.event_lock:
+            self.sequence+=1;self.log.write(json.dumps(dict(sequence=self.sequence,event=kind,**values))+'\n')
+
+    def arm_fault(self,command,ordinal,edge):
+        if command not in (1,3) or ordinal<1 or edge not in ('before','after'):
+            raise ValueError('Invalid finite block cut')
+        with self.event_lock:
+            if self.fault is not None:raise RuntimeError('Fault already armed')
+            self.fault=dict(command=command,ordinal=ordinal,edge=edge,seen=0)
+            self.event('fault_armed',**self.fault)
+
+    def fault_boundary(self,command,edge):
+        with self.event_lock:
+            if self.fault is None or command!=self.fault['command']:return False
+            if edge=='before':self.fault['seen']+=1
+            if self.fault['seen']!=self.fault['ordinal'] or edge!=self.fault['edge']:return False
+            self.event('fault_reached',dirty=len(self.dirty),**self.fault)
+            self.cutting=True;self.fault_seen.set();return True
 
     def persist(self,sectors):
         for number in sorted(sectors):
@@ -66,6 +84,7 @@ class VolatileNbd:
                     elif command==3 and (offset or length):error=22
                     elif command!=3 and (length<=0 or length>MAX_REQUEST or offset%512 or length%512 or offset+length>self.size):error=22
                     if not error:
+                        if self.fault_boundary(command,'before'):return
                         if command==0:
                             self.stats['reads']+=1
                             response=os.pread(self.fd,length,offset)
@@ -88,6 +107,7 @@ class VolatileNbd:
                             if self.honour_barriers:self.persist(list(self.dirty))
                             self.stats['flushes']+=1
                             self.event('flush',persisted_sectors=count if self.honour_barriers else 0,honoured=self.honour_barriers)
+                        if self.fault_boundary(command,'after'):return
                     else:self.event('rejected',command=command,flags=flags,offset=offset,length=length)
                     connection.sendall(struct.pack('>II8s',REPLY,error,cookie)+response)
         except (EOFError,BrokenPipeError,ConnectionResetError,OSError) as failure:
