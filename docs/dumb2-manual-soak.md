@@ -484,3 +484,14 @@ marker visibility remains unconfirmed and needs successful checkpoint recovery.
 The [current profile](architecture/3.8.0-context-durability-profile.md) lists exact
 conditions and the still-open device/power-loss qualification. It is not a
 general certificate for any disk whose mount happens to say ext4.
+
+
+### Stage 653 — isolated cold-recovery qualification
+
+The [block-device harness](architecture/3.8.0-context-block-device-harness.md)
+now runs a real ext4 guest and discards unflushed sectors after abrupt VM stop.
+One acknowledged append survives cold journal recovery on a flush-honouring
+model. A deliberately lying FLUSH backend loses the ACK and is detected.
+This is qualification infrastructure, not a new Console mode or weaker runtime
+option. Production remains stage 652; full operation and device acceptance remain
+open. The commands use owned images and never reboot or mount a host device.
