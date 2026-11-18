@@ -1,0 +1,1575 @@
+{
+  "scope": "One unreproduced TERM materialization failure before fault arming; experimental C1/QEMU acquisition",
+  "classification": "OPEN; neither persistence failure nor JVM/QEMU cause proved",
+  "production_code_changed": false,
+  "acquisition": "target/context-native-block/run-_rh3p1p6",
+  "failure_serial": "[    0.000000] Linux version 6.8.0-149-generic (buildd@lcy02-amd64-099) (x86_64-linux-gnu-gcc-13 (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #149-Ubuntu SMP PREEMPT_DYNAMIC Fri Oct 23 13:21:10 UTC 2026 (Ubuntu 6.8.0-149.149-generic 6.8.12)\n[    0.000000] Command line: console=ttyS0 root=/dev/vda rw rootfstype=ext4 panic=-1 init=/sbin/init random.trust_cpu=on kanger.phase=write-resume-native-topology\n[    0.000000] KERNEL supported cpus:\n[    0.000000]   Intel GenuineIntel\n[    0.000000]   AMD AuthenticAMD\n[    0.000000]   Hygon HygonGenuine\n[    0.000000]   Centaur CentaurHauls\n[    0.000000]   zhaoxin   Shanghai  \n[    0.000000] BIOS-provided physical RAM map:\n[    0.000000] BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff] usable\n[    0.000000] BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff] reserved\n[    0.000000] BIOS-e820: [mem 0x00000000000f0000-0x00000000000fffff] reserved\n[    0.000000] BIOS-e820: [mem 0x0000000000100000-0x000000002ffdcfff] usable\n[    0.000000] BIOS-e820: [mem 0x000000002ffdd000-0x000000002fffffff] reserved\n[    0.000000] BIOS-e820: [mem 0x00000000fffc0000-0x00000000ffffffff] reserved\n[    0.000000] BIOS-e820: [mem 0x000000fd00000000-0x000000ffffffffff] reserved\n[    0.000000] NX (Execute Disable) protection: active\n[    0.000000] APIC: Static calls initialized\n[    0.000000] SMBIOS 3.0.0 present.\n[    0.000000] DMI: QEMU Standard PC (i440FX + PIIX, 1996), BIOS 1.16.3-debian-1.16.3-2 04/01/2014\n[    0.000000] tsc: Fast TSC calibration using PIT\n[    0.000000] tsc: Detected 2591.952 MHz processor\n[    0.022842] last_pfn = 0x2ffdd max_arch_pfn = 0x10000000000\n[    0.025732] MTRR map: 4 entries (3 fixed + 1 variable; max 19), built from 8 variable MTRRs\n[    0.027313] x86/PAT: Configuration [0-7]: WB  WC  UC- UC  WB  WP  UC- WT  \n[    0.115036] found SMP MP-table at [mem 0x000f5480-0x000f548f]\n[    0.120930] Using GB pages for direct mapping\n[    0.136993] ACPI: Early table checksum verification disabled\n[    0.138671] ACPI: RSDP 0x00000000000F52B0 000014 (v00 BOCHS )\n[    0.139836] ACPI: RSDT 0x000000002FFE1C29 000034 (v01 BOCHS  BXPC     00000001 BXPC 00000001)\n[    0.142436] ACPI: FACP 0x000000002FFE1ADD 000074 (v01 BOCHS  BXPC     00000001 BXPC 00000001)\n[    0.145025] ACPI: DSDT 0x000000002FFE0040 001A9D (v01 BOCHS  BXPC     00000001 BXPC 00000001)\n[    0.145376] ACPI: FACS 0x000000002FFE0000 000040\n[    0.145623] ACPI: APIC 0x000000002FFE1B51 000078 (v03 BOCHS  BXPC     00000001 BXPC 00000001)\n[    0.145770] ACPI: HPET 0x000000002FFE1BC9 000038 (v01 BOCHS  BXPC     00000001 BXPC 00000001)\n[    0.145910] ACPI: WAET 0x000000002FFE1C01 000028 (v01 BOCHS  BXPC     00000001 BXPC 00000001)\n[    0.146353] ACPI: Reserving FACP table memory at [mem 0x2ffe1add-0x2ffe1b50]\n[    0.146517] ACPI: Reserving DSDT table memory at [mem 0x2ffe0040-0x2ffe1adc]\n[    0.146561] ACPI: Reserving FACS table memory at [mem 0x2ffe0000-0x2ffe003f]\n[    0.146601] ACPI: Reserving APIC table memory at [mem 0x2ffe1b51-0x2ffe1bc8]\n[    0.146639] ACPI: Reserving HPET table memory at [mem 0x2ffe1bc9-0x2ffe1c00]\n[    0.146674] ACPI: Reserving WAET table memory at [mem 0x2ffe1c01-0x2ffe1c28]\n[    0.156004] No NUMA configuration found\n[    0.156126] Faking a node at [mem 0x0000000000000000-0x000000002ffdcfff]\n[    0.158633] NODE_DATA(0) allocated [mem 0x2ffb2000-0x2ffdcfff]\n[    0.173427] Zone ranges:\n[    0.173561]   DMA      [mem 0x0000000000001000-0x0000000000ffffff]\n[    0.174042]   DMA32    [mem 0x0000000001000000-0x000000002ffdcfff]\n[    0.174106]   Normal   empty\n[    0.174206]   Device   empty\n[    0.174274] Movable zone start for each node\n[    0.174408] Early memory node ranges\n[    0.174514]   node   0: [mem 0x0000000000001000-0x000000000009efff]\n[    0.175151]   node   0: [mem 0x0000000000100000-0x000000002ffdcfff]\n[    0.175937] Initmem setup node 0 [mem 0x0000000000001000-0x000000002ffdcfff]\n[    0.180503] On node 0, zone DMA: 1 pages in unavailable ranges\n[    0.181540] On node 0, zone DMA: 97 pages in unavailable ranges\n[    0.220646] On node 0, zone DMA32: 35 pages in unavailable ranges\n[    0.222814] ACPI: PM-Timer IO Port: 0x608\n[    0.224775] ACPI: LAPIC_NMI (acpi_id[0xff] dfl dfl lint[0x1])\n[    0.226713] IOAPIC[0]: apic_id 0, version 32, address 0xfec00000, GSI 0-23\n[    0.227382] ACPI: INT_SRC_OVR (bus 0 bus_irq 0 global_irq 2 dfl dfl)\n[    0.228585] ACPI: INT_SRC_OVR (bus 0 bus_irq 5 global_irq 5 high level)\n[    0.228795] ACPI: INT_SRC_OVR (bus 0 bus_irq 9 global_irq 9 high level)\n[    0.229169] ACPI: INT_SRC_OVR (bus 0 bus_irq 10 global_irq 10 high level)\n[    0.229235] ACPI: INT_SRC_OVR (bus 0 bus_irq 11 global_irq 11 high level)\n[    0.230061] ACPI: Using ACPI (MADT) for SMP configuration information\n[    0.230237] ACPI: HPET id: 0x8086a201 base: 0xfed00000\n[    0.231263] smpboot: Allowing 1 CPUs, 0 hotplug CPUs\n[    0.235741] PM: hibernation: Registered nosave memory: [mem 0x00000000-0x00000fff]\n[    0.235940] PM: hibernation: Registered nosave memory: [mem 0x0009f000-0x000fffff]\n[    0.236443] [mem 0x30000000-0xfffbffff] available for PCI devices\n[    0.236713] Booting paravirtualized kernel on bare hardware\n[    0.237786] clocksource: refined-jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 1910969940391419 ns\n[    0.239975] setup_percpu: NR_CPUS:8192 nr_cpumask_bits:1 nr_cpu_ids:1 nr_node_ids:1\n[    0.250615] percpu: Embedded 86 pages/cpu s229376 r8192 d114688 u2097152\n[    0.255693] Kernel command line: console=ttyS0 root=/dev/vda rw rootfstype=ext4 panic=-1 init=/sbin/init random.trust_cpu=on kanger.phase=write-resume-native-topology\n[    0.264171] random: crng init done\n[    0.265885] Dentry cache hash table entries: 131072 (order: 8, 1048576 bytes, linear)\n[    0.267366] Inode-cache hash table entries: 65536 (order: 7, 524288 bytes, linear)\n[    0.278850] Fallback order for Node 0: 0 \n[    0.280360] Built 1 zonelists, mobility grouping on.  Total pages: 193245\n[    0.280475] Policy zone: DMA32\n[    0.282855] mem auto-init: stack:all(zero), heap alloc:on, heap free:off\n[    0.334258] Memory: 716336K/785900K available (22528K kernel code, 4444K rwdata, 14456K rodata, 4948K init, 4756K bss, 69360K reserved, 0K cma-reserved)\n[    0.379272] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=1, Nodes=1\n[    0.577508] ftrace: allocating 57855 entries in 228 pages\n[    0.578851] ftrace: allocated 228 pages with 4 groups\n[    0.614930] Dynamic Preempt: voluntary\n[    0.629232] rcu: Preemptible hierarchical RCU implementation.\n[    0.629388] rcu: \tRCU restricting CPUs from NR_CPUS=8192 to nr_cpu_ids=1.\n[    0.629774] \tTrampoline variant of Tasks RCU enabled.\n[    0.629812] \tRude variant of Tasks RCU enabled.\n[    0.629842] \tTracing variant of Tasks RCU enabled.\n[    0.630236] rcu: RCU calculated value of scheduler-enlistment delay is 100 jiffies.\n[    0.630346] rcu: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=1\n[    0.634855] RCU Tasks: Setting shift to 0 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=1.\n[    0.634998] RCU Tasks Rude: Setting shift to 0 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=1.\n[    0.635048] RCU Tasks Trace: Setting shift to 0 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=1.\n[    0.727642] NR_IRQS: 524544, nr_irqs: 256, preallocated irqs: 16\n[    0.762338] rcu: srcu_init: Setting srcu_struct sizes based on contention.\n[    0.785055] Console: colour *CGA 80x25\n[    0.791091] printk: legacy console [ttyS0] enabled\n[    0.852554] ACPI: Core revision 20230628\n[    0.877358] clocksource: hpet: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 19112604467 ns\n[    0.901267] APIC: Switch to symmetric I/O mode setup\n[    0.922709] ..TIMER: vector=0x30 apic1=0 pin1=2 apic2=-1 pin2=-1\n[    0.932521] clocksource: tsc-early: mask: 0xffffffffffffffff max_cycles: 0x255c8978e6e, max_idle_ns: 440795231078 ns\n[    0.936949] Calibrating delay loop (skipped), value calculated using timer frequency.. 5183.90 BogoMIPS (lpj=2591952)\n[    0.947516] x86/cpu: User Mode Instruction Prevention (UMIP) activated\n[    0.978652] Last level iTLB entries: 4KB 0, 2MB 0, 4MB 0\n[    0.979628] Last level dTLB entries: 4KB 0, 2MB 0, 4MB 0, 1GB 0\n[    0.985090] Spectre V1 : Mitigation: usercopy/swapgs barriers and __user pointer sanitization\n[    0.987370] Spectre V2 : Mitigation: Retpolines\n[    0.988562] Spectre V2 : Spectre v2 / SpectreRSB: Filling RSB on context switch and VMEXIT\n[    0.989790] Speculative Store Bypass: Vulnerable\n[    1.006920] x86/fpu: Supporting XSAVE feature 0x001: 'x87 floating point registers'\n[    1.011778] x86/fpu: Supporting XSAVE feature 0x002: 'SSE registers'\n[    1.013588] x86/fpu: Supporting XSAVE feature 0x004: 'AVX registers'\n[    1.014323] x86/fpu: Supporting XSAVE feature 0x008: 'MPX bounds registers'\n[    1.015171] x86/fpu: Supporting XSAVE feature 0x010: 'MPX CSR'\n[    1.016592] x86/fpu: Supporting XSAVE feature 0x200: 'Protection Keys User registers'\n[    1.017908] x86/fpu: xstate_offset[2]:  576, xstate_sizes[2]:  256\n[    1.018849] x86/fpu: xstate_offset[3]:  960, xstate_sizes[3]:   64\n[    1.020584] x86/fpu: xstate_offset[4]: 1024, xstate_sizes[4]:   64\n[    1.020943] x86/fpu: xstate_offset[9]: 2688, xstate_sizes[9]:    8\n[    1.021628] x86/fpu: Enabled xstate features 0x21f, context size is 2696 bytes, using 'standard' format.\n[    2.665684] Freeing SMP alternatives memory: 48K\n[    2.669597] pid_max: default: 32768 minimum: 301\n[    2.694539] LSM: initializing lsm=lockdown,capability,landlock,yama,apparmor,integrity\n[    2.698732] landlock: Up and running.\n[    2.699320] Yama: becoming mindful.\n[    2.714971] AppArmor: AppArmor initialized\n[    2.730539] Mount-cache hash table entries: 2048 (order: 2, 16384 bytes, linear)\n[    2.730943] Mountpoint-cache hash table entries: 2048 (order: 2, 16384 bytes, linear)\n[    2.941863] smpboot: CPU0: AMD QEMU TCG CPU version 2.5+ (family: 0x6, model: 0x6, stepping: 0x3)\n[    2.984843] Performance Events: PMU not available due to virtualization, using software events only.\n[    2.988935] signal: max sigframe size: 3632\n[    2.997438] rcu: Hierarchical SRCU implementation.\n[    2.998697] rcu: \tMax phase no-delay instances is 400.\n[    3.030796] NMI watchdog: Perf NMI watchdog permanently disabled\n[    3.041960] smp: Bringing up secondary CPUs ...\n[    3.049574] smp: Brought up 1 node, 1 CPU\n[    3.050573] smpboot: Max logical packages: 1\n[    3.051875] smpboot: Total of 1 processors activated (5183.90 BogoMIPS)\n[    3.105023] devtmpfs: initialized\n[    3.117740] x86/mm: Memory block size: 128MB\n[    3.153660] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 1911260446275000 ns\n[    3.156306] futex hash table entries: 256 (order: 2, 16384 bytes, linear)\n[    3.167990] pinctrl core: initialized pinctrl subsystem\n[    3.197900] PM: RTC time: 13:35:26, date: 2026-11-18\n[    3.267301] NET: Registered PF_NETLINK/PF_ROUTE protocol family\n[    3.284889] DMA: preallocated 128 KiB GFP_KERNEL pool for atomic allocations\n[    3.288862] DMA: preallocated 128 KiB GFP_KERNEL|GFP_DMA pool for atomic allocations\n[    3.291932] DMA: preallocated 128 KiB GFP_KERNEL|GFP_DMA32 pool for atomic allocations\n[    3.293831] audit: initializing netlink subsys (disabled)\n[    3.304609] audit: type=2000 audit(1795008926.399:1): state=initialized audit_enabled=0 res=1\n[    3.328902] thermal_sys: Registered thermal governor 'fair_share'\n[    3.329037] thermal_sys: Registered thermal governor 'bang_bang'\n[    3.330611] thermal_sys: Registered thermal governor 'step_wise'\n[    3.331134] thermal_sys: Registered thermal governor 'user_space'\n[    3.331601] thermal_sys: Registered thermal governor 'power_allocator'\n[    3.335000] cpuidle: using governor ladder\n[    3.336718] cpuidle: using governor menu\n[    3.344565] acpiphp: ACPI Hot Plug PCI Controller Driver version: 0.5\n[    3.354442] PCI: Using configuration type 1 for base access\n[    3.371208] kprobes: kprobe jump-optimization is enabled. All kprobes are optimized if possible.\n[    3.754947] HugeTLB: registered 1.00 GiB page size, pre-allocated 0 pages\n[    3.755668] HugeTLB: 16380 KiB vmemmap can be freed for a 1.00 GiB page\n[    3.757275] HugeTLB: registered 2.00 MiB page size, pre-allocated 0 pages\n[    3.757590] HugeTLB: 28 KiB vmemmap can be freed for a 2.00 MiB page\n[    3.862021] ACPI: Added _OSI(Module Device)\n[    3.862652] ACPI: Added _OSI(Processor Device)\n[    3.862891] ACPI: Added _OSI(Processor Aggregator Device)\n[    3.971704] ACPI: 1 ACPI AML tables successfully acquired and loaded\n[    4.034539] ACPI: _OSC evaluation for CPUs failed, trying _PDC\n[    4.042429] ACPI: Interpreter enabled\n[    4.047225] ACPI: PM: (supports S0 S3 S4 S5)\n[    4.047733] ACPI: Using IOAPIC for interrupt routing\n[    4.053539] PCI: Using host bridge windows from ACPI; if necessary, use \"pci=nocrs\" and report a bug\n[    4.053539] PCI: Using E820 reservations for host bridge windows\n[    4.058373] ACPI: Enabled 2 GPEs in block 00 to 0F\n[    4.228162] ACPI: PCI Root Bridge [PCI0] (domain 0000 [bus 00-ff])\n[    4.231373] acpi PNP0A03:00: _OSC: OS supports [ASPM ClockPM Segments MSI EDR HPX-Type3]\n[    4.232849] acpi PNP0A03:00: _OSC: not requesting OS control; OS requires [ExtendedConfig ASPM ClockPM MSI]\n[    4.237146] acpi PNP0A03:00: fail to add MMCONFIG information, can't access extended configuration space under this bridge\n[    4.264146] acpiphp: Slot [2] registered\n[    4.266130] acpiphp: Slot [3] registered\n[    4.266906] acpiphp: Slot [4] registered\n[    4.267684] acpiphp: Slot [5] registered\n[    4.268392] acpiphp: Slot [6] registered\n[    4.268954] acpiphp: Slot [7] registered\n[    4.269911] acpiphp: Slot [8] registered\n[    4.270623] acpiphp: Slot [9] registered\n[    4.271196] acpiphp: Slot [10] registered\n[    4.271896] acpiphp: Slot [11] registered\n[    4.272642] acpiphp: Slot [12] registered\n[    4.273232] acpiphp: Slot [13] registered\n[    4.273899] acpiphp: Slot [14] registered\n[    4.274450] acpiphp: Slot [15] registered\n[    4.274539] acpiphp: Slot [16] registered\n[    4.274539] acpiphp: Slot [17] registered\n[    4.274840] acpiphp: Slot [18] registered\n[    4.276074] acpiphp: Slot [19] registered\n[    4.276878] acpiphp: Slot [20] registered\n[    4.277577] acpiphp: Slot [21] registered\n[    4.278146] acpiphp: Slot [22] registered\n[    4.278800] acpiphp: Slot [23] registered\n[    4.279287] acpiphp: Slot [24] registered\n[    4.279971] acpiphp: Slot [25] registered\n[    4.280814] acpiphp: Slot [26] registered\n[    4.281465] acpiphp: Slot [27] registered\n[    4.281955] acpiphp: Slot [28] registered\n[    4.282953] acpiphp: Slot [29] registered\n[    4.283624] acpiphp: Slot [30] registered\n[    4.284658] acpiphp: Slot [31] registered\n[    4.285918] PCI host bridge to bus 0000:00\n[    4.286707] pci_bus 0000:00: root bus resource [io  0x0000-0x0cf7 window]\n[    4.287428] pci_bus 0000:00: root bus resource [io  0x0d00-0xffff window]\n[    4.287616] pci_bus 0000:00: root bus resource [mem 0x000a0000-0x000bffff window]\n[    4.288107] pci_bus 0000:00: root bus resource [mem 0x30000000-0xfebfffff window]\n[    4.288592] pci_bus 0000:00: root bus resource [mem 0x100000000-0x17fffffff window]\n[    4.289762] pci_bus 0000:00: root bus resource [bus 00-ff]\n[    4.295116] pci 0000:00:00.0: [8086:1237] type 00 class 0x060000 conventional PCI endpoint\n[    4.312819] pci 0000:00:01.0: [8086:7000] type 00 class 0x060100 conventional PCI endpoint\n[    4.315963] pci 0000:00:01.1: [8086:7010] type 00 class 0x010180 conventional PCI endpoint\n[    4.318103] pci 0000:00:01.1: BAR 4 [io  0xc080-0xc08f]\n[    4.318709] pci 0000:00:01.1: BAR 0 [io  0x01f0-0x01f7]: legacy IDE quirk\n[    4.319114] pci 0000:00:01.1: BAR 1 [io  0x03f6]: legacy IDE quirk\n[    4.319530] pci 0000:00:01.1: BAR 2 [io  0x0170-0x0177]: legacy IDE quirk\n[    4.319653] pci 0000:00:01.1: BAR 3 [io  0x0376]: legacy IDE quirk\n[    4.325721] pci 0000:00:01.3: [8086:7113] type 00 class 0x068000 conventional PCI endpoint\n[    4.329034] pci 0000:00:01.3: quirk: [io  0x0600-0x063f] claimed by PIIX4 ACPI\n[    4.329785] pci 0000:00:01.3: quirk: [io  0x0700-0x070f] claimed by PIIX4 SMB\n[    4.334210] pci 0000:00:02.0: [1af4:1001] type 00 class 0x010000 conventional PCI endpoint\n[    4.337608] pci 0000:00:02.0: BAR 0 [io  0xc000-0xc07f]\n[    4.337988] pci 0000:00:02.0: BAR 1 [mem 0xfebff000-0xfebfffff]\n[    4.338384] pci 0000:00:02.0: BAR 4 [mem 0xfebf8000-0xfebfbfff 64bit pref]\n[    4.386776] ACPI: PCI: Interrupt link LNKA configured for IRQ 10\n[    4.391011] ACPI: PCI: Interrupt link LNKB configured for IRQ 10\n[    4.394366] ACPI: PCI: Interrupt link LNKC configured for IRQ 11\n[    4.397865] ACPI: PCI: Interrupt link LNKD configured for IRQ 11\n[    4.399770] ACPI: PCI: Interrupt link LNKS configured for IRQ 9\n[    4.417539] iommu: Default domain type: Translated\n[    4.417539] iommu: DMA domain TLB invalidation policy: lazy mode\n[    4.437159] SCSI subsystem initialized\n[    4.447118] ACPI: bus type USB registered\n[    4.449314] usbcore: registered new interface driver usbfs\n[    4.449539] usbcore: registered new interface driver hub\n[    4.449539] usbcore: registered new device driver usb\n[    4.454368] pps_core: LinuxPPS API ver. 1 registered\n[    4.454851] pps_core: Software ver. 5.3.6 - Copyright 2005-2007 Rodolfo Giometti <giometti@linux.it>\n[    4.455960] PTP clock support registered\n[    4.464001] EDAC MC: Ver: 3.0.0\n[    4.520289] NetLabel: Initializing\n[    4.520640] NetLabel:  domain hash size = 128\n[    4.520894] NetLabel:  protocols = UNLABELED CIPSOv4 CALIPSO\n[    4.525969] NetLabel:  unlabeled traffic allowed by default\n[    4.542539] mctp: management component transport protocol core\n[    4.542539] NET: Registered PF_MCTP protocol family\n[    4.545915] PCI: Using ACPI for IRQ routing\n[    4.556230] vgaarb: loaded\n[    4.563568] hpet0: at MMIO 0xfed00000, IRQs 2, 8, 0\n[    4.564658] hpet0: 3 comparators, 64-bit 100.000000 MHz counter\n[    4.570753] clocksource: Switched to clocksource tsc-early\n[    4.621455] VFS: Disk quotas dquot_6.6.0\n[    4.621455] VFS: Dquot-cache hash table entries: 512 (order 0, 4096 bytes)\n[    4.653566] AppArmor: AppArmor Filesystem Enabled\n[    4.657791] pnp: PnP ACPI init\n[    4.680117] pnp: PnP ACPI: found 5 devices\n[    4.802884] clocksource: acpi_pm: mask: 0xffffff max_cycles: 0xffffff, max_idle_ns: 2085701024 ns\n[    4.807848] NET: Registered PF_INET protocol family\n[    4.815063] IP idents hash table entries: 16384 (order: 5, 131072 bytes, linear)\n[    5.146396] tcp_listen_portaddr_hash hash table entries: 512 (order: 1, 8192 bytes, linear)\n[    5.149222] Table-perturb hash table entries: 65536 (order: 6, 262144 bytes, linear)\n[    5.150486] TCP established hash table entries: 8192 (order: 4, 65536 bytes, linear)\n[    5.153454] TCP bind hash table entries: 8192 (order: 6, 262144 bytes, linear)\n[    5.154617] TCP: Hash tables configured (established 8192 bind 8192)\n[    5.161052] MPTCP token hash table entries: 1024 (order: 3, 24576 bytes, linear)\n[    5.162828] UDP hash table entries: 512 (order: 2, 16384 bytes, linear)\n[    5.164127] UDP-Lite hash table entries: 512 (order: 2, 16384 bytes, linear)\n[    5.169169] NET: Registered PF_UNIX/PF_LOCAL protocol family\n[    5.171003] NET: Registered PF_XDP protocol family\n[    5.174525] pci_bus 0000:00: resource 4 [io  0x0000-0x0cf7 window]\n[    5.174946] pci_bus 0000:00: resource 5 [io  0x0d00-0xffff window]\n[    5.175268] pci_bus 0000:00: resource 6 [mem 0x000a0000-0x000bffff window]\n[    5.175739] pci_bus 0000:00: resource 7 [mem 0x30000000-0xfebfffff window]\n[    5.176090] pci_bus 0000:00: resource 8 [mem 0x100000000-0x17fffffff window]\n[    5.178631] pci 0000:00:01.0: PIIX3: Enabling Passive Release\n[    5.179252] pci 0000:00:00.0: Limiting direct PCI/PCI transfers\n[    5.179989] PCI: CLS 0 bytes, default 64\n[    5.222042] Initialise system trusted keyrings\n[    5.228501] Key type blacklist registered\n[    5.231934] workingset: timestamp_bits=36 max_order=18 bucket_order=0\n[    5.234633] zbud: loaded\n[    5.244636] squashfs: version 4.0 (2009/01/31) Phillip Lougher\n[    5.251201] fuse: init (API version 7.39)\n[    5.264955] integrity: Platform Keyring initialized\n[    5.266586] integrity: Machine keyring initialized\n[    5.559587] Key type asymmetric registered\n[    5.560792] Asymmetric key parser 'x509' registered\n[    5.562946] Block layer SCSI generic (bsg) driver version 0.4 loaded (major 243)\n[    5.567679] io scheduler mq-deadline registered\n[    5.578884] shpchp: Standard Hot Plug PCI Controller Driver version: 0.4\n[    5.595949] input: Power Button as /devices/LNXSYSTM:00/LNXPWRBN:00/input/input0\n[    5.613589] ACPI: button: Power Button [PWRF]\n[    6.249841] tsc: Refined TSC clocksource calibration: 2591.996 MHz\n[    6.251567] clocksource: tsc: mask: 0xffffffffffffffff max_cycles: 0x255cb30caa3, max_idle_ns: 440795217292 ns\n[    6.256667] clocksource: Switched to clocksource tsc\n[    6.701559] ACPI: \\_SB_.LNKB: Enabled at IRQ 10\n[    6.714476] Serial: 8250/16550 driver, 32 ports, IRQ sharing enabled\n[    6.752761] 00:03: ttyS0 at I/O 0x3f8 (irq = 4, base_baud = 115200) is a 16550A\n[    6.892303] Linux agpgart interface v0.103\n[    6.987770] loop: module loaded\n[    6.991522] virtio_blk virtio0: 1/0/0 default/read/poll queues\n[    7.029769] virtio_blk virtio0: [vda] 1048576 512-byte logical blocks (537 MB/512 MiB)\n[    7.143913] scsi host0: ata_piix\n[    7.154093] scsi host1: ata_piix\n[    7.156929] ata1: PATA max MWDMA2 cmd 0x1f0 ctl 0x3f6 bmdma 0xc080 irq 14 lpm-pol 0\n[    7.157841] ata2: PATA max MWDMA2 cmd 0x170 ctl 0x376 bmdma 0xc088 irq 15 lpm-pol 0\n[    7.183187] ACPI: bus type drm_connector registered\n[    7.197513] tun: Universal TUN/TAP device driver, 1.6\n[    7.201211] PPP generic driver version 2.4.2\n[    7.215086] i8042: PNP: PS/2 Controller [PNP0303:KBD,PNP0f13:MOU] at 0x60,0x64 irq 1,12\n[    7.230115] serio: i8042 KBD port at 0x60,0x64 irq 1\n[    7.231384] serio: i8042 AUX port at 0x60,0x64 irq 12\n[    7.243494] mousedev: PS/2 mouse device common for all mice\n[    7.251876] rtc_cmos 00:04: RTC can wake from S4\n[    7.266878] input: AT Translated Set 2 keyboard as /devices/platform/i8042/serio0/input/input1\n[    7.278261] rtc_cmos 00:04: registered as rtc0\n[    7.281041] rtc_cmos 00:04: setting system clock to 2026-11-18T13:35:31 UTC (1795008931)\n[    7.288837] rtc_cmos 00:04: alarms up to one day, y3k, 242 bytes nvram, hpet irqs\n[    7.290128] i2c_dev: i2c /dev entries driver\n[    7.293122] device-mapper: core: CONFIG_IMA_DISABLE_HTABLE is disabled. Duplicate IMA measurements will not be recorded in the IMA log.\n[    7.293425] device-mapper: uevent: version 1.0.3\n[    7.297617] device-mapper: ioctl: 4.48.0-ioctl (2023-03-01) initialised: dm-devel@redhat.com\n[    7.307103] amd_pstate: the _CPC object is not present in SBIOS or ACPI disabled\n[    7.312031] ledtrig-cpu: registered to indicate activity on CPUs\n[    7.317008] drop_monitor: Initializing network drop monitor service\n[    7.322513] NET: Registered PF_INET6 protocol family\n[    7.427675] Segment Routing with IPv6\n[    7.430203] In-situ OAM (IOAM) with IPv6\n[    7.434392] NET: Registered PF_PACKET protocol family\n[    7.437092] Key type dns_resolver registered\n[    7.449550] IPI shorthand broadcast: enabled\n[    7.572659] sched_clock: Marking stable (7435116517, 137279963)->(7793455316, -221058836)\n[    7.584380] registered taskstats version 1\n[    7.596815] Loading compiled-in X.509 certificates\n[    7.645053] Loaded X.509 cert 'Build time autogenerated kernel key: 9a137e402f355547be6108f074230bd270d34d14'\n[    7.652074] Loaded X.509 cert 'Canonical Ltd. Live Patch Signing 2025 Kmod: d541cef61dc7e793b7eb7e899970a2eef0b5dc8c'\n[    7.659213] Loaded X.509 cert 'Canonical Ltd. Live Patch Signing: 14df34d1a87cf37625abec039ef2bf521249b969'\n[    7.665950] Loaded X.509 cert 'Canonical Ltd. Kernel Module Signing 2025 Kmod: 4627603d2357a2a3f81006370894c221175893e9'\n[    7.673661] Loaded X.509 cert 'Canonical Ltd. Kernel Module Signing: 88f752e560a1e0737e31163a466ad7b70a850c19'\n[    7.674616] blacklist: Loading compiled-in revocation X.509 certificates\n[    7.679904] Loaded X.509 cert 'Canonical Ltd. Secure Boot Signing: 61482aa2830d0ab2ad5af10b7250da9033ddcef0'\n[    7.682068] Loaded X.509 cert 'Canonical Ltd. Secure Boot Signing (2017): 242ade75ac4a15e50d50c84b0d45ff3eae707a03'\n[    7.683193] Loaded X.509 cert 'Canonical Ltd. Secure Boot Signing (ESM 2018): 365188c1d374d6b07c3c8f240f8ef722433d6a8b'\n[    7.684692] Loaded X.509 cert 'Canonical Ltd. Secure Boot Signing (2019): c0746fd6c5da3ae827864651ad66ae47fe24b3e8'\n[    7.686200] Loaded X.509 cert 'Canonical Ltd. Secure Boot Signing (2021 v1): a8d54bbb3825cfb94fa13c9f8a594a195c107b8d'\n[    7.687917] Loaded X.509 cert 'Canonical Ltd. Secure Boot Signing (2021 v2): 4cf046892d6fd3c9a5b03f98d845f90851dc6a8c'\n[    7.689758] Loaded X.509 cert 'Canonical Ltd. Secure Boot Signing (2021 v3): 100437bb6de6e469b581e61cd66bce3ef4ed53af'\n[    7.691160] Loaded X.509 cert 'Canonical Ltd. Secure Boot Signing (Ubuntu Core 2019): c1d57b8f6b743f23ee41f4f7ee292f06eecadfb9'\n[    7.826877] Key type .fscrypt registered\n[    7.827270] Key type fscrypt-provisioning registered\n[    7.864929] Key type encrypted registered\n[    7.866034] AppArmor: AppArmor sha256 policy hashing enabled\n[    7.870976] ima: No TPM chip found, activating TPM-bypass!\n[    7.872812] Loading compiled-in module X.509 certificates\n[    7.878906] Loaded X.509 cert 'Build time autogenerated kernel key: 9a137e402f355547be6108f074230bd270d34d14'\n[    7.880762] ima: Allocated hash algorithm: sha256\n[    7.891640] ima: No architecture policies found\n[    7.894071] evm: Initialising EVM extended attributes:\n[    7.895755] evm: security.selinux\n[    7.896028] evm: security.SMACK64\n[    7.896200] evm: security.SMACK64EXEC\n[    7.897615] evm: security.SMACK64TRANSMUTE\n[    7.897958] evm: security.SMACK64MMAP\n[    7.898148] evm: security.apparmor\n[    7.899056] evm: security.ima\n[    7.899495] evm: security.capability\n[    7.900421] evm: HMAC attrs: 0x1\n[    7.912086] PM:   Magic number: 2:791:584\n[    8.159408] RAS: Correctable Errors collector initialized.\n[    8.166184] clk: Disabling unused clocks\n[    8.186190] md: Waiting for all devices to be available before autodetect\n[    8.187125] md: If you don't use raid, use raid=noautodetect\n[    8.187765] md: Autodetecting RAID arrays.\n[    8.188108] md: autorun ...\n[    8.188465] md: ... autorun DONE.\n[   10.180703] EXT4-fs (vda): recovery complete\n[   10.196533] EXT4-fs (vda): mounted filesystem d2118247-a6db-4a15-9368-7addeb8d0d70 r/w with ordered data mode. Quota mode: none.\n[   10.198092] VFS: Mounted root (ext4 filesystem) on device 253:0.\n[   10.208723] devtmpfs: mounted\n[   10.456396] Freeing unused decrypted memory: 2028K\n[   10.691117] Freeing unused kernel image (initmem) memory: 4948K\n[   10.693570] Write protecting the kernel read-only data: 38912k\n[   10.702988] Freeing unused kernel image (rodata/data gap) memory: 1928K\n[   11.448532] x86/mm: Checked W+X mappings: passed, no W+X pages found.\n[   11.450087] Run /sbin/init as init process\n[   17.306000] hrtimer: interrupt took 3086766 ns\nException in thread \"main\" java.io.IOException: Invalid or missing TERM field deleted\n\tat org.kanger.storage.dumb2.adapter.TermAdapter.require(TermAdapter.java:284)\n\tat org.kanger.storage.dumb2.adapter.TermAdapter.materializeTerm(TermAdapter.java:172)\n\tat org.kanger.storage.dumb2.adapter.TermAdapter.materialize(TermAdapter.java:83)\n\tat org.kanger.storage.dumb2.adapter.TermAdapter.materialize(TermAdapter.java:21)\n\tat org.kanger.storage.dumb2.adapter.KangerAdapterRegistry.materialize(KangerAdapterRegistry.java:137)\n\tat org.kanger.storage.dumb2.KangerRecordCodec.decode(KangerRecordCodec.java:68)\n\tat org.kanger.storage.dumb2.ContextRecordCodec.decode(ContextRecordCodec.java:127)\n\tat org.kanger.storage.dumb2.ContextBase.materialize(ContextBase.java:423)\n\tat org.kanger.storage.dumb2.ContextStep.getData(ContextStep.java:91)\n\tat org.kanger.storage.Escalera$WalkIterator.<init>(Escalera.java:633)\n\tat org.kanger.storage.Escalera.iterator(Escalera.java:537)\n\tat org.kanger.factory.DictionaryFactory.iterator(DictionaryFactory.java:408)\n\tat org.kanger.factory.DictionaryFactory.transaction(DictionaryFactory.java:166)\n\tat org.kanger.factory.DictionaryFactory.<init>(DictionaryFactory.java:148)\n\tat org.kanger.Mind.init(Mind.java:457)\n\tat org.kanger.Mind.init(Mind.java:453)\n\tat org.kanger.Mind.<init>(Mind.java:321)\n\tat org.kanger.Mind.<init>(Mind.java:250)\n\tat org.kanger.Mind.checkpointStorageState(Mind.java:518)\n\tat org.kanger.User.checkpoint(User.java:320)\n\tat org.kanger.User.closeQuiescentStorage(User.java:354)\n\tat org.kanger.User.close(User.java:343)\n\tat org.kanger.Mind.closeStorage(Mind.java:2833)\n\tat org.kanger.storage.dumb2.PairQualification$AttachedMind.close(PairQualification.java:583)\n\tat org.kanger.storage.dumb2.PairQualification.qualify(PairQualification.java:50)\n\tat org.kanger.storage.dumb2.ConnectionManager.qualifyConnect(ConnectionManager.java:135)\n\tat org.kanger.storage.dumb2.ConnectionManager.qualifyConnect(ConnectionManager.java:83)\n\tat org.kanger.storage.dumb2.DB.connectContext(DB.java:1623)\n\tat org.kanger.storage.dumb2.DB.connectContext(DB.java:1599)\n\tat org.kanger.storage.dumb2.ContextBlockDeviceRunner.nativeOperation(ContextBlockDeviceRunner.java:156)\n\tat org.kanger.storage.dumb2.ContextBlockDeviceRunner.main(ContextBlockDeviceRunner.java:20)\nKANGER_GUEST_FAILED\n",
+  "failure_ledger": "{\"sequence\": 1, \"event\": \"write\", \"offset\": 0, \"length\": 4096, \"fua\": false, \"dirty\": 8}\n{\"sequence\": 2, \"event\": \"flush\", \"persisted_sectors\": 8, \"honoured\": true}\n{\"sequence\": 3, \"event\": \"write\", \"offset\": 268435456, \"length\": 4096, \"fua\": false, \"dirty\": 8}\n{\"sequence\": 4, \"event\": \"flush\", \"persisted_sectors\": 8, \"honoured\": true}\n{\"sequence\": 5, \"event\": \"write\", \"offset\": 0, \"length\": 4096, \"fua\": false, \"dirty\": 8}\n{\"sequence\": 6, \"event\": \"flush\", \"persisted_sectors\": 8, \"honoured\": true}\n{\"sequence\": 7, \"event\": \"write\", \"offset\": 268435456, \"length\": 4096, \"fua\": false, \"dirty\": 8}\n{\"sequence\": 8, \"event\": \"flush\", \"persisted_sectors\": 8, \"honoured\": true}\n{\"sequence\": 9, \"event\": \"write\", \"offset\": 268435456, \"length\": 4096, \"fua\": false, \"dirty\": 8}\n{\"sequence\": 10, \"event\": \"write\", \"offset\": 269561856, \"length\": 8192, \"fua\": false, \"dirty\": 24}\n{\"sequence\": 11, \"event\": \"flush\", \"persisted_sectors\": 24, \"honoured\": true}\n{\"sequence\": 12, \"event\": \"write\", \"offset\": 269570048, \"length\": 4096, \"fua\": false, \"dirty\": 8}\n{\"sequence\": 13, \"event\": \"flush\", \"persisted_sectors\": 8, \"honoured\": true}\n{\"sequence\": 14, \"event\": \"write\", \"offset\": 0, \"length\": 4096, \"fua\": false, \"dirty\": 8}\n{\"sequence\": 15, \"event\": \"flush\", \"persisted_sectors\": 8, \"honoured\": true}\n{\"sequence\": 16, \"event\": \"flush\", \"persisted_sectors\": 0, \"honoured\": true}\n{\"sequence\": 17, \"event\": \"flush\", \"persisted_sectors\": 0, \"honoured\": true}\n{\"sequence\": 18, \"event\": \"flush\", \"persisted_sectors\": 0, \"honoured\": true}\n{\"sequence\": 19, \"event\": \"flush\", \"persisted_sectors\": 0, \"honoured\": true}\n{\"sequence\": 20, \"event\": \"flush\", \"persisted_sectors\": 0, \"honoured\": true}\n{\"sequence\": 21, \"event\": \"flush\", \"persisted_sectors\": 0, \"honoured\": true}\n{\"sequence\": 22, \"event\": \"power_cut\", \"dropped_sectors\": 0}\n",
+  "prepared_inputs": {
+    "qemu_version": "QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)",
+    "kernel": "target/persistence-vm/tools/boot/vmlinuz-6.8.0-149-generic",
+    "template": "target/persistence-vm/template.ext4",
+    "packages": [
+      "Package: ipxe-qemu\nVersion: 1.21.1+git-20220113.fbbdc3926-0ubuntu2\nArchitecture: all",
+      "Package: libdaxctl1\nVersion: 77-2ubuntu2\nArchitecture: amd64",
+      "Package: libfdt1\nVersion: 1.7.0-2build1\nArchitecture: amd64",
+      "Package: libndctl6\nVersion: 77-2ubuntu2\nArchitecture: amd64",
+      "Package: libpmem1\nVersion: 1.13.1-1.1ubuntu2\nArchitecture: amd64",
+      "Package: librdmacm1t64\nVersion: 50.0-2ubuntu0.2\nArchitecture: amd64",
+      "Package: libslirp0\nVersion: 4.7.0-1ubuntu3.1\nArchitecture: amd64",
+      "Package: linux-image-unsigned-6.8.0-149-generic\nVersion: 6.8.0-149.149\nArchitecture: amd64",
+      "Package: qemu-system-common\nVersion: 1:8.2.2+ds-0ubuntu1.18\nArchitecture: amd64",
+      "Package: qemu-system-data\nVersion: 1:8.2.2+ds-0ubuntu1.18\nArchitecture: all",
+      "Package: qemu-system-x86\nVersion: 1:8.2.2+ds-0ubuntu1.18\nArchitecture: amd64",
+      "Package: seabios\nVersion: 1.16.3-2\nArchitecture: all"
+    ],
+    "sha256": {
+      "target/persistence-vm/tools/boot/vmlinuz-6.8.0-149-generic": "c2b4577c780c2cbd15dda13b6c890bf655fb4d1e1434a801e6e79e88e8c9a2e1",
+      "target/persistence-vm/template.ext4": "ab6e19637a19514f8d21b3b8e3361e7424968bdde6e68d55853cbec53842f6ed",
+      "kanger-console/target/kanger-console-3.3-SNAPSHOT.jar": "ca5cce279f6e7a9e36760ae4c3545902b205b677585fa38cacde348d88225f23",
+      "kanger-qualification/src/org/kanger/storage/dumb2/ContextBlockDeviceRunner.java": "4561781ebfb2134170c30d0ee937375b11098641d29f6d8bd142980f6578e6f3",
+      "target/persistence-vm/tools/usr/bin/qemu-system-x86_64": "8a35ccba41582fc6c38b9df85fc9e35fa1d42f414d2d7d8090ee9b2f5e7c0854",
+      "scripts/persistence_vm/prepare.py": "b37f550bc5cb954b3827bfe9755af9d97c19c4fe1619bf99f4b24bbf3833533d",
+      "scripts/persistence_vm/tool-packages.json": "32dbfb10f6adc4a9d4ba2e2a500c8d3b4e528870d09752bc19fee92fee2e45a1",
+      "target/persistence-vm/debs/ipxe-qemu_1.21.1+git-20220113.fbbdc3926-0ubuntu2_all.deb": "1f1612934b6ddaf4dd633760dfe5ef2a79ea2507341fd5efe394ff589a044707",
+      "target/persistence-vm/debs/libdaxctl1_77-2ubuntu2_amd64.deb": "c6629b49c79343fb11ae404aeaa3156f051168da6c6d3d9d8d516acd94705061",
+      "target/persistence-vm/debs/libfdt1_1.7.0-2build1_amd64.deb": "274d20dfab9d6b216b5de85446a93f6ce5b2cd82c847b8dfdc508577f76eb96a",
+      "target/persistence-vm/debs/libndctl6_77-2ubuntu2_amd64.deb": "4eab53588a8fa9e3192635e118c2d91bc069cde46a4a3785c77a0bb1ae001d02",
+      "target/persistence-vm/debs/libpmem1_1.13.1-1.1ubuntu2_amd64.deb": "8f1be1cc834a98f0cf5c0950153f7f939a0c2c92095e98cd7bb40c752c545c1b",
+      "target/persistence-vm/debs/librdmacm1t64_50.0-2ubuntu0.2_amd64.deb": "7b7cc2fa16564bf301751b43d05d16f0846288b080d9a25a92a691d0df33fc68",
+      "target/persistence-vm/debs/libslirp0_4.7.0-1ubuntu3.1_amd64.deb": "4efa2d1c509de4d10fe965e86a3d864bf542996caf476d9111fd882c73857164",
+      "target/persistence-vm/debs/linux-image-unsigned-6.8.0-149-generic_6.8.0-149.149_amd64.deb": "a82f22e04caa71f07f2a30e060f79d6221612f8f7abd6f4b791ca515cbec8157",
+      "target/persistence-vm/debs/qemu-system-common_1%3a8.2.2+ds-0ubuntu1.18_amd64.deb": "0a0b744f31e87d72dd0465436b8dfbb1ef9f574ecd0d5a2e9dd8c5cb7d0fef1f",
+      "target/persistence-vm/debs/qemu-system-data_1%3a8.2.2+ds-0ubuntu1.18_all.deb": "a14b88d864859bd61c8a3274971da4ecb7da6cec15be6c265d0d411f783d5f2e",
+      "target/persistence-vm/debs/qemu-system-x86_1%3a8.2.2+ds-0ubuntu1.18_amd64.deb": "14602e262627adac030329d2cecfee5f6c0938b34566ff2ea2d4c9a9eb02430d",
+      "target/persistence-vm/debs/seabios_1.16.3-2_all.deb": "cac4e59a66c834d19cae751c22ab3a0391c22f78010fd11aa2e3fe630e6bc0e0"
+    }
+  },
+  "archive_aliases": {
+    "target/persistence-vm/manifest.json": "target/context-native-block/run-_rh3p1p6/experimental-inputs/manifest.json",
+    "scripts/persistence_vm/prepare.py": "target/context-native-block/run-_rh3p1p6/experimental-inputs/prepare.py",
+    "target/persistence-vm/template.ext4": "target/context-native-block/run-_rh3p1p6/experimental-inputs/template.ext4"
+  },
+  "followups": {
+    "target/context-native-reopen-probe/run-dq5bwtwy/report.json": {
+      "seed": "/tmp/k3-stage607/target/context-native-block/run-_rh3p1p6/topology/seed/stable.ext4",
+      "seed_sha256": "1c88e4e29c9f70d953c7c1727bf43730c2f6d9e12736ec2f36b48ab1f9ff8f95",
+      "results": {
+        "0": {
+          "write": {
+            "expected_marker": "KANGER_BLOCK_NEXT_ACK operation=topology revision=2",
+            "normal_completion_marker": "KANGER_BLOCK_NEXT_ACK operation=topology revision=2",
+            "observed_event": "application_marker",
+            "next_application_ack_observed": true,
+            "observed": true,
+            "exit_code": -9,
+            "block_stats": {
+              "reads": 788,
+              "writes": 33,
+              "flushes": 40,
+              "fua": 0,
+              "dropped_sectors": 0
+            },
+            "honour_barriers": true,
+            "journal_recovery_seen": true,
+            "previous_ack_stats": {
+              "reads": 778,
+              "writes": 8,
+              "flushes": 13,
+              "fua": 0,
+              "dropped_sectors": 0
+            },
+            "cut": null,
+            "cut_reached": false,
+            "post_previous_ack_stats": {
+              "reads": 10,
+              "writes": 25,
+              "flushes": 27,
+              "fua": 0,
+              "dropped_sectors": 0
+            }
+          },
+          "cold": {
+            "expected_marker": "KANGER_BLOCK_NATIVE_RECOVERED operation=topology previous=1 selected=",
+            "normal_completion_marker": "KANGER_BLOCK_NATIVE_RECOVERED operation=topology previous=1 selected=",
+            "observed_event": "application_marker",
+            "next_application_ack_observed": false,
+            "observed": true,
+            "exit_code": -9,
+            "block_stats": {
+              "reads": 642,
+              "writes": 14,
+              "flushes": 6,
+              "fua": 0,
+              "dropped_sectors": 8
+            },
+            "honour_barriers": true,
+            "journal_recovery_seen": true,
+            "previous_ack_stats": null,
+            "cut": null,
+            "cut_reached": false,
+            "post_previous_ack_stats": null
+          },
+          "term_error": false,
+          "previous_marker_seen": true,
+          "no_fault_configured": true
+        },
+        "1": {
+          "write": {
+            "expected_marker": "KANGER_BLOCK_NEXT_ACK operation=topology revision=2",
+            "normal_completion_marker": "KANGER_BLOCK_NEXT_ACK operation=topology revision=2",
+            "observed_event": "application_marker",
+            "next_application_ack_observed": true,
+            "observed": true,
+            "exit_code": -9,
+            "block_stats": {
+              "reads": 775,
+              "writes": 33,
+              "flushes": 40,
+              "fua": 0,
+              "dropped_sectors": 0
+            },
+            "honour_barriers": true,
+            "journal_recovery_seen": true,
+            "previous_ack_stats": {
+              "reads": 765,
+              "writes": 8,
+              "flushes": 13,
+              "fua": 0,
+              "dropped_sectors": 0
+            },
+            "cut": null,
+            "cut_reached": false,
+            "post_previous_ack_stats": {
+              "reads": 10,
+              "writes": 25,
+              "flushes": 27,
+              "fua": 0,
+              "dropped_sectors": 0
+            }
+          },
+          "cold": {
+            "expected_marker": "KANGER_BLOCK_NATIVE_RECOVERED operation=topology previous=1 selected=",
+            "normal_completion_marker": "KANGER_BLOCK_NATIVE_RECOVERED operation=topology previous=1 selected=",
+            "observed_event": "application_marker",
+            "next_application_ack_observed": false,
+            "observed": true,
+            "exit_code": -9,
+            "block_stats": {
+              "reads": 644,
+              "writes": 14,
+              "flushes": 6,
+              "fua": 0,
+              "dropped_sectors": 8
+            },
+            "honour_barriers": true,
+            "journal_recovery_seen": true,
+            "previous_ack_stats": null,
+            "cut": null,
+            "cut_reached": false,
+            "post_previous_ack_stats": null
+          },
+          "term_error": false,
+          "previous_marker_seen": true,
+          "no_fault_configured": true
+        },
+        "2": {
+          "write": {
+            "expected_marker": "KANGER_BLOCK_NEXT_ACK operation=topology revision=2",
+            "normal_completion_marker": "KANGER_BLOCK_NEXT_ACK operation=topology revision=2",
+            "observed_event": "application_marker",
+            "next_application_ack_observed": true,
+            "observed": true,
+            "exit_code": -9,
+            "block_stats": {
+              "reads": 781,
+              "writes": 33,
+              "flushes": 40,
+              "fua": 0,
+              "dropped_sectors": 0
+            },
+            "honour_barriers": true,
+            "journal_recovery_seen": true,
+            "previous_ack_stats": {
+              "reads": 771,
+              "writes": 8,
+              "flushes": 13,
+              "fua": 0,
+              "dropped_sectors": 0
+            },
+            "cut": null,
+            "cut_reached": false,
+            "post_previous_ack_stats": {
+              "reads": 10,
+              "writes": 25,
+              "flushes": 27,
+              "fua": 0,
+              "dropped_sectors": 0
+            }
+          },
+          "cold": {
+            "expected_marker": "KANGER_BLOCK_NATIVE_RECOVERED operation=topology previous=1 selected=",
+            "normal_completion_marker": "KANGER_BLOCK_NATIVE_RECOVERED operation=topology previous=1 selected=",
+            "observed_event": "application_marker",
+            "next_application_ack_observed": false,
+            "observed": true,
+            "exit_code": -9,
+            "block_stats": {
+              "reads": 645,
+              "writes": 14,
+              "flushes": 6,
+              "fua": 0,
+              "dropped_sectors": 8
+            },
+            "honour_barriers": true,
+            "journal_recovery_seen": true,
+            "previous_ack_stats": null,
+            "cut": null,
+            "cut_reached": false,
+            "post_previous_ack_stats": null
+          },
+          "term_error": false,
+          "previous_marker_seen": true,
+          "no_fault_configured": true
+        },
+        "3": {
+          "write": {
+            "expected_marker": "KANGER_BLOCK_NEXT_ACK operation=topology revision=2",
+            "normal_completion_marker": "KANGER_BLOCK_NEXT_ACK operation=topology revision=2",
+            "observed_event": "application_marker",
+            "next_application_ack_observed": true,
+            "observed": true,
+            "exit_code": -9,
+            "block_stats": {
+              "reads": 782,
+              "writes": 33,
+              "flushes": 40,
+              "fua": 0,
+              "dropped_sectors": 0
+            },
+            "honour_barriers": true,
+            "journal_recovery_seen": true,
+            "previous_ack_stats": {
+              "reads": 772,
+              "writes": 8,
+              "flushes": 13,
+              "fua": 0,
+              "dropped_sectors": 0
+            },
+            "cut": null,
+            "cut_reached": false,
+            "post_previous_ack_stats": {
+              "reads": 10,
+              "writes": 25,
+              "flushes": 27,
+              "fua": 0,
+              "dropped_sectors": 0
+            }
+          },
+          "cold": {
+            "expected_marker": "KANGER_BLOCK_NATIVE_RECOVERED operation=topology previous=1 selected=",
+            "normal_completion_marker": "KANGER_BLOCK_NATIVE_RECOVERED operation=topology previous=1 selected=",
+            "observed_event": "application_marker",
+            "next_application_ack_observed": false,
+            "observed": true,
+            "exit_code": -9,
+            "block_stats": {
+              "reads": 652,
+              "writes": 14,
+              "flushes": 6,
+              "fua": 0,
+              "dropped_sectors": 8
+            },
+            "honour_barriers": true,
+            "journal_recovery_seen": true,
+            "previous_ack_stats": null,
+            "cut": null,
+            "cut_reached": false,
+            "post_previous_ack_stats": null
+          },
+          "term_error": false,
+          "previous_marker_seen": true,
+          "no_fault_configured": true
+        },
+        "4": {
+          "write": {
+            "expected_marker": "KANGER_BLOCK_NEXT_ACK operation=topology revision=2",
+            "normal_completion_marker": "KANGER_BLOCK_NEXT_ACK operation=topology revision=2",
+            "observed_event": "application_marker",
+            "next_application_ack_observed": true,
+            "observed": true,
+            "exit_code": -9,
+            "block_stats": {
+              "reads": 778,
+              "writes": 33,
+              "flushes": 40,
+              "fua": 0,
+              "dropped_sectors": 0
+            },
+            "honour_barriers": true,
+            "journal_recovery_seen": true,
+            "previous_ack_stats": {
+              "reads": 768,
+              "writes": 8,
+              "flushes": 13,
+              "fua": 0,
+              "dropped_sectors": 0
+            },
+            "cut": null,
+            "cut_reached": false,
+            "post_previous_ack_stats": {
+              "reads": 10,
+              "writes": 25,
+              "flushes": 27,
+              "fua": 0,
+              "dropped_sectors": 0
+            }
+          },
+          "cold": {
+            "expected_marker": "KANGER_BLOCK_NATIVE_RECOVERED operation=topology previous=1 selected=",
+            "normal_completion_marker": "KANGER_BLOCK_NATIVE_RECOVERED operation=topology previous=1 selected=",
+            "observed_event": "application_marker",
+            "next_application_ack_observed": false,
+            "observed": true,
+            "exit_code": -9,
+            "block_stats": {
+              "reads": 645,
+              "writes": 14,
+              "flushes": 6,
+              "fua": 0,
+              "dropped_sectors": 8
+            },
+            "honour_barriers": true,
+            "journal_recovery_seen": true,
+            "previous_ack_stats": null,
+            "cut": null,
+            "cut_reached": false,
+            "post_previous_ack_stats": null
+          },
+          "term_error": false,
+          "previous_marker_seen": true,
+          "no_fault_configured": true
+        },
+        "5": {
+          "write": {
+            "expected_marker": "KANGER_BLOCK_NEXT_ACK operation=topology revision=2",
+            "normal_completion_marker": "KANGER_BLOCK_NEXT_ACK operation=topology revision=2",
+            "observed_event": "application_marker",
+            "next_application_ack_observed": true,
+            "observed": true,
+            "exit_code": -9,
+            "block_stats": {
+              "reads": 785,
+              "writes": 33,
+              "flushes": 40,
+              "fua": 0,
+              "dropped_sectors": 0
+            },
+            "honour_barriers": true,
+            "journal_recovery_seen": true,
+            "previous_ack_stats": {
+              "reads": 775,
+              "writes": 8,
+              "flushes": 13,
+              "fua": 0,
+              "dropped_sectors": 0
+            },
+            "cut": null,
+            "cut_reached": false,
+            "post_previous_ack_stats": {
+              "reads": 10,
+              "writes": 25,
+              "flushes": 27,
+              "fua": 0,
+              "dropped_sectors": 0
+            }
+          },
+          "cold": {
+            "expected_marker": "KANGER_BLOCK_NATIVE_RECOVERED operation=topology previous=1 selected=",
+            "normal_completion_marker": "KANGER_BLOCK_NATIVE_RECOVERED operation=topology previous=1 selected=",
+            "observed_event": "application_marker",
+            "next_application_ack_observed": false,
+            "observed": true,
+            "exit_code": -9,
+            "block_stats": {
+              "reads": 641,
+              "writes": 14,
+              "flushes": 6,
+              "fua": 0,
+              "dropped_sectors": 8
+            },
+            "honour_barriers": true,
+            "journal_recovery_seen": true,
+            "previous_ack_stats": null,
+            "cut": null,
+            "cut_reached": false,
+            "post_previous_ack_stats": null
+          },
+          "term_error": false,
+          "previous_marker_seen": true,
+          "no_fault_configured": true
+        },
+        "6": {
+          "write": {
+            "expected_marker": "KANGER_BLOCK_NEXT_ACK operation=topology revision=2",
+            "normal_completion_marker": "KANGER_BLOCK_NEXT_ACK operation=topology revision=2",
+            "observed_event": "application_marker",
+            "next_application_ack_observed": true,
+            "observed": true,
+            "exit_code": -9,
+            "block_stats": {
+              "reads": 793,
+              "writes": 33,
+              "flushes": 40,
+              "fua": 0,
+              "dropped_sectors": 0
+            },
+            "honour_barriers": true,
+            "journal_recovery_seen": true,
+            "previous_ack_stats": {
+              "reads": 783,
+              "writes": 8,
+              "flushes": 13,
+              "fua": 0,
+              "dropped_sectors": 0
+            },
+            "cut": null,
+            "cut_reached": false,
+            "post_previous_ack_stats": {
+              "reads": 10,
+              "writes": 25,
+              "flushes": 27,
+              "fua": 0,
+              "dropped_sectors": 0
+            }
+          },
+          "cold": {
+            "expected_marker": "KANGER_BLOCK_NATIVE_RECOVERED operation=topology previous=1 selected=",
+            "normal_completion_marker": "KANGER_BLOCK_NATIVE_RECOVERED operation=topology previous=1 selected=",
+            "observed_event": "application_marker",
+            "next_application_ack_observed": false,
+            "observed": true,
+            "exit_code": -9,
+            "block_stats": {
+              "reads": 644,
+              "writes": 14,
+              "flushes": 6,
+              "fua": 0,
+              "dropped_sectors": 8
+            },
+            "honour_barriers": true,
+            "journal_recovery_seen": true,
+            "previous_ack_stats": null,
+            "cut": null,
+            "cut_reached": false,
+            "post_previous_ack_stats": null
+          },
+          "term_error": false,
+          "previous_marker_seen": true,
+          "no_fault_configured": true
+        },
+        "7": {
+          "write": {
+            "expected_marker": "KANGER_BLOCK_NEXT_ACK operation=topology revision=2",
+            "normal_completion_marker": "KANGER_BLOCK_NEXT_ACK operation=topology revision=2",
+            "observed_event": "application_marker",
+            "next_application_ack_observed": true,
+            "observed": true,
+            "exit_code": -9,
+            "block_stats": {
+              "reads": 793,
+              "writes": 33,
+              "flushes": 40,
+              "fua": 0,
+              "dropped_sectors": 0
+            },
+            "honour_barriers": true,
+            "journal_recovery_seen": true,
+            "previous_ack_stats": {
+              "reads": 783,
+              "writes": 8,
+              "flushes": 13,
+              "fua": 0,
+              "dropped_sectors": 0
+            },
+            "cut": null,
+            "cut_reached": false,
+            "post_previous_ack_stats": {
+              "reads": 10,
+              "writes": 25,
+              "flushes": 27,
+              "fua": 0,
+              "dropped_sectors": 0
+            }
+          },
+          "cold": {
+            "expected_marker": "KANGER_BLOCK_NATIVE_RECOVERED operation=topology previous=1 selected=",
+            "normal_completion_marker": "KANGER_BLOCK_NATIVE_RECOVERED operation=topology previous=1 selected=",
+            "observed_event": "application_marker",
+            "next_application_ack_observed": false,
+            "observed": true,
+            "exit_code": -9,
+            "block_stats": {
+              "reads": 647,
+              "writes": 16,
+              "flushes": 8,
+              "fua": 0,
+              "dropped_sectors": 0
+            },
+            "honour_barriers": true,
+            "journal_recovery_seen": true,
+            "previous_ack_stats": null,
+            "cut": null,
+            "cut_reached": false,
+            "post_previous_ack_stats": null
+          },
+          "term_error": false,
+          "previous_marker_seen": true,
+          "no_fault_configured": true
+        }
+      },
+      "prepared_inputs": {
+        "qemu_version": "QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)",
+        "kernel": "target/persistence-vm/tools/boot/vmlinuz-6.8.0-149-generic",
+        "template": "target/persistence-vm/template.ext4",
+        "packages": [
+          "Package: ipxe-qemu\nVersion: 1.21.1+git-20220113.fbbdc3926-0ubuntu2\nArchitecture: all",
+          "Package: libdaxctl1\nVersion: 77-2ubuntu2\nArchitecture: amd64",
+          "Package: libfdt1\nVersion: 1.7.0-2build1\nArchitecture: amd64",
+          "Package: libndctl6\nVersion: 77-2ubuntu2\nArchitecture: amd64",
+          "Package: libpmem1\nVersion: 1.13.1-1.1ubuntu2\nArchitecture: amd64",
+          "Package: librdmacm1t64\nVersion: 50.0-2ubuntu0.2\nArchitecture: amd64",
+          "Package: libslirp0\nVersion: 4.7.0-1ubuntu3.1\nArchitecture: amd64",
+          "Package: linux-image-unsigned-6.8.0-149-generic\nVersion: 6.8.0-149.149\nArchitecture: amd64",
+          "Package: qemu-system-common\nVersion: 1:8.2.2+ds-0ubuntu1.18\nArchitecture: amd64",
+          "Package: qemu-system-data\nVersion: 1:8.2.2+ds-0ubuntu1.18\nArchitecture: all",
+          "Package: qemu-system-x86\nVersion: 1:8.2.2+ds-0ubuntu1.18\nArchitecture: amd64",
+          "Package: seabios\nVersion: 1.16.3-2\nArchitecture: all"
+        ],
+        "sha256": {
+          "target/persistence-vm/tools/boot/vmlinuz-6.8.0-149-generic": "c2b4577c780c2cbd15dda13b6c890bf655fb4d1e1434a801e6e79e88e8c9a2e1",
+          "target/persistence-vm/template.ext4": "ab6e19637a19514f8d21b3b8e3361e7424968bdde6e68d55853cbec53842f6ed",
+          "kanger-console/target/kanger-console-3.3-SNAPSHOT.jar": "ca5cce279f6e7a9e36760ae4c3545902b205b677585fa38cacde348d88225f23",
+          "kanger-qualification/src/org/kanger/storage/dumb2/ContextBlockDeviceRunner.java": "4561781ebfb2134170c30d0ee937375b11098641d29f6d8bd142980f6578e6f3",
+          "target/persistence-vm/tools/usr/bin/qemu-system-x86_64": "8a35ccba41582fc6c38b9df85fc9e35fa1d42f414d2d7d8090ee9b2f5e7c0854",
+          "scripts/persistence_vm/prepare.py": "b37f550bc5cb954b3827bfe9755af9d97c19c4fe1619bf99f4b24bbf3833533d",
+          "scripts/persistence_vm/tool-packages.json": "32dbfb10f6adc4a9d4ba2e2a500c8d3b4e528870d09752bc19fee92fee2e45a1",
+          "target/persistence-vm/debs/ipxe-qemu_1.21.1+git-20220113.fbbdc3926-0ubuntu2_all.deb": "1f1612934b6ddaf4dd633760dfe5ef2a79ea2507341fd5efe394ff589a044707",
+          "target/persistence-vm/debs/libdaxctl1_77-2ubuntu2_amd64.deb": "c6629b49c79343fb11ae404aeaa3156f051168da6c6d3d9d8d516acd94705061",
+          "target/persistence-vm/debs/libfdt1_1.7.0-2build1_amd64.deb": "274d20dfab9d6b216b5de85446a93f6ce5b2cd82c847b8dfdc508577f76eb96a",
+          "target/persistence-vm/debs/libndctl6_77-2ubuntu2_amd64.deb": "4eab53588a8fa9e3192635e118c2d91bc069cde46a4a3785c77a0bb1ae001d02",
+          "target/persistence-vm/debs/libpmem1_1.13.1-1.1ubuntu2_amd64.deb": "8f1be1cc834a98f0cf5c0950153f7f939a0c2c92095e98cd7bb40c752c545c1b",
+          "target/persistence-vm/debs/librdmacm1t64_50.0-2ubuntu0.2_amd64.deb": "7b7cc2fa16564bf301751b43d05d16f0846288b080d9a25a92a691d0df33fc68",
+          "target/persistence-vm/debs/libslirp0_4.7.0-1ubuntu3.1_amd64.deb": "4efa2d1c509de4d10fe965e86a3d864bf542996caf476d9111fd882c73857164",
+          "target/persistence-vm/debs/linux-image-unsigned-6.8.0-149-generic_6.8.0-149.149_amd64.deb": "a82f22e04caa71f07f2a30e060f79d6221612f8f7abd6f4b791ca515cbec8157",
+          "target/persistence-vm/debs/qemu-system-common_1%3a8.2.2+ds-0ubuntu1.18_amd64.deb": "0a0b744f31e87d72dd0465436b8dfbb1ef9f574ecd0d5a2e9dd8c5cb7d0fef1f",
+          "target/persistence-vm/debs/qemu-system-data_1%3a8.2.2+ds-0ubuntu1.18_all.deb": "a14b88d864859bd61c8a3274971da4ecb7da6cec15be6c265d0d411f783d5f2e",
+          "target/persistence-vm/debs/qemu-system-x86_1%3a8.2.2+ds-0ubuntu1.18_amd64.deb": "14602e262627adac030329d2cecfee5f6c0938b34566ff2ea2d4c9a9eb02430d",
+          "target/persistence-vm/debs/seabios_1.16.3-2_all.deb": "cac4e59a66c834d19cae751c22ab3a0391c22f78010fd11aa2e3fe630e6bc0e0"
+        }
+      },
+      "artifacts_sha256": {
+        "/tmp/k3-656-reopen-probe.py": "7577129570a4078bc441c048064512182f31deb7d401d267cf10aaebbc547ade",
+        "/tmp/k3-stage607/scripts/qualify-context-block-device.py": "b299653db0d1644f0dc6b809a99482279e97391f9d9febbc35dcd62b373bc6a9",
+        "/tmp/k3-stage607/target/persistence-vm/manifest.json": "2b64a91aff849ca632e1e88e460d3de5ae21204c61dd8af63d2e4122349ab39e",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/6/write-resume-native-topology-serial.log": "19943dad5061503e67e92be4f0a576f62ba8d3b5d3bdec4f3c13b5396894d1ed",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/6/read-native-topology-serial.log": "1535fc41558356ab5bb98c419cb7e200b0d9d14bde6a7992e5ac09c391467c3c",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/3/write-resume-native-topology-serial.log": "c93a09441dd83deca1ddb8ce63924db56d8114f0e0c98ca73a03f532e6181b19",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/3/read-native-topology-serial.log": "41950b4b2a16330d03110a64f6d9e87cf2a2353fa96b7a2a4dc093f5b28467b2",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/2/write-resume-native-topology-serial.log": "3ff48a57fe501d58b789152e2321157f3494a9992a2e75e983682f78bfa135e1",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/2/read-native-topology-serial.log": "e9490be4bc7cc57dc66f5e559ef75d3799b4be8b6430afd154521e40c4407fe4",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/7/write-resume-native-topology-serial.log": "aa242fa6551e42f86c1922c0c9b42dcbee3644492b46f464075ca38b0aa22c6d",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/7/read-native-topology-serial.log": "c12e1da9d3316f22b5602c447570932838112ea051cdc23ed24f360cfa36fbad",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/4/write-resume-native-topology-serial.log": "e94f619a617ca027d25d7482a2f1addac25175e8fdbc24dfdf745a15d6dd6eaa",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/4/read-native-topology-serial.log": "9845d7106fa8a3112ca7645943576a00e635acb416bb827232060e9b436ca22a",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/5/write-resume-native-topology-serial.log": "1ee2f8cecbfdc28c130752210ee7530eb42aa4d7af171297f53eaffb61050bb5",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/5/read-native-topology-serial.log": "41b689e82c582b9ef8bdcd28d52eaeeb5fffcf0f0c062143ebfbfa03dd0063be",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/1/write-resume-native-topology-serial.log": "54a2b7853da517b053feb6e92993d54fadf8b531614ec15fa35807e6433f766f",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/1/read-native-topology-serial.log": "af076e84622d6e000c9b8f4c98f01353f335256749a1653249c5f8cc5e67549c",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/0/write-resume-native-topology-serial.log": "33fe83b90ca8e04a1b442ecac73da55a1003e6be0f2117fb140edd1647cdcd1d",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/0/read-native-topology-serial.log": "c14045fcfbcb049bc62c3bc2b121f048470e372ba9e313563850d9c99ddfed9b",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/6/read-native-topology-block.jsonl": "d04f12afca1e947d3f6a35be5e9621e0494abc104af1eb073cc3624a1e0d213e",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/6/write-resume-native-topology-block.jsonl": "1cc99fd26ce9164986e0cedcc3741b57fed5da25932c7c8da79212f8764d816a",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/3/read-native-topology-block.jsonl": "d04f12afca1e947d3f6a35be5e9621e0494abc104af1eb073cc3624a1e0d213e",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/3/write-resume-native-topology-block.jsonl": "1cc99fd26ce9164986e0cedcc3741b57fed5da25932c7c8da79212f8764d816a",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/2/read-native-topology-block.jsonl": "d04f12afca1e947d3f6a35be5e9621e0494abc104af1eb073cc3624a1e0d213e",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/2/write-resume-native-topology-block.jsonl": "1cc99fd26ce9164986e0cedcc3741b57fed5da25932c7c8da79212f8764d816a",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/7/read-native-topology-block.jsonl": "e951d29c4f811e2d74f8cd61817e9ed54e8f06786a7a8a1e298b0f0e9c32e064",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/7/write-resume-native-topology-block.jsonl": "1cc99fd26ce9164986e0cedcc3741b57fed5da25932c7c8da79212f8764d816a",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/4/read-native-topology-block.jsonl": "d04f12afca1e947d3f6a35be5e9621e0494abc104af1eb073cc3624a1e0d213e",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/4/write-resume-native-topology-block.jsonl": "1cc99fd26ce9164986e0cedcc3741b57fed5da25932c7c8da79212f8764d816a",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/5/read-native-topology-block.jsonl": "d04f12afca1e947d3f6a35be5e9621e0494abc104af1eb073cc3624a1e0d213e",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/5/write-resume-native-topology-block.jsonl": "1cc99fd26ce9164986e0cedcc3741b57fed5da25932c7c8da79212f8764d816a",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/1/read-native-topology-block.jsonl": "d04f12afca1e947d3f6a35be5e9621e0494abc104af1eb073cc3624a1e0d213e",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/1/write-resume-native-topology-block.jsonl": "1cc99fd26ce9164986e0cedcc3741b57fed5da25932c7c8da79212f8764d816a",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/0/read-native-topology-block.jsonl": "d04f12afca1e947d3f6a35be5e9621e0494abc104af1eb073cc3624a1e0d213e",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/0/write-resume-native-topology-block.jsonl": "1cc99fd26ce9164986e0cedcc3741b57fed5da25932c7c8da79212f8764d816a",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/6/read-native-topology-command.json": "52d8c519f77e92c4c781a98439d2f4647da1629e3a314b96fb2dc68a3b0bc47c",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/6/write-resume-native-topology-command.json": "785bd36d6255f65e4cb9cecfd7214bbe4d2ee14abee30da93e52602e7e87bf94",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/3/read-native-topology-command.json": "42b1acb6060aa876c09add05aa6b8da77043c477f87e939fd608cfdf936d3eed",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/3/write-resume-native-topology-command.json": "72a635f95266f225a627f41e1cfd2dcbc62c1e365f055b6953c8cc5f4f35da70",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/2/read-native-topology-command.json": "ce3a804a74a8a3bdb8ec5f7b33f471c954c94db979f170bffa272e56366494dd",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/2/write-resume-native-topology-command.json": "668c49236528972bf2218fa55d9c1a471bd791214ec0b5f774af2ae4c6a73b97",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/7/read-native-topology-command.json": "09685f6e33cd23a9c02eb3623bb93144503eceb035582a317dd79525890f0a57",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/7/write-resume-native-topology-command.json": "9b986f9985049123d1c74d9ed85fd59f7ab1c0725e2dd3ef8176fe55a6d2bcba",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/4/read-native-topology-command.json": "073b885e7b85232d5649cb1295f0c27c431746a8f1ea72d6a611e70714f4a2da",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/4/write-resume-native-topology-command.json": "af81e7698bc4492db950762a93e3f7d68a8341cb61e2b14f1f6373fdc2c646ae",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/5/read-native-topology-command.json": "a84ede9dccc79cd9564a5aee5b35e22cf0884e41f355799e816ef5ee592ae7d7",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/5/write-resume-native-topology-command.json": "217fbd954673d10f2fd6bc1488e5695230f47c1fc1810796fea3edae0f195ccb",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/1/read-native-topology-command.json": "ea0601cb10eb815d5bdb6b78dd1cffafbe8364f44453c958f2ab907eb431bf44",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/1/write-resume-native-topology-command.json": "f6c4f5948b6ce1e23c9d69dedb14da432f4f1c0f7bb08604dd72e2fbad35b40f",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/0/read-native-topology-command.json": "29a54dd94e4857072ea1857131096fb704263291a9d92781469b6b19b50f4b5e",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/0/write-resume-native-topology-command.json": "8ed4f8df09c24fc93b693eb0c5a64815824a8d21670e59fc6addfab16e164284",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/6/result.json": "a024730dfe19d3cd029fa95aca1134c0ec606b356fd5d23b55d3ab97d19418f6",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/3/result.json": "f5bea0f29b56c1f0de64c726339f53a2b728343e75fd00fb98bdfcd1ea001e4e",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/2/result.json": "352cbe3e84abf8df5794c8ee0646a2e58131ca5486f5d9846df77e9b0a608115",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/7/result.json": "b95bd47a2960e6fc88e264ef8b8e24d6b7e7c4aa34868cc441955359a39f3a1e",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/4/result.json": "93de082c8cc2471003edf03703a82df436f008727ac2673e5e7a326e0a2d66b6",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/5/result.json": "aed3004c00feb9715cdcd4418027f13ec594c3894dd40298be5ac8759a0ee750",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/1/result.json": "dfccdb9e83a4c91654eba1e75d0cbe0a5a46430492a4c23ebc9306508d9656b7",
+        "/tmp/k3-stage607/target/context-native-reopen-probe/run-dq5bwtwy/0/result.json": "eb70aa954122c8599d8df46a40ccfd2e887991be84592931468083f2927cad8e"
+      }
+    },
+    "target/context-native-reopen-xint/run-vo7wnb_k/report.json": {
+      "seed": "/tmp/k3-stage607/target/context-native-block/run-_rh3p1p6/topology/seed/stable.ext4",
+      "seed_sha256": "1c88e4e29c9f70d953c7c1727bf43730c2f6d9e12736ec2f36b48ab1f9ff8f95",
+      "results": {
+        "0": {
+          "write": {
+            "expected_marker": "KANGER_BLOCK_NEXT_ACK operation=topology revision=2",
+            "normal_completion_marker": "KANGER_BLOCK_NEXT_ACK operation=topology revision=2",
+            "observed_event": "application_marker",
+            "next_application_ack_observed": true,
+            "observed": true,
+            "exit_code": -9,
+            "block_stats": {
+              "reads": 775,
+              "writes": 24,
+              "flushes": 38,
+              "fua": 0,
+              "dropped_sectors": 0
+            },
+            "honour_barriers": true,
+            "journal_recovery_seen": true,
+            "previous_ack_stats": {
+              "reads": 765,
+              "writes": 8,
+              "flushes": 13,
+              "fua": 0,
+              "dropped_sectors": 0
+            },
+            "cut": null,
+            "cut_reached": false,
+            "post_previous_ack_stats": {
+              "reads": 10,
+              "writes": 16,
+              "flushes": 25,
+              "fua": 0,
+              "dropped_sectors": 0
+            }
+          },
+          "cold": {
+            "expected_marker": "KANGER_BLOCK_NATIVE_RECOVERED operation=topology previous=1 selected=",
+            "normal_completion_marker": "KANGER_BLOCK_NATIVE_RECOVERED operation=topology previous=1 selected=",
+            "observed_event": "application_marker",
+            "next_application_ack_observed": false,
+            "observed": true,
+            "exit_code": -9,
+            "block_stats": {
+              "reads": 640,
+              "writes": 14,
+              "flushes": 6,
+              "fua": 0,
+              "dropped_sectors": 8
+            },
+            "honour_barriers": true,
+            "journal_recovery_seen": true,
+            "previous_ack_stats": null,
+            "cut": null,
+            "cut_reached": false,
+            "post_previous_ack_stats": null
+          },
+          "term_error": false,
+          "previous_marker_seen": true,
+          "no_fault_configured": true
+        },
+        "1": {
+          "write": {
+            "expected_marker": "KANGER_BLOCK_NEXT_ACK operation=topology revision=2",
+            "normal_completion_marker": "KANGER_BLOCK_NEXT_ACK operation=topology revision=2",
+            "observed_event": "application_marker",
+            "next_application_ack_observed": true,
+            "observed": true,
+            "exit_code": -9,
+            "block_stats": {
+              "reads": 784,
+              "writes": 25,
+              "flushes": 38,
+              "fua": 0,
+              "dropped_sectors": 0
+            },
+            "honour_barriers": true,
+            "journal_recovery_seen": true,
+            "previous_ack_stats": {
+              "reads": 774,
+              "writes": 8,
+              "flushes": 13,
+              "fua": 0,
+              "dropped_sectors": 0
+            },
+            "cut": null,
+            "cut_reached": false,
+            "post_previous_ack_stats": {
+              "reads": 10,
+              "writes": 17,
+              "flushes": 25,
+              "fua": 0,
+              "dropped_sectors": 0
+            }
+          },
+          "cold": {
+            "expected_marker": "KANGER_BLOCK_NATIVE_RECOVERED operation=topology previous=1 selected=",
+            "normal_completion_marker": "KANGER_BLOCK_NATIVE_RECOVERED operation=topology previous=1 selected=",
+            "observed_event": "application_marker",
+            "next_application_ack_observed": false,
+            "observed": true,
+            "exit_code": -9,
+            "block_stats": {
+              "reads": 641,
+              "writes": 15,
+              "flushes": 6,
+              "fua": 0,
+              "dropped_sectors": 16
+            },
+            "honour_barriers": true,
+            "journal_recovery_seen": true,
+            "previous_ack_stats": null,
+            "cut": null,
+            "cut_reached": false,
+            "post_previous_ack_stats": null
+          },
+          "term_error": false,
+          "previous_marker_seen": true,
+          "no_fault_configured": true
+        },
+        "2": {
+          "write": {
+            "expected_marker": "KANGER_BLOCK_NEXT_ACK operation=topology revision=2",
+            "normal_completion_marker": "KANGER_BLOCK_NEXT_ACK operation=topology revision=2",
+            "observed_event": "application_marker",
+            "next_application_ack_observed": true,
+            "observed": true,
+            "exit_code": -9,
+            "block_stats": {
+              "reads": 767,
+              "writes": 25,
+              "flushes": 38,
+              "fua": 0,
+              "dropped_sectors": 0
+            },
+            "honour_barriers": true,
+            "journal_recovery_seen": true,
+            "previous_ack_stats": {
+              "reads": 757,
+              "writes": 8,
+              "flushes": 13,
+              "fua": 0,
+              "dropped_sectors": 0
+            },
+            "cut": null,
+            "cut_reached": false,
+            "post_previous_ack_stats": {
+              "reads": 10,
+              "writes": 17,
+              "flushes": 25,
+              "fua": 0,
+              "dropped_sectors": 0
+            }
+          },
+          "cold": {
+            "expected_marker": "KANGER_BLOCK_NATIVE_RECOVERED operation=topology previous=1 selected=",
+            "normal_completion_marker": "KANGER_BLOCK_NATIVE_RECOVERED operation=topology previous=1 selected=",
+            "observed_event": "application_marker",
+            "next_application_ack_observed": false,
+            "observed": true,
+            "exit_code": -9,
+            "block_stats": {
+              "reads": 654,
+              "writes": 13,
+              "flushes": 6,
+              "fua": 0,
+              "dropped_sectors": 0
+            },
+            "honour_barriers": true,
+            "journal_recovery_seen": true,
+            "previous_ack_stats": null,
+            "cut": null,
+            "cut_reached": false,
+            "post_previous_ack_stats": null
+          },
+          "term_error": false,
+          "previous_marker_seen": true,
+          "no_fault_configured": true
+        },
+        "3": {
+          "write": {
+            "expected_marker": "KANGER_BLOCK_NEXT_ACK operation=topology revision=2",
+            "normal_completion_marker": "KANGER_BLOCK_NEXT_ACK operation=topology revision=2",
+            "observed_event": "application_marker",
+            "next_application_ack_observed": true,
+            "observed": true,
+            "exit_code": -9,
+            "block_stats": {
+              "reads": 776,
+              "writes": 25,
+              "flushes": 38,
+              "fua": 0,
+              "dropped_sectors": 0
+            },
+            "honour_barriers": true,
+            "journal_recovery_seen": true,
+            "previous_ack_stats": {
+              "reads": 766,
+              "writes": 8,
+              "flushes": 13,
+              "fua": 0,
+              "dropped_sectors": 0
+            },
+            "cut": null,
+            "cut_reached": false,
+            "post_previous_ack_stats": {
+              "reads": 10,
+              "writes": 17,
+              "flushes": 25,
+              "fua": 0,
+              "dropped_sectors": 0
+            }
+          },
+          "cold": {
+            "expected_marker": "KANGER_BLOCK_NATIVE_RECOVERED operation=topology previous=1 selected=",
+            "normal_completion_marker": "KANGER_BLOCK_NATIVE_RECOVERED operation=topology previous=1 selected=",
+            "observed_event": "application_marker",
+            "next_application_ack_observed": false,
+            "observed": true,
+            "exit_code": -9,
+            "block_stats": {
+              "reads": 636,
+              "writes": 13,
+              "flushes": 6,
+              "fua": 0,
+              "dropped_sectors": 0
+            },
+            "honour_barriers": true,
+            "journal_recovery_seen": true,
+            "previous_ack_stats": null,
+            "cut": null,
+            "cut_reached": false,
+            "post_previous_ack_stats": null
+          },
+          "term_error": false,
+          "previous_marker_seen": true,
+          "no_fault_configured": true
+        },
+        "4": {
+          "write": {
+            "expected_marker": "KANGER_BLOCK_NEXT_ACK operation=topology revision=2",
+            "normal_completion_marker": "KANGER_BLOCK_NEXT_ACK operation=topology revision=2",
+            "observed_event": "application_marker",
+            "next_application_ack_observed": true,
+            "observed": true,
+            "exit_code": -9,
+            "block_stats": {
+              "reads": 769,
+              "writes": 25,
+              "flushes": 38,
+              "fua": 0,
+              "dropped_sectors": 0
+            },
+            "honour_barriers": true,
+            "journal_recovery_seen": true,
+            "previous_ack_stats": {
+              "reads": 759,
+              "writes": 8,
+              "flushes": 13,
+              "fua": 0,
+              "dropped_sectors": 0
+            },
+            "cut": null,
+            "cut_reached": false,
+            "post_previous_ack_stats": {
+              "reads": 10,
+              "writes": 17,
+              "flushes": 25,
+              "fua": 0,
+              "dropped_sectors": 0
+            }
+          },
+          "cold": {
+            "expected_marker": "KANGER_BLOCK_NATIVE_RECOVERED operation=topology previous=1 selected=",
+            "normal_completion_marker": "KANGER_BLOCK_NATIVE_RECOVERED operation=topology previous=1 selected=",
+            "observed_event": "application_marker",
+            "next_application_ack_observed": false,
+            "observed": true,
+            "exit_code": -9,
+            "block_stats": {
+              "reads": 633,
+              "writes": 13,
+              "flushes": 6,
+              "fua": 0,
+              "dropped_sectors": 0
+            },
+            "honour_barriers": true,
+            "journal_recovery_seen": true,
+            "previous_ack_stats": null,
+            "cut": null,
+            "cut_reached": false,
+            "post_previous_ack_stats": null
+          },
+          "term_error": false,
+          "previous_marker_seen": true,
+          "no_fault_configured": true
+        },
+        "5": {
+          "write": {
+            "expected_marker": "KANGER_BLOCK_NEXT_ACK operation=topology revision=2",
+            "normal_completion_marker": "KANGER_BLOCK_NEXT_ACK operation=topology revision=2",
+            "observed_event": "application_marker",
+            "next_application_ack_observed": true,
+            "observed": true,
+            "exit_code": -9,
+            "block_stats": {
+              "reads": 769,
+              "writes": 24,
+              "flushes": 38,
+              "fua": 0,
+              "dropped_sectors": 0
+            },
+            "honour_barriers": true,
+            "journal_recovery_seen": true,
+            "previous_ack_stats": {
+              "reads": 759,
+              "writes": 8,
+              "flushes": 13,
+              "fua": 0,
+              "dropped_sectors": 0
+            },
+            "cut": null,
+            "cut_reached": false,
+            "post_previous_ack_stats": {
+              "reads": 10,
+              "writes": 16,
+              "flushes": 25,
+              "fua": 0,
+              "dropped_sectors": 0
+            }
+          },
+          "cold": {
+            "expected_marker": "KANGER_BLOCK_NATIVE_RECOVERED operation=topology previous=1 selected=",
+            "normal_completion_marker": "KANGER_BLOCK_NATIVE_RECOVERED operation=topology previous=1 selected=",
+            "observed_event": "application_marker",
+            "next_application_ack_observed": false,
+            "observed": true,
+            "exit_code": -9,
+            "block_stats": {
+              "reads": 639,
+              "writes": 14,
+              "flushes": 6,
+              "fua": 0,
+              "dropped_sectors": 8
+            },
+            "honour_barriers": true,
+            "journal_recovery_seen": true,
+            "previous_ack_stats": null,
+            "cut": null,
+            "cut_reached": false,
+            "post_previous_ack_stats": null
+          },
+          "term_error": false,
+          "previous_marker_seen": true,
+          "no_fault_configured": true
+        },
+        "6": {
+          "write": {
+            "expected_marker": "KANGER_BLOCK_NEXT_ACK operation=topology revision=2",
+            "normal_completion_marker": "KANGER_BLOCK_NEXT_ACK operation=topology revision=2",
+            "observed_event": "application_marker",
+            "next_application_ack_observed": true,
+            "observed": true,
+            "exit_code": -9,
+            "block_stats": {
+              "reads": 767,
+              "writes": 25,
+              "flushes": 38,
+              "fua": 0,
+              "dropped_sectors": 0
+            },
+            "honour_barriers": true,
+            "journal_recovery_seen": true,
+            "previous_ack_stats": {
+              "reads": 757,
+              "writes": 8,
+              "flushes": 13,
+              "fua": 0,
+              "dropped_sectors": 0
+            },
+            "cut": null,
+            "cut_reached": false,
+            "post_previous_ack_stats": {
+              "reads": 10,
+              "writes": 17,
+              "flushes": 25,
+              "fua": 0,
+              "dropped_sectors": 0
+            }
+          },
+          "cold": {
+            "expected_marker": "KANGER_BLOCK_NATIVE_RECOVERED operation=topology previous=1 selected=",
+            "normal_completion_marker": "KANGER_BLOCK_NATIVE_RECOVERED operation=topology previous=1 selected=",
+            "observed_event": "application_marker",
+            "next_application_ack_observed": false,
+            "observed": true,
+            "exit_code": -9,
+            "block_stats": {
+              "reads": 650,
+              "writes": 14,
+              "flushes": 6,
+              "fua": 0,
+              "dropped_sectors": 8
+            },
+            "honour_barriers": true,
+            "journal_recovery_seen": true,
+            "previous_ack_stats": null,
+            "cut": null,
+            "cut_reached": false,
+            "post_previous_ack_stats": null
+          },
+          "term_error": false,
+          "previous_marker_seen": true,
+          "no_fault_configured": true
+        },
+        "7": {
+          "write": {
+            "expected_marker": "KANGER_BLOCK_NEXT_ACK operation=topology revision=2",
+            "normal_completion_marker": "KANGER_BLOCK_NEXT_ACK operation=topology revision=2",
+            "observed_event": "application_marker",
+            "next_application_ack_observed": true,
+            "observed": true,
+            "exit_code": -9,
+            "block_stats": {
+              "reads": 770,
+              "writes": 25,
+              "flushes": 38,
+              "fua": 0,
+              "dropped_sectors": 0
+            },
+            "honour_barriers": true,
+            "journal_recovery_seen": true,
+            "previous_ack_stats": {
+              "reads": 760,
+              "writes": 8,
+              "flushes": 13,
+              "fua": 0,
+              "dropped_sectors": 0
+            },
+            "cut": null,
+            "cut_reached": false,
+            "post_previous_ack_stats": {
+              "reads": 10,
+              "writes": 17,
+              "flushes": 25,
+              "fua": 0,
+              "dropped_sectors": 0
+            }
+          },
+          "cold": {
+            "expected_marker": "KANGER_BLOCK_NATIVE_RECOVERED operation=topology previous=1 selected=",
+            "normal_completion_marker": "KANGER_BLOCK_NATIVE_RECOVERED operation=topology previous=1 selected=",
+            "observed_event": "application_marker",
+            "next_application_ack_observed": false,
+            "observed": true,
+            "exit_code": -9,
+            "block_stats": {
+              "reads": 635,
+              "writes": 13,
+              "flushes": 6,
+              "fua": 0,
+              "dropped_sectors": 0
+            },
+            "honour_barriers": true,
+            "journal_recovery_seen": true,
+            "previous_ack_stats": null,
+            "cut": null,
+            "cut_reached": false,
+            "post_previous_ack_stats": null
+          },
+          "term_error": false,
+          "previous_marker_seen": true,
+          "no_fault_configured": true
+        }
+      },
+      "prepared_inputs": {
+        "qemu_version": "QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)",
+        "kernel": "target/persistence-vm/tools/boot/vmlinuz-6.8.0-149-generic",
+        "template": "target/persistence-vm/template.ext4",
+        "packages": [
+          "Package: ipxe-qemu\nVersion: 1.21.1+git-20220113.fbbdc3926-0ubuntu2\nArchitecture: all",
+          "Package: libdaxctl1\nVersion: 77-2ubuntu2\nArchitecture: amd64",
+          "Package: libfdt1\nVersion: 1.7.0-2build1\nArchitecture: amd64",
+          "Package: libndctl6\nVersion: 77-2ubuntu2\nArchitecture: amd64",
+          "Package: libpmem1\nVersion: 1.13.1-1.1ubuntu2\nArchitecture: amd64",
+          "Package: librdmacm1t64\nVersion: 50.0-2ubuntu0.2\nArchitecture: amd64",
+          "Package: libslirp0\nVersion: 4.7.0-1ubuntu3.1\nArchitecture: amd64",
+          "Package: linux-image-unsigned-6.8.0-149-generic\nVersion: 6.8.0-149.149\nArchitecture: amd64",
+          "Package: qemu-system-common\nVersion: 1:8.2.2+ds-0ubuntu1.18\nArchitecture: amd64",
+          "Package: qemu-system-data\nVersion: 1:8.2.2+ds-0ubuntu1.18\nArchitecture: all",
+          "Package: qemu-system-x86\nVersion: 1:8.2.2+ds-0ubuntu1.18\nArchitecture: amd64",
+          "Package: seabios\nVersion: 1.16.3-2\nArchitecture: all"
+        ],
+        "sha256": {
+          "target/persistence-vm/tools/boot/vmlinuz-6.8.0-149-generic": "c2b4577c780c2cbd15dda13b6c890bf655fb4d1e1434a801e6e79e88e8c9a2e1",
+          "target/persistence-vm/template.ext4": "ab6e19637a19514f8d21b3b8e3361e7424968bdde6e68d55853cbec53842f6ed",
+          "kanger-console/target/kanger-console-3.3-SNAPSHOT.jar": "ca5cce279f6e7a9e36760ae4c3545902b205b677585fa38cacde348d88225f23",
+          "kanger-qualification/src/org/kanger/storage/dumb2/ContextBlockDeviceRunner.java": "4561781ebfb2134170c30d0ee937375b11098641d29f6d8bd142980f6578e6f3",
+          "target/persistence-vm/tools/usr/bin/qemu-system-x86_64": "8a35ccba41582fc6c38b9df85fc9e35fa1d42f414d2d7d8090ee9b2f5e7c0854",
+          "scripts/persistence_vm/prepare.py": "b37f550bc5cb954b3827bfe9755af9d97c19c4fe1619bf99f4b24bbf3833533d",
+          "scripts/persistence_vm/tool-packages.json": "32dbfb10f6adc4a9d4ba2e2a500c8d3b4e528870d09752bc19fee92fee2e45a1",
+          "target/persistence-vm/debs/ipxe-qemu_1.21.1+git-20220113.fbbdc3926-0ubuntu2_all.deb": "1f1612934b6ddaf4dd633760dfe5ef2a79ea2507341fd5efe394ff589a044707",
+          "target/persistence-vm/debs/libdaxctl1_77-2ubuntu2_amd64.deb": "c6629b49c79343fb11ae404aeaa3156f051168da6c6d3d9d8d516acd94705061",
+          "target/persistence-vm/debs/libfdt1_1.7.0-2build1_amd64.deb": "274d20dfab9d6b216b5de85446a93f6ce5b2cd82c847b8dfdc508577f76eb96a",
+          "target/persistence-vm/debs/libndctl6_77-2ubuntu2_amd64.deb": "4eab53588a8fa9e3192635e118c2d91bc069cde46a4a3785c77a0bb1ae001d02",
+          "target/persistence-vm/debs/libpmem1_1.13.1-1.1ubuntu2_amd64.deb": "8f1be1cc834a98f0cf5c0950153f7f939a0c2c92095e98cd7bb40c752c545c1b",
+          "target/persistence-vm/debs/librdmacm1t64_50.0-2ubuntu0.2_amd64.deb": "7b7cc2fa16564bf301751b43d05d16f0846288b080d9a25a92a691d0df33fc68",
+          "target/persistence-vm/debs/libslirp0_4.7.0-1ubuntu3.1_amd64.deb": "4efa2d1c509de4d10fe965e86a3d864bf542996caf476d9111fd882c73857164",
+          "target/persistence-vm/debs/linux-image-unsigned-6.8.0-149-generic_6.8.0-149.149_amd64.deb": "a82f22e04caa71f07f2a30e060f79d6221612f8f7abd6f4b791ca515cbec8157",
+          "target/persistence-vm/debs/qemu-system-common_1%3a8.2.2+ds-0ubuntu1.18_amd64.deb": "0a0b744f31e87d72dd0465436b8dfbb1ef9f574ecd0d5a2e9dd8c5cb7d0fef1f",
+          "target/persistence-vm/debs/qemu-system-data_1%3a8.2.2+ds-0ubuntu1.18_all.deb": "a14b88d864859bd61c8a3274971da4ecb7da6cec15be6c265d0d411f783d5f2e",
+          "target/persistence-vm/debs/qemu-system-x86_1%3a8.2.2+ds-0ubuntu1.18_amd64.deb": "14602e262627adac030329d2cecfee5f6c0938b34566ff2ea2d4c9a9eb02430d",
+          "target/persistence-vm/debs/seabios_1.16.3-2_all.deb": "cac4e59a66c834d19cae751c22ab3a0391c22f78010fd11aa2e3fe630e6bc0e0"
+        }
+      },
+      "artifacts_sha256": {
+        "/tmp/k3-656-reopen-xint.py": "693bae7d2af0ec3354f61110feadc59b797c92c30eadf976319cce7f8ac61e3d",
+        "/tmp/k3-656-block-interpreter.py": "e7b3f27365d747b8201992ad0a6c45a791ecb9caffccd0da95d537cf05dfb4da",
+        "/tmp/k3-stage607/target/persistence-vm/manifest.json": "2b64a91aff849ca632e1e88e460d3de5ae21204c61dd8af63d2e4122349ab39e",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/6/write-resume-native-topology-serial.log": "ea63b670a254012cc487f8fa92a2ead03babea49ccdd3ae2f1ea65fe3eb41b47",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/6/read-native-topology-serial.log": "699a70151366be98e2f3f6c4cb92122b758f9d98543cc16c1c37903c6d571ae5",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/3/write-resume-native-topology-serial.log": "38f1d8a61b2a706f49196651425a990b6dfba0e8a79560799221d0a3aaf6c56d",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/3/read-native-topology-serial.log": "f1fabac74cdb98d39a4391a21c896c8f1f6bf584e71436b762588c34c0929b97",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/2/write-resume-native-topology-serial.log": "0219070307c9c07243bb8cf719ffea22a50ab8dbbe94b5386df65bc52f9e9ea6",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/2/read-native-topology-serial.log": "57debdc2f95373b0b9a3d82fd761ed44d58896835f7603c7d0aeda6759b5dd04",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/7/write-resume-native-topology-serial.log": "98686bf702e16c15a429cbca34a15d84050ee27fe6d0491ae9a31f771f0bc5d9",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/7/read-native-topology-serial.log": "bc6a8b1f24c536536363bd421ece2b462969bdbc36593cdc36b5f5143d64232a",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/4/write-resume-native-topology-serial.log": "df4ddd493203b8f6a1d22c5580a14def82874e90d275d6d722366bded2a5c148",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/4/read-native-topology-serial.log": "de11cd9b80c54fd49a3ca0be233332d33d41ce767abd8ddefaa7aadf69ad61c6",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/5/write-resume-native-topology-serial.log": "f2f858c10560e59f00097b55a0a207eccc6ff40386e48c1d3274755d922cdfd5",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/5/read-native-topology-serial.log": "da91a97306d688e40eeee64c4bba353a49b45b2b159647e670c01cee37559d41",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/1/write-resume-native-topology-serial.log": "6fd27aaa3c028badbfddaaab698a8328f2e41917a75a8a8995ac303c56a1e426",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/1/read-native-topology-serial.log": "c8baeb5818a820673d3447fca66fd0e965ccf0588acad064aa3b61e7e284bf7d",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/0/write-resume-native-topology-serial.log": "499aed10dd6980cc66f10be08ffeff49f72371267e994722a9897ac68ad6b9f8",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/0/read-native-topology-serial.log": "7f588e17d26d9d7e4c5d4a2a0dc0c8a58921f0c44962cdf5c09d063ac05daeec",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/6/read-native-topology-block.jsonl": "a67ed7da8cfe1ca178159636a5ae735159763a5e0a0fe0ffc596e896c4028559",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/6/write-resume-native-topology-block.jsonl": "2c5c216e75dae5bb71d5d341d5342b7c4d0b812a8cda304dc4989ebaff8a6105",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/3/read-native-topology-block.jsonl": "7eca70606c575e5908f36e57032b195356edfe5e6bdb595a276eb15cf19093b3",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/3/write-resume-native-topology-block.jsonl": "a985bc43840aa05b850ed16685cc8982f8d1b033eb4be0fcbc24dbca395cc410",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/2/read-native-topology-block.jsonl": "7eca70606c575e5908f36e57032b195356edfe5e6bdb595a276eb15cf19093b3",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/2/write-resume-native-topology-block.jsonl": "4f8cacd4fb8ce13928ff89ebcefc0cb5d3387bd355be8ffa4f94c88f1bba27d5",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/7/read-native-topology-block.jsonl": "fe92e4e31f7db937281af67c23f4f02af56f3dc0491d8da2fc82fb1abd600c95",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/7/write-resume-native-topology-block.jsonl": "a985bc43840aa05b850ed16685cc8982f8d1b033eb4be0fcbc24dbca395cc410",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/4/read-native-topology-block.jsonl": "fe92e4e31f7db937281af67c23f4f02af56f3dc0491d8da2fc82fb1abd600c95",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/4/write-resume-native-topology-block.jsonl": "123759d82c660e672010a9b0a48acd9e3d550139ced6aeb57c1ab15959fb8c75",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/5/read-native-topology-block.jsonl": "a67ed7da8cfe1ca178159636a5ae735159763a5e0a0fe0ffc596e896c4028559",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/5/write-resume-native-topology-block.jsonl": "a8f04e375948def9e1f7fb1c5a376e4e60323f281a16c76333fdf85469a249bd",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/1/read-native-topology-block.jsonl": "450e39199e9d5e3647f0d23cbb7af0d0ee55e6bd68afc08c5e73818cc9f11a9e",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/1/write-resume-native-topology-block.jsonl": "4f8cacd4fb8ce13928ff89ebcefc0cb5d3387bd355be8ffa4f94c88f1bba27d5",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/0/read-native-topology-block.jsonl": "a67ed7da8cfe1ca178159636a5ae735159763a5e0a0fe0ffc596e896c4028559",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/0/write-resume-native-topology-block.jsonl": "a8f04e375948def9e1f7fb1c5a376e4e60323f281a16c76333fdf85469a249bd",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/6/read-native-topology-command.json": "f3f2dba88ea53e4a588bedc324c1eddfce039555e6ff25219713f92e05d012e3",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/6/write-resume-native-topology-command.json": "7145840e3c94cd27f4389d109090603d34ed7f7058def3267a119955a0c36488",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/3/read-native-topology-command.json": "495abe9fc07e6077a7d46038a5d3a2f0571a3f2ca3068d46d6a12cb7776373b1",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/3/write-resume-native-topology-command.json": "803c4c12b816917e706b644008af3605b2aa922ffbb637bed9be598506fca015",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/2/read-native-topology-command.json": "511eed46808fc7a731062a9b4995d6573b86b6ffd9f93483544fc7d20d434116",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/2/write-resume-native-topology-command.json": "ff618a9726053eda7d7d36724890afe4427d535ae21a85adf4f784e515952049",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/7/read-native-topology-command.json": "938ba9c1d7230bd1ba12c570c3e4fdd26afaae7a038ddf4f956214b093f31386",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/7/write-resume-native-topology-command.json": "cbb3b14e51cde641f7aea1da49a0332db6129bf55dc4ce6c366c2b392ec4cc36",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/4/read-native-topology-command.json": "f1c0e7618154e74f49f315cd2ca0b2550cabc84affca8e9179bd7c1ee1f5afa2",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/4/write-resume-native-topology-command.json": "a5964e6f2b1dd88e69a90bbbc5d9d9e354e05fa32a1d28b7de31655a235a8fbf",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/5/read-native-topology-command.json": "cf43a2967b5a0e820fe5c3e666e0f5a0e1b875d73c1c4ef4a3f529f3f214cffe",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/5/write-resume-native-topology-command.json": "f4350f26a81652221f18bab1f53fc881a97d3fdfa9ddbe8144a9c5b513725117",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/1/read-native-topology-command.json": "495c36023d11d442f50d85a748509f9968868a3de8983e1447e31d61564f666e",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/1/write-resume-native-topology-command.json": "21126dce61ad832e63ac86cb90e6dd0d69e71e6ebab12d6b1a40e82c3f7ce14d",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/0/read-native-topology-command.json": "b5ce306f0736eba96523d05d35cbe1b56080e754da12981d58c34a0a7e93409c",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/0/write-resume-native-topology-command.json": "3d0cbddf22f2fb0780ae720d7e60f27400fc2c9a4d886a90829c032637e618d7",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/6/result.json": "324bd13203dc9abe11d90788445c07df870a10eb83daff2ba7487eabbc415057",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/3/result.json": "cb67798a9970f0f9f6526abe18b0004228db9eed48084f6b576b47e5b0e96ac2",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/2/result.json": "5cc08b38294db44f637023d256968c5d69b564c546e1363b67e88468c2f966a9",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/7/result.json": "55649fef817f91dae449fcf919a8d73bbfd6adbc1e041174e6508ec0dc71617a",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/4/result.json": "9aa354c8b54a3c264b2b6683b978785169129c3b979d015e5b96069306e5b00f",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/5/result.json": "08131521f38c2da0983e20816da98aeaf9549b5e0b5b97e43d3f20d79415aa4c",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/1/result.json": "e40a6cf8e8cd574e3eaac96cf080a5e6e2484795894d3af827626a53c00dc77e",
+        "/tmp/k3-stage607/target/context-native-reopen-xint/run-vo7wnb_k/0/result.json": "41f2b18066f7df9e8665f9a4712524859f6825c0eb0c606b1da696132263516f"
+      }
+    },
+    "target/context-codec-guest/run-vi1y5jop/report.json": {
+      "results": {
+        "c1": {
+          "output": "/opt/java/bin/java -XX:-UsePerfData -XX:ActiveProcessorCount=1 -Xmx128m -XX:\r\r\nTieredStopAtLevel=1 -cp /tmp:/app/kanger.jar TermCodecProbe 20000\r\nK3_CODEC_PASS it",
+          "stats": {
+            "reads": 471,
+            "writes": 9,
+            "flushes": 6,
+            "fua": 0,
+            "dropped_sectors": 0
+          },
+          "exit_code": -9
+        },
+        "xint": {
+          "output": "/opt/java/bin/java -XX:-UsePerfData -XX:ActiveProcessorCount=1 -Xmx128m -Xin\r\r\nt -cp /tmp:/app/kanger.jar TermCodecProbe 20000\r\nK3_CODEC_PASS itera",
+          "stats": {
+            "reads": 462,
+            "writes": 13,
+            "flushes": 6,
+            "fua": 0,
+            "dropped_sectors": 64
+          },
+          "exit_code": -9
+        }
+      },
+      "artifacts_sha256": {
+        "/tmp/k3-656-codec-guest.py": "0655471798d5771a11c163b3d4cf6c4d1e2d2c7aa449c719b52fd7cf873bf46f",
+        "/tmp/TermCodecProbe.java": "eacce705fe561fd8165b3ce82bd698644c9b4db444f7fa46517a376d8c275e5c",
+        "/tmp/k3-656-codec/TermCodecProbe.class": "9ce496761761c985974e14800717e8a6d2dd7de50534182157ca47ec00bf55f0",
+        "/tmp/k3-stage607/target/context-codec-guest/run-vi1y5jop/xint/serial.log": "d550206c38b0a757c6dd878478e61bbc82afb0f968e6626fb5987059cf99959c",
+        "/tmp/k3-stage607/target/context-codec-guest/run-vi1y5jop/c1/serial.log": "74b232a0eeb12b27f2b9b1708c3e7eea1edd2a92a83ac081eff308925a20b710",
+        "/tmp/k3-stage607/target/context-codec-guest/run-vi1y5jop/xint/block.jsonl": "ada501a049036d768eeef3159225f8860b7afc002a74e4f6f335b957082c3378",
+        "/tmp/k3-stage607/target/context-codec-guest/run-vi1y5jop/c1/block.jsonl": "d64b520b825a2af0365b4f252bcb15420f5770f0a6b87d1429919e3f45fd15f6",
+        "/tmp/k3-stage607/target/context-codec-guest/run-vi1y5jop/xint/command.json": "3a8890c4f67e67aaa3e468c86f6a6a144aa6471aa717049b8433517d7dd780c5",
+        "/tmp/k3-stage607/target/context-codec-guest/run-vi1y5jop/c1/command.json": "ecfac75f2194682fe7aa699555f59fe19c8f8b883f3872b3ce72b0b1c5be0055"
+      }
+    },
+    "target/context-term-materialize-guest/run-v9e5uopl/report.json": {
+      "results": {
+        "c1": {
+          "output": "\u001b[6n/opt/java/bin/java -XX:-UsePerfData -XX:ActiveProcessorCount=1 -Xmx128m -XX:\r\r\nTieredStopAtLevel=1 -cp /tmp:/app/kanger.jar TermMaterializeProbe 20000\r\nK3_CODEC_PASS iteration",
+          "stats": {
+            "reads": 649,
+            "writes": 20,
+            "flushes": 8,
+            "fua": 0,
+            "dropped_sectors": 56
+          },
+          "exit_code": -9
+        },
+        "xint": {
+          "output": "/opt/java/bin/java -XX:-UsePerfData -XX:ActiveProcessorCount=1 -Xmx128m -Xin\r\r\nt -cp /tmp:/app/kanger.jar TermMaterializeProbe 20000\r\nK3_CODEC_PASS iter",
+          "stats": {
+            "reads": 645,
+            "writes": 15,
+            "flushes": 6,
+            "fua": 0,
+            "dropped_sectors": 72
+          },
+          "exit_code": -9
+        }
+      },
+      "artifacts_sha256": {
+        "/tmp/k3-656-materialize-guest.py": "80d6d439de714fe2829d9f5087c0e5aec0ab7d01108e23456f9f1b8a473ccf7a",
+        "/tmp/TermMaterializeProbe.java": "7c704ac0a2bc1744e56ffab51ce451bdad4b09514f4c649271df271bfab211fc",
+        "/tmp/k3-656-materialize/TermMaterializeProbe.class": "67920ee1273ecfd7b191e6c0ab29cbf6f882f21afafff7e3b01c35d3844fc39a",
+        "/tmp/k3-stage607/target/context-term-materialize-guest/run-v9e5uopl/xint/serial.log": "22053b566c722df56da344961a19f48a2d1adb41b2018c6e21e8ac190ba9c819",
+        "/tmp/k3-stage607/target/context-term-materialize-guest/run-v9e5uopl/c1/serial.log": "a38cf720cfeb9a42ebb49143d7cc906da59d70812c24509026d343398cc4d529",
+        "/tmp/k3-stage607/target/context-term-materialize-guest/run-v9e5uopl/xint/block.jsonl": "9b27fd98f813d6b127f09813940bb47b0bdaa2d5883dfbeaa89f7c51cf105f0f",
+        "/tmp/k3-stage607/target/context-term-materialize-guest/run-v9e5uopl/c1/block.jsonl": "b1960e10ba10f0b91ee629b3b4e6303f3e18f9e40e2a5353ccd6acad3e5beb45",
+        "/tmp/k3-stage607/target/context-term-materialize-guest/run-v9e5uopl/xint/command.json": "681403d2a056f5fc513364105da7cd5e7e4d569aa938b4b214dbc9a52b870a77",
+        "/tmp/k3-stage607/target/context-term-materialize-guest/run-v9e5uopl/c1/command.json": "d9926d52e9ac578f4bcd1a4427b63fd7a3600023fb2a36149b5ff73a17e036c7"
+      }
+    },
+    "target/context-native-failed-image-probe/run-ka_8273h/report.json": {
+      "seed": "/tmp/k3-stage607/target/context-native-block/run-_rh3p1p6/topology/f2-b/stable.ext4",
+      "seed_sha256": "b0ab90b9a8383cfac53d89c6ade8249aa4e8e81ecf02f66f59b16747b10a6016",
+      "results": {
+        "0": {
+          "write": {
+            "expected_marker": "KANGER_BLOCK_NEXT_ACK operation=topology revision=2",
+            "normal_completion_marker": "KANGER_BLOCK_NEXT_ACK operation=topology revision=2",
+            "observed_event": "application_marker",
+            "next_application_ack_observed": true,
+            "observed": true,
+            "exit_code": -9,
+            "block_stats": {
+              "reads": 783,
+              "writes": 32,
+              "flushes": 40,
+              "fua": 0,
+              "dropped_sectors": 0
+            },
+            "honour_barriers": true,
+            "journal_recovery_seen": true,
+            "previous_ack_stats": {
+              "reads": 773,
+              "writes": 8,
+              "flushes": 13,
+              "fua": 0,
+              "dropped_sectors": 0
+            },
+            "cut": null,
+            "cut_reached": false,
+            "post_previous_ack_stats": {
+              "reads": 10,
+              "writes": 24,
+              "flushes": 27,
+              "fua": 0,
+              "dropped_sectors": 0
+            }
+          },
+          "cold": {
+            "expected_marker": "KANGER_BLOCK_NATIVE_RECOVERED operation=topology previous=1 selected=",
+            "normal_completion_marker": "KANGER_BLOCK_NATIVE_RECOVERED operation=topology previous=1 selected=",
+            "observed_event": "application_marker",
+            "next_application_ack_observed": false,
+            "observed": true,
+            "exit_code": -9,
+            "block_stats": {
+              "reads": 638,
+              "writes": 17,
+              "flushes": 8,
+              "fua": 0,
+              "dropped_sectors": 8
+            },
+            "honour_barriers": true,
+            "journal_recovery_seen": true,
+            "previous_ack_stats": null,
+            "cut": null,
+            "cut_reached": false,
+            "post_previous_ack_stats": null
+          },
+          "term_error": false,
+          "previous_marker_seen": true,
+          "no_fault_configured": true
+        }
+      },
+      "prepared_inputs": {
+        "qemu_version": "QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)",
+        "kernel": "target/persistence-vm/tools/boot/vmlinuz-6.8.0-149-generic",
+        "template": "target/persistence-vm/template.ext4",
+        "packages": [
+          "Package: ipxe-qemu\nVersion: 1.21.1+git-20220113.fbbdc3926-0ubuntu2\nArchitecture: all",
+          "Package: libdaxctl1\nVersion: 77-2ubuntu2\nArchitecture: amd64",
+          "Package: libfdt1\nVersion: 1.7.0-2build1\nArchitecture: amd64",
+          "Package: libndctl6\nVersion: 77-2ubuntu2\nArchitecture: amd64",
+          "Package: libpmem1\nVersion: 1.13.1-1.1ubuntu2\nArchitecture: amd64",
+          "Package: librdmacm1t64\nVersion: 50.0-2ubuntu0.2\nArchitecture: amd64",
+          "Package: libslirp0\nVersion: 4.7.0-1ubuntu3.1\nArchitecture: amd64",
+          "Package: linux-image-unsigned-6.8.0-149-generic\nVersion: 6.8.0-149.149\nArchitecture: amd64",
+          "Package: qemu-system-common\nVersion: 1:8.2.2+ds-0ubuntu1.18\nArchitecture: amd64",
+          "Package: qemu-system-data\nVersion: 1:8.2.2+ds-0ubuntu1.18\nArchitecture: all",
+          "Package: qemu-system-x86\nVersion: 1:8.2.2+ds-0ubuntu1.18\nArchitecture: amd64",
+          "Package: seabios\nVersion: 1.16.3-2\nArchitecture: all"
+        ],
+        "sha256": {
+          "target/persistence-vm/tools/boot/vmlinuz-6.8.0-149-generic": "c2b4577c780c2cbd15dda13b6c890bf655fb4d1e1434a801e6e79e88e8c9a2e1",
+          "target/persistence-vm/template.ext4": "ab6e19637a19514f8d21b3b8e3361e7424968bdde6e68d55853cbec53842f6ed",
+          "kanger-console/target/kanger-console-3.3-SNAPSHOT.jar": "ca5cce279f6e7a9e36760ae4c3545902b205b677585fa38cacde348d88225f23",
+          "kanger-qualification/src/org/kanger/storage/dumb2/ContextBlockDeviceRunner.java": "4561781ebfb2134170c30d0ee937375b11098641d29f6d8bd142980f6578e6f3",
+          "target/persistence-vm/tools/usr/bin/qemu-system-x86_64": "8a35ccba41582fc6c38b9df85fc9e35fa1d42f414d2d7d8090ee9b2f5e7c0854",
+          "scripts/persistence_vm/prepare.py": "b37f550bc5cb954b3827bfe9755af9d97c19c4fe1619bf99f4b24bbf3833533d",
+          "scripts/persistence_vm/tool-packages.json": "32dbfb10f6adc4a9d4ba2e2a500c8d3b4e528870d09752bc19fee92fee2e45a1",
+          "target/persistence-vm/debs/ipxe-qemu_1.21.1+git-20220113.fbbdc3926-0ubuntu2_all.deb": "1f1612934b6ddaf4dd633760dfe5ef2a79ea2507341fd5efe394ff589a044707",
+          "target/persistence-vm/debs/libdaxctl1_77-2ubuntu2_amd64.deb": "c6629b49c79343fb11ae404aeaa3156f051168da6c6d3d9d8d516acd94705061",
+          "target/persistence-vm/debs/libfdt1_1.7.0-2build1_amd64.deb": "274d20dfab9d6b216b5de85446a93f6ce5b2cd82c847b8dfdc508577f76eb96a",
+          "target/persistence-vm/debs/libndctl6_77-2ubuntu2_amd64.deb": "4eab53588a8fa9e3192635e118c2d91bc069cde46a4a3785c77a0bb1ae001d02",
+          "target/persistence-vm/debs/libpmem1_1.13.1-1.1ubuntu2_amd64.deb": "8f1be1cc834a98f0cf5c0950153f7f939a0c2c92095e98cd7bb40c752c545c1b",
+          "target/persistence-vm/debs/librdmacm1t64_50.0-2ubuntu0.2_amd64.deb": "7b7cc2fa16564bf301751b43d05d16f0846288b080d9a25a92a691d0df33fc68",
+          "target/persistence-vm/debs/libslirp0_4.7.0-1ubuntu3.1_amd64.deb": "4efa2d1c509de4d10fe965e86a3d864bf542996caf476d9111fd882c73857164",
+          "target/persistence-vm/debs/linux-image-unsigned-6.8.0-149-generic_6.8.0-149.149_amd64.deb": "a82f22e04caa71f07f2a30e060f79d6221612f8f7abd6f4b791ca515cbec8157",
+          "target/persistence-vm/debs/qemu-system-common_1%3a8.2.2+ds-0ubuntu1.18_amd64.deb": "0a0b744f31e87d72dd0465436b8dfbb1ef9f574ecd0d5a2e9dd8c5cb7d0fef1f",
+          "target/persistence-vm/debs/qemu-system-data_1%3a8.2.2+ds-0ubuntu1.18_all.deb": "a14b88d864859bd61c8a3274971da4ecb7da6cec15be6c265d0d411f783d5f2e",
+          "target/persistence-vm/debs/qemu-system-x86_1%3a8.2.2+ds-0ubuntu1.18_amd64.deb": "14602e262627adac030329d2cecfee5f6c0938b34566ff2ea2d4c9a9eb02430d",
+          "target/persistence-vm/debs/seabios_1.16.3-2_all.deb": "cac4e59a66c834d19cae751c22ab3a0391c22f78010fd11aa2e3fe630e6bc0e0"
+        }
+      },
+      "artifacts_sha256": {
+        "/tmp/k3-656-failed-image-probe.py": "4ef44e7f20f907a1f561df0834c339f5853c504b7505564d7a2274cc40522649",
+        "/tmp/k3-stage607/scripts/qualify-context-block-device.py": "b299653db0d1644f0dc6b809a99482279e97391f9d9febbc35dcd62b373bc6a9",
+        "/tmp/k3-stage607/target/context-native-block/run-_rh3p1p6/experimental-inputs/manifest.json": "2b64a91aff849ca632e1e88e460d3de5ae21204c61dd8af63d2e4122349ab39e",
+        "/tmp/k3-stage607/target/context-native-failed-image-probe/run-ka_8273h/0/write-resume-native-topology-serial.log": "97c59023338e5847e56a7a12e8a5be2ce5adf5efa119ed1d2a694183f92eee05",
+        "/tmp/k3-stage607/target/context-native-failed-image-probe/run-ka_8273h/0/read-native-topology-serial.log": "670ff43c2d46947fa17ba690eaec8f1e01133b170243c6f8fe16a996a661fb8b",
+        "/tmp/k3-stage607/target/context-native-failed-image-probe/run-ka_8273h/0/read-native-topology-block.jsonl": "a9ea1141e2805e42fc980bd80fec24abb82ef3a5462bad2c90800cbf93405ed0",
+        "/tmp/k3-stage607/target/context-native-failed-image-probe/run-ka_8273h/0/write-resume-native-topology-block.jsonl": "79dcf221a05b28c3b51bc21c59dc0576876b6f9899233a910812be20af8b462c",
+        "/tmp/k3-stage607/target/context-native-failed-image-probe/run-ka_8273h/0/read-native-topology-command.json": "d12f27cb203a9edbcf700ad215995cd7bd624365a25ebf8811c5c1ca94469ee0",
+        "/tmp/k3-stage607/target/context-native-failed-image-probe/run-ka_8273h/0/write-resume-native-topology-command.json": "9e60faf7326deb46e365c110a3e5496910af16edbb2574d52717423603b06663",
+        "/tmp/k3-stage607/target/context-native-failed-image-probe/run-ka_8273h/0/result.json": "42ed2d725de784464a043299a5302916d83dd6a5c325446c2abd1fb2f95fbe4e"
+      }
+    },
+    "target/context-native-host-probe/run-ec2bk1wf/report.json": {
+      "results": [
+        {
+          "returncode": 0,
+          "passed": true,
+          "term_error": false
+        },
+        {
+          "returncode": 0,
+          "passed": true,
+          "term_error": false
+        },
+        {
+          "returncode": 0,
+          "passed": true,
+          "term_error": false
+        },
+        {
+          "returncode": 0,
+          "passed": true,
+          "term_error": false
+        },
+        {
+          "returncode": 0,
+          "passed": true,
+          "term_error": false
+        },
+        {
+          "returncode": 0,
+          "passed": true,
+          "term_error": false
+        },
+        {
+          "returncode": 0,
+          "passed": true,
+          "term_error": false
+        },
+        {
+          "returncode": 0,
+          "passed": true,
+          "term_error": false
+        },
+        {
+          "returncode": 0,
+          "passed": true,
+          "term_error": false
+        },
+        {
+          "returncode": 0,
+          "passed": true,
+          "term_error": false
+        },
+        {
+          "returncode": 0,
+          "passed": true,
+          "term_error": false
+        },
+        {
+          "returncode": 0,
+          "passed": true,
+          "term_error": false
+        },
+        {
+          "returncode": 0,
+          "passed": true,
+          "term_error": false
+        },
+        {
+          "returncode": 0,
+          "passed": true,
+          "term_error": false
+        },
+        {
+          "returncode": 0,
+          "passed": true,
+          "term_error": false
+        },
+        {
+          "returncode": 0,
+          "passed": true,
+          "term_error": false
+        }
+      ],
+      "source": "package org.kanger.storage.dumb2;\nimport org.kanger.*;\nimport java.nio.file.*;\npublic class NativeReopenHostProbe {\n public static void main(String[] args)throws Exception{\n  Path root=Paths.get(args[0]).toAbsolutePath();System.setProperty(\"user.home\",root.resolve(\"home\").toString());\n  User user=new User();user.setDatabaseDir(root+java.io.File.separator);DB db=new DB();db.init(user);\n  Mind base=new Mind(user);user.setCurrentMind(base);Mind m=(Mind)base.useStorage(\"Source\");user.setCurrentMind(m);\n  if(db.getRevision()!=1)throw new AssertionError(\"Input must be Source R1\");\n  db.connectContext(\"Rules\");if(db.saveConnections(m)!=2)throw new AssertionError(\"Expected publication R2\");\n  user.setCurrentMind(m.closeStorage());System.out.println(\"HOST_REOPEN_PASS\");\n }\n}\n",
+      "artifacts_sha256": {
+        "/tmp/NativeReopenHostProbe.java": "bd0543055ddb84358c0f7638edba60afbb01f0141db5d10cff6c13be0400e6ab",
+        "/tmp/k3-stage607/target/context-native-host-probe/run-ec2bk1wf/5.log": "399d501274e45356db5ab2c6c26af28ee270a14771b69cf9371df3cc71020a69",
+        "/tmp/k3-stage607/target/context-native-host-probe/run-ec2bk1wf/2.log": "399d501274e45356db5ab2c6c26af28ee270a14771b69cf9371df3cc71020a69",
+        "/tmp/k3-stage607/target/context-native-host-probe/run-ec2bk1wf/14.log": "399d501274e45356db5ab2c6c26af28ee270a14771b69cf9371df3cc71020a69",
+        "/tmp/k3-stage607/target/context-native-host-probe/run-ec2bk1wf/7.log": "399d501274e45356db5ab2c6c26af28ee270a14771b69cf9371df3cc71020a69",
+        "/tmp/k3-stage607/target/context-native-host-probe/run-ec2bk1wf/1.log": "399d501274e45356db5ab2c6c26af28ee270a14771b69cf9371df3cc71020a69",
+        "/tmp/k3-stage607/target/context-native-host-probe/run-ec2bk1wf/4.log": "399d501274e45356db5ab2c6c26af28ee270a14771b69cf9371df3cc71020a69",
+        "/tmp/k3-stage607/target/context-native-host-probe/run-ec2bk1wf/6.log": "399d501274e45356db5ab2c6c26af28ee270a14771b69cf9371df3cc71020a69",
+        "/tmp/k3-stage607/target/context-native-host-probe/run-ec2bk1wf/3.log": "399d501274e45356db5ab2c6c26af28ee270a14771b69cf9371df3cc71020a69",
+        "/tmp/k3-stage607/target/context-native-host-probe/run-ec2bk1wf/8.log": "399d501274e45356db5ab2c6c26af28ee270a14771b69cf9371df3cc71020a69",
+        "/tmp/k3-stage607/target/context-native-host-probe/run-ec2bk1wf/9.log": "399d501274e45356db5ab2c6c26af28ee270a14771b69cf9371df3cc71020a69",
+        "/tmp/k3-stage607/target/context-native-host-probe/run-ec2bk1wf/10.log": "399d501274e45356db5ab2c6c26af28ee270a14771b69cf9371df3cc71020a69",
+        "/tmp/k3-stage607/target/context-native-host-probe/run-ec2bk1wf/0.log": "399d501274e45356db5ab2c6c26af28ee270a14771b69cf9371df3cc71020a69",
+        "/tmp/k3-stage607/target/context-native-host-probe/run-ec2bk1wf/13.log": "399d501274e45356db5ab2c6c26af28ee270a14771b69cf9371df3cc71020a69",
+        "/tmp/k3-stage607/target/context-native-host-probe/run-ec2bk1wf/12.log": "399d501274e45356db5ab2c6c26af28ee270a14771b69cf9371df3cc71020a69",
+        "/tmp/k3-stage607/target/context-native-host-probe/run-ec2bk1wf/11.log": "399d501274e45356db5ab2c6c26af28ee270a14771b69cf9371df3cc71020a69",
+        "/tmp/k3-stage607/target/context-native-host-probe/run-ec2bk1wf/15.log": "399d501274e45356db5ab2c6c26af28ee270a14771b69cf9371df3cc71020a69"
+      }
+    }
+  },
+  "diagnostic_sources": {
+    "/tmp/TermCodecProbe.java": "import java.util.*;\nimport org.kanger.storage.dumb2.adapter.TermAdapter;\nimport org.kanger.storage.dumb2.descriptor.*;\npublic class TermCodecProbe {\n public static void main(String[] args)throws Exception{\n  Descriptor canonical=TermAdapter.INSTANCE.getDescriptor();\n  Map<String,StructuralValue> f=new LinkedHashMap<>();\n  f.put(\"id\",StructuralValue.int64(0));f.put(\"mindId\",StructuralValue.int64(0));f.put(\"deleted\",StructuralValue.bool(false));\n  f.put(\"kind\",StructuralValue.enumeration(\"TermKind\",\"STRING\"));f.put(\"hash\",StructuralValue.int32(19));\n  f.put(\"value\",StructuralValue.utf8(\"anchor\"));f.put(\"index\",StructuralValue.int32(0));\n  byte[] schema=DescriptorBinaryCodec.encode(canonical),payload=StructuralValueCodec.encode(canonical,StructuralValue.struct(f));\n  int n=Integer.parseInt(args[0]);Descriptor parsed=null;\n  for(int i=0;i<n;i++){\n   if(i%50==0){parsed=DescriptorBinaryCodec.decode(schema);if(!canonical.equals(parsed))throw new AssertionError(\"Descriptor inequality\");}\n   Map<String,StructuralValue> decoded=StructuralValueCodec.decode(parsed,payload).asStruct();\n   StructuralValue flag=decoded.get(\"deleted\");\n   if(flag==null||flag.getKind()!=StructuralValue.Kind.BOOL){System.out.println(\"K3_CODEC_FAIL iteration=\"+i+\" kind=\"+(flag==null?\"missing\":flag.getKind())+\" keys=\"+decoded.keySet());return;}\n  }\n  System.out.println(\"K3_CODEC_PASS iterations=\"+n);\n }\n}\n",
+    "/tmp/TermMaterializeProbe.java": "import java.util.*;\nimport org.kanger.storage.dumb2.adapter.TermAdapter;\nimport org.kanger.storage.dumb2.descriptor.*;\npublic class TermMaterializeProbe {\n public static void main(String[] args)throws Exception{\n  java.nio.file.Path root=java.nio.file.Files.createTempDirectory(\"term-materialize-\");\n  System.setProperty(\"user.home\",root.resolve(\"home\").toString());\n  org.kanger.User user=new org.kanger.User();user.setDatabaseDir(root+java.io.File.separator);\n  org.kanger.storage.dumb2.DB db=new org.kanger.storage.dumb2.DB();db.init(user);\n  org.kanger.Mind mind=new org.kanger.Mind(user);user.setCurrentMind(mind);\n  Descriptor canonical=TermAdapter.INSTANCE.getDescriptor();\n  Map<String,StructuralValue> f=new LinkedHashMap<>();\n  f.put(\"id\",StructuralValue.int64(0));f.put(\"mindId\",StructuralValue.int64(0));f.put(\"deleted\",StructuralValue.bool(false));\n  f.put(\"kind\",StructuralValue.enumeration(\"TermKind\",\"STRING\"));f.put(\"hash\",StructuralValue.int32(19));\n  f.put(\"value\",StructuralValue.utf8(\"anchor\"));f.put(\"index\",StructuralValue.int32(0));\n  byte[] schema=DescriptorBinaryCodec.encode(canonical),payload=StructuralValueCodec.encode(canonical,StructuralValue.struct(f));\n  int n=Integer.parseInt(args[0]);Descriptor parsed=null;\n  for(int i=0;i<n;i++){\n   if(i%50==0){parsed=DescriptorBinaryCodec.decode(schema);if(!canonical.equals(parsed))throw new AssertionError(\"Descriptor inequality\");}\n   Map<String,StructuralValue> decoded=StructuralValueCodec.decode(parsed,payload).asStruct();\n   StructuralValue flag=decoded.get(\"deleted\");\n   try{TermAdapter.INSTANCE.materialize(StructuralValue.struct(decoded),mind);}\n   catch(Exception e){System.out.println(\"K3_CODEC_FAIL materialize iteration=\"+i+\" kind=\"+(flag==null?\"missing\":flag.getKind())+\" keys=\"+decoded.keySet());e.printStackTrace();return;}\n   if(flag==null||flag.getKind()!=StructuralValue.Kind.BOOL){System.out.println(\"K3_CODEC_FAIL iteration=\"+i+\" kind=\"+(flag==null?\"missing\":flag.getKind())+\" keys=\"+decoded.keySet());return;}\n  }\n  System.out.println(\"K3_CODEC_PASS iterations=\"+n);\n }\n}\n",
+    "/tmp/k3-656-reopen-probe.py": "from concurrent.futures import ThreadPoolExecutor\nimport hashlib,importlib.util,json,re,subprocess,sys,tempfile\nfrom pathlib import Path\nROOT=Path('/tmp/k3-stage607');sys.dont_write_bytecode=True\ns=importlib.util.spec_from_file_location('block',ROOT/'scripts/qualify-context-block-device.py');b=importlib.util.module_from_spec(s);s.loader.exec_module(b)\nm=json.loads((ROOT/'target/persistence-vm/manifest.json').read_text())\nseed=ROOT/'target/context-native-block/run-_rh3p1p6/topology/seed/stable.ext4'\nseed_sha=hashlib.sha256(seed.read_bytes()).hexdigest()\noutput=ROOT/'target/context-native-reopen-probe';output.mkdir(exist_ok=True)\nrun=Path(tempfile.mkdtemp(prefix='run-',dir=output))\ndef one(n):\n d=run/str(n);d.mkdir();image=d/'stable.ext4';subprocess.run(['cp','--sparse=always',str(seed),str(image)],check=True)\n result={}\n try:\n  result['write']=b.boot(d,image,'write-resume-native-topology',m,previous_marker='KANGER_BLOCK_PREVIOUS_ACK operation=topology previous=1',expected_marker='KANGER_BLOCK_NEXT_ACK operation=topology revision=2',timeout_seconds=600)\n except RuntimeError as e:result['write_failure']=str(e)\n result['cold']=b.boot(d,image,'read-native-topology',m,expected_marker='KANGER_BLOCK_NATIVE_RECOVERED operation=topology previous=1 selected=',expected_prefix=True)\n text=(d/'write-resume-native-topology-serial.log').read_text()\n result['term_error']='Invalid or missing TERM field deleted' in text\n result['previous_marker_seen']='KANGER_BLOCK_PREVIOUS_ACK' in text\n result['no_fault_configured']=True\n (d/'result.json').write_text(json.dumps(result,indent=2)+'\\n')\n print('REOPEN',n,'term_error='+str(result['term_error']),flush=True)\n return str(n),result\nwith ThreadPoolExecutor(max_workers=4) as pool:results=dict(pool.map(one,range(8)))\nassert hashlib.sha256(seed.read_bytes()).hexdigest()==seed_sha\nfiles=[Path(__file__),ROOT/'scripts/qualify-context-block-device.py',ROOT/'target/persistence-vm/manifest.json']+list(run.rglob('*.log'))+list(run.rglob('*.jsonl'))+list(run.rglob('*-command.json'))+list(run.rglob('result.json'))\nreport=dict(seed=str(seed),seed_sha256=seed_sha,results=results,prepared_inputs=m,artifacts_sha256={str(p):hashlib.sha256(p.read_bytes()).hexdigest() for p in files})\n(run/'report.json').write_text(json.dumps(report,indent=2)+'\\n');print('Report:',run/'report.json')\n",
+    "/tmp/k3-656-reopen-xint.py": "from concurrent.futures import ThreadPoolExecutor\nimport hashlib,importlib.util,json,re,subprocess,sys,tempfile\nfrom pathlib import Path\nROOT=Path('/tmp/k3-stage607');sys.dont_write_bytecode=True\ns=importlib.util.spec_from_file_location('block',Path('/tmp/k3-656-block-interpreter.py'));b=importlib.util.module_from_spec(s);s.loader.exec_module(b)\nm=json.loads((ROOT/'target/persistence-vm/manifest.json').read_text())\nseed=ROOT/'target/context-native-block/run-_rh3p1p6/topology/seed/stable.ext4'\nseed_sha=hashlib.sha256(seed.read_bytes()).hexdigest()\noutput=ROOT/'target/context-native-reopen-xint';output.mkdir(exist_ok=True)\nrun=Path(tempfile.mkdtemp(prefix='run-',dir=output))\ndef one(n):\n d=run/str(n);d.mkdir();image=d/'stable.ext4';subprocess.run(['cp','--sparse=always',str(seed),str(image)],check=True)\n result={}\n try:\n  result['write']=b.boot(d,image,'write-resume-native-topology',m,previous_marker='KANGER_BLOCK_PREVIOUS_ACK operation=topology previous=1',expected_marker='KANGER_BLOCK_NEXT_ACK operation=topology revision=2',timeout_seconds=600)\n except RuntimeError as e:result['write_failure']=str(e)\n result['cold']=b.boot(d,image,'read-native-topology',m,expected_marker='KANGER_BLOCK_NATIVE_RECOVERED operation=topology previous=1 selected=',expected_prefix=True)\n text=(d/'write-resume-native-topology-serial.log').read_text()\n result['term_error']='Invalid or missing TERM field deleted' in text\n result['previous_marker_seen']='KANGER_BLOCK_PREVIOUS_ACK' in text\n result['no_fault_configured']=True\n (d/'result.json').write_text(json.dumps(result,indent=2)+'\\n')\n print('REOPEN',n,'term_error='+str(result['term_error']),flush=True)\n return str(n),result\nwith ThreadPoolExecutor(max_workers=4) as pool:results=dict(pool.map(one,range(8)))\nassert hashlib.sha256(seed.read_bytes()).hexdigest()==seed_sha\nfiles=[Path(__file__),Path('/tmp/k3-656-block-interpreter.py'),ROOT/'target/persistence-vm/manifest.json']+list(run.rglob('*.log'))+list(run.rglob('*.jsonl'))+list(run.rglob('*-command.json'))+list(run.rglob('result.json'))\nreport=dict(seed=str(seed),seed_sha256=seed_sha,results=results,prepared_inputs=m,artifacts_sha256={str(p):hashlib.sha256(p.read_bytes()).hexdigest() for p in files})\n(run/'report.json').write_text(json.dumps(report,indent=2)+'\\n');print('Report:',run/'report.json')\n",
+    "/tmp/k3-656-block-interpreter.py": "#!/usr/bin/env python3\n\"\"\"Cold ext4 recovery in an owned VM over a flush-aware volatile NBD model.\"\"\"\nimport hashlib\nimport importlib.util\nimport json\nimport os\nfrom pathlib import Path\nimport queue\nimport shutil\nimport socket\nimport struct\nimport subprocess\nimport sys\nimport tempfile\nimport threading\nimport time\n\nROOT=Path('/tmp/k3-stage607')\nsys.dont_write_bytecode=True\nspec=importlib.util.spec_from_file_location('volatile_nbd',ROOT/'scripts/persistence_vm/volatile_nbd.py')\nnbd=importlib.util.module_from_spec(spec);spec.loader.exec_module(nbd)\n\n\nclass Client:\n    def __init__(self,path):\n        self.sock=socket.socket(socket.AF_UNIX,socket.SOCK_STREAM);self.sock.connect(str(path));self.counter=0\n        header=nbd.receive(self.sock,152)\n        assert header[:8]==b'NBDMAGIC' and struct.unpack('>I',header[24:28])[0]==13\n    def command(self,kind,offset=0,length=0,payload=b'',flags=0,error=False):\n        self.counter+=1;cookie=struct.pack('>Q',self.counter)\n        self.sock.sendall(struct.pack('>IHH8sQI',nbd.REQUEST,flags,kind,cookie,offset,length)+payload)\n        magic,code,returned=struct.unpack('>II8s',nbd.receive(self.sock,16))\n        assert magic==nbd.REPLY and returned==cookie\n        if error:assert code!=0;return\n        assert code==0,code\n        return nbd.receive(self.sock,length) if kind==0 else None\n    def cut(self,server):server.arm_cut();self.sock.close();return server.stop()\n\n\ndef controls(run):\n    image=run/'control.img';image.write_bytes(bytes(4096));sock=run/'control.sock'\n    def start(name):\n        server=nbd.VolatileNbd(image,sock,run/(name+'.jsonl'));return server,Client(sock)\n    server,c=start('unflushed');c.command(1,0,512,b'A'*512);assert c.command(0,0,512)==b'A'*512\n    assert c.cut(server)['dropped_sectors']==1;assert image.read_bytes()[:512]==bytes(512)\n    server,c=start('fua');c.command(1,0,512,b'A'*512);c.command(1,512,512,b'B'*512,flags=1)\n    assert c.cut(server)['dropped_sectors']==1\n    assert image.read_bytes()[:1024]==bytes(512)+b'B'*512\n    server,c=start('flush');c.command(1,0,512,b'A'*512);c.command(3);c.command(1,1024,512,b'C'*512)\n    c.command(0,4096,512,error=True)\n    assert c.cut(server)['dropped_sectors']==1\n    assert image.read_bytes()[:1536]==b'A'*512+b'B'*512+bytes(512)\n    server,c=start('cut-freeze');c.command(1,1536,512,b'D'*512);server.arm_cut()\n    try:\n        c.command(3)\n        raise AssertionError('A post-cut flush must never be acknowledged')\n    except (EOFError,BrokenPipeError,ConnectionResetError):pass\n    c.sock.close();assert server.stop()['dropped_sectors']==1\n    assert image.read_bytes()[1536:2048]==bytes(512)\n    return dict(cut_freezes_new_commands=True,unflushed_ack_is_lost=True,fua_does_not_flush_unrelated_writes=True,\n                flush_covers_completed_prefix=True,later_writes_are_lost=True,out_of_range_refused=True)\n\n\ndef boot(run,image,phase,manifest,honour_barriers=True,expect_missing=False,expected_marker=None,fault=None,expected_prefix=False,previous_marker='KANGER_BLOCK_PREVIOUS_ACK revision=1 value=42',release_previous=True,timeout_seconds=240):\n    base=ROOT/'target/persistence-vm';tools=base/'tools';sock=run/'b.sock'\n    server=nbd.VolatileNbd(image,sock,run/(phase+'-block.jsonl'),honour_barriers=honour_barriers)\n    env=os.environ.copy();env['LD_LIBRARY_PATH']=str(tools/'usr/lib/x86_64-linux-gnu');env['QEMU_MODULE_DIR']=str(tools/'usr/lib/x86_64-linux-gnu/qemu')\n    command=[str(tools/'usr/bin/qemu-system-x86_64'),'-L',str(tools/'usr/share/qemu'),\n             '-bios',str(tools/'usr/share/seabios/bios-256k.bin'),'-machine','pc,accel=tcg','-cpu','max','-smp','1','-m','768','-nodefaults',\n             '-display','none','-serial','stdio','-monitor','none','-nic','none','-no-reboot',\n             '-kernel',str(ROOT/manifest['kernel']),'-append',\n             'console=ttyS0 root=/dev/vda rw rootfstype=ext4 panic=-1 init=/sbin/init random.trust_cpu=on JAVA_TOOL_OPTIONS=-Xint kanger.phase='+phase,\n             '-blockdev','driver=nbd,node-name=os,server.type=unix,server.path='+str(sock),\n             '-device','virtio-blk-pci,drive=os,write-cache=on']\n    (run/(phase+'-command.json')).write_text(json.dumps(command,indent=2)+'\\n')\n    process=subprocess.Popen(command,cwd=ROOT,env=env,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True,errors='replace',bufsize=1)\n    lines=queue.Queue();log_path=run/(phase+'-serial.log')\n    def consume():\n        with log_path.open('w') as log:\n            for line in process.stdout:log.write(line);log.flush();lines.put(line.strip())\n        lines.put(None)\n    reader=threading.Thread(target=consume,daemon=True);reader.start()\n    expected='KANGER_BLOCK_ACK revision=1 value=42' if phase=='write' else 'KANGER_BLOCK_RECOVERED revision=1 value=42'\n    if expect_missing:expected='KANGER_BLOCK_MISSING revision=1 code=STORAGE_NOT_FOUND'\n    if expected_marker is not None:expected=expected_marker\n    observed=False;previous_ack=None;deadline=time.monotonic()+timeout_seconds\n    try:\n        while time.monotonic()<deadline:\n            if fault is not None and server.fault_seen.is_set():observed=True;break\n            try:line=lines.get(timeout=1)\n            except queue.Empty:continue\n            if line is None:break\n            if line==previous_marker:\n                if previous_ack is not None:raise RuntimeError('Duplicate previous ACK')\n                previous_ack=dict(server.stats)\n                if not release_previous:observed=True;break\n                if fault is not None:server.arm_fault(**fault)\n                process.stdin.write('\\n');process.stdin.flush()\n            if line==expected or (expected_prefix and line.startswith(expected)):observed=True;break\n            if 'KANGER_GUEST_FAILED' in line or 'Kernel panic' in line:break\n    finally:\n        server.arm_cut()\n        if process.poll() is None:process.kill()\n        process.wait(timeout=20);reader.join(timeout=10);stats=server.stop()\n    if fault is not None:\n        observed=server.fault_seen.is_set() and previous_ack is not None\n        if 'KANGER_BLOCK_NEXT_ACK' in log_path.read_text():raise RuntimeError('Cut followed the next application ACK')\n    if not observed:raise RuntimeError('Guest did not reach '+expected+'; inspect '+str(log_path))\n    if phase.startswith('write') and stats['flushes']+stats['fua']==0:raise RuntimeError('No stable barrier reached NBD backend')\n    if phase.startswith('write') and stats['writes']<=stats['fua']:raise RuntimeError('VM did not exercise cacheable writes')\n    recovery_seen='EXT4-fs (vda): recovery complete' in log_path.read_text()\n    if phase.startswith('read') and not expect_missing and not recovery_seen:raise RuntimeError('Cold journal recovery was not observed')\n    return dict(expected_marker=expected if fault is None else None,normal_completion_marker=expected,\n                observed_event=('application_marker' if release_previous else 'previous_publication_ack') if fault is None else 'block_cut',\n                next_application_ack_observed='KANGER_BLOCK_NEXT_ACK' in log_path.read_text(),\n                observed=True,exit_code=process.returncode,block_stats=stats,\n                honour_barriers=honour_barriers,journal_recovery_seen=recovery_seen,\n                previous_ack_stats=previous_ack,cut=fault,cut_reached=server.fault_seen.is_set(),\n                post_previous_ack_stats=None if previous_ack is None else {k:stats[k]-previous_ack[k] for k in stats})\n\n\ndef main():\n    base=ROOT/'target/persistence-vm';manifest=json.loads((base/'manifest.json').read_text())\n    for name,digest in manifest['sha256'].items():\n        if hashlib.sha256((ROOT/name).read_bytes()).hexdigest()!=digest:raise ValueError('Prepared input changed: '+name)\n    output=ROOT/'target/context-block-device';output.mkdir(parents=True,exist_ok=True)\n    run=Path(tempfile.mkdtemp(prefix='run-',dir=str(output)))\n    self_controls=controls(run)\n    image=run/'stable.ext4'\n    subprocess.run(['cp','--sparse=always',str(ROOT/manifest['template']),str(image)],check=True)\n    write=boot(run,image,'write',manifest)\n    read=boot(run,image,'read',manifest)\n    negative=run/'negative';negative.mkdir()\n    bad_image=negative/'lying.ext4'\n    subprocess.run(['cp','--sparse=always',str(ROOT/manifest['template']),str(bad_image)],check=True)\n    bad_write=boot(negative,bad_image,'write',manifest,honour_barriers=False)\n    bad_read=boot(negative,bad_image,'read',manifest,expect_missing=True)\n    if bad_write['block_stats']['dropped_sectors']==0:raise RuntimeError('Negative control dropped no writes')\n    matrix={}\n    for operation,revision in [('create',0),('append2',2),('fork',1)]:\n        case=run/operation;case.mkdir();case_image=case/'stable.ext4'\n        subprocess.run(['cp','--sparse=always',str(ROOT/manifest['template']),str(case_image)],check=True)\n        result={}\n        for phase,marker in [('write','ACK'),('read','RECOVERED')]:\n            result[phase]=boot(case,case_image,phase+'-'+operation,manifest,\n                expected_marker='KANGER_BLOCK_'+marker+' operation='+operation+' revision='+str(revision))\n        matrix[operation]=result\n    files=[ROOT/'target/persistence-vm/manifest.json',Path(__file__),ROOT/'scripts/persistence_vm/volatile_nbd.py',ROOT/'scripts/persistence_vm/prepare.py']\n    files += sorted(run.rglob('*.log'))+sorted(run.rglob('*.jsonl'))+sorted(run.rglob('*-command.json'))\n    report=dict(scope='Acknowledged create, append, retained R1 after R2, and fork cold recovery under a flush-honouring block model',\n                head=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),source_dirty=True,\n                qemu_version=manifest['qemu_version'],self_controls=self_controls,write=write,cold_read=read,\n                lying_device_control=dict(write=bad_write,cold_read=bad_read,acknowledged_value_lost=True),\n                acknowledged_operation_matrix=matrix,guest_provider_unmodified=True,block_model_qualification_passed=True,full_operation_matrix=False,\n                physical_device_power_loss_acceptance=False,\n                artifacts_sha256={str(p):hashlib.sha256(p.read_bytes()).hexdigest() for p in files})\n    (run/'report.json').write_text(json.dumps(report,indent=2)+'\\n')\n    print('Report:',run/'report.json');print('BLOCK_DEVICE_COLD_RECOVERY_PASS value=42 revision=1')\n\n\nif __name__=='__main__':main()\n",
+    "/tmp/k3-656-codec-guest.py": "from pathlib import Path\nimport base64,hashlib,importlib.util,json,os,queue,subprocess,sys,tempfile,threading,time\nfrom concurrent.futures import ThreadPoolExecutor\nROOT=Path('/tmp/k3-stage607');sys.dont_write_bytecode=True\ns=importlib.util.spec_from_file_location('block',ROOT/'scripts/qualify-context-block-device.py');b=importlib.util.module_from_spec(s);s.loader.exec_module(b)\nseed=ROOT/'target/context-native-block/run-_rh3p1p6/topology/seed/stable.ext4'\nbase=json.loads((ROOT/'target/context-native-block/run-_rh3p1p6/topology/witness/write-resume-native-topology-command.json').read_text())\nout=ROOT/'target/context-codec-guest';out.mkdir(exist_ok=True);run=Path(tempfile.mkdtemp(prefix='run-',dir=out))\ndef one(mode):\n d=run/mode;d.mkdir();img=d/'stable.ext4';subprocess.run(['cp','--sparse=always',str(seed),str(img)],check=True)\n sock=d/'b.sock';server=b.nbd.VolatileNbd(img,sock,d/'block.jsonl')\n cmd=list(base);i=cmd.index('-append')+1;cmd[i]=cmd[i].replace('init=/sbin/init','init=/bin/sh')\n i=cmd.index('-blockdev')+1;cmd[i]='driver=nbd,node-name=os,server.type=unix,server.path='+str(sock)\n (d/'command.json').write_text(json.dumps(cmd,indent=2)+'\\n')\n tools=ROOT/'target/persistence-vm/tools';env=os.environ.copy();env['LD_LIBRARY_PATH']=str(tools/'usr/lib/x86_64-linux-gnu');env['QEMU_MODULE_DIR']=str(tools/'usr/lib/x86_64-linux-gnu/qemu')\n p=subprocess.Popen(cmd,env=env,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,bufsize=0)\n q=queue.Queue()\n def consume():\n  with (d/'serial.log').open('wb',buffering=0) as log:\n   while True:\n    chunk=p.stdout.read(4096)\n    if not chunk:q.put(None);return\n    log.write(chunk);q.put(chunk)\n t=threading.Thread(target=consume,daemon=True);t.start()\n def wait(token,timeout=90):\n  data=bytearray();end=time.monotonic()+timeout\n  while time.monotonic()<end:\n   try:chunk=q.get(timeout=1)\n   except queue.Empty:continue\n   if chunk is None:break\n   data.extend(chunk)\n   if token in data:return bytes(data)\n  raise RuntimeError('Missing shell/probe marker '+str(token)+' in '+str(d))\n def command(text):p.stdin.write(text.encode()+b'\\n');p.stdin.flush();return wait(b'# ')\n try:\n  wait(b'# ')\n  command('/bin/mount -t proc proc /proc');command('/bin/mount -t sysfs sysfs /sys')\n  payload=base64.encodebytes(Path('/tmp/k3-656-codec/TermCodecProbe.class').read_bytes()).decode()\n  command(\"/bin/cat > /tmp/TermCodecProbe.b64 <<'K3END'\\n\"+payload+'K3END')\n  command('/bin/busybox base64 -d /tmp/TermCodecProbe.b64 > /tmp/TermCodecProbe.class')\n  option='-Xint' if mode=='xint' else '-XX:TieredStopAtLevel=1'\n  text='/opt/java/bin/java -XX:-UsePerfData -XX:ActiveProcessorCount=1 -Xmx128m '+option+' -cp /tmp:/app/kanger.jar TermCodecProbe 20000'\n  p.stdin.write(text.encode()+b'\\n');p.stdin.flush();result=wait(b'K3_CODEC_',600).decode(errors='replace')\n finally:\n  server.arm_cut();p.kill();p.wait(timeout=20);t.join(timeout=10);stats=server.stop()\n print('CODEC_GUEST',mode,result.split('K3_CODEC_')[-1].splitlines()[0],flush=True)\n return mode,dict(output=result,stats=stats,exit_code=p.returncode)\nwith ThreadPoolExecutor(max_workers=2) as pool:results=dict(pool.map(one,['c1','xint']))\nfiles=[Path(__file__),Path('/tmp/TermCodecProbe.java'),Path('/tmp/k3-656-codec/TermCodecProbe.class')]+list(run.rglob('*.log'))+list(run.rglob('*.jsonl'))+list(run.rglob('command.json'))\n(run/'report.json').write_text(json.dumps(dict(results=results,artifacts_sha256={str(p):hashlib.sha256(p.read_bytes()).hexdigest() for p in files}),indent=2)+'\\n');print('Report:',run/'report.json')\n",
+    "/tmp/k3-656-materialize-guest.py": "from pathlib import Path\nimport base64,hashlib,importlib.util,json,os,queue,subprocess,sys,tempfile,threading,time\nfrom concurrent.futures import ThreadPoolExecutor\nROOT=Path('/tmp/k3-stage607');sys.dont_write_bytecode=True\ns=importlib.util.spec_from_file_location('block',ROOT/'scripts/qualify-context-block-device.py');b=importlib.util.module_from_spec(s);s.loader.exec_module(b)\nseed=ROOT/'target/context-native-block/run-_rh3p1p6/topology/seed/stable.ext4'\nbase=json.loads((ROOT/'target/context-native-block/run-_rh3p1p6/topology/witness/write-resume-native-topology-command.json').read_text())\nout=ROOT/'target/context-term-materialize-guest';out.mkdir(exist_ok=True);run=Path(tempfile.mkdtemp(prefix='run-',dir=out))\ndef one(mode):\n d=run/mode;d.mkdir();img=d/'stable.ext4';subprocess.run(['cp','--sparse=always',str(seed),str(img)],check=True)\n sock=d/'b.sock';server=b.nbd.VolatileNbd(img,sock,d/'block.jsonl')\n cmd=list(base);i=cmd.index('-append')+1;cmd[i]=cmd[i].replace('init=/sbin/init','init=/bin/sh')\n i=cmd.index('-blockdev')+1;cmd[i]='driver=nbd,node-name=os,server.type=unix,server.path='+str(sock)\n (d/'command.json').write_text(json.dumps(cmd,indent=2)+'\\n')\n tools=ROOT/'target/persistence-vm/tools';env=os.environ.copy();env['LD_LIBRARY_PATH']=str(tools/'usr/lib/x86_64-linux-gnu');env['QEMU_MODULE_DIR']=str(tools/'usr/lib/x86_64-linux-gnu/qemu')\n p=subprocess.Popen(cmd,env=env,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,bufsize=0)\n q=queue.Queue()\n def consume():\n  with (d/'serial.log').open('wb',buffering=0) as log:\n   while True:\n    chunk=p.stdout.read(4096)\n    if not chunk:q.put(None);return\n    log.write(chunk);q.put(chunk)\n t=threading.Thread(target=consume,daemon=True);t.start()\n def wait(token,timeout=90):\n  data=bytearray();end=time.monotonic()+timeout\n  while time.monotonic()<end:\n   try:chunk=q.get(timeout=1)\n   except queue.Empty:continue\n   if chunk is None:break\n   data.extend(chunk)\n   if token in data:return bytes(data)\n  raise RuntimeError('Missing shell/probe marker '+str(token)+' in '+str(d))\n def command(text):p.stdin.write(text.encode()+b'\\n');p.stdin.flush();return wait(b'# ')\n try:\n  wait(b'# ')\n  command('/bin/mount -t proc proc /proc');command('/bin/mount -t sysfs sysfs /sys')\n  payload=base64.encodebytes(Path('/tmp/k3-656-materialize/TermMaterializeProbe.class').read_bytes()).decode()\n  command(\"/bin/cat > /tmp/TermMaterializeProbe.b64 <<'K3END'\\n\"+payload+'K3END')\n  command('/bin/busybox base64 -d /tmp/TermMaterializeProbe.b64 > /tmp/TermMaterializeProbe.class')\n  option='-Xint' if mode=='xint' else '-XX:TieredStopAtLevel=1'\n  text='/opt/java/bin/java -XX:-UsePerfData -XX:ActiveProcessorCount=1 -Xmx128m '+option+' -cp /tmp:/app/kanger.jar TermMaterializeProbe 20000'\n  p.stdin.write(text.encode()+b'\\n');p.stdin.flush();result=wait(b'K3_CODEC_',600).decode(errors='replace')\n finally:\n  server.arm_cut();p.kill();p.wait(timeout=20);t.join(timeout=10);stats=server.stop()\n print('CODEC_GUEST',mode,result.split('K3_CODEC_')[-1].splitlines()[0],flush=True)\n return mode,dict(output=result,stats=stats,exit_code=p.returncode)\nwith ThreadPoolExecutor(max_workers=2) as pool:results=dict(pool.map(one,['c1','xint']))\nfiles=[Path(__file__),Path('/tmp/TermMaterializeProbe.java'),Path('/tmp/k3-656-materialize/TermMaterializeProbe.class')]+list(run.rglob('*.log'))+list(run.rglob('*.jsonl'))+list(run.rglob('command.json'))\n(run/'report.json').write_text(json.dumps(dict(results=results,artifacts_sha256={str(p):hashlib.sha256(p.read_bytes()).hexdigest() for p in files}),indent=2)+'\\n');print('Report:',run/'report.json')\n",
+    "/tmp/k3-656-failed-image-probe.py": "from concurrent.futures import ThreadPoolExecutor\nimport hashlib,importlib.util,json,re,subprocess,sys,tempfile\nfrom pathlib import Path\nROOT=Path('/tmp/k3-stage607');sys.dont_write_bytecode=True\ns=importlib.util.spec_from_file_location('block',ROOT/'scripts/qualify-context-block-device.py');b=importlib.util.module_from_spec(s);s.loader.exec_module(b)\nm=json.loads((ROOT/'target/context-native-block/run-_rh3p1p6/experimental-inputs/manifest.json').read_text())\nseed=ROOT/'target/context-native-block/run-_rh3p1p6/topology/f2-b/stable.ext4'\nseed_sha=hashlib.sha256(seed.read_bytes()).hexdigest()\noutput=ROOT/'target/context-native-failed-image-probe';output.mkdir(exist_ok=True)\nrun=Path(tempfile.mkdtemp(prefix='run-',dir=output))\ndef one(n):\n d=run/str(n);d.mkdir();image=d/'stable.ext4';subprocess.run(['cp','--sparse=always',str(seed),str(image)],check=True)\n result={}\n try:\n  result['write']=b.boot(d,image,'write-resume-native-topology',m,previous_marker='KANGER_BLOCK_PREVIOUS_ACK operation=topology previous=1',expected_marker='KANGER_BLOCK_NEXT_ACK operation=topology revision=2',timeout_seconds=600)\n except RuntimeError as e:result['write_failure']=str(e)\n result['cold']=b.boot(d,image,'read-native-topology',m,expected_marker='KANGER_BLOCK_NATIVE_RECOVERED operation=topology previous=1 selected=',expected_prefix=True)\n text=(d/'write-resume-native-topology-serial.log').read_text()\n result['term_error']='Invalid or missing TERM field deleted' in text\n result['previous_marker_seen']='KANGER_BLOCK_PREVIOUS_ACK' in text\n result['no_fault_configured']=True\n (d/'result.json').write_text(json.dumps(result,indent=2)+'\\n')\n print('REOPEN',n,'term_error='+str(result['term_error']),flush=True)\n return str(n),result\nwith ThreadPoolExecutor(max_workers=4) as pool:results=dict(pool.map(one,range(1)))\nassert hashlib.sha256(seed.read_bytes()).hexdigest()==seed_sha\nfiles=[Path(__file__),ROOT/'scripts/qualify-context-block-device.py',ROOT/'target/context-native-block/run-_rh3p1p6/experimental-inputs/manifest.json']+list(run.rglob('*.log'))+list(run.rglob('*.jsonl'))+list(run.rglob('*-command.json'))+list(run.rglob('result.json'))\nreport=dict(seed=str(seed),seed_sha256=seed_sha,results=results,prepared_inputs=m,artifacts_sha256={str(p):hashlib.sha256(p.read_bytes()).hexdigest() for p in files})\n(run/'report.json').write_text(json.dumps(report,indent=2)+'\\n');print('Report:',run/'report.json')\n",
+    "/tmp/NativeReopenHostProbe.java": "package org.kanger.storage.dumb2;\nimport org.kanger.*;\nimport java.nio.file.*;\npublic class NativeReopenHostProbe {\n public static void main(String[] args)throws Exception{\n  Path root=Paths.get(args[0]).toAbsolutePath();System.setProperty(\"user.home\",root.resolve(\"home\").toString());\n  User user=new User();user.setDatabaseDir(root+java.io.File.separator);DB db=new DB();db.init(user);\n  Mind base=new Mind(user);user.setCurrentMind(base);Mind m=(Mind)base.useStorage(\"Source\");user.setCurrentMind(m);\n  if(db.getRevision()!=1)throw new AssertionError(\"Input must be Source R1\");\n  db.connectContext(\"Rules\");if(db.saveConnections(m)!=2)throw new AssertionError(\"Expected publication R2\");\n  user.setCurrentMind(m.closeStorage());System.out.println(\"HOST_REOPEN_PASS\");\n }\n}\n"
+  },
+  "artifacts_sha256": {
+    "target/context-native-block/run-_rh3p1p6/experimental-inputs/manifest.json": "2b64a91aff849ca632e1e88e460d3de5ae21204c61dd8af63d2e4122349ab39e",
+    "target/context-native-block/run-_rh3p1p6/experimental-inputs/prepare.py": "b37f550bc5cb954b3827bfe9755af9d97c19c4fe1619bf99f4b24bbf3833533d",
+    "target/context-native-block/run-_rh3p1p6/experimental-inputs/template.ext4": "ab6e19637a19514f8d21b3b8e3361e7424968bdde6e68d55853cbec53842f6ed",
+    "target/context-native-block/run-_rh3p1p6/topology/seed/stable.ext4": "1c88e4e29c9f70d953c7c1727bf43730c2f6d9e12736ec2f36b48ab1f9ff8f95",
+    "target/context-native-block/run-_rh3p1p6/topology/f2-b/write-resume-native-topology-serial.log": "d666ea2943dadfb0c44e319c4f9f720996ca0464d054de54ff146a0966b2e84e",
+    "target/context-native-block/run-_rh3p1p6/topology/f2-b/write-resume-native-topology-block.jsonl": "e55baa33c765c629805c940a43e689d6ca43052f46016a90cd9e808dd87dfe14",
+    "target/context-native-block/run-_rh3p1p6/topology/f2-b/write-resume-native-topology-command.json": "7436759e6d658d3626764c66d2d6652915bb352bda222e76a7d1f913f2eafa47",
+    "target/context-native-reopen-probe/run-dq5bwtwy/report.json": "47625e798f486da96103c154e8a4dda9621445048219fe892665c2d01d996bc7",
+    "target/context-native-reopen-xint/run-vo7wnb_k/report.json": "5d81b34e053e12bce332bf98be4eaa96376b7c2439495c24a117960d02b79487",
+    "target/context-codec-guest/run-vi1y5jop/report.json": "d66e9989d29f4ce09342cca3b1245add33b1ef285ddfc317d394511463a16c54",
+    "target/context-term-materialize-guest/run-v9e5uopl/report.json": "49af5abdeea32532b0a20348c59bafd37808d074ba9b06e6709bd55e8663605a",
+    "/tmp/TermCodecProbe.java": "eacce705fe561fd8165b3ce82bd698644c9b4db444f7fa46517a376d8c275e5c",
+    "/tmp/TermMaterializeProbe.java": "7c704ac0a2bc1744e56ffab51ce451bdad4b09514f4c649271df271bfab211fc",
+    "/tmp/k3-656-reopen-probe.py": "7577129570a4078bc441c048064512182f31deb7d401d267cf10aaebbc547ade",
+    "/tmp/k3-656-reopen-xint.py": "693bae7d2af0ec3354f61110feadc59b797c92c30eadf976319cce7f8ac61e3d",
+    "/tmp/k3-656-block-interpreter.py": "e7b3f27365d747b8201992ad0a6c45a791ecb9caffccd0da95d537cf05dfb4da",
+    "/tmp/k3-656-codec-guest.py": "0655471798d5771a11c163b3d4cf6c4d1e2d2c7aa449c719b52fd7cf873bf46f",
+    "/tmp/k3-656-materialize-guest.py": "80d6d439de714fe2829d9f5087c0e5aec0ab7d01108e23456f9f1b8a473ccf7a",
+    "target/context-native-failed-image-probe/run-ka_8273h/report.json": "c7a4968f1ebe905d719bf06d89b06af965fee863b53427fad9d22fdc3cd1ef44",
+    "/tmp/k3-656-failed-image-probe.py": "4ef44e7f20f907a1f561df0834c339f5853c504b7505564d7a2274cc40522649",
+    "/tmp/k3-656-failed-jar.jar": "ca5cce279f6e7a9e36760ae4c3545902b205b677585fa38cacde348d88225f23",
+    "scripts/qualify-context-native-block-device.py": "75076d42ea78a584b404b38a6a00e14aea6b4e9f959cf902d754a5d6775567c7",
+    "scripts/qualify-context-block-device.py": "b299653db0d1644f0dc6b809a99482279e97391f9d9febbc35dcd62b373bc6a9",
+    "target/context-native-host-probe/run-ec2bk1wf/report.json": "44eb215f18b3e13e0de004f803566494ea3531f17daca7d2cc1cf25e12bebddb",
+    "/tmp/NativeReopenHostProbe.java": "bd0543055ddb84358c0f7638edba60afbb01f0141db5d10cff6c13be0400e6ab"
+  },
+  "failed_image_jar_check": {
+    "method": "Read-only debugfs dump /app/kanger.jar; original image not modified",
+    "sha256": "ca5cce279f6e7a9e36760ae4c3545902b205b677585fa38cacde348d88225f23",
+    "matches_packaged_jar": true
+  },
+  "failed_image_reopen": {
+    "no_fault": true,
+    "published_next_and_cold_read_passed": true,
+    "term_error_reproduced": false
+  },
+  "host_seed_files_sha256": {
+    "Source.context": "252efe2352d4913ae3c8693804b5d4a411c680fddc6a2623924e5a3c97165f8d",
+    "Rules.revision": "4d93c655f2020b382b08413992fbbedf34caaa8b9d8b2a7217141667b069cd9c",
+    "Rules.context": "01821d71ef6fa9795e7e8073497abc5c90ff680ffdb581aaf2dc75250dc02d39",
+    "Source.revision": "4d93c655f2020b382b08413992fbbedf34caaa8b9d8b2a7217141667b069cd9c",
+    "Rules.dumb2/.lock": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Source.dumb2/.lock": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Rules.dumb2/revision-1/domains.base": "e75133b864277181ca0ff16225d743e7488578094ff5e6530678905804a30d91",
+    "Rules.dumb2/revision-1/predicates.base": "3d36dc84598c840ba70d5a7c99aab514a02af4ec17e4371f91e403a64f7d22a9",
+    "Rules.dumb2/revision-1/rules.base": "f7a854c86e506c504850c02ce898924e53192e9a4565444c97011fe74a3bc71c",
+    "Rules.dumb2/revision-1/revision.manifest": "91957291e7cdaeca111090485e465db44ae65a7a3c391dcee9f9c68ef1666906",
+    "Rules.dumb2/revision-1/dictionary.base": "d58d79f887dccec4b97e9144460390f4d1412277158a1ce33f5c24ec4a4db1a2",
+    "Source.dumb2/revision-1/domains.base": "e75133b864277181ca0ff16225d743e7488578094ff5e6530678905804a30d91",
+    "Source.dumb2/revision-1/predicates.base": "6d698cb7c91d81c4ac9cf2dd09ebe212cd3a59cde03d2df787f239a8ef18bc5d",
+    "Source.dumb2/revision-1/rules.base": "f7a854c86e506c504850c02ce898924e53192e9a4565444c97011fe74a3bc71c",
+    "Source.dumb2/revision-1/revision.manifest": "b8a0798e7a95493eafa297f253014314b0021973bef3ca72c185c7dd584326c9",
+    "Source.dumb2/revision-1/dictionary.base": "d44fde29c878b6ecea856b355f9aa05400a4c994c8c57da64c5a320b57c3d6b4"
+  },
+  "host_seed_note": "Read-only debugfs rdump of confirmed seed; uid ownership could not be copied in host namespace, byte images subsequently validated by native mutable open/manifest seals. Source input not mutated."
+}

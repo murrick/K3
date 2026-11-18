@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Build an owned ext4 guest image from local tool debs; no mount or system installation."""
+import argparse
 import hashlib
 import json
 import os
@@ -16,6 +17,10 @@ def call(args,**kw):return subprocess.run(list(map(str,args)),check=True,**kw)
 
 
 def main():
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--java-profile',choices=['baseline','c1'],default='baseline',
+                        help='C1 is an experimental diagnostic profile, not accepted qualification evidence')
+    args=parser.parse_args()
     tools=BASE/'tools';tools.mkdir(parents=True,exist_ok=True)
     lock=json.loads((Path(__file__).with_name('tool-packages.json')).read_text())
     debs=[BASE/'debs'/package['filename'] for package in lock['packages']]
@@ -55,10 +60,10 @@ for option in $(/bin/cat /proc/cmdline); do
  case "$option" in kanger.phase=*) phase=${option#kanger.phase=};; esac
 done
 export KANGER_HOME=KANGER
-/opt/java/bin/java -XX:-UsePerfData -XX:ActiveProcessorCount=1 -Xmx128m -Djava.security.egd=file:/dev/urandom -cp /app/classes:/app/kanger.jar org.kanger.storage.dumb2.ContextBlockDeviceRunner "$phase"
+/opt/java/bin/java -XX:-UsePerfData __QUALIFICATION_JAVA_OPTIONS__-XX:ActiveProcessorCount=1 -Xmx128m -Djava.security.egd=file:/dev/urandom -cp /app/classes:/app/kanger.jar org.kanger.storage.dumb2.ContextBlockDeviceRunner "$phase"
 echo KANGER_GUEST_FAILED
 while true; do /bin/sleep 1000; done
-''');init.chmod(0o755)
+'''.replace('__QUALIFICATION_JAVA_OPTIONS__','-XX:TieredStopAtLevel=1 ' if args.java_profile=='c1' else ''));init.chmod(0o755)
     image=BASE/'template.ext4'
     with image.open('wb') as file:file.truncate(512*1024*1024)
     call(['mkfs.ext4','-q','-F','-m','0','-d',root,image])
@@ -70,7 +75,7 @@ while true; do /bin/sleep 1000; done
     files=[kernel,image,jar,source,qemu,Path(__file__),Path(__file__).with_name('tool-packages.json'),*debs]
 
     hashes={str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest() for p in files}
-    manifest=dict(qemu_version=version,kernel= str(kernel.relative_to(ROOT)),template=str(image.relative_to(ROOT)),
+    manifest=dict(java_profile=args.java_profile,qemu_version=version,kernel= str(kernel.relative_to(ROOT)),template=str(image.relative_to(ROOT)),
                   packages=[subprocess.check_output(['dpkg-deb','-f',str(p),'Package','Version','Architecture'],text=True).strip() for p in debs],sha256=hashes)
     (BASE/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
     print('VM_IMAGE_READY',image,'qemu='+version)

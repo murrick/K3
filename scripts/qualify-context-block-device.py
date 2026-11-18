@@ -61,8 +61,8 @@ def controls(run):
                 flush_covers_completed_prefix=True,later_writes_are_lost=True,out_of_range_refused=True)
 
 
-def boot(run,image,phase,manifest,honour_barriers=True,expect_missing=False,expected_marker=None,fault=None,expected_prefix=False):
-    base=ROOT/'target/persistence-vm';tools=base/'tools';sock=run/(phase+'.sock')
+def boot(run,image,phase,manifest,honour_barriers=True,expect_missing=False,expected_marker=None,fault=None,expected_prefix=False,previous_marker='KANGER_BLOCK_PREVIOUS_ACK revision=1 value=42',release_previous=True,timeout_seconds=240):
+    base=ROOT/'target/persistence-vm';tools=base/'tools';sock=run/'b.sock'
     server=nbd.VolatileNbd(image,sock,run/(phase+'-block.jsonl'),honour_barriers=honour_barriers)
     env=os.environ.copy();env['LD_LIBRARY_PATH']=str(tools/'usr/lib/x86_64-linux-gnu');env['QEMU_MODULE_DIR']=str(tools/'usr/lib/x86_64-linux-gnu/qemu')
     command=[str(tools/'usr/bin/qemu-system-x86_64'),'-L',str(tools/'usr/share/qemu'),
@@ -83,16 +83,17 @@ def boot(run,image,phase,manifest,honour_barriers=True,expect_missing=False,expe
     expected='KANGER_BLOCK_ACK revision=1 value=42' if phase=='write' else 'KANGER_BLOCK_RECOVERED revision=1 value=42'
     if expect_missing:expected='KANGER_BLOCK_MISSING revision=1 code=STORAGE_NOT_FOUND'
     if expected_marker is not None:expected=expected_marker
-    observed=False;previous_ack=None;deadline=time.monotonic()+240
+    observed=False;previous_ack=None;deadline=time.monotonic()+timeout_seconds
     try:
         while time.monotonic()<deadline:
             if fault is not None and server.fault_seen.is_set():observed=True;break
             try:line=lines.get(timeout=1)
             except queue.Empty:continue
             if line is None:break
-            if line=='KANGER_BLOCK_PREVIOUS_ACK revision=1 value=42':
+            if line==previous_marker:
                 if previous_ack is not None:raise RuntimeError('Duplicate previous ACK')
                 previous_ack=dict(server.stats)
+                if not release_previous:observed=True;break
                 if fault is not None:server.arm_fault(**fault)
                 process.stdin.write('\n');process.stdin.flush()
             if line==expected or (expected_prefix and line.startswith(expected)):observed=True;break
@@ -109,7 +110,10 @@ def boot(run,image,phase,manifest,honour_barriers=True,expect_missing=False,expe
     if phase.startswith('write') and stats['writes']<=stats['fua']:raise RuntimeError('VM did not exercise cacheable writes')
     recovery_seen='EXT4-fs (vda): recovery complete' in log_path.read_text()
     if phase.startswith('read') and not expect_missing and not recovery_seen:raise RuntimeError('Cold journal recovery was not observed')
-    return dict(expected_marker=expected,observed=True,exit_code=process.returncode,block_stats=stats,
+    return dict(expected_marker=expected if fault is None else None,normal_completion_marker=expected,
+                observed_event=('application_marker' if release_previous else 'previous_publication_ack') if fault is None else 'block_cut',
+                next_application_ack_observed='KANGER_BLOCK_NEXT_ACK' in log_path.read_text(),
+                observed=True,exit_code=process.returncode,block_stats=stats,
                 honour_barriers=honour_barriers,journal_recovery_seen=recovery_seen,
                 previous_ack_stats=previous_ack,cut=fault,cut_reached=server.fault_seen.is_set(),
                 post_previous_ack_stats=None if previous_ack is None else {k:stats[k]-previous_ack[k] for k in stats})

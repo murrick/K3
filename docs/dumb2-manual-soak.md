@@ -518,3 +518,16 @@ and validate CURRENT R1 or complete R2. See the
 [protocol, results and limits](architecture/3.8.0-context-interrupted-block-device.md).
 Stage 655 passed 21 cut cases and 44 VM boots; it does not close topology,
 reindex, initial-publication, distinct-device pin or physical-device acceptance.
+
+
+## Stage 656 — native topology/reindex block cuts
+
+`python3 scripts/persistence_vm/prepare.py` selects the baseline JVM profile.
+Run `python3 scripts/qualify-context-native-block-device.py --workers 4`, then
+`python3 scripts/audit-context-native-block-device.py PATH/TO/report.json`.
+See the [native protocol and limits](architecture/3.8.0-context-native-block-device.md).
+Stage 656 passed 110 cut cases and 234 VM boots with exact old history checks
+and actual Rule-v1 migration. This is one-device ordinal coverage; marker-visible
+and distinct-device pin cases remain separate. `--java-profile c1` is an explicit
+experimental diagnostic option; its unreproduced TERM observation is OPEN and
+must not be folded into baseline acceptance or treated as a proved runtime bug.
