@@ -22,16 +22,37 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--workers',type=int,choices=range(1,5),default=2)
     parser.add_argument('--saved-topology',action='store_true',help='Qualify repin and disconnect from an acknowledged nonempty vector')
+    parser.add_argument('--resume-run', type=Path, help='Resume an interrupted saved-topology acquisition')
     args=parser.parse_args()
+    if args.resume_run and not args.saved_topology:
+        parser.error('--resume-run requires --saved-topology')
     manifest=json.loads((ROOT/'target/persistence-vm/manifest.json').read_text())
     for name,digest in manifest['sha256'].items():
         if hashlib.sha256((ROOT/name).read_bytes()).hexdigest()!=digest:raise ValueError('Prepared input changed: '+name)
     output=ROOT/'target/context-native-block';output.mkdir(parents=True,exist_ok=True)
-    run=Path(tempfile.mkdtemp(prefix='run-',dir=str(output)))
-    controls=block.controls(run);cut_controls=interrupt.fault_controls(run)
+    if args.resume_run:
+        run=args.resume_run.resolve(strict=True)
+        if run.parent!=output or (run/'report.json').exists():
+            parser.error('Expected an unfinished directory under target/context-native-block')
+        if not all((run/op/'seed'/'result.json').is_file() for op in ('repin','disconnect')):
+            parser.error('Both acknowledged seed receipts are required')
+        if any(run.glob('*/*/*.sock')):
+            parser.error('Remove sockets only after verifying the previous coordinator has stopped')
+        control_run=Path(tempfile.mkdtemp(prefix='resume-controls-',dir=str(run)))
+    else:
+        run=Path(tempfile.mkdtemp(prefix='run-',dir=str(output)))
+        control_run=run
+    controls=block.controls(control_run);cut_controls=interrupt.fault_controls(control_run)
     append_regression={}
     for name,fault in [('ack',None),('cut',dict(command=1,ordinal=1,edge='after'))]:
-        case=run/('append-'+name);case.mkdir();image=case/'stable.ext4'
+        case=run/('append-'+name)
+        receipt=case/'result.json'
+        if args.resume_run and receipt.is_file():
+            append_regression[name]=json.loads(receipt.read_text())
+            continue
+        if args.resume_run and case.is_dir():
+            case.rename(control_run/(case.name+'-interrupted'))
+        case.mkdir();image=case/'stable.ext4'
         subprocess.run(['cp','--sparse=always',str(ROOT/manifest['template']),str(image)],check=True)
         write=block.boot(case,image,'write-interrupt',manifest,
             expected_marker='KANGER_BLOCK_NEXT_ACK revision=2 value=84',fault=fault)
@@ -40,14 +61,22 @@ def main():
         serial=(case/'read-interrupt-serial.log').read_text();selected=int(re.search(re.escape(prefix)+r'(\d+)',serial)[1])
         if selected not in (1,2) or (fault is None and selected!=2):raise ValueError('Append helper regression failed')
         append_regression[name]=dict(write=write,cold_read=read,selected_revision=selected)
+        receipt.write_text(json.dumps(append_regression[name],indent=2)+'\n')
     print('APPEND_HELPER_REGRESSION_PASS',flush=True)
     operations={'topology':dict(previous=1,next=2),'reindex':dict(previous=3,next=4)}
     if args.saved_topology:
         operations={name:dict(previous=2,next=3) for name in ('repin','disconnect')}
-    for operation in operations:(run/operation).mkdir()
+    for operation in operations:(run/operation).mkdir(exist_ok=bool(args.resume_run))
     def one(operation,name,fault,initial_image=None,release_previous=True,checked=False):
         revisions=operations[operation];previous=revisions['previous'];next_revision=revisions['next']
-        case=run/operation/name;case.mkdir();image=case/'stable.ext4'
+        case=run/operation/name
+        receipt=case/'result.json'
+        if args.resume_run and receipt.is_file():
+            return json.loads(receipt.read_text())
+        if args.resume_run and case.is_dir():
+            archive=Path(tempfile.mkdtemp(prefix='interrupted-'+run.name+'-',dir=str(output)))
+            case.rename(archive/(operation+'-'+name))
+        case.mkdir();image=case/'stable.ext4'
         subprocess.run(['cp','--sparse=always',str(ROOT/manifest['template'] if initial_image is None else initial_image),str(image)],check=True)
         write_phase=('write-native-' if initial_image is None else ('write-resume-checked-native-' if checked else 'write-resume-native-'))+operation;read_phase='read-native-'+operation
         write=block.boot(case,image,write_phase,manifest,
