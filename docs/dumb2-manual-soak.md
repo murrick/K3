@@ -495,3 +495,13 @@ model. A deliberately lying FLUSH backend loses the ACK and is detected.
 This is qualification infrastructure, not a new Console mode or weaker runtime
 option. Production remains stage 652; full operation and device acceptance remain
 open. The commands use owned images and never reboot or mount a host device.
+
+
+## Stage 654 — cold acknowledged operations
+
+Run `python3 scripts/persistence_vm/prepare.py` followed by
+`python3 scripts/qualify-context-block-device.py`. The latter now runs ten VM
+boots: the original append/negative controls plus create R0, two appends with
+retained R1, and fork. All cold reads verify exact snapshots before any mutable
+reopen. See [scope and evidence](architecture/3.8.0-context-block-device-harness.md).
+Intermediate publication cuts and distinct-device pins remain separate work.

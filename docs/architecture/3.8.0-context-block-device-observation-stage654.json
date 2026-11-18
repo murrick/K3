@@ -1,0 +1,251 @@
+{
+  "scope": "Acknowledged create, append, retained R1 after R2, and fork cold recovery under a flush-honouring block model",
+  "head": "bf456a79a4e75ccf042d6c4d9c2c1625254fcd8c",
+  "source_dirty": true,
+  "qemu_version": "QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)",
+  "self_controls": {
+    "cut_freezes_new_commands": true,
+    "unflushed_ack_is_lost": true,
+    "fua_does_not_flush_unrelated_writes": true,
+    "flush_covers_completed_prefix": true,
+    "later_writes_are_lost": true,
+    "out_of_range_refused": true
+  },
+  "write": {
+    "expected_marker": "KANGER_BLOCK_ACK revision=1 value=42",
+    "observed": true,
+    "exit_code": -9,
+    "block_stats": {
+      "reads": 637,
+      "writes": 33,
+      "flushes": 21,
+      "fua": 0,
+      "dropped_sectors": 0
+    },
+    "honour_barriers": true,
+    "journal_recovery_seen": false
+  },
+  "cold_read": {
+    "expected_marker": "KANGER_BLOCK_RECOVERED revision=1 value=42",
+    "observed": true,
+    "exit_code": -9,
+    "block_stats": {
+      "reads": 726,
+      "writes": 15,
+      "flushes": 6,
+      "fua": 0,
+      "dropped_sectors": 0
+    },
+    "honour_barriers": true,
+    "journal_recovery_seen": true
+  },
+  "lying_device_control": {
+    "write": {
+      "expected_marker": "KANGER_BLOCK_ACK revision=1 value=42",
+      "observed": true,
+      "exit_code": -9,
+      "block_stats": {
+        "reads": 635,
+        "writes": 33,
+        "flushes": 21,
+        "fua": 0,
+        "dropped_sectors": 800
+      },
+      "honour_barriers": false,
+      "journal_recovery_seen": false
+    },
+    "cold_read": {
+      "expected_marker": "KANGER_BLOCK_MISSING revision=1 code=STORAGE_NOT_FOUND",
+      "observed": true,
+      "exit_code": -9,
+      "block_stats": {
+        "reads": 510,
+        "writes": 1,
+        "flushes": 1,
+        "fua": 0,
+        "dropped_sectors": 0
+      },
+      "honour_barriers": true,
+      "journal_recovery_seen": false
+    },
+    "acknowledged_value_lost": true
+  },
+  "acknowledged_operation_matrix": {
+    "create": {
+      "write": {
+        "expected_marker": "KANGER_BLOCK_ACK operation=create revision=0",
+        "observed": true,
+        "exit_code": -9,
+        "block_stats": {
+          "reads": 589,
+          "writes": 12,
+          "flushes": 9,
+          "fua": 0,
+          "dropped_sectors": 0
+        },
+        "honour_barriers": true,
+        "journal_recovery_seen": false
+      },
+      "read": {
+        "expected_marker": "KANGER_BLOCK_RECOVERED operation=create revision=0",
+        "observed": true,
+        "exit_code": -9,
+        "block_stats": {
+          "reads": 573,
+          "writes": 11,
+          "flushes": 4,
+          "fua": 0,
+          "dropped_sectors": 0
+        },
+        "honour_barriers": true,
+        "journal_recovery_seen": true
+      }
+    },
+    "append2": {
+      "write": {
+        "expected_marker": "KANGER_BLOCK_ACK operation=append2 revision=2",
+        "observed": true,
+        "exit_code": -9,
+        "block_stats": {
+          "reads": 638,
+          "writes": 37,
+          "flushes": 31,
+          "fua": 0,
+          "dropped_sectors": 0
+        },
+        "honour_barriers": true,
+        "journal_recovery_seen": false
+      },
+      "read": {
+        "expected_marker": "KANGER_BLOCK_RECOVERED operation=append2 revision=2",
+        "observed": true,
+        "exit_code": -9,
+        "block_stats": {
+          "reads": 748,
+          "writes": 12,
+          "flushes": 4,
+          "fua": 0,
+          "dropped_sectors": 0
+        },
+        "honour_barriers": true,
+        "journal_recovery_seen": true
+      }
+    },
+    "fork": {
+      "write": {
+        "expected_marker": "KANGER_BLOCK_ACK operation=fork revision=1",
+        "observed": true,
+        "exit_code": -9,
+        "block_stats": {
+          "reads": 638,
+          "writes": 50,
+          "flushes": 37,
+          "fua": 0,
+          "dropped_sectors": 0
+        },
+        "honour_barriers": true,
+        "journal_recovery_seen": false
+      },
+      "read": {
+        "expected_marker": "KANGER_BLOCK_RECOVERED operation=fork revision=1",
+        "observed": true,
+        "exit_code": -9,
+        "block_stats": {
+          "reads": 751,
+          "writes": 13,
+          "flushes": 4,
+          "fua": 0,
+          "dropped_sectors": 0
+        },
+        "honour_barriers": true,
+        "journal_recovery_seen": true
+      }
+    }
+  },
+  "guest_provider_unmodified": true,
+  "block_model_qualification_passed": true,
+  "full_operation_matrix": false,
+  "physical_device_power_loss_acceptance": false,
+  "artifacts_sha256": {
+    "/tmp/k3-stage607/target/persistence-vm/manifest.json": "961181fc74f1a7438b69188c26a28316c5fcf1edb777a7473fc5384d550e0667",
+    "/tmp/k3-stage607/scripts/qualify-context-block-device.py": "8e3d5521c0c91a87f37952b68426d87042e3ac0e8af9344565433f14788d7343",
+    "/tmp/k3-stage607/scripts/persistence_vm/volatile_nbd.py": "1e4d643ac3b6d9d39c644524dbb7a0bc29ae9a3a6847937194520767d41b0fae",
+    "/tmp/k3-stage607/scripts/persistence_vm/prepare.py": "8f1158eaee9485af9a9a64beef2f938eeb0bb9e9f2b0f767cc90f519e0cc96a9",
+    "/tmp/k3-stage607/target/context-block-device/run-64srdvk5/append2/read-append2-serial.log": "afee195088bfe9b8b1bc4affa77e660546309c3b4acf0456741369fd5f178d4d",
+    "/tmp/k3-stage607/target/context-block-device/run-64srdvk5/append2/write-append2-serial.log": "9d858ff02389eaa8cc6f0ca79370d5bd4e83ccf48b31604a64ed17b41b3c4083",
+    "/tmp/k3-stage607/target/context-block-device/run-64srdvk5/create/read-create-serial.log": "f132c56f032f9f6489d620b66f67ba7cb0ab133bb5d50dfb368ecced770b848a",
+    "/tmp/k3-stage607/target/context-block-device/run-64srdvk5/create/write-create-serial.log": "34a454f277f63af363c542166791bdc176e5a703a6d12bd7dc52a70c2faf21a9",
+    "/tmp/k3-stage607/target/context-block-device/run-64srdvk5/fork/read-fork-serial.log": "19675c528be8428cd39cf05238ec0e1da50101639dd97d8686f20bea65b76264",
+    "/tmp/k3-stage607/target/context-block-device/run-64srdvk5/fork/write-fork-serial.log": "b74c435d3295bcdb142442eb85b6725fb22eb06cb7c3f75906b8e955c4969e8f",
+    "/tmp/k3-stage607/target/context-block-device/run-64srdvk5/negative/read-serial.log": "4fb20d81852cd147809e833403ffea6dd2781db137d8693e8b53977acda688e6",
+    "/tmp/k3-stage607/target/context-block-device/run-64srdvk5/negative/write-serial.log": "52925991932007857840f0ca62aea44a9bce4e2ae4e24b6d66dcba416b9776ea",
+    "/tmp/k3-stage607/target/context-block-device/run-64srdvk5/read-serial.log": "1966d1f63d411777e2813b1e0dad870a9d230cfe010b9e1c313cd725b3be8408",
+    "/tmp/k3-stage607/target/context-block-device/run-64srdvk5/write-serial.log": "944453ca9d28d920f333ea948d9b4dbcf008253411908d17825cfb3d7b9a5980",
+    "/tmp/k3-stage607/target/context-block-device/run-64srdvk5/append2/read-append2-block.jsonl": "eb2b16edce5d6f0133f011ae15394ee1c83834f7f6334def65ebf555710015a6",
+    "/tmp/k3-stage607/target/context-block-device/run-64srdvk5/append2/write-append2-block.jsonl": "74b89324d51ec080ce30fbfb29c4dc1486a14b6dead54d802d17fe84e079f0e7",
+    "/tmp/k3-stage607/target/context-block-device/run-64srdvk5/create/read-create-block.jsonl": "900ef0a354bf089286d06efb1d1d6f191db45ff6ac03e6ee7be7eed114e76044",
+    "/tmp/k3-stage607/target/context-block-device/run-64srdvk5/create/write-create-block.jsonl": "77ebc37578afab99c598ff72186e7ec2313b0ec05f075f91683494afef595322",
+    "/tmp/k3-stage607/target/context-block-device/run-64srdvk5/cut-freeze.jsonl": "cc8d8ccd265998a5e85867b234354f3550bb4be7682fc6978fef5ea5f2978584",
+    "/tmp/k3-stage607/target/context-block-device/run-64srdvk5/flush.jsonl": "14d97e30a6781da3d8413ce944839dbca12e907df8ed55c5c87a1f72e6334413",
+    "/tmp/k3-stage607/target/context-block-device/run-64srdvk5/fork/read-fork-block.jsonl": "11f0a61518ed629931649f744556f071b12e1f365f93196e1067a6338e40de17",
+    "/tmp/k3-stage607/target/context-block-device/run-64srdvk5/fork/write-fork-block.jsonl": "2c67a5bdb424ffa8de9f0660bd03f7807de7bab047893998a25b7ffe9e9c4758",
+    "/tmp/k3-stage607/target/context-block-device/run-64srdvk5/fua.jsonl": "8446d7f50b0dcbea1ed344af3d9d82a2d3408bfbc7f4dc3ea7969a7e0da0081e",
+    "/tmp/k3-stage607/target/context-block-device/run-64srdvk5/negative/read-block.jsonl": "7912d15daff9753cdbcfb3ae6d19de56530f318b0792d527013e8e83d2fb593d",
+    "/tmp/k3-stage607/target/context-block-device/run-64srdvk5/negative/write-block.jsonl": "3b18d1fb4c99fba8072fdba6077f6ba5d47f32f92824c0ab00e2e3c7fc574719",
+    "/tmp/k3-stage607/target/context-block-device/run-64srdvk5/read-block.jsonl": "807aa6ac63cfa7a92f7d984b604d6af1805c98ffc34051b0c04efb55602f8187",
+    "/tmp/k3-stage607/target/context-block-device/run-64srdvk5/unflushed.jsonl": "dcb174f5a919c838d71895f5e1bb59951d9d5002da49c5ea5d3075eea85962f5",
+    "/tmp/k3-stage607/target/context-block-device/run-64srdvk5/write-block.jsonl": "b0ee646f0949ad91c4cca0eb664fb246af87f27ca6aa249439fff2e445cd0162",
+    "/tmp/k3-stage607/target/context-block-device/run-64srdvk5/append2/read-append2-command.json": "83e9be5a3bcc7860115c73b6e18e423a3565e53e50c915c6357bc516647f06df",
+    "/tmp/k3-stage607/target/context-block-device/run-64srdvk5/append2/write-append2-command.json": "2ad53f67388edf19e6aa73feb868eee7fab0db8ebdb4695edcb351aa45c51660",
+    "/tmp/k3-stage607/target/context-block-device/run-64srdvk5/create/read-create-command.json": "a07d3888b9ca6b22803f40e2b0c76150e441cb8575492fe08091d779e4e9eb56",
+    "/tmp/k3-stage607/target/context-block-device/run-64srdvk5/create/write-create-command.json": "28648da0375db452a433c0d6e9293528815317ad273056b2583344ac82a9c6ec",
+    "/tmp/k3-stage607/target/context-block-device/run-64srdvk5/fork/read-fork-command.json": "74bf4c3ba64b65be935847bea2aa6a1163cc7757356391113adb0efdaef4ce54",
+    "/tmp/k3-stage607/target/context-block-device/run-64srdvk5/fork/write-fork-command.json": "8b6804f7044a3249a9017579cd06310674fe6a664dd453af5553109280e5387c",
+    "/tmp/k3-stage607/target/context-block-device/run-64srdvk5/negative/read-command.json": "b6a4c7f1192e121b5e523138a5dae195769826f813761a147f6a6e2b8f9ea72e",
+    "/tmp/k3-stage607/target/context-block-device/run-64srdvk5/negative/write-command.json": "b8f220621b2aa9445b69107912b2b8042f0eb05cf1170381fae002c91c1fa245",
+    "/tmp/k3-stage607/target/context-block-device/run-64srdvk5/read-command.json": "d8b66f92afef80ab8e4e14b18b1ad740b7b0ee4fe6493939eb4564b328ae5dc2",
+    "/tmp/k3-stage607/target/context-block-device/run-64srdvk5/write-command.json": "4efe616e54ba604d1f82935e7bf7ad7a804e3725101fd28cdfcfe5cc5e22cf46"
+  },
+  "prepared_inputs": {
+    "qemu_version": "QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)",
+    "kernel": "target/persistence-vm/tools/boot/vmlinuz-6.8.0-149-generic",
+    "template": "target/persistence-vm/template.ext4",
+    "packages": [
+      "Package: ipxe-qemu\nVersion: 1.21.1+git-20220113.fbbdc3926-0ubuntu2\nArchitecture: all",
+      "Package: libdaxctl1\nVersion: 77-2ubuntu2\nArchitecture: amd64",
+      "Package: libfdt1\nVersion: 1.7.0-2build1\nArchitecture: amd64",
+      "Package: libndctl6\nVersion: 77-2ubuntu2\nArchitecture: amd64",
+      "Package: libpmem1\nVersion: 1.13.1-1.1ubuntu2\nArchitecture: amd64",
+      "Package: librdmacm1t64\nVersion: 50.0-2ubuntu0.2\nArchitecture: amd64",
+      "Package: libslirp0\nVersion: 4.7.0-1ubuntu3.1\nArchitecture: amd64",
+      "Package: linux-image-unsigned-6.8.0-149-generic\nVersion: 6.8.0-149.149\nArchitecture: amd64",
+      "Package: qemu-system-common\nVersion: 1:8.2.2+ds-0ubuntu1.18\nArchitecture: amd64",
+      "Package: qemu-system-data\nVersion: 1:8.2.2+ds-0ubuntu1.18\nArchitecture: all",
+      "Package: qemu-system-x86\nVersion: 1:8.2.2+ds-0ubuntu1.18\nArchitecture: amd64",
+      "Package: seabios\nVersion: 1.16.3-2\nArchitecture: all"
+    ],
+    "sha256": {
+      "target/persistence-vm/tools/boot/vmlinuz-6.8.0-149-generic": "c2b4577c780c2cbd15dda13b6c890bf655fb4d1e1434a801e6e79e88e8c9a2e1",
+      "target/persistence-vm/template.ext4": "eb08d77e22813d37c1bae82625b848009282e2da3d7604d9d000632b74df5342",
+      "kanger-console/target/kanger-console-3.3-SNAPSHOT.jar": "ca5cce279f6e7a9e36760ae4c3545902b205b677585fa38cacde348d88225f23",
+      "kanger-qualification/src/org/kanger/storage/dumb2/ContextBlockDeviceRunner.java": "6009d043468bd32f4ae719848864d892556d646ee3cbecc942635ff002b01d69",
+      "target/persistence-vm/tools/usr/bin/qemu-system-x86_64": "8a35ccba41582fc6c38b9df85fc9e35fa1d42f414d2d7d8090ee9b2f5e7c0854",
+      "scripts/persistence_vm/prepare.py": "8f1158eaee9485af9a9a64beef2f938eeb0bb9e9f2b0f767cc90f519e0cc96a9",
+      "scripts/persistence_vm/tool-packages.json": "32dbfb10f6adc4a9d4ba2e2a500c8d3b4e528870d09752bc19fee92fee2e45a1",
+      "target/persistence-vm/debs/ipxe-qemu_1.21.1+git-20220113.fbbdc3926-0ubuntu2_all.deb": "1f1612934b6ddaf4dd633760dfe5ef2a79ea2507341fd5efe394ff589a044707",
+      "target/persistence-vm/debs/libdaxctl1_77-2ubuntu2_amd64.deb": "c6629b49c79343fb11ae404aeaa3156f051168da6c6d3d9d8d516acd94705061",
+      "target/persistence-vm/debs/libfdt1_1.7.0-2build1_amd64.deb": "274d20dfab9d6b216b5de85446a93f6ce5b2cd82c847b8dfdc508577f76eb96a",
+      "target/persistence-vm/debs/libndctl6_77-2ubuntu2_amd64.deb": "4eab53588a8fa9e3192635e118c2d91bc069cde46a4a3785c77a0bb1ae001d02",
+      "target/persistence-vm/debs/libpmem1_1.13.1-1.1ubuntu2_amd64.deb": "8f1be1cc834a98f0cf5c0950153f7f939a0c2c92095e98cd7bb40c752c545c1b",
+      "target/persistence-vm/debs/librdmacm1t64_50.0-2ubuntu0.2_amd64.deb": "7b7cc2fa16564bf301751b43d05d16f0846288b080d9a25a92a691d0df33fc68",
+      "target/persistence-vm/debs/libslirp0_4.7.0-1ubuntu3.1_amd64.deb": "4efa2d1c509de4d10fe965e86a3d864bf542996caf476d9111fd882c73857164",
+      "target/persistence-vm/debs/linux-image-unsigned-6.8.0-149-generic_6.8.0-149.149_amd64.deb": "a82f22e04caa71f07f2a30e060f79d6221612f8f7abd6f4b791ca515cbec8157",
+      "target/persistence-vm/debs/qemu-system-common_1%3a8.2.2+ds-0ubuntu1.18_amd64.deb": "0a0b744f31e87d72dd0465436b8dfbb1ef9f574ecd0d5a2e9dd8c5cb7d0fef1f",
+      "target/persistence-vm/debs/qemu-system-data_1%3a8.2.2+ds-0ubuntu1.18_all.deb": "a14b88d864859bd61c8a3274971da4ecb7da6cec15be6c265d0d411f783d5f2e",
+      "target/persistence-vm/debs/qemu-system-x86_1%3a8.2.2+ds-0ubuntu1.18_amd64.deb": "14602e262627adac030329d2cecfee5f6c0938b34566ff2ea2d4c9a9eb02430d",
+      "target/persistence-vm/debs/seabios_1.16.3-2_all.deb": "cac4e59a66c834d19cae751c22ab3a0391c22f78010fd11aa2e3fe630e6bc0e0"
+    }
+  },
+  "production_baseline": "fb0171fa3ed2fdc520ca26f86089b1a88cc612dc",
+  "production_code_changed": false
+}

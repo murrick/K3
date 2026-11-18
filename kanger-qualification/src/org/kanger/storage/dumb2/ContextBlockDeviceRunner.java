@@ -8,7 +8,41 @@ import org.kanger.exception.StorageLifecycleException;
 public final class ContextBlockDeviceRunner {
     public static void main(String[] args)throws Exception{
         System.setProperty("user.home","/root");Path location=Paths.get("/store/Source");
-        if("write".equals(args[0])){
+        if(args[0].contains("-")){
+            String[] parts=args[0].split("-",2);String operation=parts[1];
+            if(!java.util.Arrays.asList("create","append2","fork").contains(operation))
+                throw new IllegalArgumentException(operation);
+            boolean write="write".equals(parts[0]);
+            long revision="create".equals(operation)?0:("append2".equals(operation)?2:1);
+            if(write){
+                ContextStore store=ContextStore.create(location);
+                if(!"create".equals(operation)){
+                    add(store,0,42L);if(store.flush()!=1)throw new AssertionError("R1");
+                    if("append2".equals(operation)){
+                        add(store,1,84L);if(store.flush()!=2)throw new AssertionError("R2");
+                    }else{
+                        try(ContextSnapshot source=ContextSnapshot.open(location,1)){
+                            ContextStore fork=ContextStore.fork(source,Paths.get("/store/Fork"));
+                            if(fork.getRevision()!=1)throw new AssertionError("Fork R1");
+                        }
+                    }
+                }
+            }else{
+                try(ContextSnapshot recovered=ContextSnapshot.open(location,revision)){
+                    if(recovered.getRevision()!=revision)throw new AssertionError("Revision");
+                    if(revision>0)check(recovered,0,42L);
+                    if(revision==2)check(recovered,1,84L);
+                }
+                if("append2".equals(operation)){
+                    try(ContextSnapshot previous=ContextSnapshot.open(location,1)){check(previous,0,42L);}
+                }
+                if("fork".equals(operation)){
+                    try(ContextSnapshot fork=ContextSnapshot.open(Paths.get("/store/Fork"),1)){check(fork,0,42L);}
+                }
+            }
+            System.out.println("KANGER_BLOCK_"+(write?"ACK":"RECOVERED")+" operation="+operation+" revision="+revision);
+            for(;;)Thread.sleep(1000);
+        }else if("write".equals(args[0])){
             ContextStore store=ContextStore.create(location);
             Step row=new Step();row.setId(0);row.setHash(19);row.setData(42L);store.getBase("index").add(row);
             if(store.flush()!=1)throw new AssertionError("Expected actual R1 acknowledgement");
@@ -28,5 +62,11 @@ public final class ContextBlockDeviceRunner {
             System.out.println("KANGER_BLOCK_RECOVERED revision=1 value=42");
             for(;;)Thread.sleep(1000);
         }
+    }
+    private static void add(ContextStore store,int id,long value)throws Exception{
+        Step row=new Step();row.setId(id);row.setHash(19+id);row.setData(value);if(id>0)row.setNext(store.getBase("index").get(id-1));store.getBase("index").add(row);
+    }
+    private static void check(ContextSnapshot snapshot,int id,long value)throws Exception{
+        if(!Long.valueOf(value).equals(snapshot.getBase("index").get(id).getData()))throw new AssertionError("Lost row "+id);
     }
 }

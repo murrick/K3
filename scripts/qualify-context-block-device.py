@@ -61,7 +61,7 @@ def controls(run):
                 flush_covers_completed_prefix=True,later_writes_are_lost=True,out_of_range_refused=True)
 
 
-def boot(run,image,phase,manifest,honour_barriers=True,expect_missing=False):
+def boot(run,image,phase,manifest,honour_barriers=True,expect_missing=False,expected_marker=None):
     base=ROOT/'target/persistence-vm';tools=base/'tools';sock=run/(phase+'.sock')
     server=nbd.VolatileNbd(image,sock,run/(phase+'-block.jsonl'),honour_barriers=honour_barriers)
     env=os.environ.copy();env['LD_LIBRARY_PATH']=str(tools/'usr/lib/x86_64-linux-gnu');env['QEMU_MODULE_DIR']=str(tools/'usr/lib/x86_64-linux-gnu/qemu')
@@ -82,6 +82,7 @@ def boot(run,image,phase,manifest,honour_barriers=True,expect_missing=False):
     reader=threading.Thread(target=consume,daemon=True);reader.start()
     expected='KANGER_BLOCK_ACK revision=1 value=42' if phase=='write' else 'KANGER_BLOCK_RECOVERED revision=1 value=42'
     if expect_missing:expected='KANGER_BLOCK_MISSING revision=1 code=STORAGE_NOT_FOUND'
+    if expected_marker is not None:expected=expected_marker
     observed=False;deadline=time.monotonic()+240
     try:
         while time.monotonic()<deadline:
@@ -95,10 +96,10 @@ def boot(run,image,phase,manifest,honour_barriers=True,expect_missing=False):
         if process.poll() is None:process.kill()
         process.wait(timeout=20);reader.join(timeout=10);stats=server.stop()
     if not observed:raise RuntimeError('Guest did not reach '+expected+'; inspect '+str(log_path))
-    if phase=='write' and stats['flushes']+stats['fua']==0:raise RuntimeError('No stable barrier reached NBD backend')
-    if phase=='write' and stats['writes']<=stats['fua']:raise RuntimeError('VM did not exercise cacheable writes')
+    if phase.startswith('write') and stats['flushes']+stats['fua']==0:raise RuntimeError('No stable barrier reached NBD backend')
+    if phase.startswith('write') and stats['writes']<=stats['fua']:raise RuntimeError('VM did not exercise cacheable writes')
     recovery_seen='EXT4-fs (vda): recovery complete' in log_path.read_text()
-    if phase=='read' and not expect_missing and not recovery_seen:raise RuntimeError('Cold journal recovery was not observed')
+    if phase.startswith('read') and not expect_missing and not recovery_seen:raise RuntimeError('Cold journal recovery was not observed')
     return dict(expected_marker=expected,observed=True,exit_code=process.returncode,block_stats=stats,
                 honour_barriers=honour_barriers,journal_recovery_seen=recovery_seen)
 
@@ -120,13 +121,22 @@ def main():
     bad_write=boot(negative,bad_image,'write',manifest,honour_barriers=False)
     bad_read=boot(negative,bad_image,'read',manifest,expect_missing=True)
     if bad_write['block_stats']['dropped_sectors']==0:raise RuntimeError('Negative control dropped no writes')
+    matrix={}
+    for operation,revision in [('create',0),('append2',2),('fork',1)]:
+        case=run/operation;case.mkdir();case_image=case/'stable.ext4'
+        subprocess.run(['cp','--sparse=always',str(ROOT/manifest['template']),str(case_image)],check=True)
+        result={}
+        for phase,marker in [('write','ACK'),('read','RECOVERED')]:
+            result[phase]=boot(case,case_image,phase+'-'+operation,manifest,
+                expected_marker='KANGER_BLOCK_'+marker+' operation='+operation+' revision='+str(revision))
+        matrix[operation]=result
     files=[ROOT/'target/persistence-vm/manifest.json',Path(__file__),ROOT/'scripts/persistence_vm/volatile_nbd.py',ROOT/'scripts/persistence_vm/prepare.py']
     files += sorted(run.rglob('*.log'))+sorted(run.rglob('*.jsonl'))+sorted(run.rglob('*-command.json'))
-    report=dict(scope='One acknowledged append and cold ext4 recovery under an explicit flush-honouring block model',
+    report=dict(scope='Acknowledged create, append, retained R1 after R2, and fork cold recovery under a flush-honouring block model',
                 head=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),source_dirty=True,
                 qemu_version=manifest['qemu_version'],self_controls=self_controls,write=write,cold_read=read,
                 lying_device_control=dict(write=bad_write,cold_read=bad_read,acknowledged_value_lost=True),
-                guest_provider_unmodified=True,block_model_qualification_passed=True,full_operation_matrix=False,
+                acknowledged_operation_matrix=matrix,guest_provider_unmodified=True,block_model_qualification_passed=True,full_operation_matrix=False,
                 physical_device_power_loss_acceptance=False,
                 artifacts_sha256={str(p):hashlib.sha256(p.read_bytes()).hexdigest() for p in files})
     (run/'report.json').write_text(json.dumps(report,indent=2)+'\n')
