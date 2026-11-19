@@ -571,3 +571,9 @@ return `STORAGE_CONTEXT_INCOMPLETE`. Check that the revision stays unchanged and
 an explicitly started transaction is still available for rollback. Explicit
 checked writes retain their own qualification policy. Engine-owned checkpoint
 and refresh use their existing primary-declaration invariant.
+
+The same option also applies to `ctx publish`. The detached publication
+candidate is checked after its transaction stack is replayed and before
+its generation is installed in Source. A rejected publish keeps the
+original transaction open. A successful publish includes the prepared local
+rules and the working pin vector, including saved initialization recipes.

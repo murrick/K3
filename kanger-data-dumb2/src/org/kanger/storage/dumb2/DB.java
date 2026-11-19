@@ -1331,6 +1331,24 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         }
     }
 
+    private void validatePreparedPublication(Mind prepared, ConnectionVector proposedConnections)
+            throws Exception {
+        // Replay in the detached provider so cleanup owns only the candidate layers.
+        ConnectionVector detached = ConnectionVector.empty();
+        for (ContextConnection pin : proposedConnections.getConnections()) {
+            detached = detached.with(new ContextConnection(pin.getTargetLocation(), pin.getTarget(),
+                    pin.getCertificate(), pin.getInitialization(), pin.getTrustGroup()));
+        }
+        retiredLayers.addAll(detached.getConnections());
+        activateConnections(detached);
+        Mind proposed = new Mind(prepared);
+        try {
+            validatePendingProductionCommit(proposed);
+        } finally {
+            prepared.release(proposed);
+        }
+    }
+
     @Override
     public synchronized IMind publishContext(IMind source, String description) throws Exception {
         requireWritable();
@@ -1361,6 +1379,9 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
             candidateUser.setCurrentMind(root);
             Mind prepared = Mind.preparePublicationStack((Mind) source, root);
             candidateUser.setCurrentMind(prepared);
+            if (Boolean.getBoolean(ORDINARY_FAMILY_QUALIFICATION) && !workingConnections.isEmpty()) {
+                candidateData.validatePreparedPublication(prepared, workingConnections);
+            }
             if (candidateData.getRevision() == 0L) {
                 candidateData.context.publishGeneration(null, ConnectionVector.empty(), "Prepared publication");
             }

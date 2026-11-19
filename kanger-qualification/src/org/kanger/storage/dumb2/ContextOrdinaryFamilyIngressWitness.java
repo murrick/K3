@@ -41,12 +41,27 @@ public final class ContextOrdinaryFamilyIngressWitness {
                 require(user.getCurrentMind() == child, "Refusal lost the open transaction");
                 root.requirePendingPhysicalChild(child);
                 require(db.getRevision() == revision, "Refused transaction changed Source");
+                expectConflict(() -> db.publishContext(child, "Masked publication"));
+                require(user.getCurrentMind() == child, "Publication refusal lost the open transaction");
+                root.requirePendingPhysicalChild(child);
+                require(db.getRevision() == revision && root.getRules().size() == ruleCount,
+                        "Refused publication changed Source");
                 command(user, "transaction rollback");
                 require(user.getCurrentMind() == root, "Rollback did not return to Source");
 
                 require(Boolean.TRUE.equals(root.query("!unrelated(1);", null, false)),
                         "Safe rule refused because siblings disagree");
                 require(db.getRevision() == revision + 1, "Safe write did not publish");
+                command(user, "transaction start");
+                command(user, "transaction start");
+                Mind safe = (Mind) user.getCurrentMind();
+                require(Boolean.TRUE.equals(safe.query("!localPublished(9);", null, false)), "Stage safe nested rule");
+                Mind published = (Mind) db.publishContext(safe, "Safe nested publication");
+                require(db.getRevision() == revision + 2, "Safe publication did not advance once");
+                require(Boolean.TRUE.equals(published.query("?localPublished(9);", null, false)),
+                        "Safe publication lost the nested rule");
+                require(db.federationSnapshot().getConnections().size() == 2,
+                        "Publication did not retain both pins");
             } finally {
                 ((Mind) user.getCurrentMind()).closeStorage();
             }
