@@ -580,27 +580,32 @@ final class ContextPendingProductionSnapshotSession implements AutoCloseable {
                 ContextProductionNativeBinding.Result x=ContextProductionNativeBinding.bind(child,childInventory,preparation,events);
                 if(!x.bound) throw new IllegalStateException("Pending X binding incomplete: "+x.reason);
                 List<Snapshot> bound=bindForeign(preparation,events);
-                List<Snapshot> complete=new ArrayList<>(bound);complete.add(x.snapshot);
-                boolean witnesses=false,variables=false;int remaining=work;
-                for(Snapshot snapshot:complete) for(ContextProductionNativeBinding.Entry entry:snapshot.primary) {
-                    if(--remaining<0) throw new IllegalStateException("Pending engine selection work limit");
-                    witnesses|=entry.kind==ContextProductionNativeBinding.Kind.WITNESS_BUNDLE;
-                    for(ContextProductionCapture.Clause clause:entry.clauses) {
-                        if(--remaining<0) throw new IllegalStateException("Pending engine selection work limit");
-                        variables|=!clause.variables.isEmpty();
-                    }
-                }
-                if(witnesses) {
-                    ContextProductionFamilyAssembly.Result family=ContextProductionFamilyAssembly.assemble(x.snapshot,bound,work);
-                    if(!family.assembled) throw new IllegalStateException("Pending witness family incomplete: "+family.reason);
-                    return new Decision(Engine.WITNESS,null,family.artifact.evaluate(rounds,depth,work,events),null);
-                }
-                if(!variables) return new Decision(Engine.GROUND,ContextGroundClauseFamily.evaluate(x.snapshot,bound,rounds,local,depth,work,events,probes,models),null,null);
-                ContextUniversalFamilyInspection.Result inspected=ContextUniversalFamilyInspection.inspect(x.snapshot,bound,rounds,local,depth,instances,models,work);
-                ContextUniversalFamilyAudit.Audit checked=ContextUniversalFamilyAudit.audit(inspected,x.snapshot,bound,depth,instances,audit);
-                return new Decision(Engine.UNIVERSAL,null,null,new Result(inspected,checked));
+                return inspectBoundFamily(x.snapshot,bound,rounds,local,depth,instances,models,events,work,audit,probes);
             } finally {requireCurrent();}
         }
     }
+    static Decision inspectBoundFamily(Snapshot source,List<Snapshot> bound,int rounds,int local,
+            int depth,int instances,int models,int events,int work,int audit,int probes) throws Exception {
+        List<Snapshot> complete=new ArrayList<>(bound);complete.add(source);
+        boolean witnesses=false,variables=false;int remaining=work;
+        for(Snapshot snapshot:complete) for(ContextProductionNativeBinding.Entry entry:snapshot.primary) {
+            if(--remaining<0) throw new IllegalStateException("Pending engine selection work limit");
+            witnesses|=entry.kind==ContextProductionNativeBinding.Kind.WITNESS_BUNDLE;
+            for(ContextProductionCapture.Clause clause:entry.clauses) {
+                if(--remaining<0) throw new IllegalStateException("Pending engine selection work limit");
+                variables|=!clause.variables.isEmpty();
+            }
+        }
+        if(witnesses) {
+            ContextProductionFamilyAssembly.Result family=ContextProductionFamilyAssembly.assemble(source,bound,work);
+            if(!family.assembled) throw new IllegalStateException("Pending witness family incomplete: "+family.reason);
+            return new Decision(Engine.WITNESS,null,family.artifact.evaluate(rounds,depth,work,events),null);
+        }
+        if(!variables) return new Decision(Engine.GROUND,ContextGroundClauseFamily.evaluate(source,bound,rounds,local,depth,work,events,probes,models),null,null);
+        ContextUniversalFamilyInspection.Result inspected=ContextUniversalFamilyInspection.inspect(source,bound,rounds,local,depth,instances,models,work);
+        ContextUniversalFamilyAudit.Audit checked=ContextUniversalFamilyAudit.audit(inspected,source,bound,depth,instances,audit);
+        return new Decision(Engine.UNIVERSAL,null,null,new Result(inspected,checked));
+    }
+
     @Override public void close() {synchronized(provider) {dependentRuntime=null;dependentRuntimeModels=null;dependentRuntimeExecution=null;dependentRuntimeBarrier=null;dependentRuntimeContinuation=null;dependentRuntimeIteration=null;closed=true;}}
 }

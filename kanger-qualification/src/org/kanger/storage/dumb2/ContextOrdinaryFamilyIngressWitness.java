@@ -13,6 +13,7 @@ import org.kanger.exception.StorageLifecycleException;
 
 /** Whole-family qualification through the actual explicitly enabled DUMB2 provider. */
 public final class ContextOrdinaryFamilyIngressWitness {
+    private static final String MODE = "kanger.dumb2.experimental.ordinaryFamilyQualification";
     private static final String RULE = "!@x left(x)&&right(x)->p(x);";
 
     public static void main(String[] args) throws Exception {
@@ -68,12 +69,17 @@ public final class ContextOrdinaryFamilyIngressWitness {
         }
         checkTopologySave(data, false);
         checkTopologySave(data, true);
+        checkTopologyEdits(data, false);
+        checkTopologyEdits(data, true);
         seed(data, "Arithmetic", "!@x fun(x)->next(x+1);");
         DB unsupported = new DB();
         Mind root = ContextPrivatePublicationWitness.open(unsupported, data, "Unsupported");
         try {
             require(root.compile("!anchor(1);", null, false), "Unsupported case seed");
-            unsupported.connectContext("Arithmetic");
+            expectFailure(() -> unsupported.connectContext("Arithmetic"),
+                    StorageLifecycleErrorCode.STORAGE_CONTEXT_INCOMPLETE);
+            require(!unsupported.hasConnectedContexts(), "Incomplete connect installed a pin");
+            withLegacyTopology(() -> unsupported.connectContext("Arithmetic"));
             long revision = unsupported.getRevision();
             expectFailure(() -> root.query("!ordinary(1);", null, false),
                     StorageLifecycleErrorCode.STORAGE_CONTEXT_INCOMPLETE);
@@ -90,8 +96,10 @@ public final class ContextOrdinaryFamilyIngressWitness {
         Mind root = ContextPrivatePublicationWitness.open(db, data, name);
         try {
             require(root.compile(RULE, null, false), "Seed Source before attaching contexts");
-            db.connectContext(reverse ? "B" : "A");
-            db.connectContext(reverse ? "A" : "B");
+            withLegacyTopology(() -> {
+                db.connectContext(reverse ? "B" : "A");
+                db.connectContext(reverse ? "A" : "B");
+            });
             long revision = db.getRevision();
             expectConflict(() -> db.saveConnections(root));
             require(db.getRevision() == revision, "Refused topology save advanced Source");
@@ -112,6 +120,45 @@ public final class ContextOrdinaryFamilyIngressWitness {
             }
         } finally {
             root.closeStorage();
+        }
+    }
+
+    private static void checkTopologyEdits(Path data, boolean reverse) throws Exception {
+        String target = reverse ? "RepinReverseTarget" : "RepinForwardTarget";
+        seed(data, target, "!right(1);");
+        DB db = new DB();
+        Mind root = ContextPrivatePublicationWitness.open(db, data, reverse ? "EditReverse" : "EditForward");
+        try {
+            require(root.compile(RULE, null, false), "Source topology seed");
+            long revision = db.getRevision();
+            String first = reverse ? "B" : "A";
+            String second = reverse ? "A" : "B";
+            db.connectContext(first);
+            expectConflict(() -> db.connectContext(second));
+            require(db.federationSnapshot().getConnections().size() == 1,
+                    "Refused connect changed working pins");
+            db.disconnectContext(first);
+
+            db.connectContext(reverse ? target : "A");
+            db.connectContext(reverse ? "A" : target);
+            seed(data, target, "!~p(1);");
+            expectConflict(() -> db.switchContextRevision(target, 2));
+            require(db.federationSnapshot().getConnections().size() == 2
+                    && db.federationSnapshot().getConnections().stream().allMatch(pin -> pin.getPinnedRevision() == 1),
+                    "Refused repin changed working pins");
+            require(db.getRevision() == revision, "Working edits published Source");
+        } finally {
+            root.closeStorage();
+        }
+    }
+
+    private static void withLegacyTopology(Attempt attempt) throws Exception {
+        String prior = System.getProperty(MODE);
+        System.clearProperty(MODE);
+        try {
+            attempt.run();
+        } finally {
+            if (prior != null) System.setProperty(MODE, prior);
         }
     }
 

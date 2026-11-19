@@ -557,6 +557,11 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
             org.kanger.exception.ContextProductionCommitException failure=org.kanger.exception.ContextProductionCommitException.incomplete("Pending whole-family policy incomplete: "+unsupported.getMessage(),null);
             failure.initCause(unsupported);throw failure;
         }
+        requireCompleteOrdinaryFamily(decision);
+    }
+
+    private static void requireCompleteOrdinaryFamily(ContextPendingProductionSnapshotSession.Decision decision)
+            throws Exception {
         switch(decision.engine) {
             case UNIVERSAL: requirePendingUniversalResult(decision.universal);return;
             case GROUND:
@@ -1633,6 +1638,47 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         }
     }
 
+    private void validateTopologyFamily(ConnectionVector candidate) throws Exception {
+        if (!Boolean.getBoolean(ORDINARY_FAMILY_QUALIFICATION) || candidate.isEmpty()) return;
+        RevisionRef source = new RevisionRef(getContextId(), getRevision());
+        java.util.Map<String, Integer> limits = org.kanger.ContextUniversalCandidateRequest.DEFAULTS;
+        try (SnapshotMindRuntime runtime = SnapshotMindRuntime.open(activeLocation(), source, "topology-family")) {
+            int rows = limits.get("rows");
+            org.kanger.ContextProductionInventory local = org.kanger.ContextProductionInventory.inspect(
+                    runtime.getMind(), source.getContextId(), source.getRevision(), true,
+                    java.util.Collections.emptyList(), rows);
+            rows -= local.rows.size();
+            org.kanger.ContextProductionNativeBinding.Snapshot own = bindTopologyMember(runtime.getMind(), local, limits);
+            java.util.List<org.kanger.ContextProductionNativeBinding.Snapshot> foreign = new java.util.ArrayList<>();
+            for (ContextConnection pin : candidate.getConnections()) {
+                Mind layer = pin.layer();
+                RevisionRef target = pin.getTarget();
+                org.kanger.ContextProductionInventory inventory = org.kanger.ContextProductionInventory.inspect(
+                        layer, target.getContextId(), target.getRevision(), false, pin.getInitialization(), rows);
+                rows -= inventory.rows.size();
+                foreign.add(bindTopologyMember(layer, inventory, limits));
+            }
+            requireCompleteOrdinaryFamily(ContextPendingProductionSnapshotSession.inspectBoundFamily(
+                    own, foreign, limits.get("rounds"), limits.get("local"), limits.get("depth"),
+                    limits.get("instances"), limits.get("models"), limits.get("events"),
+                    limits.get("work"), limits.get("audit"), 100000));
+        } catch (IllegalStateException unsupported) {
+            org.kanger.exception.ContextProductionCommitException failure =
+                    org.kanger.exception.ContextProductionCommitException.incomplete(
+                            "Topology whole-family policy incomplete: " + unsupported.getMessage(), null);
+            failure.initCause(unsupported);
+            throw failure;
+        }
+    }
+
+    private static org.kanger.ContextProductionNativeBinding.Snapshot bindTopologyMember(Mind mind,
+            org.kanger.ContextProductionInventory inventory, java.util.Map<String, Integer> limits) throws Exception {
+        org.kanger.ContextProductionNativeBinding.Result bound = org.kanger.ContextProductionNativeBinding.bind(
+                mind, inventory, limits.get("preparation"), limits.get("events"));
+        if (!bound.bound) throw new IllegalStateException(bound.reason);
+        return bound.snapshot;
+    }
+
     @Override
     public synchronized IContextFederation.Connection connectContext(
             String targetLocator) throws Exception {
@@ -1666,6 +1712,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         retiredLayers.add(connection);
         try {
             ConnectionVector candidate = workingConnections.with(connection);
+            validateTopologyFamily(candidate);
             candidate.prepareCommunes(communeCache);
             PairQualification.CompositionQualification before =
                     PairQualification.qualifyCompositionState(
@@ -1755,8 +1802,15 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
                         targetContextId,
                         targetRevision);
         retiredLayers.add(connection);
+        ConnectionVector candidate = workingConnections.with(connection);
+        try {
+            validateTopologyFamily(candidate);
+        } catch (Exception rejection) {
+            collectAfterRejectedTopologyChange(rejection);
+            throw rejection;
+        }
         retiredLayers.addAll(workingConnections.getConnections());
-        activateConnections(workingConnections.with(connection));
+        activateConnections(candidate);
         ((User) user).getContextOpinionSession().invalidate();
         collectAfterTopologyChange();
         return projectConnection(
