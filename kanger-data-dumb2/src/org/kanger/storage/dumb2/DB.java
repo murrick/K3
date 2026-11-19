@@ -940,7 +940,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         requireWritable();if(!(supplied instanceof Mind))throw new CommandErrorException("Checked symbolic save requires the owning Mind");Mind source=(Mind)supplied;requireSymbolicCacheIdentity(source);
         SymbolicCacheFamilyInspection checked;
         try{checked=inspectSymbolicCacheFamily(source);}catch(InterruptedException interrupted){Thread.currentThread().interrupt();throw interrupted;}catch(Exception unsupported){org.kanger.exception.StorageLifecycleException failure=org.kanger.ContextDependentFamilyOutcome.incomplete(org.kanger.ContextDependentFamilyOutcome.reason(unsupported),symbolicFamilyNames());failure.initCause(unsupported);throw failure;}
-        requireCurrentSymbolicFamilyModel(source,checked);return saveConnections(source);
+        requireCurrentSymbolicFamilyModel(source,checked);return saveConnections(source,false);
     }
 
     /** Explicit read-only independent-cut composition; never a connect/write decision. */
@@ -1341,11 +1341,15 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         }
         retiredLayers.addAll(detached.getConnections());
         activateConnections(detached);
-        Mind proposed = new Mind(prepared);
+        validateSettledFamily(prepared);
+    }
+
+    private void validateSettledFamily(Mind root) throws Exception {
+        Mind proposed = new Mind(root);
         try {
             validatePendingProductionCommit(proposed);
         } finally {
-            prepared.release(proposed);
+            root.release(proposed);
         }
     }
 
@@ -1478,6 +1482,10 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
 
     @Override
     public synchronized long saveConnections(IMind source) throws Exception {
+        return saveConnections(source, Boolean.getBoolean(ORDINARY_FAMILY_QUALIFICATION));
+    }
+
+    private long saveConnections(IMind source, boolean qualifyOrdinaryFamily) throws Exception {
         requireOpen();
         if(source==null || source.getUser()!=user || source!=user.getCurrentMind()
                 || source.getTransactionLevel()!=0)
@@ -1486,6 +1494,10 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         // ordinary authoring. SMART ownership/ACL publication remains separate.
         recoverPublishedConnections();
         requireWritable();
+        if (qualifyOrdinaryFamily && !workingConnections.isEmpty()) {
+            if (!(source instanceof Mind)) throw new CommandErrorException("Context save requires the owning Mind");
+            validateSettledFamily((Mind) source);
+        }
         long revision=context.publishTopology(workingConnections,"Save explicit Context connections");
         retiredLayers.addAll(workingConnections.getConnections());
         activatePublishedConnections(context.getQualifiedWorkingConnections());

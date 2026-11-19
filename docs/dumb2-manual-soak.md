@@ -577,3 +577,8 @@ candidate is checked after its transaction stack is replayed and before
 its generation is installed in Source. A rejected publish keeps the
 original transaction open. A successful publish includes the prepared local
 rules and the working pin vector, including saved initialization recipes.
+
+The option also covers ordinary `ctx save`. If a working connection set
+fails whole-family qualification, Source retains its prior revision and
+saved connections. The working set remains available for correction.
+Explicit symbolic save uses its own checked verdict.

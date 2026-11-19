@@ -66,6 +66,8 @@ public final class ContextOrdinaryFamilyIngressWitness {
                 ((Mind) user.getCurrentMind()).closeStorage();
             }
         }
+        checkTopologySave(data, false);
+        checkTopologySave(data, true);
         seed(data, "Arithmetic", "!@x fun(x)->next(x+1);");
         DB unsupported = new DB();
         Mind root = ContextPrivatePublicationWitness.open(unsupported, data, "Unsupported");
@@ -80,6 +82,37 @@ public final class ContextOrdinaryFamilyIngressWitness {
             root.closeStorage();
         }
         System.out.println("CONTEXT_ORDINARY_FAMILY_INGRESS_PASS");
+    }
+
+    private static void checkTopologySave(Path data, boolean reverse) throws Exception {
+        DB db = new DB();
+        String name = reverse ? "SaveReverse" : "SaveForward";
+        Mind root = ContextPrivatePublicationWitness.open(db, data, name);
+        try {
+            require(root.compile(RULE, null, false), "Seed Source before attaching contexts");
+            db.connectContext(reverse ? "B" : "A");
+            db.connectContext(reverse ? "A" : "B");
+            long revision = db.getRevision();
+            expectConflict(() -> db.saveConnections(root));
+            require(db.getRevision() == revision, "Refused topology save advanced Source");
+            require(db.federationSnapshot().getConnections().size() == 2,
+                    "Refused topology save lost working pins");
+            Path location = data.resolve(name);
+            try (ContextSnapshot snapshot = ContextSnapshot.open(location, revision)) {
+                require(ConnectionStore.read(location, new RevisionRef(snapshot.getContextId(), revision)).size() == 0,
+                        "Refused topology save changed the stored vector");
+            }
+            db.disconnectContext("B");
+            require(db.saveConnections(root) == revision + 1, "Safe corrected topology save refused");
+            try (ContextSnapshot snapshot = ContextSnapshot.open(location, revision + 1)) {
+                ConnectionVector saved = ConnectionStore.read(location,
+                        new RevisionRef(snapshot.getContextId(), revision + 1));
+                require(saved.size() == 1 && saved.getConnections().get(0).getTargetLocation().equals(data.resolve("A")),
+                        "Corrected topology saved the wrong pin");
+            }
+        } finally {
+            root.closeStorage();
+        }
     }
 
     private static void seed(Path data, String name, String rules) throws Exception {
