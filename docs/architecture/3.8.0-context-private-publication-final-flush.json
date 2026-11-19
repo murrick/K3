@@ -1,0 +1,364 @@
+{
+  "scope": "Canonical private publication, post-ACK, first WRITE and last sampled FLUSH cuts",
+  "controls": {
+    "cut_freezes_new_commands": true,
+    "unflushed_ack_is_lost": true,
+    "fua_does_not_flush_unrelated_writes": true,
+    "flush_covers_completed_prefix": true,
+    "later_writes_are_lost": true,
+    "out_of_range_refused": true
+  },
+  "cases": {
+    "seed": {
+      "write": {
+        "expected_marker": "KANGER_BLOCK_PREVIOUS_ACK operation=private previous=2",
+        "normal_completion_marker": "KANGER_BLOCK_PREVIOUS_ACK operation=private previous=2",
+        "observed_event": "previous_publication_ack",
+        "next_application_ack_observed": false,
+        "observed": true,
+        "exit_code": -9,
+        "block_stats": {
+          "reads": 777,
+          "writes": 121,
+          "flushes": 102,
+          "fua": 0,
+          "dropped_sectors": 0
+        },
+        "honour_barriers": true,
+        "journal_recovery_seen": false,
+        "previous_ack_stats": {
+          "reads": 777,
+          "writes": 121,
+          "flushes": 102,
+          "fua": 0,
+          "dropped_sectors": 0
+        },
+        "cut": null,
+        "cut_reached": false,
+        "post_previous_ack_stats": {
+          "reads": 0,
+          "writes": 0,
+          "flushes": 0,
+          "fua": 0,
+          "dropped_sectors": 0
+        }
+      },
+      "cold_read": {
+        "expected_marker": "KANGER_BLOCK_NATIVE_RECOVERED operation=private previous=2 selected=",
+        "normal_completion_marker": "KANGER_BLOCK_NATIVE_RECOVERED operation=private previous=2 selected=",
+        "observed_event": "application_marker",
+        "next_application_ack_observed": false,
+        "observed": true,
+        "exit_code": -9,
+        "block_stats": {
+          "reads": 1146,
+          "writes": 16,
+          "flushes": 6,
+          "fua": 0,
+          "dropped_sectors": 0
+        },
+        "honour_barriers": true,
+        "journal_recovery_seen": true,
+        "previous_ack_stats": null,
+        "cut": null,
+        "cut_reached": false,
+        "post_previous_ack_stats": null
+      },
+      "selected_revision": 2
+    },
+    "ack": {
+      "write": {
+        "expected_marker": "KANGER_BLOCK_NEXT_ACK operation=private revision=3",
+        "normal_completion_marker": "KANGER_BLOCK_NEXT_ACK operation=private revision=3",
+        "observed_event": "application_marker",
+        "next_application_ack_observed": true,
+        "observed": true,
+        "exit_code": -9,
+        "block_stats": {
+          "reads": 858,
+          "writes": 79,
+          "flushes": 101,
+          "fua": 0,
+          "dropped_sectors": 0
+        },
+        "honour_barriers": true,
+        "journal_recovery_seen": true,
+        "previous_ack_stats": {
+          "reads": 815,
+          "writes": 9,
+          "flushes": 14,
+          "fua": 0,
+          "dropped_sectors": 0
+        },
+        "cut": null,
+        "cut_reached": false,
+        "post_previous_ack_stats": {
+          "reads": 43,
+          "writes": 70,
+          "flushes": 87,
+          "fua": 0,
+          "dropped_sectors": 0
+        }
+      },
+      "cold_read": {
+        "expected_marker": "KANGER_BLOCK_NATIVE_RECOVERED operation=private previous=2 selected=",
+        "normal_completion_marker": "KANGER_BLOCK_NATIVE_RECOVERED operation=private previous=2 selected=",
+        "observed_event": "application_marker",
+        "next_application_ack_observed": false,
+        "observed": true,
+        "exit_code": -9,
+        "block_stats": {
+          "reads": 1017,
+          "writes": 17,
+          "flushes": 6,
+          "fua": 0,
+          "dropped_sectors": 0
+        },
+        "honour_barriers": true,
+        "journal_recovery_seen": true,
+        "previous_ack_stats": null,
+        "cut": null,
+        "cut_reached": false,
+        "post_previous_ack_stats": null
+      },
+      "selected_revision": 3
+    },
+    "first-write": {
+      "write": {
+        "expected_marker": null,
+        "normal_completion_marker": "KANGER_BLOCK_NEXT_ACK operation=private revision=3",
+        "observed_event": "block_cut",
+        "next_application_ack_observed": false,
+        "observed": true,
+        "exit_code": -9,
+        "block_stats": {
+          "reads": 852,
+          "writes": 10,
+          "flushes": 14,
+          "fua": 0,
+          "dropped_sectors": 16
+        },
+        "honour_barriers": true,
+        "journal_recovery_seen": true,
+        "previous_ack_stats": {
+          "reads": 815,
+          "writes": 9,
+          "flushes": 14,
+          "fua": 0,
+          "dropped_sectors": 0
+        },
+        "cut": {
+          "command": 1,
+          "ordinal": 1,
+          "edge": "after"
+        },
+        "cut_reached": true,
+        "post_previous_ack_stats": {
+          "reads": 37,
+          "writes": 1,
+          "flushes": 0,
+          "fua": 0,
+          "dropped_sectors": 16
+        }
+      },
+      "cold_read": {
+        "expected_marker": "KANGER_BLOCK_NATIVE_RECOVERED operation=private previous=2 selected=",
+        "normal_completion_marker": "KANGER_BLOCK_NATIVE_RECOVERED operation=private previous=2 selected=",
+        "observed_event": "application_marker",
+        "next_application_ack_observed": false,
+        "observed": true,
+        "exit_code": -9,
+        "block_stats": {
+          "reads": 842,
+          "writes": 8,
+          "flushes": 6,
+          "fua": 0,
+          "dropped_sectors": 8
+        },
+        "honour_barriers": true,
+        "journal_recovery_seen": true,
+        "previous_ack_stats": null,
+        "cut": null,
+        "cut_reached": false,
+        "post_previous_ack_stats": null
+      },
+      "selected_revision": 2
+    },
+    "last-flush-before": {
+      "write": {
+        "expected_marker": null,
+        "normal_completion_marker": "KANGER_BLOCK_NEXT_ACK operation=private revision=3",
+        "observed_event": "block_cut",
+        "next_application_ack_observed": false,
+        "observed": true,
+        "exit_code": -9,
+        "block_stats": {
+          "reads": 858,
+          "writes": 79,
+          "flushes": 100,
+          "fua": 0,
+          "dropped_sectors": 0
+        },
+        "honour_barriers": true,
+        "journal_recovery_seen": true,
+        "previous_ack_stats": {
+          "reads": 815,
+          "writes": 9,
+          "flushes": 14,
+          "fua": 0,
+          "dropped_sectors": 0
+        },
+        "cut": {
+          "command": 3,
+          "ordinal": 87,
+          "edge": "before"
+        },
+        "cut_reached": true,
+        "post_previous_ack_stats": {
+          "reads": 43,
+          "writes": 70,
+          "flushes": 86,
+          "fua": 0,
+          "dropped_sectors": 0
+        }
+      },
+      "cold_read": {
+        "expected_marker": "KANGER_BLOCK_NATIVE_RECOVERED operation=private previous=2 selected=",
+        "normal_completion_marker": "KANGER_BLOCK_NATIVE_RECOVERED operation=private previous=2 selected=",
+        "observed_event": "application_marker",
+        "next_application_ack_observed": false,
+        "observed": true,
+        "exit_code": -9,
+        "block_stats": {
+          "reads": 1014,
+          "writes": 17,
+          "flushes": 6,
+          "fua": 0,
+          "dropped_sectors": 0
+        },
+        "honour_barriers": true,
+        "journal_recovery_seen": true,
+        "previous_ack_stats": null,
+        "cut": null,
+        "cut_reached": false,
+        "post_previous_ack_stats": null
+      },
+      "selected_revision": 3
+    },
+    "last-flush-after": {
+      "write": {
+        "expected_marker": null,
+        "normal_completion_marker": "KANGER_BLOCK_NEXT_ACK operation=private revision=3",
+        "observed_event": "block_cut",
+        "next_application_ack_observed": false,
+        "observed": true,
+        "exit_code": -9,
+        "block_stats": {
+          "reads": 858,
+          "writes": 79,
+          "flushes": 101,
+          "fua": 0,
+          "dropped_sectors": 0
+        },
+        "honour_barriers": true,
+        "journal_recovery_seen": true,
+        "previous_ack_stats": {
+          "reads": 815,
+          "writes": 9,
+          "flushes": 14,
+          "fua": 0,
+          "dropped_sectors": 0
+        },
+        "cut": {
+          "command": 3,
+          "ordinal": 87,
+          "edge": "after"
+        },
+        "cut_reached": true,
+        "post_previous_ack_stats": {
+          "reads": 43,
+          "writes": 70,
+          "flushes": 87,
+          "fua": 0,
+          "dropped_sectors": 0
+        }
+      },
+      "cold_read": {
+        "expected_marker": "KANGER_BLOCK_NATIVE_RECOVERED operation=private previous=2 selected=",
+        "normal_completion_marker": "KANGER_BLOCK_NATIVE_RECOVERED operation=private previous=2 selected=",
+        "observed_event": "application_marker",
+        "next_application_ack_observed": false,
+        "observed": true,
+        "exit_code": -9,
+        "block_stats": {
+          "reads": 1017,
+          "writes": 17,
+          "flushes": 6,
+          "fua": 0,
+          "dropped_sectors": 0
+        },
+        "honour_barriers": true,
+        "journal_recovery_seen": true,
+        "previous_ack_stats": null,
+        "cut": null,
+        "cut_reached": false,
+        "post_previous_ack_stats": null
+      },
+      "selected_revision": 3
+    }
+  },
+  "full_cut_matrix": false,
+  "provider_sha256": "ca5cce279f6e7a9e36760ae4c3545902b205b677585fa38cacde348d88225f23",
+  "sha256": {
+    "scripts/qualify-context-private-publication.py": "1d46c719c24a28aecb69ec52a48d4c6030650e3f99ac1f5d836eb131d3d0f132",
+    "scripts/qualify-context-block-device.py": "b299653db0d1644f0dc6b809a99482279e97391f9d9febbc35dcd62b373bc6a9",
+    "kanger-console/target/kanger-console-3.3-SNAPSHOT.jar": "ca5cce279f6e7a9e36760ae4c3545902b205b677585fa38cacde348d88225f23",
+    "kanger-qualification/src/org/kanger/storage/dumb2/ContextPrivatePublicationWitness.java": "a5e2e48d00fe630b93b18b04fedb5c71198da24b461365995e420e1cb913201d",
+    "kanger-qualification/src/org/kanger/storage/dumb2/ContextPrivatePublicationBlockRunner.java": "1a3b769e10ae064a7c943735ac338fec07cf1c878eb3cd6867c3389cdf336333",
+    "target/context-private-publication/run-ga_kg81p/rootfs/sbin/init": "9c13ed87968b46793179174484bfc286752d6d6f0ce04c695acbb7fcc0b78c16",
+    "target/context-private-publication/run-ga_kg81p/template.ext4": "caffb6a2f11efbf9fb338be5139243daaf73acb4c2fcde82bbaebf719d978056",
+    "target/context-private-publication/run-ga_kg81p/rootfs/app/private-classes/org/kanger/storage/dumb2/ContextPrivatePublicationBlockRunner.class": "e82fddf4202b434ea28c477cf66e63dc13da8312e4f032ab5ad03b1106cb0bbd",
+    "target/context-private-publication/run-ga_kg81p/rootfs/app/private-classes/org/kanger/storage/dumb2/ContextPrivatePublicationWitness.class": "af393f27b3f1d8eef8d1a3fd83d0fb5f47ae719633b205679679742c6ef8a667",
+    "target/persistence-vm/manifest.json": "4a12e87d28fa1d3bef395ed5c8f06d063ec0ca95202a795a158e1f85733125b0",
+    "target/context-private-publication/run-ga_kg81p/ack/write-resume-native-private-serial.log": "32d3e4d613c8c5777bc6bfe9033a8164ea0623781207e031f1f1130e6ca11946",
+    "target/context-private-publication/run-ga_kg81p/ack/read-native-private-serial.log": "c62e3e5c157271a39a40238157176468cfb80b9ba0dce66b059f44d8210348f1",
+    "target/context-private-publication/run-ga_kg81p/last-flush-before/write-resume-native-private-serial.log": "b121d70c720660bc72af4fe8846d140ca0bb96c551613cf34873ca4eaa51756c",
+    "target/context-private-publication/run-ga_kg81p/last-flush-before/read-native-private-serial.log": "0ffa479a8490f878c696f28703820db6635853ea709480b9abc7cd04e8c3bb78",
+    "target/context-private-publication/run-ga_kg81p/seed/write-native-private-serial.log": "4544a38fdc63525da9db4087dfe9981d75acf23d6bb1c21e9f5476a064ec37d9",
+    "target/context-private-publication/run-ga_kg81p/seed/read-native-private-serial.log": "73bf20e7e606927d6f7b29b4c1ad4680f5551f78fb9dc8398def2865d86009d5",
+    "target/context-private-publication/run-ga_kg81p/first-write/write-resume-native-private-serial.log": "f85fcf0b63ff409b74a6ad18b22c748145a73aaa5ff80e23d19a34f5f60657b7",
+    "target/context-private-publication/run-ga_kg81p/first-write/read-native-private-serial.log": "1edc7556e35e5f7db531214afaf64b940e63925994c8f2da8deda2c1c05a39f1",
+    "target/context-private-publication/run-ga_kg81p/last-flush-after/write-resume-native-private-serial.log": "072d37d5c97d660b8a7cf1073d4ce49add229fdbd14c6ab39ed2f74bcc3344d1",
+    "target/context-private-publication/run-ga_kg81p/last-flush-after/read-native-private-serial.log": "f1625982fbc0ceea70de2f61577e3408b4585cdfda680c05fbfe21f580a7d423",
+    "target/context-private-publication/run-ga_kg81p/rootfs/opt/java/docs/test-amd64/jtreg-summary-hotspot.log": "0e35e06e2f46a8d43183e7fc5005f785ac3c451b37eeceeea5e8c925c35e9065",
+    "target/context-private-publication/run-ga_kg81p/cut-freeze.jsonl": "cc8d8ccd265998a5e85867b234354f3550bb4be7682fc6978fef5ea5f2978584",
+    "target/context-private-publication/run-ga_kg81p/fua.jsonl": "8446d7f50b0dcbea1ed344af3d9d82a2d3408bfbc7f4dc3ea7969a7e0da0081e",
+    "target/context-private-publication/run-ga_kg81p/unflushed.jsonl": "dcb174f5a919c838d71895f5e1bb59951d9d5002da49c5ea5d3075eea85962f5",
+    "target/context-private-publication/run-ga_kg81p/flush.jsonl": "14d97e30a6781da3d8413ce944839dbca12e907df8ed55c5c87a1f72e6334413",
+    "target/context-private-publication/run-ga_kg81p/ack/write-resume-native-private-block.jsonl": "8886b9761a93a53a73238a2d7707d20d925490b8ece0aa37c9cae90754393a59",
+    "target/context-private-publication/run-ga_kg81p/ack/read-native-private-block.jsonl": "7bae40402c6e81b5b7728af2666f2cc3ba3d9cb54b54f9ca7673ed38871955a8",
+    "target/context-private-publication/run-ga_kg81p/last-flush-before/write-resume-native-private-block.jsonl": "d513d3381dad0585f4b549977f28aefbce416904a93ab241cb628f3a781b56e3",
+    "target/context-private-publication/run-ga_kg81p/last-flush-before/read-native-private-block.jsonl": "7bae40402c6e81b5b7728af2666f2cc3ba3d9cb54b54f9ca7673ed38871955a8",
+    "target/context-private-publication/run-ga_kg81p/seed/write-native-private-block.jsonl": "4c7f128b7941dda14299f4fd9c6ee00eee71895ea8257eff79eb03e710f3ebba",
+    "target/context-private-publication/run-ga_kg81p/seed/read-native-private-block.jsonl": "969a79d9ba54b99352281c6971511d21f3c700580be65efc72896fbffbcbad8b",
+    "target/context-private-publication/run-ga_kg81p/first-write/write-resume-native-private-block.jsonl": "3f26477bde79465fc87710eb648041c84942b2bbc1f93b878cac5f91cd37c820",
+    "target/context-private-publication/run-ga_kg81p/first-write/read-native-private-block.jsonl": "6b956a6af066da0b406bceb259d55f56d29871e35ae3f5ac76255bb510a253cf",
+    "target/context-private-publication/run-ga_kg81p/last-flush-after/write-resume-native-private-block.jsonl": "786dcb86bbcfadde2bebacaf9eca456e0a79df53ef7fb0fcb27e026878aae788",
+    "target/context-private-publication/run-ga_kg81p/last-flush-after/read-native-private-block.jsonl": "7bae40402c6e81b5b7728af2666f2cc3ba3d9cb54b54f9ca7673ed38871955a8",
+    "target/context-private-publication/run-ga_kg81p/ack/write-resume-native-private-command.json": "a5c6c0776e74bf350984821506b1ee920d0f1fac102cf206f65cf9689ff60bde",
+    "target/context-private-publication/run-ga_kg81p/ack/read-native-private-command.json": "3c246b5733c765e102c9ba8a03f4e0fa3241beb46adda26196a613a3d4f28793",
+    "target/context-private-publication/run-ga_kg81p/last-flush-before/write-resume-native-private-command.json": "80cc125767ccd2ed22d7e0af9804cb6f95a003e6c305c181bff78dc2cae8c07f",
+    "target/context-private-publication/run-ga_kg81p/last-flush-before/read-native-private-command.json": "13718bdbf0fce86be3b8bc720a7b1e44c1d53f291c40024559e262f0b0143127",
+    "target/context-private-publication/run-ga_kg81p/seed/write-native-private-command.json": "7a65bcb30cce25b9fa410f99f099b0b9dfc160d6c280975240cc20af31670a48",
+    "target/context-private-publication/run-ga_kg81p/seed/read-native-private-command.json": "cf7a250215f3dfefb87133644e9936a8c8bbe30c3712f006cc48fd8d3463b47c",
+    "target/context-private-publication/run-ga_kg81p/first-write/write-resume-native-private-command.json": "82f83438971bb40154fc5c1367259fe61c974be8bf28cfb916a3ab36d3424bd4",
+    "target/context-private-publication/run-ga_kg81p/first-write/read-native-private-command.json": "cc834a4a07c034482bc25e4c7507c1426dfca40e51834c4ed2ad51e21ba344bd",
+    "target/context-private-publication/run-ga_kg81p/last-flush-after/write-resume-native-private-command.json": "5099f63154bde215c7e0ef06f121b3d0183ed3b48aa081c1fbffc4a405e6d52f",
+    "target/context-private-publication/run-ga_kg81p/last-flush-after/read-native-private-command.json": "83ac26f941fc7732b33d8f0ba7e20d7c1547ff94eb51ffa7f132b981fa201519",
+    "target/context-private-publication/run-ga_kg81p/ack/result.json": "527aba86df2425354ae36d9d5effa683d722453dcc3862b94646271b1d37e041",
+    "target/context-private-publication/run-ga_kg81p/last-flush-before/result.json": "84328e0f9c2584072a5f009cc21007715e2f806c056361edb1ff819d090220ab",
+    "target/context-private-publication/run-ga_kg81p/seed/result.json": "100cbdc32aa1c5dcb94de85d21ea84ca5719e1f3be8b30437f011ecdf8033c7d",
+    "target/context-private-publication/run-ga_kg81p/first-write/result.json": "ce638c972faf3451cfa3f6a47a55f05c3f31e77aacebe10c09564b87cb93bdb0",
+    "target/context-private-publication/run-ga_kg81p/last-flush-after/result.json": "f04b23ef644a92517dc1da93fa723e1bba5672434e00d4cd56c476b5fd5a9b3b"
+  }
+}
