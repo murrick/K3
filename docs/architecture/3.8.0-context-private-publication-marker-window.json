@@ -1,0 +1,164 @@
+{
+  "scope": "Canonical marker window before confirmation",
+  "controls": {
+    "cut_freezes_new_commands": true,
+    "unflushed_ack_is_lost": true,
+    "fua_does_not_flush_unrelated_writes": true,
+    "flush_covers_completed_prefix": true,
+    "later_writes_are_lost": true,
+    "out_of_range_refused": true
+  },
+  "cases": {
+    "seed": {
+      "write": {
+        "expected_marker": "KANGER_BLOCK_PREVIOUS_ACK operation=private previous=2",
+        "normal_completion_marker": "KANGER_BLOCK_PREVIOUS_ACK operation=private previous=2",
+        "observed_event": "previous_publication_ack",
+        "next_application_ack_observed": false,
+        "observed": true,
+        "exit_code": -9,
+        "block_stats": {
+          "reads": 777,
+          "writes": 116,
+          "flushes": 98,
+          "fua": 0,
+          "dropped_sectors": 0
+        },
+        "honour_barriers": true,
+        "journal_recovery_seen": false,
+        "previous_ack_stats": {
+          "reads": 777,
+          "writes": 116,
+          "flushes": 98,
+          "fua": 0,
+          "dropped_sectors": 0
+        },
+        "cut": null,
+        "cut_reached": false,
+        "post_previous_ack_stats": {
+          "reads": 0,
+          "writes": 0,
+          "flushes": 0,
+          "fua": 0,
+          "dropped_sectors": 0
+        }
+      },
+      "cold_read": {
+        "expected_marker": "KANGER_BLOCK_NATIVE_RECOVERED operation=private previous=2 selected=",
+        "normal_completion_marker": "KANGER_BLOCK_NATIVE_RECOVERED operation=private previous=2 selected=",
+        "observed_event": "application_marker",
+        "next_application_ack_observed": false,
+        "observed": true,
+        "exit_code": -9,
+        "block_stats": {
+          "reads": 1156,
+          "writes": 16,
+          "flushes": 6,
+          "fua": 0,
+          "dropped_sectors": 0
+        },
+        "honour_barriers": true,
+        "journal_recovery_seen": true,
+        "previous_ack_stats": null,
+        "cut": null,
+        "cut_reached": false,
+        "post_previous_ack_stats": null
+      },
+      "selected_revision": 2
+    },
+    "marker-window": {
+      "write": {
+        "expected_marker": "KANGER_PRIVATE_MARKER_VISIBLE revision=3",
+        "normal_completion_marker": "KANGER_PRIVATE_MARKER_VISIBLE revision=3",
+        "observed_event": "application_marker",
+        "next_application_ack_observed": false,
+        "observed": true,
+        "exit_code": -9,
+        "block_stats": {
+          "reads": 861,
+          "writes": 78,
+          "flushes": 90,
+          "fua": 0,
+          "dropped_sectors": 0
+        },
+        "honour_barriers": true,
+        "journal_recovery_seen": true,
+        "previous_ack_stats": {
+          "reads": 818,
+          "writes": 12,
+          "flushes": 15,
+          "fua": 0,
+          "dropped_sectors": 0
+        },
+        "cut": null,
+        "cut_reached": false,
+        "post_previous_ack_stats": {
+          "reads": 43,
+          "writes": 66,
+          "flushes": 75,
+          "fua": 0,
+          "dropped_sectors": 0
+        }
+      },
+      "cold_read": {
+        "expected_marker": "KANGER_BLOCK_NATIVE_RECOVERED operation=private previous=2 selected=",
+        "normal_completion_marker": "KANGER_BLOCK_NATIVE_RECOVERED operation=private previous=2 selected=",
+        "observed_event": "application_marker",
+        "next_application_ack_observed": false,
+        "observed": true,
+        "exit_code": -9,
+        "block_stats": {
+          "reads": 1004,
+          "writes": 19,
+          "flushes": 6,
+          "fua": 0,
+          "dropped_sectors": 8
+        },
+        "honour_barriers": true,
+        "journal_recovery_seen": true,
+        "previous_ack_stats": null,
+        "cut": null,
+        "cut_reached": false,
+        "post_previous_ack_stats": null
+      },
+      "selected_revision": 2
+    }
+  },
+  "full_cut_matrix": false,
+  "producer_marker_overlay": true,
+  "provider_sha256": "ca5cce279f6e7a9e36760ae4c3545902b205b677585fa38cacde348d88225f23",
+  "sha256": {
+    "scripts/qualify-context-private-publication.py": "23b5d6a09aad9abaa25ba0471f982615129c7b8c5a8c060bba0d2dcac06a311f",
+    "scripts/qualify-context-block-device.py": "b299653db0d1644f0dc6b809a99482279e97391f9d9febbc35dcd62b373bc6a9",
+    "kanger-console/target/kanger-console-3.3-SNAPSHOT.jar": "ca5cce279f6e7a9e36760ae4c3545902b205b677585fa38cacde348d88225f23",
+    "kanger-qualification/src/org/kanger/storage/dumb2/ContextPrivatePublicationWitness.java": "a5e2e48d00fe630b93b18b04fedb5c71198da24b461365995e420e1cb913201d",
+    "kanger-qualification/src/org/kanger/storage/dumb2/ContextPrivatePublicationBlockRunner.java": "1a3b769e10ae064a7c943735ac338fec07cf1c878eb3cd6867c3389cdf336333",
+    "target/context-private-publication/run-aorqkqiq/rootfs/sbin/init": "ccf074936f03e6033d4535f7ef1bd970adcdb66bf3136678f09e08af237d2180",
+    "target/context-private-publication/run-aorqkqiq/template.ext4": "b2db6d82d38ceb1cd920433cd84b5aef28a21a83ef69472d57516c502e3eb725",
+    "target/context-private-publication/run-aorqkqiq/rootfs/app/private-classes/org/kanger/storage/dumb2/ContextPrivatePublicationBlockRunner.class": "e82fddf4202b434ea28c477cf66e63dc13da8312e4f032ab5ad03b1106cb0bbd",
+    "target/context-private-publication/run-aorqkqiq/rootfs/app/private-classes/org/kanger/storage/dumb2/ContextPrivatePublicationWitness.class": "af393f27b3f1d8eef8d1a3fd83d0fb5f47ae719633b205679679742c6ef8a667",
+    "kanger-data-dumb2/src/org/kanger/storage/dumb2/RevisionStore.java": "ff4333da9f74708b23b44545880134a3ff6e9334ecc97f8b2354706aeece37d9",
+    "target/context-private-publication/run-aorqkqiq/RevisionStore.java": "cc7a16337a85537d7efaf54d9950228eb5d97348a6feda0501d5e5dedca57af9",
+    "target/context-private-publication/run-aorqkqiq/rootfs/app/marker-overlay/org/kanger/storage/dumb2/RevisionStore.class": "b1495719acc0a1e4099b5e5356d1c702b6013afc900a517a1288c47f068ad98a",
+    "target/persistence-vm/manifest.json": "4a12e87d28fa1d3bef395ed5c8f06d063ec0ca95202a795a158e1f85733125b0",
+    "target/context-private-publication/run-aorqkqiq/marker-window/write-resume-native-private-serial.log": "626de2a75cd141a8864c3890c2603e0493656bc32c22c6d718a4519441919300",
+    "target/context-private-publication/run-aorqkqiq/marker-window/read-native-private-serial.log": "9208f4eb4218cfbd74b8cc6072a03c10fb5165373cfb794cf7cdca3d6a19417f",
+    "target/context-private-publication/run-aorqkqiq/seed/write-native-private-serial.log": "ece7d18b3eaab05c42f5be3b2be8e4c914fc2011da98133f64cdad93547a72a2",
+    "target/context-private-publication/run-aorqkqiq/seed/read-native-private-serial.log": "69984875bd2093c2fae676dcbcc0552d2cf4452ccd46d3006f103fae6dcbba5b",
+    "target/context-private-publication/run-aorqkqiq/rootfs/opt/java/docs/test-amd64/jtreg-summary-hotspot.log": "0e35e06e2f46a8d43183e7fc5005f785ac3c451b37eeceeea5e8c925c35e9065",
+    "target/context-private-publication/run-aorqkqiq/cut-freeze.jsonl": "cc8d8ccd265998a5e85867b234354f3550bb4be7682fc6978fef5ea5f2978584",
+    "target/context-private-publication/run-aorqkqiq/fua.jsonl": "8446d7f50b0dcbea1ed344af3d9d82a2d3408bfbc7f4dc3ea7969a7e0da0081e",
+    "target/context-private-publication/run-aorqkqiq/unflushed.jsonl": "dcb174f5a919c838d71895f5e1bb59951d9d5002da49c5ea5d3075eea85962f5",
+    "target/context-private-publication/run-aorqkqiq/flush.jsonl": "14d97e30a6781da3d8413ce944839dbca12e907df8ed55c5c87a1f72e6334413",
+    "target/context-private-publication/run-aorqkqiq/marker-window/write-resume-native-private-block.jsonl": "50eb16b0541266eee31aa2a913edd4122bf6361a99ddd0d78240f1ab284c4512",
+    "target/context-private-publication/run-aorqkqiq/marker-window/read-native-private-block.jsonl": "11c230515afe319f7450d6e819c2554eb42bbe898b3a74a9b50a6e61cbcf1dfc",
+    "target/context-private-publication/run-aorqkqiq/seed/write-native-private-block.jsonl": "ac7aeb62ff5f76e2c9c4b49f59ff1bb6144814b276454eb3bdae196b709454fd",
+    "target/context-private-publication/run-aorqkqiq/seed/read-native-private-block.jsonl": "0274d058ee492e1e54ad5131fc80bef267338702d126c16f20bf1d924ce21539",
+    "target/context-private-publication/run-aorqkqiq/marker-window/write-resume-native-private-command.json": "e24456270b8f10d13b5e97f17e5d1aa4f7b38aedd95b21295344b992bd466429",
+    "target/context-private-publication/run-aorqkqiq/marker-window/read-native-private-command.json": "ba5de91879516cec92df7085143e0f9159921d7ac0c8b23e7c77457acd043d82",
+    "target/context-private-publication/run-aorqkqiq/seed/write-native-private-command.json": "619d3ba2de59f9e20b6f6f129b4bb82e63cbe5174375d12bbb0ebc2a2c3f93e1",
+    "target/context-private-publication/run-aorqkqiq/seed/read-native-private-command.json": "b8f386ef4e77d72493e33ceef3aa6ca56cc86d451dffdc6ebc95d4ae31644105",
+    "target/context-private-publication/run-aorqkqiq/marker-window/result.json": "d7b07976ad79ecd057f6d03092a7595c210102ded47d6f8f5db77d9df1ba8823",
+    "target/context-private-publication/run-aorqkqiq/seed/result.json": "f0f5219a04320c06ff6bda15b249b9e3176bf202a67b80dfad519b80c9f76084"
+  }
+}
