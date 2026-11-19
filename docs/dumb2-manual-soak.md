@@ -558,3 +558,16 @@ the sole pin. Both publish through ordinary `DB.saveConnections`. The cold
 reader checks exact historical and CURRENT pins against their target identities
 and compares Source content. Audit the report with
 `python3 scripts/audit-context-native-block-device.py PATH/TO/report.json`.
+
+## Experimental ordinary family qualification
+
+To exercise the service path for ordinary DUMB2 writes and user transaction
+commits, launch the JVM with
+`-Dkanger.dumb2.experimental.ordinaryFamilyQualification=true` before `-jar`.
+Use a separate Console process for the experiment. The option is off by default.
+An enabled write with attached contexts uses the bounded whole-family verdict
+before the existing native pair and composition checks. Unsupported input can
+return `STORAGE_CONTEXT_INCOMPLETE`. Check that the revision stays unchanged and
+an explicitly started transaction is still available for rollback. Explicit
+checked writes retain their own qualification policy. Engine-owned checkpoint
+and refresh use their existing primary-declaration invariant.

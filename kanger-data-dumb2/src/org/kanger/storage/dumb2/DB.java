@@ -679,6 +679,8 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         }
     }
 
+    private static final String ORDINARY_FAMILY_QUALIFICATION =
+            "kanger.dumb2.experimental.ordinaryFamilyQualification";
     private boolean validatingCommit;
 
     @Override
@@ -688,6 +690,11 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         if (validatingCommit || isClosed() || isReadOnly() || workingConnections.isEmpty()) return;
         validatingCommit = true;
         try {
+            // Mind verifies that operational refresh and checkpoint preserve primary declarations.
+            if (pendingNativeWrite == null && !((Mind) proposed).isOperationalCommit()
+                    && Boolean.getBoolean(ORDINARY_FAMILY_QUALIFICATION)) {
+                validatePendingProductionCommit((Mind) proposed);
+            }
             validateEffectiveConnections((Mind) proposed, workingConnections);
             if(pendingNativeWrite!=null) pendingNativeWrite.validate((Mind)proposed);
         } finally { validatingCommit = false; }
