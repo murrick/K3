@@ -18,6 +18,12 @@ public final class ContextTrustRecoveryWitness {
     public static void main(String[] args) throws Exception {
         if (args.length != 1) throw new IllegalArgumentException("A fresh data directory is required");
         Path data = Files.createDirectory(Paths.get(args[0]).toAbsolutePath());
+        close(publish(data));
+        verify(data);
+        System.out.println("TRUST_REOPEN_WITNESS_OK");
+    }
+
+    static Mind publish(Path data) throws Exception {
         Mind rules = ContextPrivatePublicationWitness.open(new DB(), data, "Rules");
         require(rules.compile("!@x p(x) -> q(x);", null, false), "Rules original");
         close(rules);
@@ -30,9 +36,7 @@ public final class ContextTrustRecoveryWitness {
         source.connectContext("Rules", "own");
         source.connectContext("Facts", "own");
         require(source.saveConnections(mind) == 2, "Trust vector publication");
-        close(mind);
-        verify(data);
-        System.out.println("TRUST_REOPEN_WITNESS_OK");
+        return mind;
     }
     static void verify(Path data) throws Exception {
         for (String name : new String[] {"Rules", "Facts"}) {
@@ -42,6 +46,21 @@ public final class ContextTrustRecoveryWitness {
                     "Member alone derived the joint answer: " + name);
             } finally {
                 close(member);
+            }
+        }
+        Path source = data.resolve("Source");
+        require(RevisionStore.read(ContextStore.revisionPath(source)) == 2, "Source CURRENT");
+        try (ContextSnapshot snapshot = ContextSnapshot.open(source, 2)) {
+            ConnectionVector vector = ConnectionStore.read(source,
+                new RevisionRef(snapshot.getContextId(), 2));
+            for (String name : new String[] {"Rules", "Facts"}) {
+                Path location = data.resolve(name);
+                try (ContextSnapshot target = ContextSnapshot.open(location, 1)) {
+                    require(vector.getConnections().stream().anyMatch(pin ->
+                        pin.getTargetLocation().equals(location)
+                        && pin.getTarget().getContextId().equals(target.getContextId())
+                        && pin.getTarget().getRevision() == 1), "Exact pin missing: " + name);
+                }
             }
         }
         DB reopened = new DB();
