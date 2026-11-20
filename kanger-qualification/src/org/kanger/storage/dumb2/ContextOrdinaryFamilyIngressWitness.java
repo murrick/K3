@@ -141,12 +141,26 @@ public final class ContextOrdinaryFamilyIngressWitness {
 
             db.connectContext(reverse ? target : "A");
             db.connectContext(reverse ? "A" : target);
+            db.applyConnectionCommand(root, target, "!privateSafe(9);");
+            require(Boolean.TRUE.equals(root.query("?privateSafe(9);", null, false)),
+                    "Safe private rule was not applied");
+            expectConflict(() -> db.applyConnectionCommand(root, target, "!~p(1);"));
+            require(Boolean.TRUE.equals(root.query("?privateSafe(9);", null, false)),
+                    "Refused private edit discarded the previous layer");
+            require(db.federationSnapshot().getConnections().stream()
+                    .filter(pin -> pin.getPinnedRevision() == 1).count() == 2,
+                    "Private edit changed the pins");
             seed(data, target, "!~p(1);");
             expectConflict(() -> db.switchContextRevision(target, 2));
             require(db.federationSnapshot().getConnections().size() == 2
                     && db.federationSnapshot().getConnections().stream().allMatch(pin -> pin.getPinnedRevision() == 1),
                     "Refused repin changed working pins");
             require(db.getRevision() == revision, "Working edits published Source");
+            db.disconnectContext(target);
+            require(db.federationSnapshot().getConnections().size() == 1
+                    && root.query("?privateSafe(9);", null, false) == null,
+                    "Disconnect did not remove the private layer");
+            require(db.getRevision() == revision, "Disconnect published Source");
         } finally {
             root.closeStorage();
         }

@@ -1641,14 +1641,21 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
     private void validateTopologyFamily(ConnectionVector candidate) throws Exception {
         if (!Boolean.getBoolean(ORDINARY_FAMILY_QUALIFICATION) || candidate.isEmpty()) return;
         RevisionRef source = new RevisionRef(getContextId(), getRevision());
-        java.util.Map<String, Integer> limits = org.kanger.ContextUniversalCandidateRequest.DEFAULTS;
         try (SnapshotMindRuntime runtime = SnapshotMindRuntime.open(activeLocation(), source, "topology-family")) {
+            validateTopologyFamily(runtime.getMind(), source, candidate);
+        }
+    }
+
+    private void validateTopologyFamily(Mind view, RevisionRef source, ConnectionVector candidate)
+            throws Exception {
+        java.util.Map<String, Integer> limits = org.kanger.ContextUniversalCandidateRequest.DEFAULTS;
+        try {
             int rows = limits.get("rows");
             org.kanger.ContextProductionInventory local = org.kanger.ContextProductionInventory.inspect(
-                    runtime.getMind(), source.getContextId(), source.getRevision(), true,
+                    view, source.getContextId(), source.getRevision(), true,
                     java.util.Collections.emptyList(), rows);
             rows -= local.rows.size();
-            org.kanger.ContextProductionNativeBinding.Snapshot own = bindTopologyMember(runtime.getMind(), local, limits);
+            org.kanger.ContextProductionNativeBinding.Snapshot own = bindTopologyMember(view, local, limits);
             java.util.List<org.kanger.ContextProductionNativeBinding.Snapshot> foreign = new java.util.ArrayList<>();
             for (ContextConnection pin : candidate.getConnections()) {
                 Mind layer = pin.layer();
@@ -2137,6 +2144,9 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         try {
             candidate.extendLayer(original, command);
             ConnectionVector proposed = workingConnections.with(candidate);
+            if (Boolean.getBoolean(ORDINARY_FAMILY_QUALIFICATION)) {
+                validateTopologyFamily((Mind) sourceMind, new RevisionRef(getContextId(), getRevision()), proposed);
+            }
             validateEffectiveConnections((Mind) sourceMind, proposed);
             PairQualification.CompositionQualification before = PairQualification.qualifyCompositionState(
                     activeLocation(), getRevision(), workingConnections);
