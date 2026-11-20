@@ -553,6 +553,7 @@ def main():
                  ('org.kanger.ContextGroundCompositionRoundsRunner', 'CONTEXT_GROUND_COMPOSITION_ROUNDS_PASS'),
                  ('org.kanger.ContextGroundLocalClosureRunner', 'CONTEXT_GROUND_LOCAL_CLOSURE_PASS'),
                  ('org.kanger.ContextGroundClauseFamilyRunner', 'CONTEXT_GROUND_CLAUSE_FAMILY_PASS'),
+                 ('org.kanger.ContextSetPatternRunner', 'CONTEXT_SET_PATTERN_PASS'),
                  ('org.kanger.ContextUniversalCompositionProofRunner', 'CONTEXT_UNIVERSAL_COMPOSITION_PROOF_PASS'),
                  ('org.kanger.ContextUniversalCompositionRoundsRunner', 'CONTEXT_UNIVERSAL_COMPOSITION_ROUNDS_PASS'),
                  ('org.kanger.ContextUniversalUnitProofRunner', 'CONTEXT_UNIVERSAL_UNIT_PROOF_PASS'),

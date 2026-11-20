@@ -5,7 +5,6 @@ import java.util.*;
 import org.kanger.ContextProductionCapture.*;
 import org.kanger.enums.ArgumentType;
 import org.kanger.enums.DataType;
-import org.kanger.enums.FunctionBinding;
 import org.kanger.interfaces.IArgument;
 import org.kanger.units.Domain;
 import org.kanger.units.Rule;
@@ -88,8 +87,8 @@ public final class ContextProductionNativeBinding {
     private static boolean closedArithmetic(IArgument argument, Rule owner, Mind mind, Runnable work) throws Exception {
         if (argument.getType() != ArgumentType.FUNCTION) return false;
         org.kanger.units.Function function = (org.kanger.units.Function) argument.getObject(mind);
-        if (function.getBinding() == FunctionBinding.INFRASTRUCTURE
-                && "_set".equals(function.getName(mind).getValue())) {
+        if (ContextSetPattern.isConstructor(function, mind)) {
+            ContextSetPattern.capture(function, owner, mind, work);
             throw new IllegalStateException("Native unordered-set patterns require structured term qualification");
         }
         ContextArithmeticExpression expression = ContextArithmeticExpression.capture(argument, owner, mind, work);
