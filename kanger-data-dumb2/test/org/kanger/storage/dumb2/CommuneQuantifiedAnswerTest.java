@@ -46,6 +46,33 @@ class CommuneQuantifiedAnswerTest {
             assertEquals("Tom", row.get("z").toString());
         } finally { close(); }
     }
+    @Test void nativeBindingPreservesClosedSetEqualityAndRefusesVariableSetPatterns() throws Exception {
+        ContextProductionNativeBinding.Result first = bindSource("closedA", "!family([John,Mary,Tom]);");
+        ContextProductionNativeBinding.Result reordered = bindSource("closedB", "!family([Tom,John,Mary]);");
+        assertTrue(first.bound, first.reason);
+        assertTrue(reordered.bound, reordered.reason);
+        assertTrue(first.snapshot.primary.get(0).clauses.get(0).equivalent(
+                reordered.snapshot.primary.get(0).clauses.get(0)));
+
+        ContextProductionNativeBinding.Result pattern = bindSource("pattern",
+                "!@x @y @z father(x,z), mother(y,z) -> family([x,y,z]);");
+        assertFalse(pattern.bound);
+        assertNull(pattern.snapshot);
+        assertEquals("Native unordered-set patterns require structured term qualification", pattern.reason);
+    }
+
+    private ContextProductionNativeBinding.Result bindSource(String name, String source) throws Exception {
+        open(name);
+        try {
+            assertTrue(mind.compile(source));
+            ContextProductionInventory inventory = ContextProductionInventory.inspect(
+                    mind, data.getContextId(), data.getRevision(), true, Collections.emptyList(), 100);
+            return ContextProductionNativeBinding.bind(mind, inventory, 100000, 10000);
+        } finally {
+            close();
+        }
+    }
+
     @Test void communeEnumeratesUnorderedSetPatternBindings() throws Exception {
         create("natives", "!@x @y @z father(x,z), mother(y,z) -> family([x,y,z]);");
         create("facts", "!father(John,Tom); !mother(Mary,Tom); !father(John,Sarah); !mother(Mary,Sarah);");
