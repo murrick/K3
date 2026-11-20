@@ -87,6 +87,20 @@ class CommuneQuantifiedAnswerTest {
                 assertTrue(members.equals(new HashSet<>(Arrays.asList("John", "Mary", "Tom")))
                         || members.equals(new HashSet<>(Arrays.asList("John", "Mary", "Sarah"))));
             }
+            // The same set can be reached by permutations. A conjunction
+            // still has to join each member against its original variable.
+            assertEquals(Boolean.TRUE, mind.query(
+                    "?$x $y $z father(x,z), mother(y,z), family([x,y,z]);"));
+            Set<List<String>> joined = new HashSet<>();
+            for (Map<String,org.kanger.interfaces.ITerm> row : mind.getValues()) {
+                joined.add(Arrays.asList(row.get("x").toString(), row.get("y").toString(),
+                        row.get("z").toString()));
+            }
+            assertEquals(new HashSet<>(Arrays.asList(
+                    Arrays.asList("John", "Mary", "Tom"),
+                    Arrays.asList("John", "Mary", "Sarah"))), joined);
+            assertEquals(2, mind.getValues().size());
+
             assertEquals(Boolean.TRUE, mind.query("?$x family([John,Mary,x]);"));
             assertEquals(new HashSet<>(Arrays.asList("Tom", "Sarah")),
                     mind.getValues().getValues("x").stream().map(Object::toString)
