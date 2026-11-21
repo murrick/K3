@@ -85,6 +85,7 @@ public final class ContextSetPatternRunner {
             if (!"Set clause instance limit".equals(limit.getMessage())) throw limit;
         }
         auditFiniteDomain(setBranch, rule, mind);
+        checkFreshQuotientCounterexample(pattern, positions, mind);
         values.remove(positions[1]);
         try {
             pattern.instantiate(values, () -> {});
@@ -93,6 +94,23 @@ public final class ContextSetPatternRunner {
             // A set constructor cannot guess a missing assignment.
         }
     }
+    private static void checkFreshQuotientCounterexample(ContextSetPattern pattern, int[] positions, Mind mind)
+            throws Exception {
+        // Neither value occurs in the declaration. The scalar quotient gives
+        // both the same fresh representative, regardless of actual equality.
+        SemanticTermSnapshot first = SemanticTermSnapshot.capture(mind.getTerms().add("FreshOne"));
+        SemanticTermSnapshot second = SemanticTermSnapshot.capture(mind.getTerms().add("FreshTwo"));
+        if (first.semanticallyEquals(second)) throw new AssertionError("Distinct fresh values required");
+        Map<Integer, SemanticTermSnapshot> assignment = new HashMap<>();
+        assignment.put(positions[0], first);
+        assignment.put(positions[1], first);
+        SemanticTermSnapshot equalMembers = pattern.instantiate(assignment, () -> {});
+        assignment.put(positions[1], second);
+        SemanticTermSnapshot distinctMembers = pattern.instantiate(assignment, () -> {});
+        if (equalMembers.semanticallyEquals(distinctMembers))
+            throw new AssertionError("Native set construction lost the distinction between fresh assignments");
+    }
+
     private static void auditFiniteDomain(List<Domain> branch, Rule rule, Mind mind) throws Exception {
         List<String> names = java.util.Arrays.asList("John", "Mary", "Fresh");
         List<SemanticTermSnapshot> domain = new java.util.ArrayList<>();
