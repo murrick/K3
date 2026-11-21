@@ -61,6 +61,13 @@ final class ContextSetPattern {
         return new ContextSetPattern(members);
     }
 
+    void collectVariables(java.util.Set<Integer> variables, Runnable work) {
+        for (Member member : members) {
+            work.run();
+            if (member.variable >= 0) variables.add(member.variable);
+        }
+    }
+
     static int variablePosition(IArgument argument, Rule owner, Mind mind) throws Exception {
         TVariable variable = (TVariable) argument.getObject(mind);
         int index = variable.getIndex() - owner.getVarIndex();

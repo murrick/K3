@@ -239,6 +239,47 @@ public final class ContextProductionCapture implements AutoCloseable {
             return new Clause(atoms);
         }
 
+        /** Finite instances over a caller-supplied domain. This operation issues no model verdict. */
+        static List<Clause> enumerateSetInstances(List<Domain> branch, org.kanger.units.Rule owner,
+                Mind mind, List<SemanticTermSnapshot> domain, int maximumInstances, Runnable work)
+                throws Exception {
+            if (domain.isEmpty() || maximumInstances < 1)
+                throw new IllegalArgumentException("Nonempty domain and positive instance limit required");
+            Set<Integer> positions = new TreeSet<>();
+            for (Domain literal : branch) {
+                work.run();
+                for (IArgument argument : literal.getArguments()) {
+                    work.run();
+                    if (argument.getType() == ArgumentType.TVARIABLE) {
+                        positions.add(ContextSetPattern.variablePosition(argument, owner, mind));
+                    } else if (argument.getType() == ArgumentType.FUNCTION) {
+                        ContextSetPattern.capture((org.kanger.units.Function) argument.getObject(mind),
+                                owner, mind, work).collectVariables(positions, work);
+                    }
+                }
+            }
+            int count = 1;
+            for (int ignored : positions) {
+                work.run();
+                if (count > maximumInstances / domain.size())
+                    throw new IllegalStateException("Set clause instance limit");
+                count *= domain.size();
+            }
+            List<Clause> instances = new ArrayList<>();
+            for (int ordinal = 0; ordinal < count; ordinal++) {
+                work.run();
+                Map<Integer, SemanticTermSnapshot> assignment = new HashMap<>();
+                int digits = ordinal;
+                for (int position : positions) {
+                    work.run();
+                    assignment.put(position, Objects.requireNonNull(domain.get(digits % domain.size())));
+                    digits /= domain.size();
+                }
+                instances.add(instantiateSetClause(branch, owner, mind, assignment, work));
+            }
+            return Collections.unmodifiableList(instances);
+        }
+
         public boolean equivalent(Clause other) { return equivalent(other,()->{}); }
         boolean equivalent(Clause other,Runnable work) {
             if (other == null || literals.size() != other.literals.size() || variables.size() != other.variables.size()) return false;

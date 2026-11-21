@@ -72,6 +72,18 @@ public final class ContextSetPatternRunner {
                 setBranch, rule, mind, values, () -> {});
         checkClause(swapped, mary, john, first);
         if (original.equivalent(swapped)) throw new AssertionError("Equal sets hid distinct clause bindings");
+        List<ContextProductionCapture.Clause> instances = ContextProductionCapture.Clause.enumerateSetInstances(
+                setBranch, rule, mind, java.util.Arrays.asList(john, mary), 4, () -> {});
+        if (instances.size() != 4 || instances.stream().filter(original::equivalent).count() != 1
+                || instances.stream().filter(swapped::equivalent).count() != 1)
+            throw new AssertionError("Finite enumeration lost correlated assignments");
+        try {
+            ContextProductionCapture.Clause.enumerateSetInstances(
+                    setBranch, rule, mind, java.util.Arrays.asList(john, mary), 3, () -> {});
+            throw new AssertionError("Instance limit was ignored");
+        } catch (IllegalStateException limit) {
+            if (!"Set clause instance limit".equals(limit.getMessage())) throw limit;
+        }
         values.remove(positions[1]);
         try {
             pattern.instantiate(values, () -> {});
