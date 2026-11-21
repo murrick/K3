@@ -87,6 +87,7 @@ public final class ContextSetPatternRunner {
         auditFiniteDomain(setBranch, rule, mind);
         checkFreshQuotientCounterexample(pattern, positions, mind);
         checkFreshEqualityPatterns(pattern, positions, mind);
+        checkConstructedValueReuse(pattern, positions, mind);
         values.remove(positions[1]);
         try {
             pattern.instantiate(values, () -> {});
@@ -138,6 +139,35 @@ public final class ContextSetPatternRunner {
             throw new AssertionError("Equal and distinct fresh assignments collapsed");
         if (!outcomes.get("0:1").semanticallyEquals(outcomes.get("1:0")))
             throw new AssertionError("Set equality must ignore member order");
+    }
+
+    private static void checkConstructedValueReuse(ContextSetPattern pattern, int[] positions, Mind mind)
+            throws Exception {
+        SemanticTermSnapshot seed = SemanticTermSnapshot.capture(mind.getTerms().add("Seed"));
+        SemanticTermSnapshot marker = SemanticTermSnapshot.capture(mind.getTerms().add("Marker"));
+        List<SemanticTermSnapshot> history = new java.util.ArrayList<>(java.util.Arrays.asList(seed, marker));
+        Map<Integer, SemanticTermSnapshot> assignment = new HashMap<>();
+        assignment.put(positions[1], marker);
+        SemanticTermSnapshot previous = seed;
+        for (int depth = 1; depth <= 4; depth++) {
+            assignment.put(positions[0], previous);
+            SemanticTermSnapshot next = pattern.instantiate(assignment, () -> {});
+            if (!SemanticTermSnapshot.isOrdinaryValue(next.materialize())
+                    || history.stream().anyMatch(next::semanticallyEquals))
+                throw new AssertionError("Expected a new admissible set at depth " + depth);
+            List<org.kanger.interfaces.ITerm> members = next.materialize().semanticMembers();
+            boolean includesPrevious = false;
+            boolean includesMarker = false;
+            for (org.kanger.interfaces.ITerm member : members) {
+                SemanticTermSnapshot value = SemanticTermSnapshot.capture(member);
+                includesPrevious |= value.semanticallyEquals(previous);
+                includesMarker |= value.semanticallyEquals(marker);
+            }
+            if (members.size() != 2 || !includesPrevious || !includesMarker)
+                throw new AssertionError("Nested set membership changed at depth " + depth);
+            history.add(next);
+            previous = next;
+        }
     }
 
     private static void auditFiniteDomain(List<Domain> branch, Rule rule, Mind mind) throws Exception {
