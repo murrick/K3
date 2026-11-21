@@ -84,6 +84,7 @@ public final class ContextSetPatternRunner {
         } catch (IllegalStateException limit) {
             if (!"Set clause instance limit".equals(limit.getMessage())) throw limit;
         }
+        auditFiniteDomain(setBranch, rule, mind);
         values.remove(positions[1]);
         try {
             pattern.instantiate(values, () -> {});
@@ -92,6 +93,30 @@ public final class ContextSetPatternRunner {
             // A set constructor cannot guess a missing assignment.
         }
     }
+    private static void auditFiniteDomain(List<Domain> branch, Rule rule, Mind mind) throws Exception {
+        List<String> names = java.util.Arrays.asList("John", "Mary", "Fresh");
+        List<SemanticTermSnapshot> domain = new java.util.ArrayList<>();
+        for (String name : names) domain.add(SemanticTermSnapshot.capture(mind.getTerms().add(name)));
+        List<ContextProductionCapture.Clause> actual = ContextProductionCapture.Clause.enumerateSetInstances(
+                branch, rule, mind, domain, 9, () -> {});
+        java.util.Set<List<String>> remaining = new java.util.HashSet<>();
+        for (String left : names) {
+            for (String right : names) remaining.add(java.util.Arrays.asList(left, right));
+        }
+        for (ContextProductionCapture.Clause instance : actual) {
+            ContextProductionCapture.Fact body = instance.literals.stream()
+                    .filter(atom -> "a".equals(atom.predicate)).findFirst().orElseThrow(AssertionError::new).fact();
+            String left = body.arguments.get(0).materialize().toString();
+            String right = body.arguments.get(1).materialize().toString();
+            if (!remaining.remove(java.util.Arrays.asList(left, right)))
+                throw new AssertionError("Duplicate or out-of-domain assignment: " + left + ", " + right);
+            SemanticTermSnapshot expected = SemanticTermSnapshot.capture(
+                    mind.getTerms().add(new Object[]{left, right}));
+            checkClause(instance, domain.get(names.indexOf(left)), domain.get(names.indexOf(right)), expected);
+        }
+        if (!remaining.isEmpty()) throw new AssertionError("Missing assignments: " + remaining);
+    }
+
     private static void checkClause(ContextProductionCapture.Clause clause, SemanticTermSnapshot left,
             SemanticTermSnapshot right, SemanticTermSnapshot set) {
         if (!clause.variables.isEmpty() || clause.literals.size() != 2)
