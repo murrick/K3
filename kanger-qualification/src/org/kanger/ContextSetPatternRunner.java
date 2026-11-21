@@ -32,6 +32,7 @@ public final class ContextSetPatternRunner {
         ContextSetPattern pattern = null;
         int[] positions = new int[2];
         boolean body = false;
+        List<Domain> setBranch = null;
         for (List<Domain> branch : rule.getTree()) {
             for (Domain domain : branch) {
                 if ("a".equals(domain.getPredicate(mind).getName(mind))) {
@@ -44,8 +45,10 @@ public final class ContextSetPatternRunner {
                 for (IArgument argument : domain.getArguments()) {
                     if (argument.getType() != ArgumentType.FUNCTION) continue;
                     Function function = (Function) argument.getObject(mind);
-                    if (ContextSetPattern.isConstructor(function, mind))
+                    if (ContextSetPattern.isConstructor(function, mind)) {
                         pattern = ContextSetPattern.capture(function, rule, mind, () -> {});
+                        setBranch = branch;
+                    }
                 }
             }
         }
@@ -58,16 +61,37 @@ public final class ContextSetPatternRunner {
         SemanticTermSnapshot first = pattern.instantiate(values, () -> {});
         SemanticTermSnapshot expected = SemanticTermSnapshot.capture(mind.getTerms().add(new Object[]{"John", "Mary"}));
         if (!first.semanticallyEquals(expected)) throw new AssertionError("Native set changed after substitution");
+        ContextProductionCapture.Clause original = ContextProductionCapture.Clause.instantiateSetClause(
+                setBranch, rule, mind, values, () -> {});
+        checkClause(original, john, mary, first);
         values.put(positions[0], mary);
         values.put(positions[1], john);
         if (!first.semanticallyEquals(pattern.instantiate(values, () -> {})))
             throw new AssertionError("Permutation changed set equality");
+        ContextProductionCapture.Clause swapped = ContextProductionCapture.Clause.instantiateSetClause(
+                setBranch, rule, mind, values, () -> {});
+        checkClause(swapped, mary, john, first);
+        if (original.equivalent(swapped)) throw new AssertionError("Equal sets hid distinct clause bindings");
         values.remove(positions[1]);
         try {
             pattern.instantiate(values, () -> {});
             throw new AssertionError("Missing variable was accepted");
         } catch (IllegalArgumentException expectedFailure) {
             // A set constructor cannot guess a missing assignment.
+        }
+    }
+    private static void checkClause(ContextProductionCapture.Clause clause, SemanticTermSnapshot left,
+            SemanticTermSnapshot right, SemanticTermSnapshot set) {
+        if (!clause.variables.isEmpty() || clause.literals.size() != 2)
+            throw new AssertionError("Expected a ground clause with both literals");
+        for (ContextProductionCapture.Atom atom : clause.literals) {
+            ContextProductionCapture.Fact fact = atom.fact();
+            if ("a".equals(fact.predicate) && !fact.positive
+                    && fact.arguments.get(0).semanticallyEquals(left)
+                    && fact.arguments.get(1).semanticallyEquals(right)) continue;
+            if ("b".equals(fact.predicate) && fact.positive
+                    && fact.arguments.get(0).semanticallyEquals(set)) continue;
+            throw new AssertionError("Wrong substitution or polarity: " + fact.predicate);
         }
     }
 }

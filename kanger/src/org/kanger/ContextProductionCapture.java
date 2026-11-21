@@ -198,6 +198,47 @@ public final class ContextProductionCapture implements AutoCloseable {
             }
             return atoms.isEmpty() ? null : new Clause(atoms);
         }
+        /** Instantiate a native clause with flat set constructors using rule-relative bindings. */
+        static Clause instantiateSetClause(List<Domain> branch, org.kanger.units.Rule owner, Mind mind,
+                Map<Integer, SemanticTermSnapshot> assignment, Runnable work) throws Exception {
+            if (branch.isEmpty() || branch.size() > 8)
+                throw new IllegalArgumentException("Native clause width limit");
+            List<Atom> atoms = new ArrayList<>();
+            for (Domain domain : branch) {
+                work.run();
+                if (domain.isSystem(mind) || domain.isCalculated(mind)
+                        || "rule(1)".equals(domain.getPredicate(mind).toString(mind)))
+                    throw new IllegalArgumentException("Ordinary native clause required");
+                List<Slot> slots = new ArrayList<>();
+                for (IArgument argument : domain.getArguments()) {
+                    work.run();
+                    SemanticTermSnapshot value;
+                    switch (argument.getType()) {
+                        case TVARIABLE:
+                            value = ContextSetPattern.requireBinding(
+                                    ContextSetPattern.variablePosition(argument, owner, mind), assignment);
+                            break;
+                        case FUNCTION:
+                            value = ContextSetPattern.capture(
+                                    (org.kanger.units.Function) argument.getObject(mind), owner, mind, work)
+                                    .instantiate(assignment, work);
+                            break;
+                        case TERM:
+                            ITerm term = argument.getValue(mind);
+                            if (!SemanticTermSnapshot.isOrdinaryValue(term))
+                                throw new IllegalArgumentException("Ordinary clause constant required");
+                            value = SemanticTermSnapshot.capture(term);
+                            break;
+                        default:
+                            throw new IllegalArgumentException("Unsupported native clause argument");
+                    }
+                    slots.add(new Slot(value, -1));
+                }
+                atoms.add(new Atom(domain.getPredicate(mind).getName(mind), domain.isAntc(), slots));
+            }
+            return new Clause(atoms);
+        }
+
         public boolean equivalent(Clause other) { return equivalent(other,()->{}); }
         boolean equivalent(Clause other,Runnable work) {
             if (other == null || literals.size() != other.literals.size() || variables.size() != other.variables.size()) return false;

@@ -50,11 +50,7 @@ final class ContextSetPattern {
             work.run();
             IArgument argument = function.getArguments().get(i);
             if (argument.getType() == ArgumentType.TVARIABLE) {
-                TVariable variable = (TVariable) argument.getObject(mind);
-                int index = variable.getIndex() - owner.getVarIndex();
-                if (variable.getRuleId() != owner.getId() || index < 0)
-                    throw new IllegalStateException("Set member variable does not belong to the rule");
-                members.add(new Member(index, null));
+                members.add(new Member(variablePosition(argument, owner, mind), null));
             } else if (argument.getType() == ArgumentType.TERM
                     && SemanticTermSnapshot.isOrdinaryValue(argument.getValue(mind))) {
                 members.add(new Member(-1, SemanticTermSnapshot.capture(argument.getValue(mind))));
@@ -65,13 +61,27 @@ final class ContextSetPattern {
         return new ContextSetPattern(members);
     }
 
+    static int variablePosition(IArgument argument, Rule owner, Mind mind) throws Exception {
+        TVariable variable = (TVariable) argument.getObject(mind);
+        int index = variable.getIndex() - owner.getVarIndex();
+        if (variable.getRuleId() != owner.getId() || index < 0)
+            throw new IllegalStateException("Variable does not belong to the rule");
+        return index;
+    }
+
+    static SemanticTermSnapshot requireBinding(int index, Map<Integer, SemanticTermSnapshot> assignment) {
+        SemanticTermSnapshot value = assignment.get(index);
+        if (value == null) throw new IllegalArgumentException("Missing binding for rule variable " + index);
+        return value;
+    }
+
     SemanticTermSnapshot instantiate(Map<Integer, SemanticTermSnapshot> assignment, Runnable work)
             throws Exception {
         List<ITerm> values = new ArrayList<>();
         for (Member member : members) {
             work.run();
-            SemanticTermSnapshot value = member.variable < 0 ? member.constant : assignment.get(member.variable);
-            if (value == null) throw new IllegalArgumentException("Missing binding for set variable " + member.variable);
+            SemanticTermSnapshot value = member.variable < 0
+                    ? member.constant : requireBinding(member.variable, assignment);
             values.add(value.materialize());
         }
         Term set = new Term();
