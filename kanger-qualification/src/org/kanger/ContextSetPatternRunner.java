@@ -86,6 +86,7 @@ public final class ContextSetPatternRunner {
         }
         auditFiniteDomain(setBranch, rule, mind);
         checkFreshQuotientCounterexample(pattern, positions, mind);
+        checkFreshEqualityPatterns(pattern, positions, mind);
         values.remove(positions[1]);
         try {
             pattern.instantiate(values, () -> {});
@@ -109,6 +110,34 @@ public final class ContextSetPatternRunner {
         SemanticTermSnapshot distinctMembers = pattern.instantiate(assignment, () -> {});
         if (equalMembers.semanticallyEquals(distinctMembers))
             throw new AssertionError("Native set construction lost the distinction between fresh assignments");
+    }
+
+    private static void checkFreshEqualityPatterns(ContextSetPattern pattern, int[] positions, Mind mind)
+            throws Exception {
+        SemanticTermSnapshot known = SemanticTermSnapshot.capture(mind.getTerms().add("Named"));
+        SemanticTermSnapshot fresh1 = SemanticTermSnapshot.capture(mind.getTerms().add("FreshOne"));
+        SemanticTermSnapshot fresh2 = SemanticTermSnapshot.capture(mind.getTerms().add("FreshTwo"));
+        List<SemanticTermSnapshot> values = java.util.Arrays.asList(known, fresh1, fresh2);
+        Map<String, SemanticTermSnapshot> outcomes = new HashMap<>();
+        for (int left = 0; left < values.size(); left++) {
+            for (int right = 0; right < values.size(); right++) {
+                // Rename anonymous values by first occurrence, preserving equality.
+                int first = left == 0 ? 0 : 1;
+                int second = right == 0 ? 0 : (left == 0 || left == right ? 1 : 2);
+                Map<Integer, SemanticTermSnapshot> assignment = new HashMap<>();
+                assignment.put(positions[0], values.get(first));
+                assignment.put(positions[1], values.get(second));
+                outcomes.put(first + ":" + second, pattern.instantiate(assignment, () -> {}));
+            }
+        }
+        java.util.Set<String> expected = new java.util.HashSet<>(
+                java.util.Arrays.asList("0:0", "0:1", "1:0", "1:1", "1:2"));
+        if (!outcomes.keySet().equals(expected))
+            throw new AssertionError("Missing or extra equality pattern: " + outcomes.keySet());
+        if (outcomes.get("1:1").semanticallyEquals(outcomes.get("1:2")))
+            throw new AssertionError("Equal and distinct fresh assignments collapsed");
+        if (!outcomes.get("0:1").semanticallyEquals(outcomes.get("1:0")))
+            throw new AssertionError("Set equality must ignore member order");
     }
 
     private static void auditFiniteDomain(List<Domain> branch, Rule rule, Mind mind) throws Exception {
