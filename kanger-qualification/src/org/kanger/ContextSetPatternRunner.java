@@ -22,6 +22,7 @@ public final class ContextSetPatternRunner {
         for (IRule item : mind.getRules()) {
             if (item.isGenerated()) continue;
             check((Rule) item, mind);
+            checkNativeClosureChain();
             System.out.println("CONTEXT_SET_PATTERN_PASS");
             return;
         }
@@ -168,6 +169,36 @@ public final class ContextSetPatternRunner {
             history.add(next);
             previous = next;
         }
+    }
+
+    private static void checkNativeClosureChain() throws Exception {
+        User user = new User();
+        Mind mind = new Mind(user);
+        user.setCurrentMind(mind);
+        String rules = "!start(Seed);"
+                + " !@x start(x)->middle([x,Marker]);"
+                + " !@x middle(x)->finish([x,Marker]);";
+        if (!mind.compile(rules)) throw new AssertionError("Native set chain fixture");
+        SemanticTermSnapshot first = querySingleValue(mind, "?$x middle(x);");
+        SemanticTermSnapshot second = querySingleValue(mind, "?$x finish(x);");
+        SemanticTermSnapshot expected = SemanticTermSnapshot.capture(
+                mind.getTerms().add(new Object[]{"Seed", "Marker"}));
+        if (!first.semanticallyEquals(expected)) throw new AssertionError("First native set differs");
+        if (first.semanticallyEquals(second)) throw new AssertionError("Native chain collapsed nested values");
+        SemanticTermSnapshot flat = SemanticTermSnapshot.capture(
+                mind.getTerms().add(new Object[]{"Seed", "Marker", "Marker"}));
+        if (!flat.semanticallyEquals(second))
+            throw new AssertionError("Native flattening baseline changed");
+        List<org.kanger.interfaces.ITerm> members = second.materialize().semanticMembers();
+        if (members.size() != 3 || members.stream().anyMatch(member -> member.getType() == org.kanger.enums.DataType.SET))
+            throw new AssertionError("Expected flat native members including the repeated marker");
+    }
+
+    private static SemanticTermSnapshot querySingleValue(Mind mind, String query) throws Exception {
+        if (!Boolean.TRUE.equals(mind.query(query, null, false))) throw new AssertionError(query);
+        List<org.kanger.interfaces.ITerm> values = mind.getValues().getValues("x");
+        if (values.size() != 1) throw new AssertionError("Expected exactly one value for " + query);
+        return SemanticTermSnapshot.capture(values.get(0));
     }
 
     private static void auditFiniteDomain(List<Domain> branch, Rule rule, Mind mind) throws Exception {
