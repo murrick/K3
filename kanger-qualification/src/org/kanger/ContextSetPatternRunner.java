@@ -156,16 +156,11 @@ public final class ContextSetPatternRunner {
             if (!SemanticTermSnapshot.isOrdinaryValue(next.materialize())
                     || history.stream().anyMatch(next::semanticallyEquals))
                 throw new AssertionError("Expected a new admissible set at depth " + depth);
-            List<org.kanger.interfaces.ITerm> members = next.materialize().semanticMembers();
-            boolean includesPrevious = false;
-            boolean includesMarker = false;
-            for (org.kanger.interfaces.ITerm member : members) {
-                SemanticTermSnapshot value = SemanticTermSnapshot.capture(member);
-                includesPrevious |= value.semanticallyEquals(previous);
-                includesMarker |= value.semanticallyEquals(marker);
-            }
-            if (members.size() != 2 || !includesPrevious || !includesMarker)
-                throw new AssertionError("Nested set membership changed at depth " + depth);
+            Object[] expected = new Object[depth + 1];
+            expected[0] = "Seed";
+            java.util.Arrays.fill(expected, 1, expected.length, "Marker");
+            if (!next.semanticallyEquals(SemanticTermSnapshot.capture(mind.getTerms().add(expected))))
+                throw new AssertionError("Flat membership or marker multiplicity changed at depth " + depth);
             history.add(next);
             previous = next;
         }

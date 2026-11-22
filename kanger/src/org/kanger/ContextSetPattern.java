@@ -89,10 +89,26 @@ final class ContextSetPattern {
             work.run();
             SemanticTermSnapshot value = member.variable < 0
                     ? member.constant : requireBinding(member.variable, assignment);
-            values.add(value.materialize());
+            appendNativeMembers(values, value.materialize(), work);
         }
         Term set = new Term();
         set.setPersistentState(DataType.SET, values, 0, 0, -1L, -1L, false);
         return SemanticTermSnapshot.capture(set);
+    }
+    private static void appendNativeMembers(List<ITerm> values, Term value, Runnable work) throws Exception {
+        java.util.Deque<ITerm> pending = new java.util.ArrayDeque<>();
+        pending.push(value);
+        while (!pending.isEmpty()) {
+            work.run();
+            ITerm member = pending.pop();
+            if (member.getType() == DataType.INTERVAL)
+                throw new IllegalArgumentException("Set interval members require native range expansion");
+            if (member.getType() == DataType.SET) {
+                List<ITerm> members = ((Term) member).semanticMembers();
+                for (int i = members.size() - 1; i >= 0; i--) pending.push(members.get(i));
+            } else {
+                values.add(member);
+            }
+        }
     }
 }
