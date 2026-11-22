@@ -24,6 +24,7 @@ public final class ContextSetPatternRunner {
             check((Rule) item, mind);
             checkNativeClosureChain();
             checkAcyclicReuseWithWideInputs();
+            checkNativeDiagonalGrowth();
             System.out.println("CONTEXT_SET_PATTERN_PASS");
             return;
         }
@@ -227,6 +228,24 @@ public final class ContextSetPatternRunner {
             SemanticTermSnapshot expected = SemanticTermSnapshot.capture(mind.getTerms().add(members));
             if (outcomes.stream().filter(expected::semanticallyEquals).count() != 1)
                 throw new AssertionError("Output did not preserve input multiplicity and add one member");
+        }
+    }
+
+    private static void checkNativeDiagonalGrowth() throws Exception {
+        User user = new User();
+        Mind mind = new Mind(user);
+        user.setCurrentMind(mind);
+        if (!mind.compile("!seed(Marker); !@x seed(x)->twice([x,x]);"
+                + " !@x twice(x)->four([x,x]); !@x four(x)->eight([x,x]);"))
+            throw new AssertionError("Native diagonal fixture");
+        String[] outputs = {"twice", "four", "eight"};
+        for (int i = 0; i < outputs.length; i++) {
+            SemanticTermSnapshot actual = querySingleValue(mind, "?$x " + outputs[i] + "(x);");
+            Object[] markers = new Object[2 << i];
+            java.util.Arrays.fill(markers, "Marker");
+            SemanticTermSnapshot expected = SemanticTermSnapshot.capture(mind.getTerms().add(markers));
+            if (!actual.semanticallyEquals(expected))
+                throw new AssertionError("Native diagonal constructor did not preserve both occurrences: " + outputs[i]);
         }
     }
 
