@@ -280,6 +280,32 @@ public final class ContextProductionCapture implements AutoCloseable {
             return Collections.unmodifiableList(instances);
         }
 
+        /**
+         * Verify that every argument in these ground instances occurs in the explicit domain.
+         * The result identifies the first missing value, if any.
+         */
+        static java.util.Optional<SemanticTermSnapshot> firstValueOutsideDomain(
+                List<Clause> instances, List<SemanticTermSnapshot> domain, Runnable work) {
+            for (Clause clause : instances) {
+                if (!clause.variables.isEmpty())
+                    throw new IllegalArgumentException("Ground set instances required");
+                for (Atom literal : clause.literals) {
+                    for (Slot argument : literal.arguments) {
+                        boolean present = false;
+                        for (SemanticTermSnapshot value : domain) {
+                            work.run();
+                            if (argument.value.semanticallyEquals(value)) {
+                                present = true;
+                                break;
+                            }
+                        }
+                        if (!present) return java.util.Optional.of(argument.value);
+                    }
+                }
+            }
+            return java.util.Optional.empty();
+        }
+
         public boolean equivalent(Clause other) { return equivalent(other,()->{}); }
         boolean equivalent(Clause other,Runnable work) {
             if (other == null || literals.size() != other.literals.size() || variables.size() != other.variables.size()) return false;

@@ -86,6 +86,7 @@ public final class ContextSetPatternRunner {
         } catch (IllegalStateException limit) {
             if (!"Set clause instance limit".equals(limit.getMessage())) throw limit;
         }
+        checkExplicitDomainClosure(setBranch, rule, mind, john, mary, instances);
         auditFiniteDomain(setBranch, rule, mind);
         checkFreshQuotientCounterexample(pattern, positions, mind);
         checkFreshEqualityPatterns(pattern, positions, mind);
@@ -234,6 +235,25 @@ public final class ContextSetPatternRunner {
         List<org.kanger.interfaces.ITerm> values = mind.getValues().getValues("x");
         if (values.size() != 1) throw new AssertionError("Expected exactly one value for " + query);
         return SemanticTermSnapshot.capture(values.get(0));
+    }
+
+    private static void checkExplicitDomainClosure(List<Domain> branch, Rule rule, Mind mind,
+            SemanticTermSnapshot john, SemanticTermSnapshot mary,
+            List<ContextProductionCapture.Clause> instances) throws Exception {
+        List<SemanticTermSnapshot> domain = java.util.Arrays.asList(john, mary);
+        SemanticTermSnapshot outside = ContextProductionCapture.Clause.firstValueOutsideDomain(
+                instances, domain, () -> {}).orElseThrow(AssertionError::new);
+        SemanticTermSnapshot repeatedJohn = SemanticTermSnapshot.capture(
+                mind.getTerms().add(new Object[]{"John", "John"}));
+        if (!outside.semanticallyEquals(repeatedJohn))
+            throw new AssertionError("Closure check did not return the first constructed value");
+
+        SemanticTermSnapshot emptySet = SemanticTermSnapshot.capture(mind.getTerms().add(new Object[0]));
+        List<SemanticTermSnapshot> closed = java.util.Collections.singletonList(emptySet);
+        List<ContextProductionCapture.Clause> closedInstances =
+                ContextProductionCapture.Clause.enumerateSetInstances(branch, rule, mind, closed, 1, () -> {});
+        if (ContextProductionCapture.Clause.firstValueOutsideDomain(closedInstances, closed, () -> {}).isPresent())
+            throw new AssertionError("The empty set is closed under self-concatenation");
     }
 
     private static void auditFiniteDomain(List<Domain> branch, Rule rule, Mind mind) throws Exception {
