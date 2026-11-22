@@ -1,6 +1,7 @@
 /* MIT License. Copyright (c) 2026 Dmitry G. Quznetsov. */
 package org.kanger;
 
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -192,6 +193,9 @@ public final class ContextSetPatternRunner {
                 + " !@x start(x)->middle([x,Marker]);"
                 + " !@x middle(x)->finish([x,Marker]);";
         if (!mind.compile(rules)) throw new AssertionError("Native set chain fixture");
+        BigInteger large = BigInteger.ONE.shiftLeft(80);
+        if (!symbolicWidth(mind, "middle", large).equals(large.add(BigInteger.ONE)))
+            throw new AssertionError("Fixed marker must add one member at arbitrary input width");
         SemanticTermSnapshot first = querySingleValue(mind, "?$x middle(x);");
         SemanticTermSnapshot second = querySingleValue(mind, "?$x finish(x);");
         SemanticTermSnapshot expected = SemanticTermSnapshot.capture(
@@ -239,14 +243,40 @@ public final class ContextSetPatternRunner {
                 + " !@x twice(x)->four([x,x]); !@x four(x)->eight([x,x]);"))
             throw new AssertionError("Native diagonal fixture");
         String[] outputs = {"twice", "four", "eight"};
+        BigInteger width = BigInteger.ONE;
         for (int i = 0; i < outputs.length; i++) {
+            width = symbolicWidth(mind, outputs[i], width);
             SemanticTermSnapshot actual = querySingleValue(mind, "?$x " + outputs[i] + "(x);");
             Object[] markers = new Object[2 << i];
             java.util.Arrays.fill(markers, "Marker");
             SemanticTermSnapshot expected = SemanticTermSnapshot.capture(mind.getTerms().add(markers));
-            if (!actual.semanticallyEquals(expected))
+            if (!actual.semanticallyEquals(expected)
+                    || !width.equals(BigInteger.valueOf(actual.materialize().semanticMembers().size())))
                 throw new AssertionError("Native diagonal constructor did not preserve both occurrences: " + outputs[i]);
         }
+    }
+
+    private static BigInteger symbolicWidth(Mind mind, String predicate, BigInteger width) throws Exception {
+        for (IRule item : mind.getRules()) {
+            if (item.isGenerated()) continue;
+            Rule rule = (Rule) item;
+            for (List<Domain> branch : rule.getTree()) {
+                for (Domain literal : branch) {
+                    if (!predicate.equals(literal.getPredicate(mind).getName(mind))) continue;
+                    for (IArgument argument : literal.getArguments()) {
+                        if (argument.getType() != ArgumentType.FUNCTION) continue;
+                        ContextSetPattern constructor = ContextSetPattern.capture(
+                                (Function) argument.getObject(mind), rule, mind, () -> {});
+                        java.util.Set<Integer> positions = new java.util.HashSet<>();
+                        constructor.collectVariables(positions, () -> {});
+                        if (positions.size() != 1) throw new AssertionError("One input variable required");
+                        return constructor.resultWidth(
+                                java.util.Collections.singletonMap(positions.iterator().next(), width), () -> {});
+                    }
+                }
+            }
+        }
+        throw new AssertionError("Missing constructor " + predicate);
     }
 
     private static SemanticTermSnapshot querySingleValue(Mind mind, String query) throws Exception {

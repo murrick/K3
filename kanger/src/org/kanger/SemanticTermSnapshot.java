@@ -159,6 +159,13 @@ public final class SemanticTermSnapshot {
 
     /** Walk set members without materializing or copying an uncharged input tree. */
     void appendFlatSetMembers(List<ITerm> result, Runnable work) {
+        visitFlatSetMembers(node -> {
+            node.chargePayload(work);
+            result.add(node.materialize());
+        }, work);
+    }
+
+    void visitFlatSetMembers(java.util.function.Consumer<SemanticTermSnapshot> visitor, Runnable work) {
         Deque<Iterator<SemanticTermSnapshot>> pending = new ArrayDeque<>();
         pending.push(Collections.singletonList(this).iterator());
         while (!pending.isEmpty()) {
@@ -174,8 +181,7 @@ public final class SemanticTermSnapshot {
             if (node.type == DataType.SET) {
                 pending.push(node.members.iterator());
             } else {
-                node.chargePayload(work);
-                result.add(node.materialize());
+                visitor.accept(node);
             }
         }
     }

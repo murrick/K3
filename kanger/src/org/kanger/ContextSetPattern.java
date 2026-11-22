@@ -1,6 +1,7 @@
 /* MIT License. Copyright (c) 2026 Dmitry G. Quznetsov. */
 package org.kanger;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -80,6 +81,25 @@ final class ContextSetPattern {
         SemanticTermSnapshot value = assignment.get(index);
         if (value == null) throw new IllegalArgumentException("Missing binding for rule variable " + index);
         return value;
+    }
+
+    /** Exact result width given flattened input widths for interval-free values. */
+    BigInteger resultWidth(Map<Integer, BigInteger> inputWidths, Runnable work) {
+        BigInteger total = BigInteger.ZERO;
+        for (Member member : members) {
+            work.run();
+            if (member.variable >= 0) {
+                BigInteger width = inputWidths.get(member.variable);
+                if (width == null || width.signum() < 0)
+                    throw new IllegalArgumentException("Missing or negative set input width: " + member.variable);
+                total = total.add(width);
+            } else {
+                BigInteger[] width = { BigInteger.ZERO };
+                member.constant.visitFlatSetMembers(ignored -> width[0] = width[0].add(BigInteger.ONE), work);
+                total = total.add(width[0]);
+            }
+        }
+        return total;
     }
 
     SemanticTermSnapshot instantiate(Map<Integer, SemanticTermSnapshot> assignment, Runnable work)
