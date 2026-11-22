@@ -23,6 +23,7 @@ public final class ContextSetPatternRunner {
             if (item.isGenerated()) continue;
             check((Rule) item, mind);
             checkNativeClosureChain();
+            checkAcyclicReuseWithWideInputs();
             System.out.println("CONTEXT_SET_PATTERN_PASS");
             return;
         }
@@ -202,6 +203,30 @@ public final class ContextSetPatternRunner {
         List<org.kanger.interfaces.ITerm> members = second.materialize().semanticMembers();
         if (members.size() != 3 || members.stream().anyMatch(member -> member.getType() == org.kanger.enums.DataType.SET))
             throw new AssertionError("Expected flat native members including the repeated marker");
+    }
+
+    private static void checkAcyclicReuseWithWideInputs() throws Exception {
+        User user = new User();
+        Mind mind = new Mind(user);
+        user.setCurrentMind(mind);
+        String declaration = "!@x input(x)->output([x,Marker]);";
+        if (!mind.compile(declaration + " !input([Seed,Marker]); !input([Seed,Marker,Marker]);"
+                + " !input([Seed,Marker,Marker,Marker]);"))
+            throw new AssertionError("Acyclic constructor fixture");
+        if (!Boolean.TRUE.equals(mind.query("?$x output(x);", null, false)))
+            throw new AssertionError("Acyclic constructor produced no values");
+        List<SemanticTermSnapshot> outcomes = new java.util.ArrayList<>();
+        for (org.kanger.interfaces.ITerm value : mind.getValues().getValues("x"))
+            outcomes.add(SemanticTermSnapshot.capture(value));
+        if (outcomes.size() != 3) throw new AssertionError("Distinct input multiplicities collapsed");
+        for (int markers = 2; markers <= 4; markers++) {
+            Object[] members = new Object[markers + 1];
+            members[0] = "Seed";
+            java.util.Arrays.fill(members, 1, members.length, "Marker");
+            SemanticTermSnapshot expected = SemanticTermSnapshot.capture(mind.getTerms().add(members));
+            if (outcomes.stream().filter(expected::semanticallyEquals).count() != 1)
+                throw new AssertionError("Output did not preserve input multiplicity and add one member");
+        }
     }
 
     private static SemanticTermSnapshot querySingleValue(Mind mind, String query) throws Exception {
