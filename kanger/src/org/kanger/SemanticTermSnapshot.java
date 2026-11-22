@@ -9,11 +9,14 @@ import org.kanger.enums.DataType;
 import org.kanger.interfaces.ITerm;
 import org.kanger.units.Term;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Deque;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -152,6 +155,47 @@ public final class SemanticTermSnapshot {
 
     public int getHash() {
         return hash;
+    }
+
+    /** Walk set members without materializing or copying an uncharged input tree. */
+    void appendFlatSetMembers(List<ITerm> result, Runnable work) {
+        Deque<Iterator<SemanticTermSnapshot>> pending = new ArrayDeque<>();
+        pending.push(Collections.singletonList(this).iterator());
+        while (!pending.isEmpty()) {
+            Iterator<SemanticTermSnapshot> current = pending.peek();
+            if (!current.hasNext()) {
+                pending.pop();
+                continue;
+            }
+            work.run();
+            SemanticTermSnapshot node = current.next();
+            if (node.type == DataType.INTERVAL)
+                throw new IllegalArgumentException("Set interval members require native range expansion");
+            if (node.type == DataType.SET) {
+                pending.push(node.members.iterator());
+            } else {
+                node.chargePayload(work);
+                result.add(node.materialize());
+            }
+        }
+    }
+
+    private void chargePayload(Runnable work) {
+        Deque<Iterator<SemanticTermSnapshot>> pending = new ArrayDeque<>();
+        pending.push(Collections.singletonList(this).iterator());
+        while (!pending.isEmpty()) {
+            Iterator<SemanticTermSnapshot> children = pending.peek();
+            if (!children.hasNext()) {
+                pending.pop();
+                continue;
+            }
+            work.run();
+            SemanticTermSnapshot node = children.next();
+            if (node.scalar instanceof byte[]) {
+                for (byte ignored : (byte[]) node.scalar) work.run();
+            }
+            if (!node.members.isEmpty()) pending.push(node.members.iterator());
+        }
     }
 
     /** Exact containment, including nested ordinary values. */

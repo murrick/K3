@@ -164,6 +164,21 @@ public final class ContextSetPatternRunner {
             history.add(next);
             previous = next;
         }
+        assignment.put(positions[0], previous);
+        int[] work = { 5 };
+        try {
+            pattern.instantiate(assignment, () -> {
+                if (--work[0] < 0) throw new IllegalStateException("Set substitution work limit");
+            });
+            throw new AssertionError("Expected the repeated members to consume the work budget");
+        } catch (IllegalStateException limit) {
+            if (!"Set substitution work limit".equals(limit.getMessage())) throw limit;
+        }
+        SemanticTermSnapshot retried = pattern.instantiate(assignment, () -> {});
+        SemanticTermSnapshot expected = SemanticTermSnapshot.capture(
+                mind.getTerms().add(new Object[]{"Seed", "Marker", "Marker", "Marker", "Marker", "Marker"}));
+        if (!retried.semanticallyEquals(expected))
+            throw new AssertionError("Budget refusal altered the input or subsequent substitution");
     }
 
     private static void checkNativeClosureChain() throws Exception {
