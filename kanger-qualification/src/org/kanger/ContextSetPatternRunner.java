@@ -26,6 +26,7 @@ public final class ContextSetPatternRunner {
             checkNativeClosureChain();
             checkAcyclicReuseWithWideInputs();
             checkNativeDiagonalGrowth();
+            checkSymbolicIdentities();
             System.out.println("CONTEXT_SET_PATTERN_PASS");
             return;
         }
@@ -263,6 +264,47 @@ public final class ContextSetPatternRunner {
                     || !width.equals(BigInteger.valueOf(actual.materialize().semanticMembers().size())))
                 throw new AssertionError("Native diagonal constructor did not preserve both occurrences: " + outputs[i]);
         }
+    }
+
+    private static void checkSymbolicIdentities() throws Exception {
+        User user = new User();
+        Mind mind = new Mind(user);
+        user.setCurrentMind(mind);
+        if (!mind.compile("!@x source(x)->p([x,Marker]), q([Marker,x]), r([x,x]), s([x,Other]);"))
+            throw new AssertionError("Symbolic identity fixture");
+        Map<String, ContextSetPattern> patterns = new HashMap<>();
+        for (IRule item : mind.getRules()) {
+            if (item.isGenerated()) continue;
+            Rule rule = (Rule) item;
+            for (List<Domain> branch : rule.getTree()) {
+                for (Domain literal : branch) {
+                    for (IArgument argument : literal.getArguments()) {
+                        if (argument.getType() != ArgumentType.FUNCTION) continue;
+                        patterns.put(literal.getPredicate(mind).getName(mind), ContextSetPattern.capture(
+                                (Function) argument.getObject(mind), rule, mind, () -> {}));
+                    }
+                }
+            }
+        }
+        ContextSetPattern first = java.util.Objects.requireNonNull(patterns.get("p"));
+        if (!first.sameFlatExpression(patterns.get("q"), () -> {})
+                || first.sameFlatExpression(patterns.get("r"), () -> {})
+                || first.sameFlatExpression(patterns.get("s"), () -> {}))
+            throw new AssertionError("Incorrect constructor identity");
+        java.util.Set<Integer> variables = new java.util.HashSet<>();
+        first.collectVariables(variables, () -> {});
+        Map<Integer, SemanticTermSnapshot> assignment = java.util.Collections.singletonMap(
+                variables.iterator().next(), SemanticTermSnapshot.capture(mind.getTerms().add("Fresh")));
+        SemanticTermSnapshot value = first.instantiate(assignment, () -> {});
+        for (String predicate : java.util.Arrays.asList("q", "r", "s")) {
+            boolean equal = value.semanticallyEquals(patterns.get(predicate).instantiate(assignment, () -> {}));
+            if (equal != "q".equals(predicate))
+                throw new AssertionError("Identity check differs from concrete substitution: " + predicate);
+        }
+        Map<Integer, SemanticTermSnapshot> matching = java.util.Collections.singletonMap(
+                variables.iterator().next(), SemanticTermSnapshot.capture(mind.getTerms().add("Marker")));
+        if (!first.instantiate(matching, () -> {}).semanticallyEquals(patterns.get("r").instantiate(matching, () -> {})))
+            throw new AssertionError("Different expressions should coincide at x=Marker");
     }
 
     private static void checkSymbolicMultiplicity(Mind mind, SemanticTermSnapshot set,

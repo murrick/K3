@@ -4,6 +4,7 @@ package org.kanger;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.kanger.enums.ArgumentType;
@@ -115,6 +116,40 @@ final class ContextSetPattern {
             }
         }
         return total;
+    }
+
+    /** An identity of flat constructors whose rule-relative positions are aligned. */
+    boolean sameFlatExpression(ContextSetPattern other, Runnable work) {
+        Map<Integer, Integer> coefficients = new HashMap<>();
+        List<SemanticTermSnapshot> constants = new ArrayList<>();
+        collectExpression(coefficients, constants, work);
+        Map<Integer, Integer> otherCoefficients = new HashMap<>();
+        List<SemanticTermSnapshot> remaining = new ArrayList<>();
+        other.collectExpression(otherCoefficients, remaining, work);
+        if (!coefficients.equals(otherCoefficients) || constants.size() != remaining.size()) return false;
+        boolean[] used = new boolean[remaining.size()];
+        for (SemanticTermSnapshot constant : constants) {
+            boolean matched = false;
+            for (int i = 0; i < remaining.size(); i++) {
+                work.run();
+                if (!used[i] && constant.semanticallyEquals(remaining.get(i))) {
+                    used[i] = true;
+                    matched = true;
+                    break;
+                }
+            }
+            if (!matched) return false;
+        }
+        return true;
+    }
+
+    private void collectExpression(Map<Integer, Integer> coefficients,
+            List<SemanticTermSnapshot> constants, Runnable work) {
+        for (Member member : members) {
+            work.run();
+            if (member.variable >= 0) coefficients.merge(member.variable, 1, Integer::sum);
+            else member.constant.visitFlatSetMembers(constants::add, work);
+        }
     }
 
     SemanticTermSnapshot instantiate(Map<Integer, SemanticTermSnapshot> assignment, Runnable work)
