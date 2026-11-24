@@ -194,7 +194,7 @@ public final class ContextSetPatternRunner {
                 + " !@x middle(x)->finish([x,Marker]);";
         if (!mind.compile(rules)) throw new AssertionError("Native set chain fixture");
         BigInteger large = BigInteger.ONE.shiftLeft(80);
-        if (!symbolicWidth(mind, "middle", large).equals(large.add(BigInteger.ONE)))
+        if (!symbolicCount(mind, "middle", large, null).equals(large.add(BigInteger.ONE)))
             throw new AssertionError("Fixed marker must add one member at arbitrary input width");
         SemanticTermSnapshot first = querySingleValue(mind, "?$x middle(x);");
         SemanticTermSnapshot second = querySingleValue(mind, "?$x finish(x);");
@@ -206,6 +206,15 @@ public final class ContextSetPatternRunner {
                 mind.getTerms().add(new Object[]{"Seed", "Marker", "Marker"}));
         if (!flat.semanticallyEquals(second))
             throw new AssertionError("Native flattening baseline changed");
+        SemanticTermSnapshot marker = SemanticTermSnapshot.capture(mind.getTerms().add("Marker"));
+        SemanticTermSnapshot seed = SemanticTermSnapshot.capture(mind.getTerms().add("Seed"));
+        checkSymbolicMultiplicity(mind, second, marker, 0, 2);
+        checkSymbolicMultiplicity(mind, second, seed, 1, 1);
+        SemanticTermSnapshot sameWidth = SemanticTermSnapshot.capture(
+                mind.getTerms().add(new Object[]{"Seed", "Seed", "Marker"}));
+        if (sameWidth.semanticallyEquals(second)
+                || !symbolicCount(mind, "finish", BigInteger.ZERO, marker).equals(BigInteger.ONE))
+            throw new AssertionError("Same width must not hide distinct member counts");
         List<org.kanger.interfaces.ITerm> members = second.materialize().semanticMembers();
         if (members.size() != 3 || members.stream().anyMatch(member -> member.getType() == org.kanger.enums.DataType.SET))
             throw new AssertionError("Expected flat native members including the repeated marker");
@@ -245,7 +254,7 @@ public final class ContextSetPatternRunner {
         String[] outputs = {"twice", "four", "eight"};
         BigInteger width = BigInteger.ONE;
         for (int i = 0; i < outputs.length; i++) {
-            width = symbolicWidth(mind, outputs[i], width);
+            width = symbolicCount(mind, outputs[i], width, null);
             SemanticTermSnapshot actual = querySingleValue(mind, "?$x " + outputs[i] + "(x);");
             Object[] markers = new Object[2 << i];
             java.util.Arrays.fill(markers, "Marker");
@@ -256,7 +265,18 @@ public final class ContextSetPatternRunner {
         }
     }
 
-    private static BigInteger symbolicWidth(Mind mind, String predicate, BigInteger width) throws Exception {
+    private static void checkSymbolicMultiplicity(Mind mind, SemanticTermSnapshot set,
+            SemanticTermSnapshot leaf, int inputCount, int expected) throws Exception {
+        BigInteger first = symbolicCount(mind, "middle", BigInteger.valueOf(inputCount), leaf);
+        BigInteger second = symbolicCount(mind, "finish", first, leaf);
+        long observed = set.materialize().semanticMembers().stream()
+                .filter(member -> member.equalsTo(leaf.materialize())).count();
+        if (!second.equals(BigInteger.valueOf(expected)) || observed != expected)
+            throw new AssertionError("Symbolic count disagrees with native set membership");
+    }
+
+    private static BigInteger symbolicCount(Mind mind, String predicate, BigInteger input,
+            SemanticTermSnapshot member) throws Exception {
         for (IRule item : mind.getRules()) {
             if (item.isGenerated()) continue;
             Rule rule = (Rule) item;
@@ -270,8 +290,10 @@ public final class ContextSetPatternRunner {
                         java.util.Set<Integer> positions = new java.util.HashSet<>();
                         constructor.collectVariables(positions, () -> {});
                         if (positions.size() != 1) throw new AssertionError("One input variable required");
-                        return constructor.resultWidth(
-                                java.util.Collections.singletonMap(positions.iterator().next(), width), () -> {});
+                        Map<Integer, BigInteger> counts =
+                                java.util.Collections.singletonMap(positions.iterator().next(), input);
+                        return member == null ? constructor.resultWidth(counts, () -> {})
+                                : constructor.resultMultiplicity(member, counts, () -> {});
                     }
                 }
             }

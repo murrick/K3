@@ -85,17 +85,32 @@ final class ContextSetPattern {
 
     /** Exact result width given flattened input widths for interval-free values. */
     BigInteger resultWidth(Map<Integer, BigInteger> inputWidths, Runnable work) {
+        return sumOccurrences(inputWidths, null, work);
+    }
+
+    /** Exact multiplicity of one flattened member given its count in each input. */
+    BigInteger resultMultiplicity(SemanticTermSnapshot value, Map<Integer, BigInteger> inputCounts,
+            Runnable work) {
+        if (value == null || value.getType() == DataType.SET || value.getType() == DataType.INTERVAL)
+            throw new IllegalArgumentException("Flattened set member required");
+        return sumOccurrences(inputCounts, value, work);
+    }
+
+    private BigInteger sumOccurrences(Map<Integer, BigInteger> inputCounts,
+            SemanticTermSnapshot value, Runnable work) {
         BigInteger total = BigInteger.ZERO;
         for (Member member : members) {
             work.run();
             if (member.variable >= 0) {
-                BigInteger width = inputWidths.get(member.variable);
+                BigInteger width = inputCounts.get(member.variable);
                 if (width == null || width.signum() < 0)
-                    throw new IllegalArgumentException("Missing or negative set input width: " + member.variable);
+                    throw new IllegalArgumentException("Missing or negative set input count: " + member.variable);
                 total = total.add(width);
             } else {
                 BigInteger[] width = { BigInteger.ZERO };
-                member.constant.visitFlatSetMembers(ignored -> width[0] = width[0].add(BigInteger.ONE), work);
+                member.constant.visitFlatSetMembers(leaf -> {
+                    if (value == null || leaf.semanticallyEquals(value)) width[0] = width[0].add(BigInteger.ONE);
+                }, work);
                 total = total.add(width[0]);
             }
         }
