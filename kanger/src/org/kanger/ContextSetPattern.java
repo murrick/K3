@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.kanger.enums.ArgumentType;
 import org.kanger.enums.DataType;
 import org.kanger.enums.FunctionBinding;
@@ -150,6 +151,51 @@ final class ContextSetPattern {
             if (member.variable >= 0) coefficients.merge(member.variable, 1, Integer::sum);
             else member.constant.visitFlatSetMembers(constants::add, work);
         }
+    }
+
+    /**
+     * Invert one flat constructor at a concrete result for a single variable.
+     * A solution describes flattened members, since several input values can flatten identically.
+     */
+    Optional<List<SemanticTermSnapshot>> inferSingleInputMembers(SemanticTermSnapshot target, Runnable work) {
+        Map<Integer, Integer> coefficients = new HashMap<>();
+        List<SemanticTermSnapshot> constants = new ArrayList<>();
+        collectExpression(coefficients, constants, work);
+        if (coefficients.size() != 1) throw new IllegalArgumentException("Exactly one set variable required");
+        if (target.getType() != DataType.SET) return Optional.empty();
+
+        List<SemanticTermSnapshot> leaves = new ArrayList<>();
+        target.visitFlatSetMembers(leaves::add, work);
+        boolean[] used = new boolean[leaves.size()];
+        for (SemanticTermSnapshot constant : constants) {
+            int match = findUnusedMember(leaves, used, constant, work);
+            if (match < 0) return Optional.empty();
+            used[match] = true;
+        }
+        int coefficient = coefficients.values().iterator().next();
+        List<SemanticTermSnapshot> input = new ArrayList<>();
+        for (int i = 0; i < leaves.size(); i++) {
+            work.run();
+            if (used[i]) continue;
+            used[i] = true;
+            SemanticTermSnapshot member = leaves.get(i);
+            for (int occurrence = 1; occurrence < coefficient; occurrence++) {
+                int match = findUnusedMember(leaves, used, member, work);
+                if (match < 0) return Optional.empty();
+                used[match] = true;
+            }
+            input.add(member);
+        }
+        return Optional.of(Collections.unmodifiableList(input));
+    }
+
+    private static int findUnusedMember(List<SemanticTermSnapshot> leaves, boolean[] used,
+            SemanticTermSnapshot member, Runnable work) {
+        for (int i = 0; i < leaves.size(); i++) {
+            work.run();
+            if (!used[i] && member.semanticallyEquals(leaves.get(i))) return i;
+        }
+        return -1;
     }
 
     SemanticTermSnapshot instantiate(Map<Integer, SemanticTermSnapshot> assignment, Runnable work)

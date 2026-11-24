@@ -303,8 +303,19 @@ public final class ContextSetPatternRunner {
         }
         Map<Integer, SemanticTermSnapshot> matching = java.util.Collections.singletonMap(
                 variables.iterator().next(), SemanticTermSnapshot.capture(mind.getTerms().add("Marker")));
-        if (!first.instantiate(matching, () -> {}).semanticallyEquals(patterns.get("r").instantiate(matching, () -> {})))
+        SemanticTermSnapshot doubled = patterns.get("r").instantiate(matching, () -> {});
+        if (!first.instantiate(matching, () -> {}).semanticallyEquals(doubled))
             throw new AssertionError("Different expressions should coincide at x=Marker");
+        List<SemanticTermSnapshot> recovered = first.inferSingleInputMembers(value, () -> {})
+                .orElseThrow(AssertionError::new);
+        if (recovered.size() != 1 || !recovered.get(0).semanticallyEquals(assignment.values().iterator().next()))
+            throw new AssertionError("Inversion did not remove the fixed marker");
+        if (patterns.get("r").inferSingleInputMembers(value, () -> {}).isPresent())
+            throw new AssertionError("A duplicate constructor cannot produce two different singleton counts");
+        List<SemanticTermSnapshot> halved = patterns.get("r").inferSingleInputMembers(doubled, () -> {})
+                .orElseThrow(AssertionError::new);
+        if (halved.size() != 1 || !halved.get(0).semanticallyEquals(matching.values().iterator().next()))
+            throw new AssertionError("Inversion did not divide repeated member counts");
     }
 
     private static void checkSymbolicMultiplicity(Mind mind, SemanticTermSnapshot set,
