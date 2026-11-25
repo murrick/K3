@@ -488,15 +488,14 @@ public final class ContextSetPatternRunner {
             String negativeRule = "!@x trigger(x)->~signed([x,x]);";
             capture.replay(mind, positive, positiveRule);
             capture.replay(mind, negative, negativeRule);
-            int beforeFresh = capture.snapshot().applications.size();
-            if (!Boolean.TRUE.equals(mind.query("!trigger(Fresh);", null, false)))
+            ContextProductionCapture.OperationApplications fresh =
+                    capture.observeApplications(mind, "!trigger(Fresh);");
+            if (!Boolean.TRUE.equals(fresh.result))
                 throw new AssertionError("Expected the control operation to succeed");
-            List<ContextProductionCapture.Application> fresh = capture.snapshot().applications;
             ContextProductionCapture.Fact freshTrigger = ContextProductionCapture.Fact.ground(
                     "trigger", true, java.util.Collections.singletonList(
                             SemanticTermSnapshot.capture(mind.getTerms().add("Fresh"))));
-            List<ContextProductionCapture.Application> controls =
-                    fresh.subList(beforeFresh, fresh.size());
+            List<ContextProductionCapture.Application> controls = fresh.applications;
             if (!findSignedPair(controls, freshTrigger, positive, negative).isEmpty())
                 throw new AssertionError("Safe operation yielded a collision pair");
             for (ContextProductionCapture.Source source : java.util.Arrays.asList(positive, negative))
@@ -505,11 +504,13 @@ public final class ContextSetPatternRunner {
                         && freshTrigger.equivalent(application.premises.get(0))))
                     throw new AssertionError("Control must exercise both rules");
 
-            if (Boolean.TRUE.equals(mind.query("!trigger(Marker);", null, false)))
-                throw new AssertionError("Expected rejection");
-            List<ContextProductionCapture.Application> observations = capture.snapshot().applications;
-            List<ContextProductionCapture.Application> pair = findSignedPair(
-                    observations.subList(fresh.size(), observations.size()), trigger, positive, negative);
+            ContextProductionCapture.OperationApplications rejected =
+                    capture.observeApplications(mind, "!trigger(Marker);");
+            if (Boolean.TRUE.equals(rejected.result)) throw new AssertionError("Expected rejection");
+            List<ContextProductionCapture.Application> pair =
+                    findSignedPair(rejected.applications, trigger, positive, negative);
+            if (!findSignedPair(fresh.applications, trigger, positive, negative).isEmpty())
+                throw new AssertionError("Earlier operation acquired later evidence");
             if (pair.size() != 2 || !conclusion.equivalent(pair.get(0).conclusion)
                     || !conclusion.opposite().equivalent(pair.get(1).conclusion))
                 throw new AssertionError("Expected both products for the same rejected operation");

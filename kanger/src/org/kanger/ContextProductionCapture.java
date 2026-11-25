@@ -1141,6 +1141,29 @@ public final class ContextProductionCapture implements AutoCloseable {
         if (fact == null) capture.gaps.add("nonordinary-materialization:" + producer.getRuleId());
         else capture.stored.add(new Materialization(producer.getRuleId(), fact));
     }
+    /** Detached applications observed during a single query on this journal's owning Mind. */
+    static final class OperationApplications {
+        final Boolean result;
+        final List<Application> applications;
+
+        private OperationApplications(Boolean result, List<Application> applications) {
+            this.result = result;
+            this.applications = Collections.unmodifiableList(new ArrayList<>(applications));
+        }
+    }
+
+    OperationApplications observeApplications(Mind expectedBoundary, String statement) throws Exception {
+        check();
+        if (boundary != expectedBoundary || boundary.getUser().getCurrentMind() != boundary)
+            throw new IllegalStateException("Current owning production boundary required");
+        int start = applications.size();
+        Boolean result = boundary.query(statement, null, false);
+        check();
+        if (boundary.getUser().getCurrentMind() != boundary)
+            throw new IllegalStateException("Production operation changed its owning boundary");
+        return new OperationApplications(result, applications.subList(start, applications.size()));
+    }
+
     public Snapshot snapshot() { check(); return new Snapshot(this); }
     /** Local instance authentication must not confuse equal native IDs in fresh replays. */
     Snapshot snapshot(Mind expectedBoundary) {
