@@ -29,6 +29,7 @@ public final class ContextSetPatternRunner {
             checkSymbolicIdentities();
             checkSharedRemainderEquality();
             checkNativeConditionalCollision();
+            checkConditionalCollisionCaptureBoundary();
             System.out.println("CONTEXT_SET_PATTERN_PASS");
             return;
         }
@@ -424,6 +425,41 @@ public final class ContextSetPatternRunner {
         if (!Boolean.TRUE.equals(mind.query("?trigger(Fresh);", null, false))
                 || Boolean.TRUE.equals(mind.query("?trigger(Marker);", null, false)))
             throw new AssertionError("Refusal changed the previous accepted assertion or leaked the rejected one");
+    }
+
+    private static void checkConditionalCollisionCaptureBoundary() throws Exception {
+        User user = new User();
+        Mind mind = new Mind(user);
+        user.setCurrentMind(mind);
+        org.kanger.interfaces.IContextResults.Revision positive =
+                new org.kanger.interfaces.IContextResults.Revision(new java.util.UUID(0, 1), 1);
+        org.kanger.interfaces.IContextResults.Revision negative =
+                new org.kanger.interfaces.IContextResults.Revision(new java.util.UUID(0, 2), 1);
+        try (DmzReplayProvenance journal = DmzReplayProvenance.begin(mind);
+                CollisionProofCapture capture = CollisionProofCapture.begin()) {
+            if (!Boolean.TRUE.equals(DmzReplayProvenance.acceptRule(mind, positive, 1,
+                    DmzReplayProvenance.Authority.EXTERNAL, "!@x trigger(x)->signed([x,Marker]);"))
+                    || !Boolean.TRUE.equals(DmzReplayProvenance.acceptRule(mind, negative, 2,
+                    DmzReplayProvenance.Authority.EXTERNAL, "!@x trigger(x)->~signed([x,x]);")))
+                throw new AssertionError("Sourced rules refused");
+            if (Boolean.TRUE.equals(mind.query("!trigger(Marker);", null, false)))
+                throw new AssertionError("Expected set collision");
+            List<DmzReplayProvenance.Binding> bindings = journal.settlementSnapshot().accepted;
+            if (bindings.size() != 2 || !bindings.stream().anyMatch(binding ->
+                    binding.context.equals(positive.getContextId()) && binding.revision == 1 && binding.sourceRule == 1)
+                    || !bindings.stream().anyMatch(binding ->
+                    binding.context.equals(negative.getContextId()) && binding.revision == 1 && binding.sourceRule == 2))
+                throw new AssertionError("Original rule origins missing from the replay journal");
+            List<CollisionProofCapture.Conflict> conflicts = capture.snapshot();
+            if (conflicts.size() != 1) throw new AssertionError("Expected one captured collision");
+            for (CollisionProofCapture.Graph graph : java.util.Arrays.asList(
+                    conflicts.get(0).left, conflicts.get(0).right)) {
+                CollisionProofCapture.Node root = graph.nodes.get(graph.root);
+                if (graph.nodes.size() != 1 || !root.causes.isEmpty() || !root.sources.isEmpty()
+                        || !root.origin.contains("signed([Marker,Marker])"))
+                    throw new AssertionError("Collision capture no longer has the documented diagnostic-only shape");
+            }
+        }
     }
 
     private static void checkSymbolicMultiplicity(Mind mind, SemanticTermSnapshot set,
