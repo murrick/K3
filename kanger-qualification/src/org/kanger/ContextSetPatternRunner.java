@@ -488,25 +488,55 @@ public final class ContextSetPatternRunner {
             String negativeRule = "!@x trigger(x)->~signed([x,x]);";
             capture.replay(mind, positive, positiveRule);
             capture.replay(mind, negative, negativeRule);
-            int before = capture.snapshot().applications.size();
+            int beforeFresh = capture.snapshot().applications.size();
+            if (!Boolean.TRUE.equals(mind.query("!trigger(Fresh);", null, false)))
+                throw new AssertionError("Expected the control operation to succeed");
+            List<ContextProductionCapture.Application> fresh = capture.snapshot().applications;
+            ContextProductionCapture.Fact freshTrigger = ContextProductionCapture.Fact.ground(
+                    "trigger", true, java.util.Collections.singletonList(
+                            SemanticTermSnapshot.capture(mind.getTerms().add("Fresh"))));
+            List<ContextProductionCapture.Application> controls =
+                    fresh.subList(beforeFresh, fresh.size());
+            if (!findSignedPair(controls, freshTrigger, positive, negative).isEmpty())
+                throw new AssertionError("Safe operation yielded a collision pair");
+            for (ContextProductionCapture.Source source : java.util.Arrays.asList(positive, negative))
+                if (controls.stream().noneMatch(application -> application.producers.contains(source)
+                        && application.premises.size() == 1
+                        && freshTrigger.equivalent(application.premises.get(0))))
+                    throw new AssertionError("Control must exercise both rules");
+
             if (Boolean.TRUE.equals(mind.query("!trigger(Marker);", null, false)))
                 throw new AssertionError("Expected rejection");
-            boolean foundPositive = false, foundNegative = false;
             List<ContextProductionCapture.Application> observations = capture.snapshot().applications;
-            for (ContextProductionCapture.Application application : observations.subList(before, observations.size())) {
-                if (!"signed".equals(application.conclusion.predicate)) continue;
-                boolean sign = application.conclusion.positive;
-                if (!(sign ? conclusion : conclusion.opposite()).equivalent(application.conclusion)
-                        || application.premises.size() != 1 || !trigger.equivalent(application.premises.get(0))
-                        || !application.producers.equals(java.util.Collections.singletonList(sign ? positive : negative)))
-                    throw new AssertionError("Wrong signed value, trigger binding or original rule source");
-                if (!(sign ? foundPositive : foundNegative))
-                    auditSetApplication(application, sign ? positiveRule : negativeRule);
-                foundPositive |= sign;
-                foundNegative |= !sign;
-            }
-            if (!foundPositive || !foundNegative) throw new AssertionError("Both signed applications required");
+            List<ContextProductionCapture.Application> pair = findSignedPair(
+                    observations.subList(fresh.size(), observations.size()), trigger, positive, negative);
+            if (pair.size() != 2 || !conclusion.equivalent(pair.get(0).conclusion)
+                    || !conclusion.opposite().equivalent(pair.get(1).conclusion))
+                throw new AssertionError("Expected both products for the same rejected operation");
+            auditSetApplication(pair.get(0), positiveRule);
+            auditSetApplication(pair.get(1), negativeRule);
+
         }
+    }
+
+    private static List<ContextProductionCapture.Application> findSignedPair(
+            List<ContextProductionCapture.Application> operation, ContextProductionCapture.Fact trigger,
+            ContextProductionCapture.Source positive, ContextProductionCapture.Source negative) {
+        for (ContextProductionCapture.Application first : operation) {
+            if (!first.conclusion.positive || !fromTrigger(first, trigger, positive)) continue;
+            ContextProductionCapture.Fact opposite = first.conclusion.opposite();
+            for (ContextProductionCapture.Application second : operation) {
+                if (opposite.equivalent(second.conclusion) && fromTrigger(second, trigger, negative))
+                    return java.util.Arrays.asList(first, second);
+            }
+        }
+        return java.util.Collections.emptyList();
+    }
+
+    private static boolean fromTrigger(ContextProductionCapture.Application application,
+            ContextProductionCapture.Fact trigger, ContextProductionCapture.Source source) {
+        return application.premises.size() == 1 && trigger.equivalent(application.premises.get(0))
+                && application.producers.equals(java.util.Collections.singletonList(source));
     }
 
     private static void auditSetApplication(ContextProductionCapture.Application application, String original)
