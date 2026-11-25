@@ -28,6 +28,7 @@ public final class ContextSetPatternRunner {
             checkNativeDiagonalGrowth();
             checkSymbolicIdentities();
             checkSharedRemainderEquality();
+            checkNativeConditionalCollision();
             System.out.println("CONTEXT_SET_PATTERN_PASS");
             return;
         }
@@ -388,6 +389,41 @@ public final class ContextSetPatternRunner {
             }
         }
         return patterns;
+    }
+
+    private static void checkNativeConditionalCollision() throws Exception {
+        User user = new User();
+        Mind mind = new Mind(user);
+        user.setCurrentMind(mind);
+        if (!mind.compile("!@x trigger(x)->signed([x,Marker]), ~signed([x,x]);"))
+            throw new AssertionError("Conditional collision fixture");
+
+        List<ContextSetPattern> conclusions = new java.util.ArrayList<>();
+        for (IRule item : mind.getRules()) {
+            if (item.isGenerated()) continue;
+            Rule rule = (Rule) item;
+            for (List<Domain> branch : rule.getTree()) {
+                for (Domain literal : branch) {
+                    if (!"signed".equals(literal.getPredicate(mind).getName(mind))) continue;
+                    Function constructor = (Function) literal.getArguments().get(0).getObject(mind);
+                    conclusions.add(ContextSetPattern.capture(constructor, rule, mind, () -> {}));
+                }
+            }
+        }
+        if (conclusions.size() != 2) throw new AssertionError("Two signed constructors required");
+        ContextSetPattern.SharedInputEquality condition =
+                conclusions.get(0).solveSharedInputEquality(conclusions.get(1), () -> {});
+        SemanticTermSnapshot marker = SemanticTermSnapshot.capture(mind.getTerms().add("Marker"));
+        if (condition.kind != ContextSetPattern.SharedInputEquality.Kind.EXACT_MEMBERS
+                || condition.members.size() != 1 || !condition.members.get(0).semanticallyEquals(marker))
+            throw new AssertionError("Wrong condition for the signed collision");
+        if (!Boolean.TRUE.equals(mind.query("!trigger(Fresh);", null, false)))
+            throw new AssertionError("Noncolliding native assertion refused");
+        if (Boolean.TRUE.equals(mind.query("!trigger(Marker);", null, false)))
+            throw new AssertionError("Native assertion admitted the predicted collision");
+        if (!Boolean.TRUE.equals(mind.query("?trigger(Fresh);", null, false))
+                || Boolean.TRUE.equals(mind.query("?trigger(Marker);", null, false)))
+            throw new AssertionError("Refusal changed the previous accepted assertion or leaked the rejected one");
     }
 
     private static void checkSymbolicMultiplicity(Mind mind, SemanticTermSnapshot set,
