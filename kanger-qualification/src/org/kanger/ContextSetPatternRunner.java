@@ -30,6 +30,7 @@ public final class ContextSetPatternRunner {
             checkSharedRemainderEquality();
             checkNativeConditionalCollision();
             checkConditionalCollisionCaptureBoundary();
+            checkSourcedSetApplications();
             System.out.println("CONTEXT_SET_PATTERN_PASS");
             return;
         }
@@ -436,7 +437,8 @@ public final class ContextSetPatternRunner {
         org.kanger.interfaces.IContextResults.Revision negative =
                 new org.kanger.interfaces.IContextResults.Revision(new java.util.UUID(0, 2), 1);
         try (DmzReplayProvenance journal = DmzReplayProvenance.begin(mind);
-                CollisionProofCapture capture = CollisionProofCapture.begin()) {
+                CollisionProofCapture capture = CollisionProofCapture.begin();
+                TerminalSupportCapture terminal = TerminalSupportCapture.begin(mind)) {
             if (!Boolean.TRUE.equals(DmzReplayProvenance.acceptRule(mind, positive, 1,
                     DmzReplayProvenance.Authority.EXTERNAL, "!@x trigger(x)->signed([x,Marker]);"))
                     || !Boolean.TRUE.equals(DmzReplayProvenance.acceptRule(mind, negative, 2,
@@ -452,6 +454,10 @@ public final class ContextSetPatternRunner {
                 throw new AssertionError("Original rule origins missing from the replay journal");
             List<CollisionProofCapture.Conflict> conflicts = capture.snapshot();
             if (conflicts.size() != 1) throw new AssertionError("Expected one captured collision");
+            if (!conflicts.get(0).observations.captureActive
+                    || !terminal.applicationGapSnapshot().contains("unsupported-argument")
+                    || !conflicts.get(0).observations.applications.isEmpty())
+                throw new AssertionError("Terminal capture boundary changed");
             for (CollisionProofCapture.Graph graph : java.util.Arrays.asList(
                     conflicts.get(0).left, conflicts.get(0).right)) {
                 CollisionProofCapture.Node root = graph.nodes.get(graph.root);
@@ -459,6 +465,41 @@ public final class ContextSetPatternRunner {
                         || !root.origin.contains("signed([Marker,Marker])"))
                     throw new AssertionError("Collision capture no longer has the documented diagnostic-only shape");
             }
+        }
+    }
+
+    private static void checkSourcedSetApplications() throws Exception {
+        User user = new User();
+        Mind mind = new Mind(user);
+        user.setCurrentMind(mind);
+        ContextProductionCapture.Source positive = new ContextProductionCapture.Source(
+                new java.util.UUID(0, 1), 1, 1, true, "Source");
+        ContextProductionCapture.Source negative = new ContextProductionCapture.Source(
+                new java.util.UUID(0, 2), 1, 2, false, "Negative");
+        SemanticTermSnapshot marker = SemanticTermSnapshot.capture(mind.getTerms().add("Marker"));
+        SemanticTermSnapshot repeated = SemanticTermSnapshot.capture(
+                mind.getTerms().add(new Object[]{"Marker", "Marker"}));
+        ContextProductionCapture.Fact trigger = ContextProductionCapture.Fact.ground(
+                "trigger", true, java.util.Collections.singletonList(marker));
+        ContextProductionCapture.Fact conclusion = ContextProductionCapture.Fact.ground(
+                "signed", true, java.util.Collections.singletonList(repeated));
+        try (ContextProductionCapture capture = ContextProductionCapture.begin(mind, 10000)) {
+            capture.replay(mind, positive, "!@x trigger(x)->signed([x,Marker]);");
+            capture.replay(mind, negative, "!@x trigger(x)->~signed([x,x]);");
+            if (Boolean.TRUE.equals(mind.query("!trigger(Marker);", null, false)))
+                throw new AssertionError("Expected rejection");
+            boolean foundPositive = false, foundNegative = false;
+            for (ContextProductionCapture.Application application : capture.snapshot().applications) {
+                if (!"signed".equals(application.conclusion.predicate)) continue;
+                boolean sign = application.conclusion.positive;
+                if (!(sign ? conclusion : conclusion.opposite()).equivalent(application.conclusion)
+                        || application.premises.size() != 1 || !trigger.equivalent(application.premises.get(0))
+                        || !application.producers.equals(java.util.Collections.singletonList(sign ? positive : negative)))
+                    throw new AssertionError("Wrong signed value, trigger binding or original rule source");
+                foundPositive |= sign;
+                foundNegative |= !sign;
+            }
+            if (!foundPositive || !foundNegative) throw new AssertionError("Both signed applications required");
         }
     }
 
