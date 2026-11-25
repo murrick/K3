@@ -28,6 +28,32 @@ class CommuneQuantifiedAnswerTest {
         new CanonicalCommandProcessor().execute(new CommandParser().parse(
                 "ctx connect " + name + " trust own"), user);
     }
+    @Test void splitSetConclusionsCollideOnlyAtMatchingBinding() throws Exception {
+        create("Negative", "!@x trigger(x)->~signed([x,x]);");
+        open("Source");
+        try {
+            assertTrue(mind.compile("!@x trigger(x)->signed([x,Marker]);"));
+            data.connectContext("Negative");
+            assertTrue(mind.query("!trigger(Fresh);", null, false));
+            long revision = data.getRevision();
+            org.kanger.exception.StorageLifecycleException failure = assertThrows(
+                    org.kanger.exception.StorageLifecycleException.class,
+                    () -> mind.query("!trigger(Marker);", null, false));
+            assertEquals(org.kanger.enums.StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT,
+                    failure.getErrorCode());
+            assertTrue(failure.getCollisions().stream().anyMatch(collision ->
+                    "!signed([Marker,Marker]);".equals(collision.getLeft())
+                    && "?signed([Marker,Marker]);".equals(collision.getRight())));
+            assertEquals(1, data.federationSnapshot().getConnections().size());
+            assertEquals(1, data.federationSnapshot().getConnections().get(0).getPinnedRevision());
+            assertEquals(revision, data.getRevision());
+            assertTrue(mind.query("?trigger(Fresh);", null, false));
+            assertNotEquals(Boolean.TRUE, mind.query("?trigger(Marker);", null, false));
+        } finally {
+            close();
+        }
+    }
+
     @Test void structuredAbstractSetStaysLocalAndDoesNotPoisonTheTransaction() throws Exception {
         create("facts", "!father(John,Tom); !mother(Mary,Tom);");
         open("family");
