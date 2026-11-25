@@ -484,23 +484,48 @@ public final class ContextSetPatternRunner {
         ContextProductionCapture.Fact conclusion = ContextProductionCapture.Fact.ground(
                 "signed", true, java.util.Collections.singletonList(repeated));
         try (ContextProductionCapture capture = ContextProductionCapture.begin(mind, 10000)) {
-            capture.replay(mind, positive, "!@x trigger(x)->signed([x,Marker]);");
-            capture.replay(mind, negative, "!@x trigger(x)->~signed([x,x]);");
+            String positiveRule = "!@x trigger(x)->signed([x,Marker]);";
+            String negativeRule = "!@x trigger(x)->~signed([x,x]);";
+            capture.replay(mind, positive, positiveRule);
+            capture.replay(mind, negative, negativeRule);
+            int before = capture.snapshot().applications.size();
             if (Boolean.TRUE.equals(mind.query("!trigger(Marker);", null, false)))
                 throw new AssertionError("Expected rejection");
             boolean foundPositive = false, foundNegative = false;
-            for (ContextProductionCapture.Application application : capture.snapshot().applications) {
+            List<ContextProductionCapture.Application> observations = capture.snapshot().applications;
+            for (ContextProductionCapture.Application application : observations.subList(before, observations.size())) {
                 if (!"signed".equals(application.conclusion.predicate)) continue;
                 boolean sign = application.conclusion.positive;
                 if (!(sign ? conclusion : conclusion.opposite()).equivalent(application.conclusion)
                         || application.premises.size() != 1 || !trigger.equivalent(application.premises.get(0))
                         || !application.producers.equals(java.util.Collections.singletonList(sign ? positive : negative)))
                     throw new AssertionError("Wrong signed value, trigger binding or original rule source");
+                if (!(sign ? foundPositive : foundNegative))
+                    auditSetApplication(application, sign ? positiveRule : negativeRule);
                 foundPositive |= sign;
                 foundNegative |= !sign;
             }
             if (!foundPositive || !foundNegative) throw new AssertionError("Both signed applications required");
         }
+    }
+
+    private static void auditSetApplication(ContextProductionCapture.Application application, String original)
+            throws Exception {
+        if (!original.equals(application.origin)) throw new AssertionError("Application origin changed");
+        User user = new User();
+        Mind replay = new Mind(user);
+        user.setCurrentMind(replay);
+        if (!replay.compile(original)) throw new AssertionError("Isolated declaration replay failed");
+        Object[] conclusion = {application.conclusion.arguments.get(0).materialize()};
+        if (replay.query("?signed(?);", conclusion, false) != null)
+            throw new AssertionError("Conclusion already supported without the observed premise");
+        ContextProductionCapture.Fact premise = application.premises.get(0);
+        if (!Boolean.TRUE.equals(replay.query(premise.assertion(),
+                new Object[]{premise.arguments.get(0).materialize()}, false)))
+            throw new AssertionError("Isolated premise replay failed");
+        if (!Boolean.valueOf(application.conclusion.positive)
+                .equals(replay.query("?signed(?);", conclusion, false)))
+            throw new AssertionError("Independent application replay disagrees with observed sign or set");
     }
 
     private static void checkSymbolicMultiplicity(Mind mind, SemanticTermSnapshot set,
