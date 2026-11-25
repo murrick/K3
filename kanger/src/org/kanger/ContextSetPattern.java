@@ -231,6 +231,47 @@ final class ContextSetPattern {
                 .orElseGet(() -> new SharedInputEquality(SharedInputEquality.Kind.NEVER, Collections.emptyList()));
     }
 
+    /** Each variable equals its required members plus the same arbitrary flat multiset. */
+    static final class SharedRemainderEquality {
+        final Map<Integer, List<SemanticTermSnapshot>> requiredMembers;
+
+        private SharedRemainderEquality(Map<Integer, List<SemanticTermSnapshot>> requiredMembers) {
+            this.requiredMembers = Collections.unmodifiableMap(requiredMembers);
+        }
+    }
+
+    SharedRemainderEquality solveSharedRemainderEquality(ContextSetPattern other, Runnable work) {
+        Map<Integer, Integer> difference = new HashMap<>(), right = new HashMap<>();
+        List<SemanticTermSnapshot> leftConstants = new ArrayList<>(), rightConstants = new ArrayList<>();
+        collectExpression(difference, leftConstants, work);
+        other.collectExpression(right, rightConstants, work);
+        for (Map.Entry<Integer, Integer> entry : right.entrySet()) {
+            work.run();
+            difference.merge(entry.getKey(), -entry.getValue(), Integer::sum);
+        }
+        difference.values().removeIf(count -> count == 0);
+        if (difference.size() != 2 || !difference.containsValue(1) || !difference.containsValue(-1))
+            throw new IllegalArgumentException("Two opposite unit-count set variables required");
+
+        List<SemanticTermSnapshot> leftOnly = new ArrayList<>(), rightOnly = new ArrayList<>();
+        boolean[] used = new boolean[rightConstants.size()];
+        for (SemanticTermSnapshot member : leftConstants) {
+            work.run();
+            int match = findUnusedMember(rightConstants, used, member, work);
+            if (match < 0) leftOnly.add(member);
+            else used[match] = true;
+        }
+        for (int i = 0; i < used.length; i++) {
+            work.run();
+            if (!used[i]) rightOnly.add(rightConstants.get(i));
+        }
+        Map<Integer, List<SemanticTermSnapshot>> required = new HashMap<>();
+        for (Map.Entry<Integer, Integer> entry : difference.entrySet()) {
+            required.put(entry.getKey(), Collections.unmodifiableList(entry.getValue() == 1 ? rightOnly : leftOnly));
+        }
+        return new SharedRemainderEquality(required);
+    }
+
     private static int findUnusedMember(List<SemanticTermSnapshot> leaves, boolean[] used,
             SemanticTermSnapshot member, Runnable work) {
         for (int i = 0; i < leaves.size(); i++) {

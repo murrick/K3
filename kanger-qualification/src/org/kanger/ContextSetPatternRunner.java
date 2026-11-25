@@ -27,6 +27,7 @@ public final class ContextSetPatternRunner {
             checkAcyclicReuseWithWideInputs();
             checkNativeDiagonalGrowth();
             checkSymbolicIdentities();
+            checkSharedRemainderEquality();
             System.out.println("CONTEXT_SET_PATTERN_PASS");
             return;
         }
@@ -272,20 +273,7 @@ public final class ContextSetPatternRunner {
         user.setCurrentMind(mind);
         if (!mind.compile("!@x source(x)->p([x,Marker]), q([Marker,x]), r([x,x]), s([x,Other]);"))
             throw new AssertionError("Symbolic identity fixture");
-        Map<String, ContextSetPattern> patterns = new HashMap<>();
-        for (IRule item : mind.getRules()) {
-            if (item.isGenerated()) continue;
-            Rule rule = (Rule) item;
-            for (List<Domain> branch : rule.getTree()) {
-                for (Domain literal : branch) {
-                    for (IArgument argument : literal.getArguments()) {
-                        if (argument.getType() != ArgumentType.FUNCTION) continue;
-                        patterns.put(literal.getPredicate(mind).getName(mind), ContextSetPattern.capture(
-                                (Function) argument.getObject(mind), rule, mind, () -> {}));
-                    }
-                }
-            }
-        }
+        Map<String, ContextSetPattern> patterns = capturePatterns(mind);
         ContextSetPattern first = java.util.Objects.requireNonNull(patterns.get("p"));
         if (!first.sameFlatExpression(patterns.get("q"), () -> {})
                 || first.sameFlatExpression(patterns.get("r"), () -> {})
@@ -329,6 +317,57 @@ public final class ContextSetPatternRunner {
                 .orElseThrow(AssertionError::new);
         if (halved.size() != 1 || !halved.get(0).semanticallyEquals(matching.values().iterator().next()))
             throw new AssertionError("Inversion did not divide repeated member counts");
+    }
+
+    private static void checkSharedRemainderEquality() throws Exception {
+        User user = new User();
+        Mind mind = new Mind(user);
+        user.setCurrentMind(mind);
+        if (!mind.compile("!@x @y source(x,y)->p([x,Marker,Common]), q([y,Other,Common]);"))
+            throw new AssertionError("Shared remainder fixture");
+        Map<String, ContextSetPattern> patterns = capturePatterns(mind);
+        ContextSetPattern left = patterns.get("p"), right = patterns.get("q");
+        java.util.Set<Integer> leftPositions = new java.util.HashSet<>(), rightPositions = new java.util.HashSet<>();
+        left.collectVariables(leftPositions, () -> {});
+        right.collectVariables(rightPositions, () -> {});
+        int x = leftPositions.iterator().next(), y = rightPositions.iterator().next();
+        SemanticTermSnapshot marker = SemanticTermSnapshot.capture(mind.getTerms().add("Marker"));
+        SemanticTermSnapshot other = SemanticTermSnapshot.capture(mind.getTerms().add("Other"));
+        for (ContextSetPattern.SharedRemainderEquality solution : java.util.Arrays.asList(
+                left.solveSharedRemainderEquality(right, () -> {}),
+                right.solveSharedRemainderEquality(left, () -> {}))) {
+            List<SemanticTermSnapshot> xRequired = solution.requiredMembers.get(x);
+            List<SemanticTermSnapshot> yRequired = solution.requiredMembers.get(y);
+            if (xRequired.size() != 1 || yRequired.size() != 1
+                    || !xRequired.get(0).semanticallyEquals(other) || !yRequired.get(0).semanticallyEquals(marker))
+                throw new AssertionError("Common constant did not cancel or required members reversed");
+        }
+        Map<Integer, SemanticTermSnapshot> assignment = new HashMap<>();
+        assignment.put(x, SemanticTermSnapshot.capture(mind.getTerms().add(new Object[]{"Other", "Fresh", "Fresh"})));
+        assignment.put(y, SemanticTermSnapshot.capture(mind.getTerms().add(new Object[]{"Marker", "Fresh", "Fresh"})));
+        if (!left.instantiate(assignment, () -> {}).semanticallyEquals(right.instantiate(assignment, () -> {})))
+            throw new AssertionError("Shared remainder failed concrete replay");
+        assignment.put(y, marker);
+        if (left.instantiate(assignment, () -> {}).semanticallyEquals(right.instantiate(assignment, () -> {})))
+            throw new AssertionError("Removing only one remainder must break equality");
+    }
+
+    private static Map<String, ContextSetPattern> capturePatterns(Mind mind) throws Exception {
+        Map<String, ContextSetPattern> patterns = new HashMap<>();
+        for (IRule item : mind.getRules()) {
+            if (item.isGenerated()) continue;
+            Rule rule = (Rule) item;
+            for (List<Domain> branch : rule.getTree()) {
+                for (Domain literal : branch) {
+                    for (IArgument argument : literal.getArguments()) {
+                        if (argument.getType() != ArgumentType.FUNCTION) continue;
+                        patterns.put(literal.getPredicate(mind).getName(mind), ContextSetPattern.capture(
+                                (Function) argument.getObject(mind), rule, mind, () -> {}));
+                    }
+                }
+            }
+        }
+        return patterns;
     }
 
     private static void checkSymbolicMultiplicity(Mind mind, SemanticTermSnapshot set,
