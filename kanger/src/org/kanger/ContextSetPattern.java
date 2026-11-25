@@ -172,7 +172,11 @@ final class ContextSetPattern {
             if (match < 0) return Optional.empty();
             used[match] = true;
         }
-        int coefficient = coefficients.values().iterator().next();
+        return divideMembers(leaves, used, coefficients.values().iterator().next(), work);
+    }
+
+    private static Optional<List<SemanticTermSnapshot>> divideMembers(List<SemanticTermSnapshot> leaves,
+            boolean[] used, int coefficient, Runnable work) {
         List<SemanticTermSnapshot> input = new ArrayList<>();
         for (int i = 0; i < leaves.size(); i++) {
             work.run();
@@ -187,6 +191,44 @@ final class ContextSetPattern {
             input.add(member);
         }
         return Optional.of(Collections.unmodifiableList(input));
+    }
+
+    static final class SharedInputEquality {
+        enum Kind { ALWAYS, NEVER, EXACT_MEMBERS }
+
+        final Kind kind;
+        final List<SemanticTermSnapshot> members;
+
+        private SharedInputEquality(Kind kind, List<SemanticTermSnapshot> members) {
+            this.kind = kind;
+            this.members = members;
+        }
+    }
+
+    /** Solve equality for a single shared variable with aligned rule-relative positions. */
+    SharedInputEquality solveSharedInputEquality(ContextSetPattern other, Runnable work) {
+        Map<Integer, Integer> left = new HashMap<>(), right = new HashMap<>();
+        List<SemanticTermSnapshot> leftConstants = new ArrayList<>(), rightConstants = new ArrayList<>();
+        collectExpression(left, leftConstants, work);
+        other.collectExpression(right, rightConstants, work);
+        if (left.size() != 1 || !left.keySet().equals(right.keySet()))
+            throw new IllegalArgumentException("Exactly one shared set variable required");
+        int difference = left.values().iterator().next() - right.values().iterator().next();
+        if (difference == 0) {
+            return new SharedInputEquality(sameFlatExpression(other, work)
+                    ? SharedInputEquality.Kind.ALWAYS : SharedInputEquality.Kind.NEVER, Collections.emptyList());
+        }
+        List<SemanticTermSnapshot> residual = difference > 0 ? rightConstants : leftConstants;
+        List<SemanticTermSnapshot> subtract = difference > 0 ? leftConstants : rightConstants;
+        boolean[] used = new boolean[residual.size()];
+        for (SemanticTermSnapshot constant : subtract) {
+            int match = findUnusedMember(residual, used, constant, work);
+            if (match < 0) return new SharedInputEquality(SharedInputEquality.Kind.NEVER, Collections.emptyList());
+            used[match] = true;
+        }
+        return divideMembers(residual, used, Math.abs(difference), work)
+                .map(members -> new SharedInputEquality(SharedInputEquality.Kind.EXACT_MEMBERS, members))
+                .orElseGet(() -> new SharedInputEquality(SharedInputEquality.Kind.NEVER, Collections.emptyList()));
     }
 
     private static int findUnusedMember(List<SemanticTermSnapshot> leaves, boolean[] used,

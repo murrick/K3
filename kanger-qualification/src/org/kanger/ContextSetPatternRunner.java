@@ -306,6 +306,19 @@ public final class ContextSetPatternRunner {
         SemanticTermSnapshot doubled = patterns.get("r").instantiate(matching, () -> {});
         if (!first.instantiate(matching, () -> {}).semanticallyEquals(doubled))
             throw new AssertionError("Different expressions should coincide at x=Marker");
+        ContextSetPattern.SharedInputEquality.Kind always = ContextSetPattern.SharedInputEquality.Kind.ALWAYS;
+        ContextSetPattern.SharedInputEquality.Kind never = ContextSetPattern.SharedInputEquality.Kind.NEVER;
+        if (first.solveSharedInputEquality(patterns.get("q"), () -> {}).kind != always
+                || first.solveSharedInputEquality(patterns.get("s"), () -> {}).kind != never)
+            throw new AssertionError("Wrong unconditional equality result");
+        for (ContextSetPattern.SharedInputEquality solution : java.util.Arrays.asList(
+                first.solveSharedInputEquality(patterns.get("r"), () -> {}),
+                patterns.get("r").solveSharedInputEquality(first, () -> {}))) {
+            if (solution.kind != ContextSetPattern.SharedInputEquality.Kind.EXACT_MEMBERS
+                    || solution.members.size() != 1
+                    || !solution.members.get(0).semanticallyEquals(matching.values().iterator().next()))
+                throw new AssertionError("Equality must require exactly one Marker member");
+        }
         List<SemanticTermSnapshot> recovered = first.inferSingleInputMembers(value, () -> {})
                 .orElseThrow(AssertionError::new);
         if (recovered.size() != 1 || !recovered.get(0).semanticallyEquals(assignment.values().iterator().next()))
