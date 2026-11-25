@@ -238,6 +238,40 @@ final class ContextSetPattern {
         private SharedRemainderEquality(Map<Integer, List<SemanticTermSnapshot>> requiredMembers) {
             this.requiredMembers = Collections.unmodifiableMap(requiredMembers);
         }
+
+        /** Evaluate only the flattened contributions, leaving every original binding intact. */
+        boolean matches(Map<Integer, SemanticTermSnapshot> assignment, Runnable work) {
+            java.util.Iterator<Map.Entry<Integer, List<SemanticTermSnapshot>>> entries =
+                    requiredMembers.entrySet().iterator();
+            List<SemanticTermSnapshot> first = remainder(entries.next(), assignment, work);
+            List<SemanticTermSnapshot> second = remainder(entries.next(), assignment, work);
+            if (first == null || second == null || first.size() != second.size()) return false;
+            boolean[] used = new boolean[second.size()];
+            for (SemanticTermSnapshot member : first) {
+                int match = findUnusedMember(second, used, member, work);
+                if (match < 0) return false;
+                used[match] = true;
+            }
+            return true;
+        }
+
+        private static List<SemanticTermSnapshot> remainder(Map.Entry<Integer, List<SemanticTermSnapshot>> requirement,
+                Map<Integer, SemanticTermSnapshot> assignment, Runnable work) {
+            List<SemanticTermSnapshot> leaves = new ArrayList<>();
+            requireBinding(requirement.getKey(), assignment).visitFlatSetMembers(leaves::add, work);
+            boolean[] used = new boolean[leaves.size()];
+            for (SemanticTermSnapshot member : requirement.getValue()) {
+                int match = findUnusedMember(leaves, used, member, work);
+                if (match < 0) return null;
+                used[match] = true;
+            }
+            List<SemanticTermSnapshot> result = new ArrayList<>();
+            for (int i = 0; i < used.length; i++) {
+                work.run();
+                if (!used[i]) result.add(leaves.get(i));
+            }
+            return result;
+        }
     }
 
     SharedRemainderEquality solveSharedRemainderEquality(ContextSetPattern other, Runnable work) {

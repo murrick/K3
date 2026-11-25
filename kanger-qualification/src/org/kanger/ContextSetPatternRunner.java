@@ -350,6 +350,26 @@ public final class ContextSetPatternRunner {
         assignment.put(y, marker);
         if (left.instantiate(assignment, () -> {}).semanticallyEquals(right.instantiate(assignment, () -> {})))
             throw new AssertionError("Removing only one remainder must break equality");
+        List<SemanticTermSnapshot> domain = java.util.Arrays.asList(marker, other,
+                SemanticTermSnapshot.capture(mind.getTerms().add(new Object[]{"Marker"})),
+                SemanticTermSnapshot.capture(mind.getTerms().add(new Object[]{"Other"})),
+                SemanticTermSnapshot.capture(mind.getTerms().add(new Object[]{"Marker", "Fresh"})),
+                SemanticTermSnapshot.capture(mind.getTerms().add(new Object[]{"Other", "Fresh"})));
+        ContextSetPattern.SharedRemainderEquality condition = left.solveSharedRemainderEquality(right, () -> {});
+        int equalPairs = 0;
+        for (SemanticTermSnapshot xValue : domain) {
+            for (SemanticTermSnapshot yValue : domain) {
+                assignment.put(x, xValue);
+                assignment.put(y, yValue);
+                boolean expected = left.instantiate(assignment, () -> {})
+                        .semanticallyEquals(right.instantiate(assignment, () -> {}));
+                if (condition.matches(assignment, () -> {}) != expected
+                        || assignment.get(x) != xValue || assignment.get(y) != yValue)
+                    throw new AssertionError("Residual condition disagrees with concrete replay or changed bindings");
+                if (expected) equalPairs++;
+            }
+        }
+        if (equalPairs != 5) throw new AssertionError("Expected both scalar and singleton inputs, plus shared Fresh");
     }
 
     private static Map<String, ContextSetPattern> capturePatterns(Mind mind) throws Exception {
