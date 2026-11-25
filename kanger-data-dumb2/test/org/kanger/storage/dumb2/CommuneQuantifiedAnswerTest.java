@@ -63,9 +63,39 @@ class CommuneQuantifiedAnswerTest {
                     "!@x trigger(x)->~signed([x,x]);", Boolean.FALSE);
             assertEquals(revision, data.getRevision());
             assertNotEquals(Boolean.TRUE, mind.query("?trigger(Marker);", null, false));
+            checkPendingSetReplay(pin, revision);
         } finally {
             close();
         }
+    }
+
+    private void checkPendingSetReplay(ContextConnection pin, long revision) throws Exception {
+        ContextProductionInventory base = ContextProductionInventory.inspect(
+                mind, data.getContextId(), revision, true, Collections.emptyList(), 100);
+        ContextProductionInventory target = ContextProductionInventory.inspect(
+                pin.layer(), pin.getTarget().getContextId(), pin.getTarget().getRevision(),
+                false, pin.getInitialization(), 100);
+        Mind proposed = new Mind(mind);
+        try {
+            assertTrue(proposed.compile("!trigger(Marker);", null, false));
+            assertTrue(proposed.query("?trigger(Marker);", null, false));
+            try (ContextPendingProductionSnapshotSession lease =
+                    ContextPendingProductionSnapshotSession.open(data, proposed, 100)) {
+                lease.requireNativeBaseline(base, Collections.singletonList(target), Collections.singletonList(pin));
+                replaySetConclusion(directory.resolve("Source"), new RevisionRef(base.context, base.revision),
+                        "!@x trigger(x)->signed([x,Marker]);", Boolean.TRUE);
+                replaySetConclusion(pin.getTargetLocation(), pin.getTarget(),
+                        "!@x trigger(x)->~signed([x,x]);", Boolean.FALSE);
+                lease.requireCurrent();
+                assertEquals(revision, data.getRevision());
+                data.disconnectContext("Negative");
+                assertThrows(IllegalStateException.class, lease::requireCurrent);
+                assertEquals(revision, data.getRevision());
+            }
+        } finally {
+            mind.release(proposed);
+        }
+        assertNotEquals(Boolean.TRUE, mind.query("?trigger(Marker);", null, false));
     }
 
     private static void replaySetConclusion(Path path, RevisionRef ref, String origin, Boolean truth)
