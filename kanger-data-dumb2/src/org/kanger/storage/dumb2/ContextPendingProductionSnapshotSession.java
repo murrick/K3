@@ -138,20 +138,38 @@ final class ContextPendingProductionSnapshotSession implements AutoCloseable {
         }
         if(!routed.equals(expected.keySet()))throw new IllegalStateException("Incomplete qualified native runtime mapping");
     }
+    /** Bind a concrete diagnostic premise to the sole original added by this live child. */
+    void requireSinglePrimaryAppend(String statement) throws Exception {
+        synchronized (provider) {
+            requireCurrent();
+            Map<Long, ContextProductionInventory.Row> originals = new LinkedHashMap<>();
+            for (ContextProductionInventory.Row row : parentInventory.primary) {
+                originals.put(row.nativeRule, row);
+            }
+            int additions = 0;
+            for (ContextProductionInventory.Row row : childInventory.primary) {
+                ContextProductionInventory.Row old = originals.remove(row.nativeRule);
+                if (old == null) {
+                    if (statement == null || !statement.equals(row.origin)) {
+                        throw new IllegalStateException("Different pending original assertion");
+                    }
+                    additions++;
+                } else if (!Objects.equals(old.origin, row.origin) || !old.nativeDigest.equals(row.nativeDigest)) {
+                    throw new IllegalStateException("Pending append changed an existing original");
+                }
+            }
+            if (!originals.isEmpty() || additions != 1) {
+                throw new IllegalStateException("Exactly one preserved-original append required");
+            }
+        }
+    }
+
     /** Fresh proof of the actual append and all independent physical members under this live lease. */
     int requireSymbolicFamily(String statement) throws Exception {
         synchronized(provider) {
             requireCurrent();
             try {
-                Map<Long,ContextProductionInventory.Row> originals=new LinkedHashMap<>();
-                for(ContextProductionInventory.Row row:parentInventory.primary)originals.put(row.nativeRule,row);
-                int additions=0;
-                for(ContextProductionInventory.Row row:childInventory.primary){
-                    ContextProductionInventory.Row old=originals.remove(row.nativeRule);
-                    if(old==null){if(!statement.equals(row.origin))throw new IllegalStateException("Different pending original assertion");additions++;}
-                    else if(!Objects.equals(old.origin,row.origin)||!old.nativeDigest.equals(row.nativeDigest))throw new IllegalStateException("Pending append changed an existing original");
-                }
-                if(!originals.isEmpty()||additions!=1)throw new IllegalStateException("Exactly one preserved-original append required");
+                requireSinglePrimaryAppend(statement);
                 ContextDependentSymbolicCacheSnapshot.Result local=ContextDependentSymbolicCacheSnapshot.capture(child,childInventory);
                 if(local.status!=ContextDependentSymbolicCacheSnapshot.Status.BOUND)throw new IllegalStateException("Pending local symbolic proof incomplete: "+local.reason);
                 List<ContextDependentSymbolicFamilyInspection.Member> members=new ArrayList<>();

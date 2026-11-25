@@ -76,6 +76,20 @@ class CommuneQuantifiedAnswerTest {
         ContextProductionInventory target = ContextProductionInventory.inspect(
                 pin.layer(), pin.getTarget().getContextId(), pin.getTarget().getRevision(),
                 false, pin.getInitialization(), 100);
+        Mind different = new Mind(mind);
+        try {
+            assertTrue(different.compile("!trigger(Other);", null, false));
+            try (ContextPendingProductionSnapshotSession lease =
+                    ContextPendingProductionSnapshotSession.open(data, different, 100)) {
+                lease.requireNativeBaseline(base, Collections.singletonList(target), Collections.singletonList(pin));
+                assertThrows(IllegalStateException.class,
+                        () -> lease.requireSinglePrimaryAppend("!trigger(Marker);"));
+                lease.requireSinglePrimaryAppend("!trigger(Other);");
+            }
+        } finally {
+            mind.release(different);
+        }
+        assertEquals(revision, data.getRevision());
         Mind proposed = new Mind(mind);
         try {
             assertTrue(proposed.compile("!trigger(Marker);", null, false));
@@ -83,6 +97,7 @@ class CommuneQuantifiedAnswerTest {
             try (ContextPendingProductionSnapshotSession lease =
                     ContextPendingProductionSnapshotSession.open(data, proposed, 100)) {
                 lease.requireNativeBaseline(base, Collections.singletonList(target), Collections.singletonList(pin));
+                lease.requireSinglePrimaryAppend("!trigger(Marker);");
                 replaySetConclusion(directory.resolve("Source"), new RevisionRef(base.context, base.revision),
                         "!@x trigger(x)->signed([x,Marker]);", Boolean.TRUE);
                 replaySetConclusion(pin.getTargetLocation(), pin.getTarget(),
