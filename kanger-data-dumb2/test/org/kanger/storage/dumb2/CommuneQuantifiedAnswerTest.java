@@ -1,6 +1,7 @@
 package org.kanger.storage.dumb2;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import org.junit.jupiter.api.Test;
@@ -95,7 +96,32 @@ class CommuneQuantifiedAnswerTest {
         } finally {
             mind.release(proposed);
         }
+        assertOnlyDictionaryMayChange(revision, data.getRevision());
+        assertTrue(data.dmzTopology().isEmpty());
         assertNotEquals(Boolean.TRUE, mind.query("?trigger(Marker);", null, false));
+    }
+
+    private void assertOnlyDictionaryMayChange(long before, long after) throws Exception {
+        Path source = directory.resolve("Source");
+        Path previous = ContextStore.generationPath(source, before);
+        Path current = ContextStore.generationPath(source, after);
+        assertArrayEquals(RevisionManifestStore.read(previous).getDependencyDigest(),
+                RevisionManifestStore.read(current).getDependencyDigest());
+        Set<String> unchangedBases = new HashSet<>();
+        try (java.nio.file.DirectoryStream<Path> bases = Files.newDirectoryStream(previous, "*.base")) {
+            for (Path base : bases) {
+                String name = base.getFileName().toString();
+                if ("dictionary.base".equals(name)) continue;
+                unchangedBases.add(name);
+                assertArrayEquals(Files.readAllBytes(base), Files.readAllBytes(current.resolve(name)), name);
+            }
+        }
+        try (java.nio.file.DirectoryStream<Path> bases = Files.newDirectoryStream(current, "*.base")) {
+            for (Path base : bases) {
+                String name = base.getFileName().toString();
+                assertTrue("dictionary.base".equals(name) || unchangedBases.contains(name), name);
+            }
+        }
     }
 
     private static void replaySetConclusion(Path path, RevisionRef ref, String origin, Boolean truth)
