@@ -49,8 +49,37 @@ class CommuneQuantifiedAnswerTest {
             assertEquals(revision, data.getRevision());
             assertTrue(mind.query("?trigger(Fresh);", null, false));
             assertNotEquals(Boolean.TRUE, mind.query("?trigger(Marker);", null, false));
+            ContextConnection pin = data.dmzTopology().get(0);
+            assertEquals(directory.resolve("Negative"), pin.getTargetLocation());
+            replaySetConclusion(directory.resolve("Source"), new RevisionRef(data.getContextId(), revision),
+                    "!@x trigger(x)->signed([x,Marker]);", Boolean.TRUE);
+            replaySetConclusion(pin.getTargetLocation(), pin.getTarget(),
+                    "!@x trigger(x)->~signed([x,x]);", Boolean.FALSE);
+            assertEquals(revision, data.getRevision());
+            assertNotEquals(Boolean.TRUE, mind.query("?trigger(Marker);", null, false));
         } finally {
             close();
+        }
+    }
+
+    private static void replaySetConclusion(Path path, RevisionRef ref, String origin, Boolean truth)
+            throws Exception {
+        try (SnapshotMindRuntime snapshot = SnapshotMindRuntime.open(path, ref, path.getFileName().toString())) {
+            Mind parent = snapshot.getMind();
+            boolean found = false;
+            for (org.kanger.interfaces.IRule rule : parent.getRules()) {
+                if (!rule.isGenerated() && origin.equals(((org.kanger.units.Rule) rule).getOrigin())) {
+                    found = true;
+                    break;
+                }
+            }
+            assertTrue(found, "Expected original declaration in " + path.getFileName());
+            User isolated = new User();
+            Mind replay = new Mind(isolated);
+            isolated.setCurrentMind(replay);
+            assertTrue(replay.compile(origin));
+            assertTrue(replay.compile("!trigger(Marker);", null, false));
+            assertEquals(truth, replay.query("?signed([Marker,Marker]);", null, false));
         }
     }
 
