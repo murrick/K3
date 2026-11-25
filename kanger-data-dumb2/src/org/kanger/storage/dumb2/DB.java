@@ -709,9 +709,9 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         RevisionRef source = new RevisionRef(context.getContextId(), getRevision());
         for (ContextConnection connection : connections.getConnections()) {
             PairQualification.Result pair = PairQualification.qualify(proposed, source, connection);
-            if (!pair.isCompatible()) throw new StorageLifecycleException(
-                    StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT,
-                    "Proposed Context pair is not compatible: " + source + " / " + connection.getTarget(),
+            if (!pair.isCompatible()) throw new org.kanger.exception.ContextPairConflictException(
+                    sourceLocator(), projectRevision(pair.getLeft()),
+                    displayFederationLocator(connection.getTargetLocation()), projectRevision(pair.getRight()),
                     pair.getCollisions());
         }
         connections.prepareCommunes(communeCache);

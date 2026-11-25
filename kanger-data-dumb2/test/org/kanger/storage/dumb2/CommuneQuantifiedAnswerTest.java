@@ -36,8 +36,8 @@ class CommuneQuantifiedAnswerTest {
             data.connectContext("Negative");
             assertTrue(mind.query("!trigger(Fresh);", null, false));
             long revision = data.getRevision();
-            org.kanger.exception.StorageLifecycleException failure = assertThrows(
-                    org.kanger.exception.StorageLifecycleException.class,
+            org.kanger.exception.ContextPairConflictException failure = assertThrows(
+                    org.kanger.exception.ContextPairConflictException.class,
                     () -> mind.query("!trigger(Marker);", null, false));
             assertEquals(org.kanger.enums.StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT,
                     failure.getErrorCode());
@@ -51,6 +51,12 @@ class CommuneQuantifiedAnswerTest {
             assertNotEquals(Boolean.TRUE, mind.query("?trigger(Marker);", null, false));
             ContextConnection pin = data.dmzTopology().get(0);
             assertEquals(directory.resolve("Negative"), pin.getTargetLocation());
+            assertEquals(data.getContextId(), failure.getSourceBase().getContextId());
+            assertEquals(revision, failure.getSourceBase().getRevision());
+            assertEquals(pin.getTarget().getContextId(), failure.getTargetPin().getContextId());
+            assertEquals(pin.getTarget().getRevision(), failure.getTargetPin().getRevision());
+            assertTrue(failure.toString().contains("Source@" + revision + " / Negative@1"));
+            assertFalse(failure.toString().contains(pin.getTarget().getContextId().toString()));
             replaySetConclusion(directory.resolve("Source"), new RevisionRef(data.getContextId(), revision),
                     "!@x trigger(x)->signed([x,Marker]);", Boolean.TRUE);
             replaySetConclusion(pin.getTargetLocation(), pin.getTarget(),
