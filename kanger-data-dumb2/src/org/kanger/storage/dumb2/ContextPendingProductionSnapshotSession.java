@@ -138,6 +138,35 @@ final class ContextPendingProductionSnapshotSession implements AutoCloseable {
         }
         if(!routed.equals(expected.keySet()))throw new IllegalStateException("Incomplete qualified native runtime mapping");
     }
+    /** Bind a diagnostic rule occurrence to the persisted parent or an exact direct pin. */
+    void requireOriginalProducer(RevisionRef revision, long nativeRule, String origin) throws Exception {
+        synchronized (provider) {
+            requireCurrent();
+            if (source.equals(revision)) {
+                requireOriginalProducer(parentInventory, nativeRule, origin);
+                return;
+            }
+            for (int i = 0; i < topology.size(); i++) {
+                ContextConnection connection = topology.get(i);
+                if (connection.getTarget().equals(revision)
+                        && connection.getTrustGroup() == null && connection.getInitialization().isEmpty()) {
+                    requireOriginalProducer(foreign.get(i), nativeRule, origin);
+                    return;
+                }
+            }
+            throw new IllegalStateException("Expected the pending parent revision or an uninitialized direct pin");
+        }
+    }
+
+    private static void requireOriginalProducer(ContextProductionInventory inventory, long nativeRule, String origin) {
+        for (ContextProductionInventory.Row row : inventory.primary) {
+            if (row.nativeRule == nativeRule && !row.query && origin != null && origin.equals(row.origin)) {
+                return;
+            }
+        }
+        throw new IllegalStateException("Original producer does not match the leased rule occurrence");
+    }
+
     /** Bind a concrete diagnostic premise to the sole original added by this live child. */
     void requireSinglePrimaryAppend(String statement) throws Exception {
         synchronized (provider) {

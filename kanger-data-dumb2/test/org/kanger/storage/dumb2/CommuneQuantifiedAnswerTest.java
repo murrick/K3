@@ -98,10 +98,21 @@ class CommuneQuantifiedAnswerTest {
                     ContextPendingProductionSnapshotSession.open(data, proposed, 100)) {
                 lease.requireNativeBaseline(base, Collections.singletonList(target), Collections.singletonList(pin));
                 lease.requireSinglePrimaryAppend("!trigger(Marker);");
-                replaySetConclusion(directory.resolve("Source"), new RevisionRef(base.context, base.revision),
-                        "!@x trigger(x)->signed([x,Marker]);", Boolean.TRUE);
-                replaySetConclusion(pin.getTargetLocation(), pin.getTarget(),
-                        "!@x trigger(x)->~signed([x,x]);", Boolean.FALSE);
+                RevisionRef source = new RevisionRef(base.context, base.revision);
+                String positive = "!@x trigger(x)->signed([x,Marker]);";
+                String negative = "!@x trigger(x)->~signed([x,x]);";
+                long positiveRule = originalRule(base, positive);
+                long negativeRule = originalRule(target, negative);
+                assertThrows(IllegalStateException.class,
+                        () -> lease.requireOriginalProducer(pin.getTarget(), positiveRule, positive));
+                assertThrows(IllegalStateException.class, () -> lease.requireOriginalProducer(
+                        new RevisionRef(source.getContextId(), revision - 1), positiveRule, positive));
+                assertThrows(IllegalStateException.class,
+                        () -> lease.requireOriginalProducer(source, Long.MAX_VALUE, positive));
+                lease.requireOriginalProducer(source, positiveRule, positive);
+                lease.requireOriginalProducer(pin.getTarget(), negativeRule, negative);
+                replaySetConclusion(directory.resolve("Source"), source, positiveRule, positive, Boolean.TRUE);
+                replaySetConclusion(pin.getTargetLocation(), pin.getTarget(), negativeRule, negative, Boolean.FALSE);
                 lease.requireCurrent();
                 assertEquals(revision, data.getRevision());
                 data.disconnectContext("Negative");
@@ -139,13 +150,24 @@ class CommuneQuantifiedAnswerTest {
         }
     }
 
+    private static long originalRule(ContextProductionInventory inventory, String origin) {
+        return inventory.primary.stream().filter(row -> origin.equals(row.origin))
+                .findFirst().orElseThrow(AssertionError::new).nativeRule;
+    }
+
     private static void replaySetConclusion(Path path, RevisionRef ref, String origin, Boolean truth)
+            throws Exception {
+        replaySetConclusion(path, ref, null, origin, truth);
+    }
+
+    private static void replaySetConclusion(Path path, RevisionRef ref, Long nativeRule, String origin, Boolean truth)
             throws Exception {
         try (SnapshotMindRuntime snapshot = SnapshotMindRuntime.open(path, ref, path.getFileName().toString())) {
             Mind parent = snapshot.getMind();
             boolean found = false;
             for (org.kanger.interfaces.IRule rule : parent.getRules()) {
-                if (!rule.isGenerated() && origin.equals(((org.kanger.units.Rule) rule).getOrigin())) {
+                if ((nativeRule == null || rule.getId() == nativeRule)
+                        && !rule.isGenerated() && origin.equals(((org.kanger.units.Rule) rule).getOrigin())) {
                     found = true;
                     break;
                 }
