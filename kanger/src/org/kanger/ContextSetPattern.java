@@ -262,13 +262,13 @@ final class ContextSetPattern {
 
         /** Reject inconsistent width offsets across shared rule-relative variable positions. */
         static boolean widthsConsistent(List<SharedRemainderEquality> conditions, Runnable work) {
-            return solveCounts(conditions, List::size, work).isPresent();
+            return solveCounts(conditions, List::size, position -> -1, work).isPresent();
         }
 
         /** Check cycles for each named member separately, using native semantic equality. */
         static boolean multiplicitiesConsistent(List<SharedRemainderEquality> conditions, Runnable work) {
             for (SemanticTermSnapshot member : namedMembers(conditions, work)) {
-                if (!solveCounts(conditions, required -> countMember(required, member, work), work).isPresent()) {
+                if (!solveCounts(conditions, required -> countMember(required, member, work), position -> -1, work).isPresent()) {
                     return false;
                 }
             }
@@ -278,6 +278,12 @@ final class ContextSetPattern {
         /** Build one finite multiset assignment for these equalities under the supplied work budget. */
         static Optional<Map<Integer, SemanticTermSnapshot>> witness(
                 List<SharedRemainderEquality> conditions, Runnable work) throws Exception {
+            return witness(conditions, Collections.emptyMap(), work);
+        }
+
+        static Optional<Map<Integer, SemanticTermSnapshot>> witness(
+                List<SharedRemainderEquality> conditions, Map<Integer, SemanticTermSnapshot> fixed,
+                Runnable work) throws Exception {
             Map<Integer, List<ITerm>> values = new HashMap<>();
             for (SharedRemainderEquality condition : conditions) {
                 for (int position : condition.originalPositions) {
@@ -285,21 +291,42 @@ final class ContextSetPattern {
                     values.computeIfAbsent(position, key -> new ArrayList<>());
                 }
             }
-            for (SemanticTermSnapshot member : namedMembers(conditions, work)) {
-                Optional<Map<Integer, Long>> counts =
-                        solveCounts(conditions, required -> countMember(required, member, work), work);
+            List<SemanticTermSnapshot> members = namedMembers(conditions, work);
+            Map<Integer, List<SemanticTermSnapshot>> fixedMembers = new HashMap<>();
+            for (SharedRemainderEquality condition : conditions) {
+                for (int position : condition.requiredMembers.keySet()) {
+                    work.run();
+                    if (!fixed.containsKey(position) || fixedMembers.containsKey(position)) continue;
+                    List<SemanticTermSnapshot> leaves = new ArrayList<>();
+                    requireBinding(position, fixed).visitFlatSetMembers(leaves::add, work);
+                    fixedMembers.put(position, leaves);
+                    for (SemanticTermSnapshot leaf : leaves) {
+                        work.run();
+                        if (countMember(members, leaf, work) == 0) members.add(leaf);
+                    }
+                }
+            }
+            for (SemanticTermSnapshot member : members) {
+                Optional<Map<Integer, Long>> counts = solveCounts(conditions,
+                        required -> countMember(required, member, work), position -> {
+                            List<SemanticTermSnapshot> leaves = fixedMembers.get(position);
+                            return leaves == null ? -1 : countMember(leaves, member, work);
+                        }, work);
                 if (!counts.isPresent()) return Optional.empty();
                 for (Map.Entry<Integer, Long> count : counts.get().entrySet()) {
                     work.run();
+                    if (fixed.containsKey(count.getKey())) continue;
                     for (long copy = 0; copy < count.getValue(); copy++) {
                         member.appendFlatSetMembers(values.get(count.getKey()), work);
                     }
                 }
             }
-            Map<Integer, SemanticTermSnapshot> assignment = new HashMap<>();
+            Map<Integer, SemanticTermSnapshot> assignment = new HashMap<>(fixed);
             for (Map.Entry<Integer, List<ITerm>> value : values.entrySet()) {
                 work.run();
-                assignment.put(value.getKey(), captureFlatSet(value.getValue()));
+                if (!assignment.containsKey(value.getKey())) {
+                    assignment.put(value.getKey(), captureFlatSet(value.getValue()));
+                }
             }
             return Optional.of(Collections.unmodifiableMap(assignment));
         }
@@ -328,7 +355,8 @@ final class ContextSetPattern {
         }
 
         private static Optional<Map<Integer, Long>> solveCounts(List<SharedRemainderEquality> conditions,
-                java.util.function.ToIntFunction<List<SemanticTermSnapshot>> measure, Runnable work) {
+                java.util.function.ToIntFunction<List<SemanticTermSnapshot>> measure,
+                java.util.function.IntUnaryOperator fixedCount, Runnable work) {
             Map<Integer, List<CountOffset>> neighbors = new HashMap<>();
             for (SharedRemainderEquality condition : conditions) {
                 work.run();
@@ -349,10 +377,18 @@ final class ContextSetPattern {
                 pending.add(start);
                 List<Integer> component = new ArrayList<>();
                 long minimum = 0;
+                Long fixedShift = null;
                 while (!pending.isEmpty()) {
                     int current = pending.remove();
                     component.add(current);
-                    minimum = Math.min(minimum, counts.get(current));
+                    long relative = counts.get(current);
+                    minimum = Math.min(minimum, relative);
+                    int fixed = fixedCount.applyAsInt(current);
+                    if (fixed >= 0) {
+                        long shift = fixed - relative;
+                        if (fixedShift != null && fixedShift != shift) return Optional.empty();
+                        fixedShift = shift;
+                    }
                     for (CountOffset offset : neighbors.get(current)) {
                         work.run();
                         long expected = counts.get(current) + offset.difference;
@@ -361,10 +397,12 @@ final class ContextSetPattern {
                         else if (existing != expected) return Optional.empty();
                     }
                 }
-                // A component may be shifted uniformly until its least count is zero.
+                // Use the anchor when present, otherwise choose the smallest nonnegative counts.
+                long shift = fixedShift == null ? -minimum : fixedShift;
+                if (shift < -minimum) return Optional.empty();
                 for (int position : component) {
                     work.run();
-                    counts.put(position, counts.get(position) - minimum);
+                    counts.put(position, counts.get(position) + shift);
                 }
             }
             return Optional.of(counts);

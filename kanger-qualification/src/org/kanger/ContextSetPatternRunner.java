@@ -500,6 +500,29 @@ public final class ContextSetPatternRunner {
                     && !w.instantiate(assignment, () -> {}).semanticallyEquals(shifted.instantiate(assignment, () -> {})))
                 throw new AssertionError("A cancelled position can still be constrained by another equality");
         }
+        java.util.Set<Integer> positions = new java.util.HashSet<>();
+        w.collectVariables(positions, () -> {});
+        int wPosition = positions.iterator().next();
+        positions.clear();
+        shifted.collectVariables(positions, () -> {});
+        int yPosition = positions.iterator().next();
+        List<ContextSetPattern.SharedRemainderEquality> constraints = java.util.Arrays.asList(equality, constrainsW);
+        SemanticTermSnapshot fresh = SemanticTermSnapshot.capture(mind.getTerms().add("Fresh"));
+        Map<Integer, SemanticTermSnapshot> fixed = new HashMap<>();
+        fixed.put(yPosition, fresh);
+        Map<Integer, SemanticTermSnapshot> anchored = ContextSetPattern.SharedRemainderEquality
+                .witness(constraints, fixed, () -> {}).orElseThrow(AssertionError::new);
+        if (anchored.get(yPosition) != fresh
+                || !left.instantiate(anchored, () -> {}).semanticallyEquals(right.instantiate(anchored, () -> {}))
+                || !w.instantiate(anchored, () -> {}).semanticallyEquals(shifted.instantiate(anchored, () -> {})))
+            throw new AssertionError("Anchored witness must preserve the exact scalar and propagate its members");
+        fixed.put(wPosition, SemanticTermSnapshot.capture(mind.getTerms().add(new Object[]{"Marker"})));
+        if (ContextSetPattern.SharedRemainderEquality.witness(constraints, fixed, () -> {}).isPresent())
+            throw new AssertionError("Conflicting fixed values returned a witness");
+        fixed.remove(yPosition);
+        fixed.put(wPosition, SemanticTermSnapshot.capture(mind.getTerms().add(new Object[]{})));
+        if (ContextSetPattern.SharedRemainderEquality.witness(constraints, fixed, () -> {}).isPresent())
+            throw new AssertionError("A fixed anchor requiring a negative count returned a witness");
     }
 
     private static Map<String, ContextSetPattern> capturePatterns(Mind mind) throws Exception {
