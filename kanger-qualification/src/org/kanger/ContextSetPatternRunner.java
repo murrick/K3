@@ -28,6 +28,7 @@ public final class ContextSetPatternRunner {
             checkNativeDiagonalGrowth();
             checkSymbolicIdentities();
             checkSharedRemainderEquality();
+            checkCyclicSetEqualities();
             checkNativeConditionalCollision();
             checkConditionalCollisionCaptureBoundary();
             checkSourcedSetApplications();
@@ -373,6 +374,60 @@ public final class ContextSetPatternRunner {
             }
         }
         if (equalPairs != 5) throw new AssertionError("Expected both scalar and singleton inputs, plus shared Fresh");
+    }
+
+    private static void checkCyclicSetEqualities() throws Exception {
+        User user = new User();
+        Mind mind = new Mind(user);
+        user.setCurrentMind(mind);
+        if (!mind.compile("!@x @y @z source(x,y,z)->p([x]), q([y]), r([z]), s([x,Marker]);"))
+            throw new AssertionError("Cyclic equality fixture");
+        Map<String, ContextSetPattern> patterns = capturePatterns(mind);
+        ContextSetPattern x = patterns.get("p"), y = patterns.get("q");
+        ContextSetPattern z = patterns.get("r"), shifted = patterns.get("s");
+        ContextSetPattern.SharedRemainderEquality xy = x.solveSharedRemainderEquality(y, () -> {});
+        ContextSetPattern.SharedRemainderEquality yz = y.solveSharedRemainderEquality(z, () -> {});
+        ContextSetPattern.SharedRemainderEquality zx = z.solveSharedRemainderEquality(shifted, () -> {});
+        java.util.Set<Integer> positions = new java.util.HashSet<>();
+        x.collectVariables(positions, () -> {});
+        int xPosition = positions.iterator().next();
+        positions.clear();
+        y.collectVariables(positions, () -> {});
+        int yPosition = positions.iterator().next();
+        positions.clear();
+        z.collectVariables(positions, () -> {});
+        int zPosition = positions.iterator().next();
+        List<SemanticTermSnapshot> domain = java.util.Arrays.asList(
+                SemanticTermSnapshot.capture(mind.getTerms().add(new Object[]{})),
+                SemanticTermSnapshot.capture(mind.getTerms().add("Marker")),
+                SemanticTermSnapshot.capture(mind.getTerms().add(new Object[]{"Marker", "Marker"})));
+        boolean[] witnessedPairsOfConditions = new boolean[3];
+        Map<Integer, SemanticTermSnapshot> assignment = new HashMap<>();
+        for (SemanticTermSnapshot a : domain) {
+            for (SemanticTermSnapshot b : domain) {
+                for (SemanticTermSnapshot c : domain) {
+                    assignment.put(xPosition, a);
+                    assignment.put(yPosition, b);
+                    assignment.put(zPosition, c);
+                    SemanticTermSnapshot px = x.instantiate(assignment, () -> {});
+                    SemanticTermSnapshot py = y.instantiate(assignment, () -> {});
+                    SemanticTermSnapshot pz = z.instantiate(assignment, () -> {});
+                    boolean first = px.semanticallyEquals(py);
+                    boolean second = py.semanticallyEquals(pz);
+                    boolean third = pz.semanticallyEquals(shifted.instantiate(assignment, () -> {}));
+                    if (first != xy.matches(assignment, () -> {})
+                            || second != yz.matches(assignment, () -> {})
+                            || third != zx.matches(assignment, () -> {}))
+                        throw new AssertionError("Symbolic equality disagrees with concrete substitution");
+                    if (first && second && third) throw new AssertionError("Inconsistent cycle has a witness");
+                    witnessedPairsOfConditions[0] |= first && second;
+                    witnessedPairsOfConditions[1] |= second && third;
+                    witnessedPairsOfConditions[2] |= third && first;
+                }
+            }
+        }
+        for (boolean witnessed : witnessedPairsOfConditions)
+            if (!witnessed) throw new AssertionError("Each pair of conditions must have a witness");
     }
 
     private static Map<String, ContextSetPattern> capturePatterns(Mind mind) throws Exception {
