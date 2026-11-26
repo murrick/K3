@@ -2,6 +2,7 @@
 package org.kanger;
 
 import java.math.BigInteger;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -253,6 +254,49 @@ final class ContextSetPattern {
                 used[match] = true;
             }
             return true;
+        }
+
+        /** Reject inconsistent width offsets across shared rule-relative variable positions. */
+        static boolean widthsConsistent(List<SharedRemainderEquality> conditions, Runnable work) {
+            Map<Integer, List<WidthOffset>> neighbors = new HashMap<>();
+            for (SharedRemainderEquality condition : conditions) {
+                work.run();
+                java.util.Iterator<Map.Entry<Integer, List<SemanticTermSnapshot>>> entries =
+                        condition.requiredMembers.entrySet().iterator();
+                Map.Entry<Integer, List<SemanticTermSnapshot>> first = entries.next(), second = entries.next();
+                int difference = second.getValue().size() - first.getValue().size();
+                neighbors.computeIfAbsent(first.getKey(), key -> new ArrayList<>())
+                        .add(new WidthOffset(second.getKey(), difference));
+                neighbors.computeIfAbsent(second.getKey(), key -> new ArrayList<>())
+                        .add(new WidthOffset(first.getKey(), -difference));
+            }
+            Map<Integer, Long> widths = new HashMap<>();
+            ArrayDeque<Integer> pending = new ArrayDeque<>();
+            for (int start : neighbors.keySet()) {
+                work.run();
+                if (widths.putIfAbsent(start, 0L) != null) continue;
+                pending.add(start);
+                while (!pending.isEmpty()) {
+                    int current = pending.remove();
+                    for (WidthOffset offset : neighbors.get(current)) {
+                        work.run();
+                        long expected = widths.get(current) + offset.difference;
+                        Long existing = widths.putIfAbsent(offset.target, expected);
+                        if (existing == null) pending.add(offset.target);
+                        else if (existing != expected) return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        private static final class WidthOffset {
+            final int target, difference;
+
+            WidthOffset(int target, int difference) {
+                this.target = target;
+                this.difference = difference;
+            }
         }
 
         private static List<SemanticTermSnapshot> remainder(Map.Entry<Integer, List<SemanticTermSnapshot>> requirement,

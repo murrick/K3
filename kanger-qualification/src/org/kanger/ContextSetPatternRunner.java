@@ -388,6 +388,17 @@ public final class ContextSetPatternRunner {
         ContextSetPattern.SharedRemainderEquality xy = x.solveSharedRemainderEquality(y, () -> {});
         ContextSetPattern.SharedRemainderEquality yz = y.solveSharedRemainderEquality(z, () -> {});
         ContextSetPattern.SharedRemainderEquality zx = z.solveSharedRemainderEquality(shifted, () -> {});
+        ContextSetPattern.SharedRemainderEquality reversed =
+                shifted.solveSharedRemainderEquality(z, () -> {});
+        ContextSetPattern.SharedRemainderEquality balanced = z.solveSharedRemainderEquality(x, () -> {});
+        if (ContextSetPattern.SharedRemainderEquality.widthsConsistent(
+                java.util.Arrays.asList(xy, yz, zx), () -> {})
+                || ContextSetPattern.SharedRemainderEquality.widthsConsistent(
+                        java.util.Arrays.asList(reversed, yz, xy), () -> {})
+                || !ContextSetPattern.SharedRemainderEquality.widthsConsistent(
+                        java.util.Arrays.asList(xy, yz, balanced), () -> {}))
+            throw new AssertionError("Width offsets must reject only the inconsistent cycles in this fixture");
+
         java.util.Set<Integer> positions = new java.util.HashSet<>();
         x.collectVariables(positions, () -> {});
         int xPosition = positions.iterator().next();
@@ -425,6 +436,11 @@ public final class ContextSetPatternRunner {
                     witnessedPairsOfConditions[2] |= third && first;
                 }
             }
+        }
+        for (List<ContextSetPattern.SharedRemainderEquality> pair : java.util.Arrays.asList(
+                java.util.Arrays.asList(xy, yz), java.util.Arrays.asList(yz, zx), java.util.Arrays.asList(zx, xy))) {
+            if (!ContextSetPattern.SharedRemainderEquality.widthsConsistent(pair, () -> {}))
+                throw new AssertionError("Width check rejected a pair with a concrete witness");
         }
         for (boolean witnessed : witnessedPairsOfConditions)
             if (!witnessed) throw new AssertionError("Each pair of conditions must have a witness");
