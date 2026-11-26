@@ -236,8 +236,12 @@ final class ContextSetPattern {
     static final class SharedRemainderEquality {
         final Map<Integer, List<SemanticTermSnapshot>> requiredMembers;
 
-        private SharedRemainderEquality(Map<Integer, List<SemanticTermSnapshot>> requiredMembers) {
+        private final List<Integer> originalPositions;
+
+        private SharedRemainderEquality(Map<Integer, List<SemanticTermSnapshot>> requiredMembers,
+                List<Integer> originalPositions) {
             this.requiredMembers = Collections.unmodifiableMap(requiredMembers);
+            this.originalPositions = Collections.unmodifiableList(originalPositions);
         }
 
         /** Evaluate only the flattened contributions, leaving every original binding intact. */
@@ -276,7 +280,7 @@ final class ContextSetPattern {
                 List<SharedRemainderEquality> conditions, Runnable work) throws Exception {
             Map<Integer, List<ITerm>> values = new HashMap<>();
             for (SharedRemainderEquality condition : conditions) {
-                for (int position : condition.requiredMembers.keySet()) {
+                for (int position : condition.originalPositions) {
                     work.run();
                     values.computeIfAbsent(position, key -> new ArrayList<>());
                 }
@@ -403,6 +407,11 @@ final class ContextSetPattern {
             work.run();
             difference.merge(entry.getKey(), -entry.getValue(), Integer::sum);
         }
+        List<Integer> originalPositions = new ArrayList<>();
+        for (int position : difference.keySet()) {
+            work.run();
+            originalPositions.add(position);
+        }
         difference.values().removeIf(count -> count == 0);
         if (difference.size() != 2 || !difference.containsValue(1) || !difference.containsValue(-1))
             throw new IllegalArgumentException("Two opposite unit-count set variables required");
@@ -423,7 +432,7 @@ final class ContextSetPattern {
         for (Map.Entry<Integer, Integer> entry : difference.entrySet()) {
             required.put(entry.getKey(), Collections.unmodifiableList(entry.getValue() == 1 ? rightOnly : leftOnly));
         }
-        return new SharedRemainderEquality(required);
+        return new SharedRemainderEquality(required, originalPositions);
     }
 
     private static int findUnusedMember(List<SemanticTermSnapshot> leaves, boolean[] used,

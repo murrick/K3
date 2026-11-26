@@ -29,6 +29,7 @@ public final class ContextSetPatternRunner {
             checkSymbolicIdentities();
             checkSharedRemainderEquality();
             checkCyclicSetEqualities();
+            checkCancelledSetVariable();
             checkNativeConditionalCollision();
             checkConditionalCollisionCaptureBoundary();
             checkSourcedSetApplications();
@@ -475,6 +476,30 @@ public final class ContextSetPatternRunner {
         }
         for (boolean witnessed : witnessedPairsOfConditions)
             if (!witnessed) throw new AssertionError("Each pair of conditions must have a witness");
+    }
+
+    private static void checkCancelledSetVariable() throws Exception {
+        User user = new User();
+        Mind mind = new Mind(user);
+        user.setCurrentMind(mind);
+        if (!mind.compile("!@x @y @w source(x,y,w)->p([x,w]), q([y,w]), r([w]), s([y,Marker]);"))
+            throw new AssertionError("Cancelled variable fixture");
+        Map<String, ContextSetPattern> patterns = capturePatterns(mind);
+        ContextSetPattern left = patterns.get("p"), right = patterns.get("q");
+        ContextSetPattern w = patterns.get("r"), shifted = patterns.get("s");
+        ContextSetPattern.SharedRemainderEquality equality = left.solveSharedRemainderEquality(right, () -> {});
+        ContextSetPattern.SharedRemainderEquality constrainsW = w.solveSharedRemainderEquality(shifted, () -> {});
+        for (List<ContextSetPattern.SharedRemainderEquality> constraints : java.util.Arrays.asList(
+                java.util.Collections.singletonList(equality), java.util.Arrays.asList(equality, constrainsW))) {
+            Map<Integer, SemanticTermSnapshot> assignment =
+                    ContextSetPattern.SharedRemainderEquality.witness(constraints, () -> {}).orElseThrow(AssertionError::new);
+            if (assignment.size() != 3
+                    || !left.instantiate(assignment, () -> {}).semanticallyEquals(right.instantiate(assignment, () -> {})))
+                throw new AssertionError("Witness must bind positions of both original expressions");
+            if (constraints.size() == 2
+                    && !w.instantiate(assignment, () -> {}).semanticallyEquals(shifted.instantiate(assignment, () -> {})))
+                throw new AssertionError("A cancelled position can still be constrained by another equality");
+        }
     }
 
     private static Map<String, ContextSetPattern> capturePatterns(Mind mind) throws Exception {
