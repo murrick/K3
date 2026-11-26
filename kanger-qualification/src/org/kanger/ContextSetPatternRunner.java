@@ -30,6 +30,7 @@ public final class ContextSetPatternRunner {
             checkSharedRemainderEquality();
             checkCyclicSetEqualities();
             checkCancelledSetVariable();
+            checkScaledSetEquality();
             checkNativeConditionalCollision();
             checkConditionalCollisionCaptureBoundary();
             checkSourcedSetApplications();
@@ -564,6 +565,28 @@ public final class ContextSetPatternRunner {
             }
         }
         if (compatible != inputs.size()) throw new AssertionError("Expected one compatible w for each fixed y");
+    }
+
+    private static void checkScaledSetEquality() throws Exception {
+        User user = new User();
+        Mind mind = new Mind(user);
+        user.setCurrentMind(mind);
+        if (!mind.compile("!@x @y source(x,y)->p([x,x]), q([y,y,Marker,Marker]), r([y,y,Marker,Other]);"))
+            throw new AssertionError("Scaled equality fixture");
+        Map<String, ContextSetPattern> patterns = capturePatterns(mind);
+        ContextSetPattern left = patterns.get("p"), doubled = patterns.get("q");
+        ContextSetPattern.SharedRemainderEquality possible = left.solveSharedRemainderEquality(doubled, () -> {});
+        ContextSetPattern.SharedRemainderEquality impossible =
+                left.solveSharedRemainderEquality(patterns.get("r"), () -> {});
+        Map<Integer, SemanticTermSnapshot> witness = ContextSetPattern.SharedRemainderEquality
+                .witness(java.util.Collections.singletonList(possible), () -> {}).orElseThrow(AssertionError::new);
+        List<ContextSetPattern.SharedRemainderEquality> rejected = java.util.Collections.singletonList(impossible);
+        if (!possible.matches(witness, () -> {})
+                || !left.instantiate(witness, () -> {}).semanticallyEquals(doubled.instantiate(witness, () -> {}))
+                || impossible.matches(witness, () -> {})
+                || ContextSetPattern.SharedRemainderEquality.multiplicitiesConsistent(rejected, () -> {})
+                || ContextSetPattern.SharedRemainderEquality.witness(rejected, () -> {}).isPresent())
+            throw new AssertionError("Scaled equality must divide the multiplicity of each member separately");
     }
 
     private static Map<String, ContextSetPattern> capturePatterns(Mind mind) throws Exception {

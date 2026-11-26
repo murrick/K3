@@ -237,15 +237,19 @@ final class ContextSetPattern {
         final Map<Integer, List<SemanticTermSnapshot>> requiredMembers;
 
         private final List<Integer> originalPositions;
+        private final boolean divisible;
 
         private SharedRemainderEquality(Map<Integer, List<SemanticTermSnapshot>> requiredMembers,
-                List<Integer> originalPositions) {
+                List<Integer> originalPositions, boolean divisible) {
             this.requiredMembers = Collections.unmodifiableMap(requiredMembers);
             this.originalPositions = Collections.unmodifiableList(originalPositions);
+            this.divisible = divisible;
         }
 
         /** Evaluate only the flattened contributions, leaving every original binding intact. */
         boolean matches(Map<Integer, SemanticTermSnapshot> assignment, Runnable work) {
+            work.run();
+            if (!divisible) return false;
             java.util.Iterator<Map.Entry<Integer, List<SemanticTermSnapshot>>> entries =
                     requiredMembers.entrySet().iterator();
             List<SemanticTermSnapshot> first = remainder(entries.next(), assignment, work);
@@ -267,6 +271,10 @@ final class ContextSetPattern {
 
         /** Check cycles for each named member separately, using native semantic equality. */
         static boolean multiplicitiesConsistent(List<SharedRemainderEquality> conditions, Runnable work) {
+            for (SharedRemainderEquality condition : conditions) {
+                work.run();
+                if (!condition.divisible) return false;
+            }
             for (SemanticTermSnapshot member : namedMembers(conditions, work)) {
                 if (!solveCounts(conditions, required -> countMember(required, member, work), position -> -1, work).isPresent()) {
                     return false;
@@ -286,6 +294,8 @@ final class ContextSetPattern {
                 Runnable work) throws Exception {
             Map<Integer, List<ITerm>> values = new HashMap<>();
             for (SharedRemainderEquality condition : conditions) {
+                work.run();
+                if (!condition.divisible) return Optional.empty();
                 for (int position : condition.originalPositions) {
                     work.run();
                     values.computeIfAbsent(position, key -> new ArrayList<>());
@@ -360,6 +370,7 @@ final class ContextSetPattern {
             Map<Integer, List<CountOffset>> neighbors = new HashMap<>();
             for (SharedRemainderEquality condition : conditions) {
                 work.run();
+                if (!condition.divisible) return Optional.empty();
                 java.util.Iterator<Map.Entry<Integer, List<SemanticTermSnapshot>>> entries =
                         condition.requiredMembers.entrySet().iterator();
                 Map.Entry<Integer, List<SemanticTermSnapshot>> first = entries.next(), second = entries.next();
@@ -451,8 +462,11 @@ final class ContextSetPattern {
             originalPositions.add(position);
         }
         difference.values().removeIf(count -> count == 0);
-        if (difference.size() != 2 || !difference.containsValue(1) || !difference.containsValue(-1))
-            throw new IllegalArgumentException("Two opposite unit-count set variables required");
+        if (difference.size() != 2)
+            throw new IllegalArgumentException("Two opposite equal-magnitude set coefficients required");
+        int coefficient = Math.abs(difference.values().iterator().next());
+        if (!difference.containsValue(coefficient) || !difference.containsValue(-coefficient))
+            throw new IllegalArgumentException("Two opposite equal-magnitude set coefficients required");
 
         List<SemanticTermSnapshot> leftOnly = new ArrayList<>(), rightOnly = new ArrayList<>();
         boolean[] used = new boolean[rightConstants.size()];
@@ -466,11 +480,14 @@ final class ContextSetPattern {
             work.run();
             if (!used[i]) rightOnly.add(rightConstants.get(i));
         }
+        Optional<List<SemanticTermSnapshot>> left = divideMembers(leftOnly, new boolean[leftOnly.size()], coefficient, work);
+        Optional<List<SemanticTermSnapshot>> rightResidual =
+                divideMembers(rightOnly, new boolean[rightOnly.size()], coefficient, work);
         Map<Integer, List<SemanticTermSnapshot>> required = new HashMap<>();
         for (Map.Entry<Integer, Integer> entry : difference.entrySet()) {
-            required.put(entry.getKey(), Collections.unmodifiableList(entry.getValue() == 1 ? rightOnly : leftOnly));
+            required.put(entry.getKey(), (entry.getValue() > 0 ? rightResidual : left).orElse(Collections.emptyList()));
         }
-        return new SharedRemainderEquality(required, originalPositions);
+        return new SharedRemainderEquality(required, originalPositions, left.isPresent() && rightResidual.isPresent());
     }
 
     private static int findUnusedMember(List<SemanticTermSnapshot> leaves, boolean[] used,
