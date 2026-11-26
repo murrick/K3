@@ -523,6 +523,47 @@ public final class ContextSetPatternRunner {
         fixed.put(wPosition, SemanticTermSnapshot.capture(mind.getTerms().add(new Object[]{})));
         if (ContextSetPattern.SharedRemainderEquality.witness(constraints, fixed, () -> {}).isPresent())
             throw new AssertionError("A fixed anchor requiring a negative count returned a witness");
+
+        positions.clear();
+        left.collectVariables(positions, () -> {});
+        positions.remove(wPosition);
+        int xPosition = positions.iterator().next();
+        List<SemanticTermSnapshot> inputs = java.util.Arrays.asList(
+                SemanticTermSnapshot.capture(mind.getTerms().add(new Object[]{})),
+                SemanticTermSnapshot.capture(mind.getTerms().add("Marker")),
+                fresh,
+                SemanticTermSnapshot.capture(mind.getTerms().add(new Object[]{"Fresh"})),
+                SemanticTermSnapshot.capture(mind.getTerms().add(new Object[]{"Marker", "Marker"})));
+        List<SemanticTermSnapshot> wCandidates = new java.util.ArrayList<>(inputs);
+        wCandidates.add(SemanticTermSnapshot.capture(mind.getTerms().add(new Object[]{"Fresh", "Marker"})));
+        wCandidates.add(SemanticTermSnapshot.capture(mind.getTerms().add(new Object[]{"Marker", "Marker", "Marker"})));
+        int compatible = 0;
+        for (SemanticTermSnapshot yValue : inputs) {
+            for (SemanticTermSnapshot wValue : wCandidates) {
+                Map<Integer, SemanticTermSnapshot> candidate = new HashMap<>();
+                candidate.put(yPosition, yValue);
+                candidate.put(wPosition, wValue);
+                java.util.Optional<Map<Integer, SemanticTermSnapshot>> symbolic =
+                        ContextSetPattern.SharedRemainderEquality.witness(constraints, candidate, () -> {});
+                boolean concrete = false;
+                for (SemanticTermSnapshot xValue : inputs) {
+                    candidate.put(xPosition, xValue);
+                    concrete |= left.instantiate(candidate, () -> {}).semanticallyEquals(right.instantiate(candidate, () -> {}))
+                            && w.instantiate(candidate, () -> {}).semanticallyEquals(shifted.instantiate(candidate, () -> {}));
+                }
+                if (symbolic.isPresent() != concrete)
+                    throw new AssertionError("Fixed-input solver disagrees with bounded concrete enumeration");
+                if (symbolic.isPresent()) {
+                    Map<Integer, SemanticTermSnapshot> result = symbolic.get();
+                    if (result.get(yPosition) != yValue || result.get(wPosition) != wValue
+                            || !left.instantiate(result, () -> {}).semanticallyEquals(right.instantiate(result, () -> {}))
+                            || !w.instantiate(result, () -> {}).semanticallyEquals(shifted.instantiate(result, () -> {})))
+                        throw new AssertionError("Returned witness did not preserve its fixed inputs and both equalities");
+                    compatible++;
+                }
+            }
+        }
+        if (compatible != inputs.size()) throw new AssertionError("Expected one compatible w for each fixed y");
     }
 
     private static Map<String, ContextSetPattern> capturePatterns(Mind mind) throws Exception {
