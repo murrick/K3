@@ -64,9 +64,33 @@ class CommuneQuantifiedAnswerTest {
                     "!@x trigger(x)->~signed([x,x]);", Boolean.FALSE);
             assertEquals(revision, data.getRevision());
             assertNotEquals(Boolean.TRUE, mind.query("?trigger(Marker);", null, false));
+            checkOptInSetRefusals(revision);
             checkPendingSetReplay(pin, revision);
         } finally {
             close();
+        }
+    }
+
+    private void checkOptInSetRefusals(long revision) throws Exception {
+        String flag = "kanger.dumb2.experimental.ordinaryFamilyQualification";
+        String previous = System.setProperty(flag, "true");
+        try {
+            org.kanger.exception.ContextPairConflictException conflict = assertThrows(
+                    org.kanger.exception.ContextPairConflictException.class,
+                    () -> mind.query("!trigger(Marker);", null, false));
+            assertEquals(revision, conflict.getSourceBase().getRevision());
+            assertTrue(conflict.toString().contains("Source@" + revision + " / Negative@1"));
+            org.kanger.exception.ContextProductionCommitException incomplete = assertThrows(
+                    org.kanger.exception.ContextProductionCommitException.class,
+                    () -> mind.query("!trigger(Other);", null, false));
+            assertEquals(org.kanger.enums.StorageLifecycleErrorCode.STORAGE_CONTEXT_INCOMPLETE,
+                    incomplete.getErrorCode());
+            assertEquals(revision, data.getRevision());
+            assertNotEquals(Boolean.TRUE, mind.query("?trigger(Marker);", null, false));
+            assertNotEquals(Boolean.TRUE, mind.query("?trigger(Other);", null, false));
+        } finally {
+            if (previous == null) System.clearProperty(flag);
+            else System.setProperty(flag, previous);
         }
     }
 

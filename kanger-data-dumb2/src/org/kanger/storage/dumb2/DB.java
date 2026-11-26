@@ -698,14 +698,22 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
             // Mind verifies that operational refresh and checkpoint preserve primary declarations.
             if (pendingNativeWrite == null && !((Mind) proposed).isOperationalCommit()
                     && Boolean.getBoolean(ORDINARY_FAMILY_QUALIFICATION)) {
-                validatePendingProductionCommit((Mind) proposed);
+                try {
+                    validatePendingProductionCommit((Mind) proposed);
+                } catch (org.kanger.exception.ContextProductionCommitException failure) {
+                    if (failure.getErrorCode() == StorageLifecycleErrorCode.STORAGE_CONTEXT_INCOMPLETE) {
+                        // A concrete native pair collision is sufficient to refuse this proposal.
+                        validateEffectivePairs((Mind) proposed, workingConnections);
+                    }
+                    throw failure;
+                }
             }
             validateEffectiveConnections((Mind) proposed, workingConnections);
             if(pendingNativeWrite!=null) pendingNativeWrite.validate((Mind)proposed);
         } finally { validatingCommit = false; }
     }
 
-    private void validateEffectiveConnections(Mind proposed, ConnectionVector connections) throws Exception {
+    private void validateEffectivePairs(Mind proposed, ConnectionVector connections) throws Exception {
         RevisionRef source = new RevisionRef(context.getContextId(), getRevision());
         for (ContextConnection connection : connections.getConnections()) {
             PairQualification.Result pair = PairQualification.qualify(proposed, source, connection);
@@ -714,6 +722,10 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
                     displayFederationLocator(connection.getTargetLocation()), projectRevision(pair.getRight()),
                     pair.getCollisions());
         }
+    }
+
+    private void validateEffectiveConnections(Mind proposed, ConnectionVector connections) throws Exception {
+        validateEffectivePairs(proposed, connections);
         connections.prepareCommunes(communeCache);
         PairQualification.CompositionQualification composition =
                 PairQualification.qualifyCompositionState(proposed, connections);
