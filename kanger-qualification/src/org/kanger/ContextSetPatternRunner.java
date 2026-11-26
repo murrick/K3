@@ -380,7 +380,7 @@ public final class ContextSetPatternRunner {
         User user = new User();
         Mind mind = new Mind(user);
         user.setCurrentMind(mind);
-        if (!mind.compile("!@x @y @z source(x,y,z)->p([x]), q([y]), r([z]), s([x,Marker]);"))
+        if (!mind.compile("!@x @y @z source(x,y,z)->p([x]), q([y]), r([z]), s([x,Marker]), t([z,Other]);"))
             throw new AssertionError("Cyclic equality fixture");
         Map<String, ContextSetPattern> patterns = capturePatterns(mind);
         ContextSetPattern x = patterns.get("p"), y = patterns.get("q");
@@ -398,6 +398,22 @@ public final class ContextSetPatternRunner {
                 || !ContextSetPattern.SharedRemainderEquality.widthsConsistent(
                         java.util.Arrays.asList(xy, yz, balanced), () -> {}))
             throw new AssertionError("Width offsets must reject only the inconsistent cycles in this fixture");
+
+        ContextSetPattern.SharedRemainderEquality equalWidth =
+                patterns.get("t").solveSharedRemainderEquality(shifted, () -> {});
+        List<ContextSetPattern.SharedRemainderEquality> equalWidthCycle =
+                java.util.Arrays.asList(xy, yz, equalWidth);
+        if (!ContextSetPattern.SharedRemainderEquality.widthsConsistent(equalWidthCycle, () -> {}))
+            throw new AssertionError("Replacing Other with Marker leaves total width unchanged");
+
+        if (ContextSetPattern.SharedRemainderEquality.multiplicitiesConsistent(equalWidthCycle, () -> {})
+                || ContextSetPattern.SharedRemainderEquality.multiplicitiesConsistent(
+                        java.util.Arrays.asList(equalWidth, yz, xy), () -> {})
+                || !ContextSetPattern.SharedRemainderEquality.multiplicitiesConsistent(
+                        java.util.Arrays.asList(equalWidth, xy), () -> {})
+                || !ContextSetPattern.SharedRemainderEquality.multiplicitiesConsistent(
+                        java.util.Arrays.asList(xy, yz, balanced), () -> {}))
+            throw new AssertionError("Member counts must detect the equal-width contradiction");
 
         java.util.Set<Integer> positions = new java.util.HashSet<>();
         x.collectVariables(positions, () -> {});

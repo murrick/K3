@@ -258,30 +258,64 @@ final class ContextSetPattern {
 
         /** Reject inconsistent width offsets across shared rule-relative variable positions. */
         static boolean widthsConsistent(List<SharedRemainderEquality> conditions, Runnable work) {
-            Map<Integer, List<WidthOffset>> neighbors = new HashMap<>();
+            return offsetsConsistent(conditions, List::size, work);
+        }
+
+        /** Check cycles for each named member separately, using native semantic equality. */
+        static boolean multiplicitiesConsistent(List<SharedRemainderEquality> conditions, Runnable work) {
+            List<SemanticTermSnapshot> members = new ArrayList<>();
+            for (SharedRemainderEquality condition : conditions) {
+                work.run();
+                for (List<SemanticTermSnapshot> required : condition.requiredMembers.values()) {
+                    for (SemanticTermSnapshot member : required) {
+                        work.run();
+                        if (countMember(members, member, work) == 0) members.add(member);
+                    }
+                }
+            }
+            for (SemanticTermSnapshot member : members) {
+                if (!offsetsConsistent(conditions, required -> countMember(required, member, work), work)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private static int countMember(List<SemanticTermSnapshot> members, SemanticTermSnapshot member, Runnable work) {
+            int count = 0;
+            for (SemanticTermSnapshot candidate : members) {
+                work.run();
+                if (candidate.semanticallyEquals(member)) count++;
+            }
+            return count;
+        }
+
+        private static boolean offsetsConsistent(List<SharedRemainderEquality> conditions,
+                java.util.function.ToIntFunction<List<SemanticTermSnapshot>> measure, Runnable work) {
+            Map<Integer, List<CountOffset>> neighbors = new HashMap<>();
             for (SharedRemainderEquality condition : conditions) {
                 work.run();
                 java.util.Iterator<Map.Entry<Integer, List<SemanticTermSnapshot>>> entries =
                         condition.requiredMembers.entrySet().iterator();
                 Map.Entry<Integer, List<SemanticTermSnapshot>> first = entries.next(), second = entries.next();
-                int difference = second.getValue().size() - first.getValue().size();
+                int difference = measure.applyAsInt(second.getValue()) - measure.applyAsInt(first.getValue());
                 neighbors.computeIfAbsent(first.getKey(), key -> new ArrayList<>())
-                        .add(new WidthOffset(second.getKey(), difference));
+                        .add(new CountOffset(second.getKey(), difference));
                 neighbors.computeIfAbsent(second.getKey(), key -> new ArrayList<>())
-                        .add(new WidthOffset(first.getKey(), -difference));
+                        .add(new CountOffset(first.getKey(), -difference));
             }
-            Map<Integer, Long> widths = new HashMap<>();
+            Map<Integer, Long> counts = new HashMap<>();
             ArrayDeque<Integer> pending = new ArrayDeque<>();
             for (int start : neighbors.keySet()) {
                 work.run();
-                if (widths.putIfAbsent(start, 0L) != null) continue;
+                if (counts.putIfAbsent(start, 0L) != null) continue;
                 pending.add(start);
                 while (!pending.isEmpty()) {
                     int current = pending.remove();
-                    for (WidthOffset offset : neighbors.get(current)) {
+                    for (CountOffset offset : neighbors.get(current)) {
                         work.run();
-                        long expected = widths.get(current) + offset.difference;
-                        Long existing = widths.putIfAbsent(offset.target, expected);
+                        long expected = counts.get(current) + offset.difference;
+                        Long existing = counts.putIfAbsent(offset.target, expected);
                         if (existing == null) pending.add(offset.target);
                         else if (existing != expected) return false;
                     }
@@ -290,10 +324,10 @@ final class ContextSetPattern {
             return true;
         }
 
-        private static final class WidthOffset {
+        private static final class CountOffset {
             final int target, difference;
 
-            WidthOffset(int target, int difference) {
+            CountOffset(int target, int difference) {
                 this.target = target;
                 this.difference = difference;
             }
