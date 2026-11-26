@@ -424,6 +424,21 @@ public final class ContextSetPatternRunner {
         positions.clear();
         z.collectVariables(positions, () -> {});
         int zPosition = positions.iterator().next();
+        Map<Integer, SemanticTermSnapshot> witness = ContextSetPattern.SharedRemainderEquality.witness(
+                java.util.Arrays.asList(yz, equalWidth), () -> {}).orElseThrow(AssertionError::new);
+        if (!y.instantiate(witness, () -> {}).semanticallyEquals(z.instantiate(witness, () -> {}))
+                || !patterns.get("t").instantiate(witness, () -> {})
+                        .semanticallyEquals(shifted.instantiate(witness, () -> {}))
+                || xy.matches(witness, () -> {}))
+            throw new AssertionError("Constructed multiset witness disagrees with concrete equality");
+        if (ContextSetPattern.SharedRemainderEquality.witness(equalWidthCycle, () -> {}).isPresent())
+            throw new AssertionError("Inconsistent equal-width cycle returned a witness");
+        Map<Integer, SemanticTermSnapshot> emptyWitness = ContextSetPattern.SharedRemainderEquality.witness(
+                java.util.Arrays.asList(xy, yz, balanced), () -> {}).orElseThrow(AssertionError::new);
+        if (emptyWitness.size() != 3 || !xy.matches(emptyWitness, () -> {}) || !yz.matches(emptyWitness, () -> {})
+                || !balanced.matches(emptyWitness, () -> {}))
+            throw new AssertionError("Constant-free component must have a complete empty-set assignment");
+
         List<SemanticTermSnapshot> domain = java.util.Arrays.asList(
                 SemanticTermSnapshot.capture(mind.getTerms().add(new Object[]{})),
                 SemanticTermSnapshot.capture(mind.getTerms().add("Marker")),
