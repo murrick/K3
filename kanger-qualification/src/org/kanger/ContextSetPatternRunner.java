@@ -38,6 +38,7 @@ public final class ContextSetPatternRunner {
             checkSameSignCoefficients();
             auditSameSignCoefficients();
             checkTwoPositionConjunction();
+            checkOneUnknownInWidePattern();
             checkNativeConditionalCollision();
             checkConditionalCollisionCaptureBoundary();
             checkSourcedSetApplications();
@@ -836,6 +837,36 @@ public final class ContextSetPatternRunner {
         if (!ContextSetPattern.inferTwoPositionConjunction(java.util.Arrays.asList(q, p, p),
                 java.util.Arrays.asList(q, patterns.get("w"), patterns.get("w")), () -> {}).isPresent())
             throw new AssertionError("A variable absent from the selected basis must still be bound");
+    }
+
+    private static void checkOneUnknownInWidePattern() throws Exception {
+        User user = new User();
+        Mind mind = new Mind(user);
+        user.setCurrentMind(mind);
+        if (!mind.compile("!@x @a @b @c @d @e @f source(x,a,b,c,d,e,f)->p([x,x,a,b,c,d,e,f]),"
+                + " q([a,b,c,d,e,f,Marker,Marker]), r([a,b,c,d,e,f,Marker]), s([a,b,c,d,e,Marker,Marker]);"))
+            throw new AssertionError("Wide pattern fixture");
+        Map<String, ContextSetPattern> patterns = capturePatterns(mind);
+        ContextSetPattern left = patterns.get("p"), right = patterns.get("q");
+        java.util.Set<Integer> positions = new java.util.HashSet<>();
+        right.collectVariables(positions, () -> {});
+        Map<Integer, SemanticTermSnapshot> fixed = new HashMap<>();
+        for (int position : positions) {
+            fixed.put(position, SemanticTermSnapshot.capture(
+                    mind.getTerms().add(new Object[]{"Fresh" + position, "Fresh" + position})));
+        }
+        Map<Integer, SemanticTermSnapshot> witness = left.inferFromFixedPattern(right, fixed, () -> {})
+                .orElseThrow(AssertionError::new);
+        if (fixed.size() != 6 || witness.size() != 7
+                || !left.instantiate(witness, () -> {}).semanticallyEquals(right.instantiate(witness, () -> {})))
+            throw new AssertionError("Wide pattern did not infer the seventh position");
+        for (Map.Entry<Integer, SemanticTermSnapshot> value : fixed.entrySet()) {
+            if (witness.get(value.getKey()) != value.getValue())
+                throw new AssertionError("Wide pattern changed a fixed binding");
+        }
+        if (left.inferFromFixedPattern(patterns.get("r"), fixed, () -> {}).isPresent()
+                || left.inferFromFixedPattern(patterns.get("s"), fixed, () -> {}).isPresent())
+            throw new AssertionError("Wide pattern accepted an indivisible or missing fixed contribution");
     }
 
     private static Map<String, ContextSetPattern> capturePatterns(Mind mind) throws Exception {

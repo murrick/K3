@@ -378,8 +378,12 @@ final class ContextSetPattern {
         List<SemanticTermSnapshot> constants = new ArrayList<>();
         collectExpression(coefficients, constants, work);
         if (coefficients.size() != 1) throw new IllegalArgumentException("Exactly one set variable required");
-        if (target.getType() != DataType.SET) return Optional.empty();
+        return inferInputMembers(target, constants, coefficients.values().iterator().next(), work);
+    }
 
+    private static Optional<List<SemanticTermSnapshot>> inferInputMembers(SemanticTermSnapshot target,
+            List<SemanticTermSnapshot> constants, int coefficient, Runnable work) {
+        if (target.getType() != DataType.SET) return Optional.empty();
         List<SemanticTermSnapshot> leaves = new ArrayList<>();
         target.visitFlatSetMembers(leaves::add, work);
         boolean[] used = new boolean[leaves.size()];
@@ -388,7 +392,7 @@ final class ContextSetPattern {
             if (match < 0) return Optional.empty();
             used[match] = true;
         }
-        return divideMembers(leaves, used, coefficients.values().iterator().next(), work);
+        return divideMembers(leaves, used, coefficient, work);
     }
 
     /**
@@ -397,14 +401,27 @@ final class ContextSetPattern {
      */
     Optional<Map<Integer, SemanticTermSnapshot>> inferFromFixedPattern(ContextSetPattern fixedPattern,
             Map<Integer, SemanticTermSnapshot> fixed, Runnable work) throws Exception {
-        java.util.Set<Integer> positions = new java.util.HashSet<>();
-        collectVariables(positions, work);
-        if (positions.size() != 1 || fixed.containsKey(positions.iterator().next())) {
-            throw new IllegalArgumentException("Exactly one unbound variable in the inferred set pattern required");
+        Map<Integer, Integer> coefficients = new HashMap<>();
+        List<SemanticTermSnapshot> constants = new ArrayList<>();
+        collectExpression(coefficients, constants, work);
+        int position = -1, coefficient = 0;
+        for (Map.Entry<Integer, Integer> variable : coefficients.entrySet()) {
+            work.run();
+            if (fixed.containsKey(variable.getKey())) {
+                SemanticTermSnapshot bound = requireBinding(variable.getKey(), fixed);
+                for (int copy = 0; copy < variable.getValue(); copy++) {
+                    work.run();
+                    bound.visitFlatSetMembers(constants::add, work);
+                }
+            } else {
+                if (position >= 0) throw new IllegalArgumentException("Exactly one unbound set variable required");
+                position = variable.getKey();
+                coefficient = variable.getValue();
+            }
         }
-        int position = positions.iterator().next();
+        if (position < 0) throw new IllegalArgumentException("Exactly one unbound set variable required");
         SemanticTermSnapshot target = fixedPattern.instantiate(fixed, work);
-        Optional<List<SemanticTermSnapshot>> solution = inferSingleInputMembers(target, work);
+        Optional<List<SemanticTermSnapshot>> solution = inferInputMembers(target, constants, coefficient, work);
         if (!solution.isPresent()) return Optional.empty();
 
         List<ITerm> values = new ArrayList<>();
