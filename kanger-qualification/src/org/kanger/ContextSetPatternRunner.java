@@ -31,6 +31,7 @@ public final class ContextSetPatternRunner {
             checkCyclicSetEqualities();
             checkCancelledSetVariable();
             checkScaledSetEquality();
+            checkUnequalSetCoefficientsWithFixedSide();
             checkNativeConditionalCollision();
             checkConditionalCollisionCaptureBoundary();
             checkSourcedSetApplications();
@@ -613,6 +614,29 @@ public final class ContextSetPatternRunner {
                 || ContextSetPattern.SharedRemainderEquality.multiplicitiesConsistent(collision, () -> {})
                 || ContextSetPattern.SharedRemainderEquality.witness(collision, anchor, () -> {}).isPresent())
             throw new AssertionError("Individually feasible scaled and unit conditions cannot share this binding");
+    }
+
+    private static void checkUnequalSetCoefficientsWithFixedSide() throws Exception {
+        User user = new User();
+        Mind mind = new Mind(user);
+        user.setCurrentMind(mind);
+        if (!mind.compile("!@x @y source(x,y)->p([x,x]), q([y,y,y]);"))
+            throw new AssertionError("Unequal coefficient fixture");
+        Map<String, ContextSetPattern> patterns = capturePatterns(mind);
+        ContextSetPattern left = patterns.get("p"), right = patterns.get("q");
+        java.util.Set<Integer> positions = new java.util.HashSet<>();
+        right.collectVariables(positions, () -> {});
+        int y = positions.iterator().next();
+        SemanticTermSnapshot two = SemanticTermSnapshot.capture(mind.getTerms().add(new Object[]{"Marker", "Marker"}));
+        SemanticTermSnapshot one = SemanticTermSnapshot.capture(mind.getTerms().add("Marker"));
+        Map<Integer, SemanticTermSnapshot> fixed = java.util.Collections.singletonMap(y, two);
+        Map<Integer, SemanticTermSnapshot> witness = left.inferFromFixedPattern(right, fixed, () -> {})
+                .orElseThrow(AssertionError::new);
+        if (witness.get(y) != two
+                || !left.instantiate(witness, () -> {}).semanticallyEquals(right.instantiate(witness, () -> {})))
+            throw new AssertionError("Expected a concrete witness with the original fixed input");
+        if (left.inferFromFixedPattern(right, java.util.Collections.singletonMap(y, one), () -> {}).isPresent())
+            throw new AssertionError("Three copies cannot be produced by doubling any input");
     }
 
     private static Map<String, ContextSetPattern> capturePatterns(Mind mind) throws Exception {

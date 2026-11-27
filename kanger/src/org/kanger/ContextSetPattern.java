@@ -176,6 +176,35 @@ final class ContextSetPattern {
         return divideMembers(leaves, used, coefficients.values().iterator().next(), work);
     }
 
+    /**
+     * Extend fixed bindings by solving this pattern's sole unbound variable
+     * against an independently evaluable right-hand pattern.
+     */
+    Optional<Map<Integer, SemanticTermSnapshot>> inferFromFixedPattern(ContextSetPattern fixedPattern,
+            Map<Integer, SemanticTermSnapshot> fixed, Runnable work) throws Exception {
+        java.util.Set<Integer> positions = new java.util.HashSet<>();
+        collectVariables(positions, work);
+        if (positions.size() != 1 || fixed.containsKey(positions.iterator().next())) {
+            throw new IllegalArgumentException("Exactly one unbound variable in the inferred set pattern required");
+        }
+        int position = positions.iterator().next();
+        SemanticTermSnapshot target = fixedPattern.instantiate(fixed, work);
+        Optional<List<SemanticTermSnapshot>> solution = inferSingleInputMembers(target, work);
+        if (!solution.isPresent()) return Optional.empty();
+
+        List<ITerm> values = new ArrayList<>();
+        for (SemanticTermSnapshot member : solution.get()) {
+            member.appendFlatSetMembers(values, work);
+        }
+        Map<Integer, SemanticTermSnapshot> assignment = new HashMap<>();
+        for (Map.Entry<Integer, SemanticTermSnapshot> entry : fixed.entrySet()) {
+            work.run();
+            assignment.put(entry.getKey(), entry.getValue());
+        }
+        assignment.put(position, captureFlatSet(values));
+        return Optional.of(Collections.unmodifiableMap(assignment));
+    }
+
     private static Optional<List<SemanticTermSnapshot>> divideMembers(List<SemanticTermSnapshot> leaves,
             boolean[] used, int coefficient, Runnable work) {
         List<SemanticTermSnapshot> input = new ArrayList<>();
