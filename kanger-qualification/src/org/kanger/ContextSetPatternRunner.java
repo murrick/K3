@@ -928,12 +928,20 @@ public final class ContextSetPatternRunner {
                     || !r.instantiate(result.assignment, () -> {}).semanticallyEquals(s.instantiate(result.assignment, () -> {})))
                 throw new AssertionError("Shared unknown must be inferred after cancelling its common contribution");
         }
-        if (ContextSetPattern.propagateFixedPatterns(java.util.Collections.singletonList(r),
-                java.util.Collections.singletonList(s), fixed, () -> {}).status != ContextSetPattern.PropagatedBindings.Status.INCOMPLETE
+        ContextSetPattern.PropagatedBindings free = ContextSetPattern.propagateFixedPatterns(
+                java.util.Collections.singletonList(r), java.util.Collections.singletonList(s), fixed, () -> {});
+        SemanticTermSnapshot empty = SemanticTermSnapshot.capture(mind.getTerms().add(new Object[]{}));
+        if (free.status != ContextSetPattern.PropagatedBindings.Status.SOLVED
+                || free.assignment.size() != 2 || !free.assignment.values().stream().anyMatch(empty::semanticallyEquals)
+                || !r.instantiate(free.assignment, () -> {}).semanticallyEquals(s.instantiate(free.assignment, () -> {}))
                 || ContextSetPattern.propagateFixedPatterns(java.util.Collections.singletonList(r),
                         java.util.Collections.singletonList(patterns.get("t")), fixed, () -> {}).status
                         != ContextSetPattern.PropagatedBindings.Status.CONFLICT)
             throw new AssertionError("Cancelled unknown must distinguish a free position from a constant contradiction");
+        ContextSetPattern.PropagatedBindings unresolved = ContextSetPattern.propagateFixedPatterns(
+                java.util.Arrays.asList(r, p), java.util.Arrays.asList(r, q), java.util.Collections.emptyMap(), () -> {});
+        if (unresolved.status != ContextSetPattern.PropagatedBindings.Status.INCOMPLETE || !unresolved.assignment.isEmpty())
+            throw new AssertionError("An identity must not choose a value while another row still constrains it");
     }
 
     private static void checkMultipleCancelledUnknowns() throws Exception {

@@ -486,8 +486,8 @@ final class ContextSetPattern {
         }
         if (coefficient == 0) {
             boolean equal = left.size() == right.size() && subtractAndDivide(left, right, 1, work).isPresent();
-            return new PropagatedBindings(equal ? PropagatedBindings.Status.INCOMPLETE
-                    : PropagatedBindings.Status.CONFLICT, Collections.emptyMap());
+            return equal ? new PropagatedBindings(PropagatedBindings.Status.SOLVED, fixed)
+                    : new PropagatedBindings(PropagatedBindings.Status.CONFLICT, Collections.emptyMap());
         }
         List<SemanticTermSnapshot> target = coefficient > 0 ? right : left;
         List<SemanticTermSnapshot> subtract = coefficient > 0 ? left : right;
@@ -510,6 +510,7 @@ final class ContextSetPattern {
         do {
             progress = false;
             boolean complete = true;
+            java.util.Set<Integer> free = new java.util.HashSet<>();
             for (int i = 0; i < left.size(); i++) {
                 work.run();
                 ContextSetPattern lhs = left.get(i), rhs = right.get(i);
@@ -523,14 +524,31 @@ final class ContextSetPattern {
                 } else {
                     PropagatedBindings inferred = lhs.inferPendingRow(rhs, assignment, work);
                     if (inferred.status == PropagatedBindings.Status.CONFLICT) return inferred;
-                    if (inferred.status == PropagatedBindings.Status.SOLVED) {
+                    if (inferred.status == PropagatedBindings.Status.INCOMPLETE) {
+                        complete = false;
+                    } else if (inferred.assignment.size() > assignment.size()) {
                         assignment = inferred.assignment;
                         progress = true;
+                        complete = false;
+                    } else {
+                        for (int position : missing) {
+                            work.run();
+                            free.add(position);
+                        }
                     }
-                    complete = false;
                 }
             }
-            if (complete) return new PropagatedBindings(PropagatedBindings.Status.SOLVED, assignment);
+            if (complete) {
+                Map<Integer, SemanticTermSnapshot> completed = new HashMap<>(assignment);
+                if (!free.isEmpty()) {
+                    SemanticTermSnapshot empty = captureFlatSet(Collections.emptyList());
+                    for (int position : free) {
+                        work.run();
+                        completed.putIfAbsent(position, empty);
+                    }
+                }
+                return new PropagatedBindings(PropagatedBindings.Status.SOLVED, completed);
+            }
         } while (progress);
         return new PropagatedBindings(PropagatedBindings.Status.INCOMPLETE, Collections.emptyMap());
     }
