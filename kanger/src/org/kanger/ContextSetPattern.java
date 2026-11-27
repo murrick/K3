@@ -154,8 +154,8 @@ final class ContextSetPattern {
         }
     }
 
-    /** One concrete witness for a single flat equality with two opposite nonzero coefficients. */
-    Optional<Map<Integer, SemanticTermSnapshot>> inferTwoOppositeInputs(ContextSetPattern other, Runnable work)
+    /** One concrete witness for a single flat equality with two nonzero coefficients. */
+    Optional<Map<Integer, SemanticTermSnapshot>> inferTwoInputs(ContextSetPattern other, Runnable work)
             throws Exception {
         Map<Integer, Integer> difference = new HashMap<>();
         List<SemanticTermSnapshot> leftConstants = new ArrayList<>(), rightConstants = new ArrayList<>();
@@ -167,16 +167,13 @@ final class ContextSetPattern {
         }
         difference.values().removeIf(count -> count == 0);
         if (difference.size() != 2)
-            throw new IllegalArgumentException("Two opposite nonzero set coefficients required");
+            throw new IllegalArgumentException("Two nonzero set coefficients required");
         java.util.Iterator<Map.Entry<Integer, Integer>> entries = difference.entrySet().iterator();
         Map.Entry<Integer, Integer> first = entries.next(), second = entries.next();
-        Map.Entry<Integer, Integer> positive = first.getValue() > 0 ? first : second;
-        Map.Entry<Integer, Integer> negative = first.getValue() > 0 ? second : first;
-        if (positive.getValue() <= 0 || negative.getValue() >= 0)
-            throw new IllegalArgumentException("Two opposite nonzero set coefficients required");
-
-        BigInteger a = BigInteger.valueOf(positive.getValue());
-        BigInteger b = BigInteger.valueOf(-negative.getValue());
+        int sign = Integer.signum(first.getValue());
+        boolean opposite = sign != Integer.signum(second.getValue());
+        BigInteger a = BigInteger.valueOf(Math.abs(first.getValue()));
+        BigInteger b = BigInteger.valueOf(Math.abs(second.getValue()));
         BigInteger gcd = a.gcd(b);
         a = a.divide(gcd);
         b = b.divide(gcd);
@@ -189,18 +186,24 @@ final class ContextSetPattern {
             if (countMember(checked, member, work) != 0) continue;
             checked.add(member);
             int residual = countMember(rightConstants, member, work) - countMember(leftConstants, member, work);
-            BigInteger[] reduced = BigInteger.valueOf(residual).divideAndRemainder(gcd);
+            BigInteger[] reduced = BigInteger.valueOf((long) sign * residual).divideAndRemainder(gcd);
             if (reduced[1].signum() != 0) return Optional.empty();
-            // a*x - b*y = residual. First find x modulo b, then raise both counts if y is negative.
+            // Choose the least nonnegative x in its residue class modulo b.
             BigInteger x = reduced[0].multiply(inverse).mod(b);
-            BigInteger y = a.multiply(x).subtract(reduced[0]).divide(b);
-            if (y.signum() < 0) {
-                BigInteger shift = y.negate().add(a).subtract(BigInteger.ONE).divide(a);
-                x = x.add(b.multiply(shift));
-                y = y.add(a.multiply(shift));
+            BigInteger y = reduced[0].subtract(a.multiply(x)).divide(b);
+            if (opposite) {
+                y = y.negate();
+                if (y.signum() < 0) {
+                    BigInteger shift = y.negate().add(a).subtract(BigInteger.ONE).divide(a);
+                    x = x.add(b.multiply(shift));
+                    y = y.add(a.multiply(shift));
+                }
+            } else if (y.signum() < 0) {
+                // Increasing x in this class can only decrease y.
+                return Optional.empty();
             }
-            appendCopies(values.get(positive.getKey()), member, x, work);
-            appendCopies(values.get(negative.getKey()), member, y, work);
+            appendCopies(values.get(first.getKey()), member, x, work);
+            appendCopies(values.get(second.getKey()), member, y, work);
         }
         Map<Integer, SemanticTermSnapshot> assignment = new HashMap<>();
         for (Map.Entry<Integer, List<ITerm>> entry : values.entrySet()) {
@@ -234,8 +237,6 @@ final class ContextSetPattern {
         BigInteger activeX = firstZero ? c : a;
         BigInteger activeY = firstZero ? d : b;
         int activeSigns = activeX.signum() * activeY.signum();
-        if (dependent && activeSigns > 0)
-            throw new IllegalArgumentException("Dependent set coefficients with the same sign are unsupported");
 
         List<SemanticTermSnapshot> members = new ArrayList<>(firstLeft);
         members.addAll(firstRight);
@@ -269,8 +270,8 @@ final class ContextSetPattern {
             appendCopies(xValues, member, xCount[0], work);
             appendCopies(yValues, member, yCount[0], work);
         }
-        if (dependent && activeSigns < 0 && !firstZero) return inferTwoOppositeInputs(right, work);
-        if (dependent && activeSigns < 0) return secondLeft.inferTwoOppositeInputs(secondRight, work);
+        if (dependent && activeSigns != 0 && !firstZero) return inferTwoInputs(right, work);
+        if (dependent && activeSigns != 0) return secondLeft.inferTwoInputs(secondRight, work);
         Map<Integer, SemanticTermSnapshot> assignment = new HashMap<>();
         assignment.put(x, captureFlatSet(xValues));
         assignment.put(y, captureFlatSet(yValues));

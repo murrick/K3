@@ -35,6 +35,7 @@ public final class ContextSetPatternRunner {
             checkSetCountDivisibility();
             checkIndependentUnequalEqualities();
             checkDependentUnequalEqualities();
+            checkSameSignCoefficients();
             checkNativeConditionalCollision();
             checkConditionalCollisionCaptureBoundary();
             checkSourcedSetApplications();
@@ -668,17 +669,17 @@ public final class ContextSetPatternRunner {
             throw new AssertionError("Divisible case must retain its concrete control witness");
 
         for (Map<Integer, SemanticTermSnapshot> inferred : java.util.Arrays.asList(
-                left.inferTwoOppositeInputs(even, () -> {}).orElseThrow(AssertionError::new),
-                even.inferTwoOppositeInputs(left, () -> {}).orElseThrow(AssertionError::new))) {
+                left.inferTwoInputs(even, () -> {}).orElseThrow(AssertionError::new),
+                even.inferTwoInputs(left, () -> {}).orElseThrow(AssertionError::new))) {
             if (!left.instantiate(inferred, () -> {}).semanticallyEquals(even.instantiate(inferred, () -> {})))
                 throw new AssertionError("Two unknowns must produce a witness in either orientation");
         }
         ContextSetPattern shifted = patterns.get("t");
-        Map<Integer, SemanticTermSnapshot> shiftedWitness = left.inferTwoOppositeInputs(shifted, () -> {})
+        Map<Integer, SemanticTermSnapshot> shiftedWitness = left.inferTwoInputs(shifted, () -> {})
                 .orElseThrow(AssertionError::new);
         if (!left.instantiate(shiftedWitness, () -> {}).semanticallyEquals(shifted.instantiate(shiftedWitness, () -> {})))
             throw new AssertionError("A negative intermediate count must be shifted to a nonnegative solution");
-        if (left.inferTwoOppositeInputs(odd, () -> {}).isPresent())
+        if (left.inferTwoInputs(odd, () -> {}).isPresent())
             throw new AssertionError("Indivisible residual must have no concrete witness");
     }
 
@@ -692,8 +693,8 @@ public final class ContextSetPatternRunner {
         Map<String, ContextSetPattern> patterns = capturePatterns(mind);
         ContextSetPattern p = patterns.get("p"), q = patterns.get("q"), r = patterns.get("r");
         ContextSetPattern s = patterns.get("s"), t = patterns.get("t"), u = patterns.get("u");
-        Map<Integer, SemanticTermSnapshot> first = p.inferTwoOppositeInputs(q, () -> {}).orElseThrow(AssertionError::new);
-        Map<Integer, SemanticTermSnapshot> second = r.inferTwoOppositeInputs(s, () -> {}).orElseThrow(AssertionError::new);
+        Map<Integer, SemanticTermSnapshot> first = p.inferTwoInputs(q, () -> {}).orElseThrow(AssertionError::new);
+        Map<Integer, SemanticTermSnapshot> second = r.inferTwoInputs(s, () -> {}).orElseThrow(AssertionError::new);
         if (!p.instantiate(first, () -> {}).semanticallyEquals(q.instantiate(first, () -> {}))
                 || !r.instantiate(second, () -> {}).semanticallyEquals(s.instantiate(second, () -> {}))
                 || p.inferTwoEqualities(q, r, s, () -> {}).isPresent()
@@ -726,7 +727,7 @@ public final class ContextSetPatternRunner {
                     || !r.instantiate(witness, () -> {}).semanticallyEquals(s.instantiate(witness, () -> {})))
                 throw new AssertionError("Proportional equations with matching residues must share a witness");
         }
-        if (!r.inferTwoOppositeInputs(t, () -> {}).isPresent()
+        if (!r.inferTwoInputs(t, () -> {}).isPresent()
                 || p.inferTwoEqualities(q, r, t, () -> {}).isPresent())
             throw new AssertionError("Proportional widths can hide inconsistent member residues");
 
@@ -751,6 +752,26 @@ public final class ContextSetPatternRunner {
             throw new AssertionError("A one-position row must retain the free position");
         if (withCommon.inferTwoEqualities(one, q, q, () -> {}).isPresent())
             throw new AssertionError("A one-position row cannot assign a fractional multiplicity");
+    }
+
+    private static void checkSameSignCoefficients() throws Exception {
+        User user = new User();
+        Mind mind = new Mind(user);
+        user.setCurrentMind(mind);
+        if (!mind.compile("!@x @y source(x,y)->p([x,x,y,y,y,y]),"
+                + " q([y,Marker]), r([y,Marker,Marker,Marker,Marker,Marker]);"))
+            throw new AssertionError("Same-sign coefficient fixture");
+        Map<String, ContextSetPattern> patterns = capturePatterns(mind);
+        ContextSetPattern p = patterns.get("p"), q = patterns.get("q"), r = patterns.get("r");
+        if (!p.satisfiesCountDivisibility(q, () -> {}) || p.inferTwoInputs(q, () -> {}).isPresent()
+                || p.inferTwoEqualities(q, q, p, () -> {}).isPresent())
+            throw new AssertionError("The divisible equation 2x + 3y = 1 has no nonnegative solution");
+        for (Map<Integer, SemanticTermSnapshot> witness : java.util.Arrays.asList(
+                p.inferTwoEqualities(r, r, p, () -> {}).orElseThrow(AssertionError::new),
+                r.inferTwoInputs(p, () -> {}).orElseThrow(AssertionError::new))) {
+            if (!p.instantiate(witness, () -> {}).semanticallyEquals(r.instantiate(witness, () -> {})))
+                throw new AssertionError("The nonnegative solution to 2x + 3y = 5 must replay");
+        }
     }
 
     private static Map<String, ContextSetPattern> capturePatterns(Mind mind) throws Exception {
