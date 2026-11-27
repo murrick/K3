@@ -714,7 +714,7 @@ public final class ContextSetPatternRunner {
         Mind mind = new Mind(user);
         user.setCurrentMind(mind);
         if (!mind.compile("!@x @y source(x,y)->p([x,x]), q([y,y,y,y,Marker,Marker]),"
-                + " r([x]), s([y,y,Marker]), t([y,y,Other]);"))
+                + " r([x]), s([y,y,Marker]), t([y,y,Other]), u([y,Marker]), v([y,Marker,Marker]), j([x,x,y]);"))
             throw new AssertionError("Dependent unequal equality fixture");
         Map<String, ContextSetPattern> patterns = capturePatterns(mind);
         ContextSetPattern p = patterns.get("p"), q = patterns.get("q"), r = patterns.get("r");
@@ -742,6 +742,15 @@ public final class ContextSetPatternRunner {
         if (p.inferTwoEqualities(p, s, t, () -> {}).isPresent()
                 || r.inferTwoEqualities(s, s, t, () -> {}).isPresent())
             throw new AssertionError("A false constant residual cannot be ignored after variable cancellation");
+
+        ContextSetPattern one = patterns.get("u"), two = patterns.get("v"), withCommon = patterns.get("j");
+        Map<Integer, SemanticTermSnapshot> oneFree = q.inferTwoEqualities(q, withCommon, two, () -> {})
+                .orElseThrow(AssertionError::new);
+        if (oneFree.size() != 2 || !oneFree.values().stream().anyMatch(empty::semanticallyEquals)
+                || !withCommon.instantiate(oneFree, () -> {}).semanticallyEquals(two.instantiate(oneFree, () -> {})))
+            throw new AssertionError("A one-position row must retain the free position");
+        if (withCommon.inferTwoEqualities(one, q, q, () -> {}).isPresent())
+            throw new AssertionError("A one-position row cannot assign a fractional multiplicity");
     }
 
     private static Map<String, ContextSetPattern> capturePatterns(Mind mind) throws Exception {

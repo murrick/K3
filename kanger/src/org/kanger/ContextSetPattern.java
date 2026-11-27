@@ -231,9 +231,11 @@ final class ContextSetPattern {
         boolean dependent = determinant.signum() == 0;
         boolean firstZero = a.signum() == 0 && b.signum() == 0;
         boolean secondZero = c.signum() == 0 && d.signum() == 0;
-        if (dependent && ((!firstZero && a.signum() * b.signum() != -1)
-                || (!secondZero && c.signum() * d.signum() != -1)))
-            throw new IllegalArgumentException("Dependent nonzero rows require opposite set coefficients");
+        BigInteger activeX = firstZero ? c : a;
+        BigInteger activeY = firstZero ? d : b;
+        int activeSigns = activeX.signum() * activeY.signum();
+        if (dependent && activeSigns > 0)
+            throw new IllegalArgumentException("Dependent set coefficients with the same sign are unsupported");
 
         List<SemanticTermSnapshot> members = new ArrayList<>(firstLeft);
         members.addAll(firstRight);
@@ -252,6 +254,12 @@ final class ContextSetPattern {
             if (dependent) {
                 if ((firstZero && e.signum() != 0) || (secondZero && f.signum() != 0)
                         || xNumerator.signum() != 0 || yNumerator.signum() != 0) return Optional.empty();
+                if (activeSigns == 0 && !(firstZero && secondZero)) {
+                    boolean bindsX = activeX.signum() != 0;
+                    BigInteger[] count = (firstZero ? f : e).divideAndRemainder(bindsX ? activeX : activeY);
+                    if (count[1].signum() != 0 || count[0].signum() < 0) return Optional.empty();
+                    appendCopies(bindsX ? xValues : yValues, member, count[0], work);
+                }
                 continue;
             }
             BigInteger[] xCount = xNumerator.divideAndRemainder(determinant);
@@ -261,8 +269,8 @@ final class ContextSetPattern {
             appendCopies(xValues, member, xCount[0], work);
             appendCopies(yValues, member, yCount[0], work);
         }
-        if (dependent && !firstZero) return inferTwoOppositeInputs(right, work);
-        if (dependent && !secondZero) return secondLeft.inferTwoOppositeInputs(secondRight, work);
+        if (dependent && activeSigns < 0 && !firstZero) return inferTwoOppositeInputs(right, work);
+        if (dependent && activeSigns < 0) return secondLeft.inferTwoOppositeInputs(secondRight, work);
         Map<Integer, SemanticTermSnapshot> assignment = new HashMap<>();
         assignment.put(x, captureFlatSet(xValues));
         assignment.put(y, captureFlatSet(yValues));
