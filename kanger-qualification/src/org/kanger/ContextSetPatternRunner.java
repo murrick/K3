@@ -976,7 +976,8 @@ public final class ContextSetPatternRunner {
         User user = new User();
         Mind mind = new Mind(user);
         user.setCurrentMind(mind);
-        if (!mind.compile("!@x @y @z source(x,y,z)->p([x,x,y,y,y,y,z]), q([z,z]);"))
+        if (!mind.compile("!@x @y @z source(x,y,z)->p([x,x,y,y,y,y,z]), q([z,z]),"
+                + " r([x,x,y,y,y,y,z,Marker,Marker]), s([x,x,x,x,y,y,y,y,y,y,z]);"))
             throw new AssertionError("Fixed residual divisibility fixture");
         Map<String, ContextSetPattern> patterns = capturePatterns(mind);
         List<ContextSetPattern> left = java.util.Collections.singletonList(patterns.get("p"));
@@ -996,6 +997,17 @@ public final class ContextSetPatternRunner {
                 || ContextSetPattern.propagateFixedPatterns(left, right, java.util.Collections.emptyMap(),
                         () -> {}).status != ContextSetPattern.PropagatedBindings.Status.INCOMPLETE)
             throw new AssertionError("Only a proven indivisible fixed residual may refuse an unresolved row");
+
+        SemanticTermSnapshot other = SemanticTermSnapshot.capture(mind.getTerms().add(new Object[]{"Other", "Other"}));
+        List<ContextSetPattern> negative = java.util.Collections.singletonList(patterns.get("r"));
+        List<ContextSetPattern> tooSmall = java.util.Collections.singletonList(patterns.get("s"));
+        if (ContextSetPattern.propagateFixedPatterns(negative, right, java.util.Collections.singletonMap(z, other),
+                () -> {}).status != ContextSetPattern.PropagatedBindings.Status.CONFLICT
+                || ContextSetPattern.propagateFixedPatterns(right, negative, java.util.Collections.singletonMap(z, other),
+                        () -> {}).status != ContextSetPattern.PropagatedBindings.Status.CONFLICT
+                || ContextSetPattern.propagateFixedPatterns(tooSmall, right, java.util.Collections.singletonMap(z, doubled),
+                        () -> {}).status != ContextSetPattern.PropagatedBindings.Status.CONFLICT)
+            throw new AssertionError("Divisible residual can still require a negative count or be too small");
     }
 
     private static Map<String, ContextSetPattern> capturePatterns(Mind mind) throws Exception {

@@ -355,11 +355,13 @@ final class ContextSetPattern {
             work.run();
             divisor = divisor.gcd(BigInteger.valueOf(coefficient));
         }
-        return residualIsDivisible(leftConstants, rightConstants, divisor.intValueExact(), work);
+        int gcd = divisor.intValueExact();
+        return checkResidualCounts(leftConstants, rightConstants,
+                residual -> gcd == 0 ? residual == 0 : residual % gcd == 0, work);
     }
 
-    private static boolean residualIsDivisible(List<SemanticTermSnapshot> leftConstants,
-            List<SemanticTermSnapshot> rightConstants, int gcd, Runnable work) {
+    private static boolean checkResidualCounts(List<SemanticTermSnapshot> leftConstants,
+            List<SemanticTermSnapshot> rightConstants, java.util.function.IntPredicate accepts, Runnable work) {
         List<SemanticTermSnapshot> members = new ArrayList<>(leftConstants);
         members.addAll(rightConstants);
         List<SemanticTermSnapshot> checked = new ArrayList<>();
@@ -368,7 +370,7 @@ final class ContextSetPattern {
             if (countMember(checked, member, work) != 0) continue;
             checked.add(member);
             int residual = countMember(rightConstants, member, work) - countMember(leftConstants, member, work);
-            if (gcd == 0 ? residual != 0 : residual % gcd != 0) return false;
+            if (!accepts.test(residual)) return false;
         }
         return true;
     }
@@ -471,12 +473,17 @@ final class ContextSetPattern {
         collectDifference(other, difference, left, right, work);
         int position = -1, coefficient = 0, unknowns = 0;
         BigInteger divisor = BigInteger.ZERO;
+        boolean positive = false, negative = false;
+        int smallestContribution = Integer.MAX_VALUE;
         for (Map.Entry<Integer, Integer> entry : difference.entrySet()) {
             work.run();
             int count = entry.getValue();
             if (count == 0) continue;
             if (!fixed.containsKey(entry.getKey())) {
                 unknowns++;
+                positive |= count > 0;
+                negative |= count < 0;
+                smallestContribution = Math.min(smallestContribution, Math.abs(count));
                 divisor = divisor.gcd(BigInteger.valueOf(count));
                 position = entry.getKey();
                 coefficient = count;
@@ -490,8 +497,12 @@ final class ContextSetPattern {
             }
         }
         if (unknowns > 1) {
-            boolean divisible = residualIsDivisible(left, right, divisor.intValueExact(), work);
-            return new PropagatedBindings(divisible ? PropagatedBindings.Status.INCOMPLETE
+            int gcd = divisor.intValueExact();
+            int direction = positive == negative ? 0 : positive ? 1 : -1;
+            int minimum = smallestContribution;
+            boolean possible = checkResidualCounts(left, right, residual -> residual % gcd == 0
+                    && (direction == 0 || residual == 0 || direction * residual >= minimum), work);
+            return new PropagatedBindings(possible ? PropagatedBindings.Status.INCOMPLETE
                     : PropagatedBindings.Status.CONFLICT, Collections.emptyMap());
         }
         if (coefficient == 0) {
