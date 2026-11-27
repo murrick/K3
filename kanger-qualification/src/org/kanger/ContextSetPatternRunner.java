@@ -33,6 +33,7 @@ public final class ContextSetPatternRunner {
             checkScaledSetEquality();
             checkUnequalSetCoefficientsWithFixedSide();
             checkSetCountDivisibility();
+            checkIndependentUnequalEqualities();
             checkNativeConditionalCollision();
             checkConditionalCollisionCaptureBoundary();
             checkSourcedSetApplications();
@@ -678,6 +679,33 @@ public final class ContextSetPatternRunner {
             throw new AssertionError("A negative intermediate count must be shifted to a nonnegative solution");
         if (left.inferTwoOppositeInputs(odd, () -> {}).isPresent())
             throw new AssertionError("Indivisible residual must have no concrete witness");
+    }
+
+    private static void checkIndependentUnequalEqualities() throws Exception {
+        User user = new User();
+        Mind mind = new Mind(user);
+        user.setCurrentMind(mind);
+        if (!mind.compile("!@x @y source(x,y)->p([x,x]), q([y,y,y,y]), r([x,x,x]),"
+                + " s([y,y,y,y,Marker]), t([y,y,y,y,Marker,Marker]), u([x,x,x,Marker,Marker]);"))
+            throw new AssertionError("Independent unequal equality fixture");
+        Map<String, ContextSetPattern> patterns = capturePatterns(mind);
+        ContextSetPattern p = patterns.get("p"), q = patterns.get("q"), r = patterns.get("r");
+        ContextSetPattern s = patterns.get("s"), t = patterns.get("t"), u = patterns.get("u");
+        Map<Integer, SemanticTermSnapshot> first = p.inferTwoOppositeInputs(q, () -> {}).orElseThrow(AssertionError::new);
+        Map<Integer, SemanticTermSnapshot> second = r.inferTwoOppositeInputs(s, () -> {}).orElseThrow(AssertionError::new);
+        if (!p.instantiate(first, () -> {}).semanticallyEquals(q.instantiate(first, () -> {}))
+                || !r.instantiate(second, () -> {}).semanticallyEquals(s.instantiate(second, () -> {}))
+                || p.inferTwoIndependentEqualities(q, r, s, () -> {}).isPresent()
+                || p.inferTwoIndependentEqualities(q, u, q, () -> {}).isPresent())
+            throw new AssertionError("Joint counts must be both integral and nonnegative");
+
+        for (Map<Integer, SemanticTermSnapshot> witness : java.util.Arrays.asList(
+                p.inferTwoIndependentEqualities(q, r, t, () -> {}).orElseThrow(AssertionError::new),
+                t.inferTwoIndependentEqualities(r, q, p, () -> {}).orElseThrow(AssertionError::new))) {
+            if (!p.instantiate(witness, () -> {}).semanticallyEquals(q.instantiate(witness, () -> {}))
+                    || !r.instantiate(witness, () -> {}).semanticallyEquals(t.instantiate(witness, () -> {})))
+                throw new AssertionError("Joint witness must satisfy both original equalities in either orientation");
+        }
     }
 
     private static Map<String, ContextSetPattern> capturePatterns(Mind mind) throws Exception {
