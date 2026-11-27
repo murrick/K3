@@ -571,7 +571,8 @@ public final class ContextSetPatternRunner {
         User user = new User();
         Mind mind = new Mind(user);
         user.setCurrentMind(mind);
-        if (!mind.compile("!@x @y source(x,y)->p([x,x]), q([y,y,Marker,Marker]), r([y,y,Marker,Other]);"))
+        if (!mind.compile("!@x @y source(x,y)->p([x,x]), q([y,y,Marker,Marker]), r([y,y,Marker,Other]),"
+                + " s([x]), t([y,Marker]), u([y,Other]);"))
             throw new AssertionError("Scaled equality fixture");
         Map<String, ContextSetPattern> patterns = capturePatterns(mind);
         ContextSetPattern left = patterns.get("p"), doubled = patterns.get("q");
@@ -587,6 +588,31 @@ public final class ContextSetPatternRunner {
                 || ContextSetPattern.SharedRemainderEquality.multiplicitiesConsistent(rejected, () -> {})
                 || ContextSetPattern.SharedRemainderEquality.witness(rejected, () -> {}).isPresent())
             throw new AssertionError("Scaled equality must divide the multiplicity of each member separately");
+
+        ContextSetPattern unitLeft = patterns.get("s"), unitMarker = patterns.get("t"), unitOther = patterns.get("u");
+        ContextSetPattern.SharedRemainderEquality sameOffset = unitLeft.solveSharedRemainderEquality(unitMarker, () -> {});
+        ContextSetPattern.SharedRemainderEquality differentOffset = unitLeft.solveSharedRemainderEquality(unitOther, () -> {});
+        List<ContextSetPattern.SharedRemainderEquality> compatible = java.util.Arrays.asList(possible, sameOffset);
+        List<ContextSetPattern.SharedRemainderEquality> collision = java.util.Arrays.asList(possible, differentOffset);
+        java.util.Set<Integer> positions = new java.util.HashSet<>();
+        unitMarker.collectVariables(positions, () -> {});
+        int y = positions.iterator().next();
+        SemanticTermSnapshot fixed = SemanticTermSnapshot.capture(mind.getTerms().add(new Object[]{"Fresh", "Fresh"}));
+        Map<Integer, SemanticTermSnapshot> anchor = java.util.Collections.singletonMap(y, fixed);
+        Map<Integer, SemanticTermSnapshot> together = ContextSetPattern.SharedRemainderEquality
+                .witness(compatible, anchor, () -> {}).orElseThrow(AssertionError::new);
+        if (together.get(y) != fixed
+                || !left.instantiate(together, () -> {}).semanticallyEquals(doubled.instantiate(together, () -> {}))
+                || !unitLeft.instantiate(together, () -> {}).semanticallyEquals(unitMarker.instantiate(together, () -> {})))
+            throw new AssertionError("Scaled and unit constraints lost the shared fixed input");
+
+        Map<Integer, SemanticTermSnapshot> unitWitness = ContextSetPattern.SharedRemainderEquality
+                .witness(java.util.Collections.singletonList(differentOffset), anchor, () -> {}).orElseThrow(AssertionError::new);
+        if (!unitLeft.instantiate(unitWitness, () -> {}).semanticallyEquals(unitOther.instantiate(unitWitness, () -> {}))
+                || !ContextSetPattern.SharedRemainderEquality.widthsConsistent(collision, () -> {})
+                || ContextSetPattern.SharedRemainderEquality.multiplicitiesConsistent(collision, () -> {})
+                || ContextSetPattern.SharedRemainderEquality.witness(collision, anchor, () -> {}).isPresent())
+            throw new AssertionError("Individually feasible scaled and unit conditions cannot share this binding");
     }
 
     private static Map<String, ContextSetPattern> capturePatterns(Mind mind) throws Exception {
