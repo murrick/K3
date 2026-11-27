@@ -210,8 +210,8 @@ final class ContextSetPattern {
         return Optional.of(Collections.unmodifiableMap(assignment));
     }
 
-    /** Solve two independent constructor equalities over the same two variable positions. */
-    Optional<Map<Integer, SemanticTermSnapshot>> inferTwoIndependentEqualities(ContextSetPattern right,
+    /** Solve two constructor equalities over the same two variable positions. */
+    Optional<Map<Integer, SemanticTermSnapshot>> inferTwoEqualities(ContextSetPattern right,
             ContextSetPattern secondLeft, ContextSetPattern secondRight, Runnable work) throws Exception {
         Map<Integer, Integer> first = new HashMap<>(), second = new HashMap<>();
         List<SemanticTermSnapshot> firstLeft = new ArrayList<>(), firstRight = new ArrayList<>();
@@ -228,7 +228,9 @@ final class ContextSetPattern {
         BigInteger c = BigInteger.valueOf(second.getOrDefault(x, 0));
         BigInteger d = BigInteger.valueOf(second.getOrDefault(y, 0));
         BigInteger determinant = a.multiply(d).subtract(b.multiply(c));
-        if (determinant.signum() == 0) throw new IllegalArgumentException("Independent set equalities required");
+        boolean dependent = determinant.signum() == 0;
+        if (dependent && (a.signum() * b.signum() != -1 || c.signum() * d.signum() != -1))
+            throw new IllegalArgumentException("Dependent set equalities require two opposite coefficients per equation");
 
         List<SemanticTermSnapshot> members = new ArrayList<>(firstLeft);
         members.addAll(firstRight);
@@ -242,13 +244,20 @@ final class ContextSetPattern {
             checked.add(member);
             BigInteger e = BigInteger.valueOf(countMember(firstRight, member, work) - countMember(firstLeft, member, work));
             BigInteger f = BigInteger.valueOf(countMember(otherRight, member, work) - countMember(otherLeft, member, work));
-            BigInteger[] xCount = e.multiply(d).subtract(b.multiply(f)).divideAndRemainder(determinant);
-            BigInteger[] yCount = a.multiply(f).subtract(e.multiply(c)).divideAndRemainder(determinant);
+            BigInteger xNumerator = e.multiply(d).subtract(b.multiply(f));
+            BigInteger yNumerator = a.multiply(f).subtract(e.multiply(c));
+            if (dependent) {
+                if (xNumerator.signum() != 0 || yNumerator.signum() != 0) return Optional.empty();
+                continue;
+            }
+            BigInteger[] xCount = xNumerator.divideAndRemainder(determinant);
+            BigInteger[] yCount = yNumerator.divideAndRemainder(determinant);
             if (xCount[1].signum() != 0 || yCount[1].signum() != 0
                     || xCount[0].signum() < 0 || yCount[0].signum() < 0) return Optional.empty();
             appendCopies(xValues, member, xCount[0], work);
             appendCopies(yValues, member, yCount[0], work);
         }
+        if (dependent) return inferTwoOppositeInputs(right, work);
         Map<Integer, SemanticTermSnapshot> assignment = new HashMap<>();
         assignment.put(x, captureFlatSet(xValues));
         assignment.put(y, captureFlatSet(yValues));

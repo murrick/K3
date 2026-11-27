@@ -34,6 +34,7 @@ public final class ContextSetPatternRunner {
             checkUnequalSetCoefficientsWithFixedSide();
             checkSetCountDivisibility();
             checkIndependentUnequalEqualities();
+            checkDependentUnequalEqualities();
             checkNativeConditionalCollision();
             checkConditionalCollisionCaptureBoundary();
             checkSourcedSetApplications();
@@ -695,17 +696,39 @@ public final class ContextSetPatternRunner {
         Map<Integer, SemanticTermSnapshot> second = r.inferTwoOppositeInputs(s, () -> {}).orElseThrow(AssertionError::new);
         if (!p.instantiate(first, () -> {}).semanticallyEquals(q.instantiate(first, () -> {}))
                 || !r.instantiate(second, () -> {}).semanticallyEquals(s.instantiate(second, () -> {}))
-                || p.inferTwoIndependentEqualities(q, r, s, () -> {}).isPresent()
-                || p.inferTwoIndependentEqualities(q, u, q, () -> {}).isPresent())
+                || p.inferTwoEqualities(q, r, s, () -> {}).isPresent()
+                || p.inferTwoEqualities(q, u, q, () -> {}).isPresent())
             throw new AssertionError("Joint counts must be both integral and nonnegative");
 
         for (Map<Integer, SemanticTermSnapshot> witness : java.util.Arrays.asList(
-                p.inferTwoIndependentEqualities(q, r, t, () -> {}).orElseThrow(AssertionError::new),
-                t.inferTwoIndependentEqualities(r, q, p, () -> {}).orElseThrow(AssertionError::new))) {
+                p.inferTwoEqualities(q, r, t, () -> {}).orElseThrow(AssertionError::new),
+                t.inferTwoEqualities(r, q, p, () -> {}).orElseThrow(AssertionError::new))) {
             if (!p.instantiate(witness, () -> {}).semanticallyEquals(q.instantiate(witness, () -> {}))
                     || !r.instantiate(witness, () -> {}).semanticallyEquals(t.instantiate(witness, () -> {})))
                 throw new AssertionError("Joint witness must satisfy both original equalities in either orientation");
         }
+    }
+
+    private static void checkDependentUnequalEqualities() throws Exception {
+        User user = new User();
+        Mind mind = new Mind(user);
+        user.setCurrentMind(mind);
+        if (!mind.compile("!@x @y source(x,y)->p([x,x]), q([y,y,y,y,Marker,Marker]),"
+                + " r([x]), s([y,y,Marker]), t([y,y,Other]);"))
+            throw new AssertionError("Dependent unequal equality fixture");
+        Map<String, ContextSetPattern> patterns = capturePatterns(mind);
+        ContextSetPattern p = patterns.get("p"), q = patterns.get("q"), r = patterns.get("r");
+        ContextSetPattern s = patterns.get("s"), t = patterns.get("t");
+        for (Map<Integer, SemanticTermSnapshot> witness : java.util.Arrays.asList(
+                p.inferTwoEqualities(q, r, s, () -> {}).orElseThrow(AssertionError::new),
+                s.inferTwoEqualities(r, p, q, () -> {}).orElseThrow(AssertionError::new))) {
+            if (!p.instantiate(witness, () -> {}).semanticallyEquals(q.instantiate(witness, () -> {}))
+                    || !r.instantiate(witness, () -> {}).semanticallyEquals(s.instantiate(witness, () -> {})))
+                throw new AssertionError("Proportional equations with matching residues must share a witness");
+        }
+        if (!r.inferTwoOppositeInputs(t, () -> {}).isPresent()
+                || p.inferTwoEqualities(q, r, t, () -> {}).isPresent())
+            throw new AssertionError("Proportional widths can hide inconsistent member residues");
     }
 
     private static Map<String, ContextSetPattern> capturePatterns(Mind mind) throws Exception {
