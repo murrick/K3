@@ -154,6 +154,35 @@ final class ContextSetPattern {
         }
     }
 
+    /** Necessary divisibility condition on each member of a flat constructor equality. */
+    boolean satisfiesCountDivisibility(ContextSetPattern other, Runnable work) {
+        Map<Integer, Integer> difference = new HashMap<>(), right = new HashMap<>();
+        List<SemanticTermSnapshot> leftConstants = new ArrayList<>(), rightConstants = new ArrayList<>();
+        collectExpression(difference, leftConstants, work);
+        other.collectExpression(right, rightConstants, work);
+        for (Map.Entry<Integer, Integer> coefficient : right.entrySet()) {
+            work.run();
+            difference.merge(coefficient.getKey(), -coefficient.getValue(), Integer::sum);
+        }
+        BigInteger divisor = BigInteger.ZERO;
+        for (int coefficient : difference.values()) {
+            work.run();
+            divisor = divisor.gcd(BigInteger.valueOf(coefficient));
+        }
+        int gcd = divisor.intValueExact();
+        List<SemanticTermSnapshot> members = new ArrayList<>(leftConstants);
+        members.addAll(rightConstants);
+        List<SemanticTermSnapshot> checked = new ArrayList<>();
+        for (SemanticTermSnapshot member : members) {
+            work.run();
+            if (countMember(checked, member, work) != 0) continue;
+            checked.add(member);
+            int residual = countMember(rightConstants, member, work) - countMember(leftConstants, member, work);
+            if (gcd == 0 ? residual != 0 : residual % gcd != 0) return false;
+        }
+        return true;
+    }
+
     /**
      * Invert one flat constructor at a concrete result for a single variable.
      * A solution describes flattened members, since several input values can flatten identically.
@@ -384,15 +413,6 @@ final class ContextSetPattern {
             return members;
         }
 
-        private static int countMember(List<SemanticTermSnapshot> members, SemanticTermSnapshot member, Runnable work) {
-            int count = 0;
-            for (SemanticTermSnapshot candidate : members) {
-                work.run();
-                if (candidate.semanticallyEquals(member)) count++;
-            }
-            return count;
-        }
-
         private static Optional<Map<Integer, Long>> solveCounts(List<SharedRemainderEquality> conditions,
                 java.util.function.ToIntFunction<List<SemanticTermSnapshot>> measure,
                 java.util.function.IntUnaryOperator fixedCount, Runnable work) {
@@ -517,6 +537,15 @@ final class ContextSetPattern {
             required.put(entry.getKey(), (entry.getValue() > 0 ? rightResidual : left).orElse(Collections.emptyList()));
         }
         return new SharedRemainderEquality(required, originalPositions, left.isPresent() && rightResidual.isPresent());
+    }
+
+    private static int countMember(List<SemanticTermSnapshot> members, SemanticTermSnapshot member, Runnable work) {
+        int count = 0;
+        for (SemanticTermSnapshot candidate : members) {
+            work.run();
+            if (candidate.semanticallyEquals(member)) count++;
+        }
+        return count;
     }
 
     private static int findUnusedMember(List<SemanticTermSnapshot> leaves, boolean[] used,

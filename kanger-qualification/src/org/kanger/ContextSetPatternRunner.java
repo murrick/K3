@@ -32,6 +32,7 @@ public final class ContextSetPatternRunner {
             checkCancelledSetVariable();
             checkScaledSetEquality();
             checkUnequalSetCoefficientsWithFixedSide();
+            checkSetCountDivisibility();
             checkNativeConditionalCollision();
             checkConditionalCollisionCaptureBoundary();
             checkSourcedSetApplications();
@@ -637,6 +638,32 @@ public final class ContextSetPatternRunner {
             throw new AssertionError("Expected a concrete witness with the original fixed input");
         if (left.inferFromFixedPattern(right, java.util.Collections.singletonMap(y, one), () -> {}).isPresent())
             throw new AssertionError("Three copies cannot be produced by doubling any input");
+    }
+
+    private static void checkSetCountDivisibility() throws Exception {
+        User user = new User();
+        Mind mind = new Mind(user);
+        user.setCurrentMind(mind);
+        if (!mind.compile("!@x @y source(x,y)->p([x,x]), q([y,y,y,y,Marker,Other]),"
+                + " r([y,y,y,y,Marker,Marker]), s([x,x,Marker]);"))
+            throw new AssertionError("Count divisibility fixture");
+        Map<String, ContextSetPattern> patterns = capturePatterns(mind);
+        ContextSetPattern left = patterns.get("p"), odd = patterns.get("q"), even = patterns.get("r");
+        if (left.satisfiesCountDivisibility(odd, () -> {})
+                || odd.satisfiesCountDivisibility(left, () -> {})
+                || !left.satisfiesCountDivisibility(even, () -> {})
+                || left.satisfiesCountDivisibility(patterns.get("s"), () -> {})
+                || !left.satisfiesCountDivisibility(left, () -> {}))
+            throw new AssertionError("Divisibility must account for each residual member and cancelled coefficients");
+
+        java.util.Set<Integer> positions = new java.util.HashSet<>();
+        even.collectVariables(positions, () -> {});
+        int y = positions.iterator().next();
+        SemanticTermSnapshot one = SemanticTermSnapshot.capture(mind.getTerms().add("Marker"));
+        Map<Integer, SemanticTermSnapshot> witness = left.inferFromFixedPattern(
+                even, java.util.Collections.singletonMap(y, one), () -> {}).orElseThrow(AssertionError::new);
+        if (!left.instantiate(witness, () -> {}).semanticallyEquals(even.instantiate(witness, () -> {})))
+            throw new AssertionError("Divisible case must retain its concrete control witness");
     }
 
     private static Map<String, ContextSetPattern> capturePatterns(Mind mind) throws Exception {
