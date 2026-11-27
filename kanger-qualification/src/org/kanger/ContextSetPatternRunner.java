@@ -37,6 +37,7 @@ public final class ContextSetPatternRunner {
             checkDependentUnequalEqualities();
             checkSameSignCoefficients();
             auditSameSignCoefficients();
+            checkTwoPositionConjunction();
             checkNativeConditionalCollision();
             checkConditionalCollisionCaptureBoundary();
             checkSourcedSetApplications();
@@ -808,6 +809,33 @@ public final class ContextSetPatternRunner {
                 }
             }
         }
+    }
+
+    private static void checkTwoPositionConjunction() throws Exception {
+        User user = new User();
+        Mind mind = new Mind(user);
+        user.setCurrentMind(mind);
+        if (!mind.compile("!@x @y source(x,y)->p([x,x]), q([y,y,y,y]), r([x,x,x]),"
+                + " s([y,y,y,y,Marker,Marker]), t([x]), u([y,Marker]), v([y,Other]), w([x,Marker,Marker]);"))
+            throw new AssertionError("Conjunction fixture");
+        Map<String, ContextSetPattern> patterns = capturePatterns(mind);
+        ContextSetPattern p = patterns.get("p"), q = patterns.get("q"), r = patterns.get("r");
+        ContextSetPattern s = patterns.get("s"), t = patterns.get("t"), u = patterns.get("u");
+        List<ContextSetPattern> left = java.util.Arrays.asList(p, r, t);
+        List<ContextSetPattern> right = java.util.Arrays.asList(q, s, u);
+        Map<Integer, SemanticTermSnapshot> witness = ContextSetPattern.inferTwoPositionConjunction(left, right, () -> {})
+                .orElseThrow(AssertionError::new);
+        for (int i = 0; i < left.size(); i++) {
+            if (!left.get(i).instantiate(witness, () -> {}).semanticallyEquals(right.get(i).instantiate(witness, () -> {})))
+                throw new AssertionError("Conjunction witness disagrees with original expressions");
+        }
+        if (ContextSetPattern.inferTwoPositionConjunction(left,
+                java.util.Arrays.asList(q, s, patterns.get("v")), () -> {}).isPresent())
+            throw new AssertionError("A witness of the basis must fail an incompatible third row");
+
+        if (!ContextSetPattern.inferTwoPositionConjunction(java.util.Arrays.asList(q, p, p),
+                java.util.Arrays.asList(q, patterns.get("w"), patterns.get("w")), () -> {}).isPresent())
+            throw new AssertionError("A variable absent from the selected basis must still be bound");
     }
 
     private static Map<String, ContextSetPattern> capturePatterns(Mind mind) throws Exception {

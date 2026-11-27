@@ -213,6 +213,51 @@ final class ContextSetPattern {
         return Optional.of(Collections.unmodifiableMap(assignment));
     }
 
+    /** Choose a basis of at most two rows, then replay every supplied equality. */
+    static Optional<Map<Integer, SemanticTermSnapshot>> inferTwoPositionConjunction(
+            List<ContextSetPattern> left, List<ContextSetPattern> right, Runnable work) throws Exception {
+        if (left.isEmpty() || left.size() != right.size())
+            throw new IllegalArgumentException("Matching nonempty lists of set expressions required");
+        java.util.Set<Integer> positions = new java.util.HashSet<>();
+        for (int i = 0; i < left.size(); i++) {
+            left.get(i).collectVariables(positions, work);
+            right.get(i).collectVariables(positions, work);
+        }
+        if (positions.size() != 2) throw new IllegalArgumentException("Exactly two set positions required");
+        java.util.Iterator<Integer> iterator = positions.iterator();
+        int x = iterator.next(), y = iterator.next();
+        int first = 0, second = 0;
+        long a = 0, b = 0;
+        for (int i = 0; i < left.size(); i++) {
+            work.run();
+            Map<Integer, Integer> coefficients = new HashMap<>();
+            left.get(i).collectDifference(right.get(i), coefficients, new ArrayList<>(), new ArrayList<>(), work);
+            long c = coefficients.getOrDefault(x, 0), d = coefficients.getOrDefault(y, 0);
+            if (a == 0 && b == 0) {
+                first = second = i;
+                a = c;
+                b = d;
+            } else if (a * d != b * c) {
+                second = i;
+                break;
+            }
+        }
+        Optional<Map<Integer, SemanticTermSnapshot>> basis = left.get(first)
+                .inferTwoEqualities(right.get(first), left.get(second), right.get(second), work);
+        if (!basis.isPresent()) return Optional.empty();
+        Map<Integer, SemanticTermSnapshot> assignment = new HashMap<>(basis.get());
+        for (int position : positions) {
+            if (!assignment.containsKey(position)) assignment.put(position, captureFlatSet(Collections.emptyList()));
+        }
+        // Dependent rows have constant truth on the solutions of the chosen basis.
+        for (int i = 0; i < left.size(); i++) {
+            work.run();
+            if (!left.get(i).instantiate(assignment, work).semanticallyEquals(right.get(i).instantiate(assignment, work)))
+                return Optional.empty();
+        }
+        return Optional.of(Collections.unmodifiableMap(assignment));
+    }
+
     /** Solve two constructor equalities over the same two variable positions. */
     Optional<Map<Integer, SemanticTermSnapshot>> inferTwoEqualities(ContextSetPattern right,
             ContextSetPattern secondLeft, ContextSetPattern secondRight, Runnable work) throws Exception {
@@ -223,9 +268,11 @@ final class ContextSetPattern {
         secondLeft.collectDifference(secondRight, second, otherLeft, otherRight, work);
         java.util.Set<Integer> positions = new java.util.HashSet<>(first.keySet());
         positions.addAll(second.keySet());
-        if (positions.size() != 2) throw new IllegalArgumentException("Exactly two set positions required");
+        if (positions.isEmpty() || positions.size() > 2)
+            throw new IllegalArgumentException("One or two set positions required");
         java.util.Iterator<Integer> positionsIterator = positions.iterator();
-        int x = positionsIterator.next(), y = positionsIterator.next();
+        int x = positionsIterator.next();
+        int y = positionsIterator.hasNext() ? positionsIterator.next() : -1;
         BigInteger a = BigInteger.valueOf(first.getOrDefault(x, 0));
         BigInteger b = BigInteger.valueOf(first.getOrDefault(y, 0));
         BigInteger c = BigInteger.valueOf(second.getOrDefault(x, 0));
@@ -274,7 +321,7 @@ final class ContextSetPattern {
         if (dependent && activeSigns != 0) return secondLeft.inferTwoInputs(secondRight, work);
         Map<Integer, SemanticTermSnapshot> assignment = new HashMap<>();
         assignment.put(x, captureFlatSet(xValues));
-        assignment.put(y, captureFlatSet(yValues));
+        if (y >= 0) assignment.put(y, captureFlatSet(yValues));
         return Optional.of(Collections.unmodifiableMap(assignment));
     }
 
