@@ -154,16 +154,87 @@ final class ContextSetPattern {
         }
     }
 
-    /** Necessary divisibility condition on each member of a flat constructor equality. */
-    boolean satisfiesCountDivisibility(ContextSetPattern other, Runnable work) {
-        Map<Integer, Integer> difference = new HashMap<>(), right = new HashMap<>();
+    /** One concrete witness for a single flat equality with two opposite nonzero coefficients. */
+    Optional<Map<Integer, SemanticTermSnapshot>> inferTwoOppositeInputs(ContextSetPattern other, Runnable work)
+            throws Exception {
+        Map<Integer, Integer> difference = new HashMap<>();
         List<SemanticTermSnapshot> leftConstants = new ArrayList<>(), rightConstants = new ArrayList<>();
+        collectDifference(other, difference, leftConstants, rightConstants, work);
+        Map<Integer, List<ITerm>> values = new HashMap<>();
+        for (int position : difference.keySet()) {
+            work.run();
+            values.put(position, new ArrayList<>());
+        }
+        difference.values().removeIf(count -> count == 0);
+        if (difference.size() != 2)
+            throw new IllegalArgumentException("Two opposite nonzero set coefficients required");
+        java.util.Iterator<Map.Entry<Integer, Integer>> entries = difference.entrySet().iterator();
+        Map.Entry<Integer, Integer> first = entries.next(), second = entries.next();
+        Map.Entry<Integer, Integer> positive = first.getValue() > 0 ? first : second;
+        Map.Entry<Integer, Integer> negative = first.getValue() > 0 ? second : first;
+        if (positive.getValue() <= 0 || negative.getValue() >= 0)
+            throw new IllegalArgumentException("Two opposite nonzero set coefficients required");
+
+        BigInteger a = BigInteger.valueOf(positive.getValue());
+        BigInteger b = BigInteger.valueOf(-negative.getValue());
+        BigInteger gcd = a.gcd(b);
+        a = a.divide(gcd);
+        b = b.divide(gcd);
+        BigInteger inverse = a.modInverse(b);
+        List<SemanticTermSnapshot> members = new ArrayList<>(leftConstants);
+        members.addAll(rightConstants);
+        List<SemanticTermSnapshot> checked = new ArrayList<>();
+        for (SemanticTermSnapshot member : members) {
+            work.run();
+            if (countMember(checked, member, work) != 0) continue;
+            checked.add(member);
+            int residual = countMember(rightConstants, member, work) - countMember(leftConstants, member, work);
+            BigInteger[] reduced = BigInteger.valueOf(residual).divideAndRemainder(gcd);
+            if (reduced[1].signum() != 0) return Optional.empty();
+            // a*x - b*y = residual. First find x modulo b, then raise both counts if y is negative.
+            BigInteger x = reduced[0].multiply(inverse).mod(b);
+            BigInteger y = a.multiply(x).subtract(reduced[0]).divide(b);
+            if (y.signum() < 0) {
+                BigInteger shift = y.negate().add(a).subtract(BigInteger.ONE).divide(a);
+                x = x.add(b.multiply(shift));
+                y = y.add(a.multiply(shift));
+            }
+            appendCopies(values.get(positive.getKey()), member, x, work);
+            appendCopies(values.get(negative.getKey()), member, y, work);
+        }
+        Map<Integer, SemanticTermSnapshot> assignment = new HashMap<>();
+        for (Map.Entry<Integer, List<ITerm>> entry : values.entrySet()) {
+            work.run();
+            assignment.put(entry.getKey(), captureFlatSet(entry.getValue()));
+        }
+        return Optional.of(Collections.unmodifiableMap(assignment));
+    }
+
+    private static void appendCopies(List<ITerm> values, SemanticTermSnapshot member, BigInteger copies, Runnable work)
+            throws Exception {
+        if (copies.compareTo(BigInteger.valueOf(Integer.MAX_VALUE - values.size())) > 0)
+            throw new IllegalStateException("Set witness exceeds concrete member capacity");
+        for (int i = 0, count = copies.intValueExact(); i < count; i++) {
+            member.appendFlatSetMembers(values, work);
+        }
+    }
+
+    private void collectDifference(ContextSetPattern other, Map<Integer, Integer> difference,
+            List<SemanticTermSnapshot> leftConstants, List<SemanticTermSnapshot> rightConstants, Runnable work) {
+        Map<Integer, Integer> right = new HashMap<>();
         collectExpression(difference, leftConstants, work);
         other.collectExpression(right, rightConstants, work);
         for (Map.Entry<Integer, Integer> coefficient : right.entrySet()) {
             work.run();
             difference.merge(coefficient.getKey(), -coefficient.getValue(), Integer::sum);
         }
+    }
+
+    /** Necessary divisibility condition on each member of a flat constructor equality. */
+    boolean satisfiesCountDivisibility(ContextSetPattern other, Runnable work) {
+        Map<Integer, Integer> difference = new HashMap<>();
+        List<SemanticTermSnapshot> leftConstants = new ArrayList<>(), rightConstants = new ArrayList<>();
+        collectDifference(other, difference, leftConstants, rightConstants, work);
         BigInteger divisor = BigInteger.ZERO;
         for (int coefficient : difference.values()) {
             work.run();

@@ -645,7 +645,7 @@ public final class ContextSetPatternRunner {
         Mind mind = new Mind(user);
         user.setCurrentMind(mind);
         if (!mind.compile("!@x @y source(x,y)->p([x,x]), q([y,y,y,y,Marker,Other]),"
-                + " r([y,y,y,y,Marker,Marker]), s([x,x,Marker]);"))
+                + " r([y,y,y,y,Marker,Marker]), s([x,x,Marker]), t([y,y,y,y,Marker,Marker,Marker,Marker,Marker,Marker]);"))
             throw new AssertionError("Count divisibility fixture");
         Map<String, ContextSetPattern> patterns = capturePatterns(mind);
         ContextSetPattern left = patterns.get("p"), odd = patterns.get("q"), even = patterns.get("r");
@@ -664,6 +664,20 @@ public final class ContextSetPatternRunner {
                 even, java.util.Collections.singletonMap(y, one), () -> {}).orElseThrow(AssertionError::new);
         if (!left.instantiate(witness, () -> {}).semanticallyEquals(even.instantiate(witness, () -> {})))
             throw new AssertionError("Divisible case must retain its concrete control witness");
+
+        for (Map<Integer, SemanticTermSnapshot> inferred : java.util.Arrays.asList(
+                left.inferTwoOppositeInputs(even, () -> {}).orElseThrow(AssertionError::new),
+                even.inferTwoOppositeInputs(left, () -> {}).orElseThrow(AssertionError::new))) {
+            if (!left.instantiate(inferred, () -> {}).semanticallyEquals(even.instantiate(inferred, () -> {})))
+                throw new AssertionError("Two unknowns must produce a witness in either orientation");
+        }
+        ContextSetPattern shifted = patterns.get("t");
+        Map<Integer, SemanticTermSnapshot> shiftedWitness = left.inferTwoOppositeInputs(shifted, () -> {})
+                .orElseThrow(AssertionError::new);
+        if (!left.instantiate(shiftedWitness, () -> {}).semanticallyEquals(shifted.instantiate(shiftedWitness, () -> {})))
+            throw new AssertionError("A negative intermediate count must be shifted to a nonnegative solution");
+        if (left.inferTwoOppositeInputs(odd, () -> {}).isPresent())
+            throw new AssertionError("Indivisible residual must have no concrete witness");
     }
 
     private static Map<String, ContextSetPattern> capturePatterns(Mind mind) throws Exception {
