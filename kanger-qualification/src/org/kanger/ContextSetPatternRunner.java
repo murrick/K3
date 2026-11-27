@@ -36,6 +36,7 @@ public final class ContextSetPatternRunner {
             checkIndependentUnequalEqualities();
             checkDependentUnequalEqualities();
             checkSameSignCoefficients();
+            auditSameSignCoefficients();
             checkNativeConditionalCollision();
             checkConditionalCollisionCaptureBoundary();
             checkSourcedSetApplications();
@@ -771,6 +772,41 @@ public final class ContextSetPatternRunner {
                 r.inferTwoInputs(p, () -> {}).orElseThrow(AssertionError::new))) {
             if (!p.instantiate(witness, () -> {}).semanticallyEquals(r.instantiate(witness, () -> {})))
                 throw new AssertionError("The nonnegative solution to 2x + 3y = 5 must replay");
+        }
+    }
+
+    private static void auditSameSignCoefficients() throws Exception {
+        for (int[] coefficients : new int[][]{{1, 4}, {2, 3}, {4, 6}, {5, 7}}) {
+            int a = coefficients[0], b = coefficients[1];
+            User user = new User();
+            Mind mind = new Mind(user);
+            user.setCurrentMind(mind);
+            String leftArguments = String.join(",", java.util.Collections.nCopies(a, "x")) + ","
+                    + String.join(",", java.util.Collections.nCopies(b + 1, "y"));
+            StringBuilder rule = new StringBuilder("!@x @y source(x,y)->p([").append(leftArguments).append("])");
+            for (int residual = 0; residual <= 12; residual++) {
+                rule.append(", target").append(residual).append("([y");
+                for (int count = 0; count < residual; count++) rule.append(",Marker");
+                rule.append("])");
+            }
+            if (!mind.compile(rule.append(';').toString())) throw new AssertionError("Same-sign audit fixture");
+            Map<String, ContextSetPattern> patterns = capturePatterns(mind);
+            ContextSetPattern left = patterns.get("p");
+            for (int residual = 0; residual <= 12; residual++) {
+                ContextSetPattern right = patterns.get("target" + residual);
+                boolean expected = false;
+                for (int x = 0; x <= residual / a; x++) {
+                    for (int y = 0; y <= residual / b; y++) expected |= a * x + b * y == residual;
+                }
+                for (java.util.Optional<Map<Integer, SemanticTermSnapshot>> result : java.util.Arrays.asList(
+                        left.inferTwoInputs(right, () -> {}), right.inferTwoInputs(left, () -> {}))) {
+                    if (result.isPresent() != expected)
+                        throw new AssertionError("Set solver disagrees with enumeration for " + a + ", " + b + ", " + residual);
+                    if (result.isPresent() && !left.instantiate(result.get(), () -> {})
+                            .semanticallyEquals(right.instantiate(result.get(), () -> {})))
+                        throw new AssertionError("Enumerated positive case did not replay");
+                }
+            }
         }
     }
 
