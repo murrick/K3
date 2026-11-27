@@ -729,6 +729,19 @@ public final class ContextSetPatternRunner {
         if (!r.inferTwoOppositeInputs(t, () -> {}).isPresent()
                 || p.inferTwoEqualities(q, r, t, () -> {}).isPresent())
             throw new AssertionError("Proportional widths can hide inconsistent member residues");
+
+        Map<Integer, SemanticTermSnapshot> identity = p.inferTwoEqualities(p, q, q, () -> {})
+                .orElseThrow(AssertionError::new);
+        SemanticTermSnapshot empty = SemanticTermSnapshot.capture(mind.getTerms().add(new Object[]{}));
+        if (identity.size() != 2 || !identity.values().stream().allMatch(empty::semanticallyEquals))
+            throw new AssertionError("Two identities must return all variables bound");
+        Map<Integer, SemanticTermSnapshot> oneIdentity = p.inferTwoEqualities(p, r, s, () -> {})
+                .orElseThrow(AssertionError::new);
+        if (!r.instantiate(oneIdentity, () -> {}).semanticallyEquals(s.instantiate(oneIdentity, () -> {})))
+            throw new AssertionError("An identity must preserve the other equation");
+        if (p.inferTwoEqualities(p, s, t, () -> {}).isPresent()
+                || r.inferTwoEqualities(s, s, t, () -> {}).isPresent())
+            throw new AssertionError("A false constant residual cannot be ignored after variable cancellation");
     }
 
     private static Map<String, ContextSetPattern> capturePatterns(Mind mind) throws Exception {

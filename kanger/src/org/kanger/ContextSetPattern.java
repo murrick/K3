@@ -229,8 +229,11 @@ final class ContextSetPattern {
         BigInteger d = BigInteger.valueOf(second.getOrDefault(y, 0));
         BigInteger determinant = a.multiply(d).subtract(b.multiply(c));
         boolean dependent = determinant.signum() == 0;
-        if (dependent && (a.signum() * b.signum() != -1 || c.signum() * d.signum() != -1))
-            throw new IllegalArgumentException("Dependent set equalities require two opposite coefficients per equation");
+        boolean firstZero = a.signum() == 0 && b.signum() == 0;
+        boolean secondZero = c.signum() == 0 && d.signum() == 0;
+        if (dependent && ((!firstZero && a.signum() * b.signum() != -1)
+                || (!secondZero && c.signum() * d.signum() != -1)))
+            throw new IllegalArgumentException("Dependent nonzero rows require opposite set coefficients");
 
         List<SemanticTermSnapshot> members = new ArrayList<>(firstLeft);
         members.addAll(firstRight);
@@ -247,7 +250,8 @@ final class ContextSetPattern {
             BigInteger xNumerator = e.multiply(d).subtract(b.multiply(f));
             BigInteger yNumerator = a.multiply(f).subtract(e.multiply(c));
             if (dependent) {
-                if (xNumerator.signum() != 0 || yNumerator.signum() != 0) return Optional.empty();
+                if ((firstZero && e.signum() != 0) || (secondZero && f.signum() != 0)
+                        || xNumerator.signum() != 0 || yNumerator.signum() != 0) return Optional.empty();
                 continue;
             }
             BigInteger[] xCount = xNumerator.divideAndRemainder(determinant);
@@ -257,7 +261,8 @@ final class ContextSetPattern {
             appendCopies(xValues, member, xCount[0], work);
             appendCopies(yValues, member, yCount[0], work);
         }
-        if (dependent) return inferTwoOppositeInputs(right, work);
+        if (dependent && !firstZero) return inferTwoOppositeInputs(right, work);
+        if (dependent && !secondZero) return secondLeft.inferTwoOppositeInputs(secondRight, work);
         Map<Integer, SemanticTermSnapshot> assignment = new HashMap<>();
         assignment.put(x, captureFlatSet(xValues));
         assignment.put(y, captureFlatSet(yValues));
