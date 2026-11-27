@@ -437,6 +437,67 @@ final class ContextSetPattern {
         return Optional.of(Collections.unmodifiableMap(assignment));
     }
 
+    static final class PropagatedBindings {
+        enum Status { SOLVED, CONFLICT, INCOMPLETE }
+
+        final Status status;
+        final Map<Integer, SemanticTermSnapshot> assignment;
+
+        private PropagatedBindings(Status status, Map<Integer, SemanticTermSnapshot> assignment) {
+            this.status = status;
+            this.assignment = Collections.unmodifiableMap(assignment);
+        }
+    }
+
+    /** Propagate exact flattened contributions through equalities with one unknown at a time. */
+    static PropagatedBindings propagateFixedPatterns(List<ContextSetPattern> left, List<ContextSetPattern> right,
+            Map<Integer, SemanticTermSnapshot> fixed, Runnable work) throws Exception {
+        if (left.size() != right.size()) throw new IllegalArgumentException("Matching set expression lists required");
+        Map<Integer, SemanticTermSnapshot> assignment = new HashMap<>();
+        for (Map.Entry<Integer, SemanticTermSnapshot> entry : fixed.entrySet()) {
+            work.run();
+            assignment.put(entry.getKey(), entry.getValue());
+        }
+        boolean progress;
+        do {
+            progress = false;
+            boolean complete = true;
+            for (int i = 0; i < left.size(); i++) {
+                work.run();
+                ContextSetPattern lhs = left.get(i), rhs = right.get(i);
+                int leftMissing = lhs.countUnboundPositions(assignment, work);
+                int rightMissing = rhs.countUnboundPositions(assignment, work);
+                if (leftMissing == 0 && rightMissing == 0) {
+                    if (!lhs.instantiate(assignment, work).semanticallyEquals(rhs.instantiate(assignment, work)))
+                        return new PropagatedBindings(PropagatedBindings.Status.CONFLICT, Collections.emptyMap());
+                } else if (leftMissing + rightMissing == 1) {
+                    Optional<Map<Integer, SemanticTermSnapshot>> inferred = leftMissing == 1
+                            ? lhs.inferFromFixedPattern(rhs, assignment, work)
+                            : rhs.inferFromFixedPattern(lhs, assignment, work);
+                    if (!inferred.isPresent())
+                        return new PropagatedBindings(PropagatedBindings.Status.CONFLICT, Collections.emptyMap());
+                    assignment = inferred.get();
+                    progress = true;
+                } else {
+                    complete = false;
+                }
+            }
+            if (complete) return new PropagatedBindings(PropagatedBindings.Status.SOLVED, assignment);
+        } while (progress);
+        return new PropagatedBindings(PropagatedBindings.Status.INCOMPLETE, Collections.emptyMap());
+    }
+
+    private int countUnboundPositions(Map<Integer, SemanticTermSnapshot> assignment, Runnable work) {
+        java.util.Set<Integer> positions = new java.util.HashSet<>();
+        collectVariables(positions, work);
+        int missing = 0;
+        for (int position : positions) {
+            work.run();
+            if (!assignment.containsKey(position)) missing++;
+        }
+        return missing;
+    }
+
     private static Optional<List<SemanticTermSnapshot>> divideMembers(List<SemanticTermSnapshot> leaves,
             boolean[] used, int coefficient, Runnable work) {
         List<SemanticTermSnapshot> input = new ArrayList<>();

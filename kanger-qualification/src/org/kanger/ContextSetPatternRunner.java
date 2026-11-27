@@ -39,6 +39,7 @@ public final class ContextSetPatternRunner {
             auditSameSignCoefficients();
             checkTwoPositionConjunction();
             checkOneUnknownInWidePattern();
+            checkSetBindingPropagation();
             checkNativeConditionalCollision();
             checkConditionalCollisionCaptureBoundary();
             checkSourcedSetApplications();
@@ -867,6 +868,41 @@ public final class ContextSetPatternRunner {
         if (left.inferFromFixedPattern(patterns.get("r"), fixed, () -> {}).isPresent()
                 || left.inferFromFixedPattern(patterns.get("s"), fixed, () -> {}).isPresent())
             throw new AssertionError("Wide pattern accepted an indivisible or missing fixed contribution");
+    }
+
+    private static void checkSetBindingPropagation() throws Exception {
+        User user = new User();
+        Mind mind = new Mind(user);
+        user.setCurrentMind(mind);
+        if (!mind.compile("!@x @y @z source(x,y,z)->p([x,x]), q([y,y,Marker,Marker]),"
+                + " r([z]), s([x,Other]), t([y,y,Marker]);"))
+            throw new AssertionError("Propagation fixture");
+        Map<String, ContextSetPattern> patterns = capturePatterns(mind);
+        ContextSetPattern p = patterns.get("p"), q = patterns.get("q");
+        ContextSetPattern r = patterns.get("r"), s = patterns.get("s");
+        java.util.Set<Integer> positions = new java.util.HashSet<>();
+        q.collectVariables(positions, () -> {});
+        int y = positions.iterator().next();
+        SemanticTermSnapshot fresh = SemanticTermSnapshot.capture(mind.getTerms().add("Fresh"));
+        Map<Integer, SemanticTermSnapshot> fixed = java.util.Collections.singletonMap(y, fresh);
+        List<ContextSetPattern> left = java.util.Arrays.asList(r, p), right = java.util.Arrays.asList(s, q);
+        for (ContextSetPattern.PropagatedBindings result : java.util.Arrays.asList(
+                ContextSetPattern.propagateFixedPatterns(left, right, fixed, () -> {}),
+                ContextSetPattern.propagateFixedPatterns(java.util.Arrays.asList(q, s),
+                        java.util.Arrays.asList(p, r), fixed, () -> {}))) {
+            if (result.status != ContextSetPattern.PropagatedBindings.Status.SOLVED
+                    || result.assignment.size() != 3 || result.assignment.get(y) != fresh
+                    || !p.instantiate(result.assignment, () -> {}).semanticallyEquals(q.instantiate(result.assignment, () -> {}))
+                    || !r.instantiate(result.assignment, () -> {}).semanticallyEquals(s.instantiate(result.assignment, () -> {})))
+                throw new AssertionError("Set binding chain must replay independent of equation order");
+        }
+        ContextSetPattern.PropagatedBindings conflict = ContextSetPattern.propagateFixedPatterns(
+                java.util.Arrays.asList(r, p, p), java.util.Arrays.asList(s, q, patterns.get("t")), fixed, () -> {});
+        ContextSetPattern.PropagatedBindings incomplete = ContextSetPattern.propagateFixedPatterns(
+                left, right, java.util.Collections.emptyMap(), () -> {});
+        if (conflict.status != ContextSetPattern.PropagatedBindings.Status.CONFLICT || !conflict.assignment.isEmpty()
+                || incomplete.status != ContextSetPattern.PropagatedBindings.Status.INCOMPLETE || !incomplete.assignment.isEmpty())
+            throw new AssertionError("Propagation must distinguish contradiction from lack of a starting binding");
     }
 
     private static Map<String, ContextSetPattern> capturePatterns(Mind mind) throws Exception {
