@@ -40,6 +40,7 @@ public final class ContextSetPatternRunner {
             checkTwoPositionConjunction();
             checkOneUnknownInWidePattern();
             checkSetBindingPropagation();
+            checkSharedUnknownPropagation();
             checkNativeConditionalCollision();
             checkConditionalCollisionCaptureBoundary();
             checkSourcedSetApplications();
@@ -903,6 +904,35 @@ public final class ContextSetPatternRunner {
         if (conflict.status != ContextSetPattern.PropagatedBindings.Status.CONFLICT || !conflict.assignment.isEmpty()
                 || incomplete.status != ContextSetPattern.PropagatedBindings.Status.INCOMPLETE || !incomplete.assignment.isEmpty())
             throw new AssertionError("Propagation must distinguish contradiction from lack of a starting binding");
+    }
+
+    private static void checkSharedUnknownPropagation() throws Exception {
+        User user = new User();
+        Mind mind = new Mind(user);
+        user.setCurrentMind(mind);
+        if (!mind.compile("!@x @y source(x,y)->p([x,x,y]), q([x,Marker,Other]),"
+                + " r([x,y]), s([x,Marker]), t([x,Other]), u([y]);"))
+            throw new AssertionError("Shared unknown fixture");
+        Map<String, ContextSetPattern> patterns = capturePatterns(mind);
+        java.util.Set<Integer> positions = new java.util.HashSet<>();
+        patterns.get("u").collectVariables(positions, () -> {});
+        SemanticTermSnapshot marker = SemanticTermSnapshot.capture(mind.getTerms().add("Marker"));
+        Map<Integer, SemanticTermSnapshot> fixed = java.util.Collections.singletonMap(positions.iterator().next(), marker);
+        ContextSetPattern p = patterns.get("p"), q = patterns.get("q"), r = patterns.get("r"), s = patterns.get("s");
+        for (ContextSetPattern.PropagatedBindings result : java.util.Arrays.asList(
+                ContextSetPattern.propagateFixedPatterns(java.util.Arrays.asList(r, p), java.util.Arrays.asList(s, q), fixed, () -> {}),
+                ContextSetPattern.propagateFixedPatterns(java.util.Arrays.asList(q, s), java.util.Arrays.asList(p, r), fixed, () -> {}))) {
+            if (result.status != ContextSetPattern.PropagatedBindings.Status.SOLVED
+                    || !p.instantiate(result.assignment, () -> {}).semanticallyEquals(q.instantiate(result.assignment, () -> {}))
+                    || !r.instantiate(result.assignment, () -> {}).semanticallyEquals(s.instantiate(result.assignment, () -> {})))
+                throw new AssertionError("Shared unknown must be inferred after cancelling its common contribution");
+        }
+        if (ContextSetPattern.propagateFixedPatterns(java.util.Collections.singletonList(r),
+                java.util.Collections.singletonList(s), fixed, () -> {}).status != ContextSetPattern.PropagatedBindings.Status.INCOMPLETE
+                || ContextSetPattern.propagateFixedPatterns(java.util.Collections.singletonList(r),
+                        java.util.Collections.singletonList(patterns.get("t")), fixed, () -> {}).status
+                        != ContextSetPattern.PropagatedBindings.Status.CONFLICT)
+            throw new AssertionError("Cancelled unknown must distinguish a free position from a constant contradiction");
     }
 
     private static Map<String, ContextSetPattern> capturePatterns(Mind mind) throws Exception {

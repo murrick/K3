@@ -386,6 +386,11 @@ final class ContextSetPattern {
         if (target.getType() != DataType.SET) return Optional.empty();
         List<SemanticTermSnapshot> leaves = new ArrayList<>();
         target.visitFlatSetMembers(leaves::add, work);
+        return subtractAndDivide(leaves, constants, coefficient, work);
+    }
+
+    private static Optional<List<SemanticTermSnapshot>> subtractAndDivide(List<SemanticTermSnapshot> leaves,
+            List<SemanticTermSnapshot> constants, int coefficient, Runnable work) {
         boolean[] used = new boolean[leaves.size()];
         for (SemanticTermSnapshot constant : constants) {
             int match = findUnusedMember(leaves, used, constant, work);
@@ -424,8 +429,13 @@ final class ContextSetPattern {
         Optional<List<SemanticTermSnapshot>> solution = inferInputMembers(target, constants, coefficient, work);
         if (!solution.isPresent()) return Optional.empty();
 
+        return Optional.of(extendBinding(fixed, position, solution.get(), work));
+    }
+
+    private static Map<Integer, SemanticTermSnapshot> extendBinding(Map<Integer, SemanticTermSnapshot> fixed,
+            int position, List<SemanticTermSnapshot> members, Runnable work) throws Exception {
         List<ITerm> values = new ArrayList<>();
-        for (SemanticTermSnapshot member : solution.get()) {
+        for (SemanticTermSnapshot member : members) {
             member.appendFlatSetMembers(values, work);
         }
         Map<Integer, SemanticTermSnapshot> assignment = new HashMap<>();
@@ -434,7 +444,7 @@ final class ContextSetPattern {
             assignment.put(entry.getKey(), entry.getValue());
         }
         assignment.put(position, captureFlatSet(values));
-        return Optional.of(Collections.unmodifiableMap(assignment));
+        return Collections.unmodifiableMap(assignment);
     }
 
     static final class PropagatedBindings {
@@ -447,6 +457,39 @@ final class ContextSetPattern {
             this.status = status;
             this.assignment = Collections.unmodifiableMap(assignment);
         }
+    }
+
+    /** A single unknown may occur on both sides. Cancel variable contributions before inversion. */
+    private PropagatedBindings inferSharedUnknown(ContextSetPattern other, int position,
+            Map<Integer, SemanticTermSnapshot> fixed, Runnable work) throws Exception {
+        Map<Integer, Integer> difference = new HashMap<>();
+        List<SemanticTermSnapshot> left = new ArrayList<>(), right = new ArrayList<>();
+        collectDifference(other, difference, left, right, work);
+        int coefficient = difference.remove(position);
+        if (coefficient == 0) {
+            // A zero coefficient says nothing about the value of this position.
+            List<ITerm> empty = Collections.emptyList();
+            Map<Integer, SemanticTermSnapshot> probe = new HashMap<>(fixed);
+            probe.put(position, captureFlatSet(empty));
+            boolean equal = instantiate(probe, work).semanticallyEquals(other.instantiate(probe, work));
+            return new PropagatedBindings(equal ? PropagatedBindings.Status.INCOMPLETE
+                    : PropagatedBindings.Status.CONFLICT, Collections.emptyMap());
+        }
+        for (Map.Entry<Integer, Integer> entry : difference.entrySet()) {
+            work.run();
+            SemanticTermSnapshot value = requireBinding(entry.getKey(), fixed);
+            List<SemanticTermSnapshot> side = entry.getValue() >= 0 ? left : right;
+            for (int copy = 0; copy < Math.abs(entry.getValue()); copy++) {
+                work.run();
+                value.visitFlatSetMembers(side::add, work);
+            }
+        }
+        List<SemanticTermSnapshot> target = coefficient > 0 ? right : left;
+        List<SemanticTermSnapshot> subtract = coefficient > 0 ? left : right;
+        Optional<List<SemanticTermSnapshot>> result = subtractAndDivide(target, subtract, Math.abs(coefficient), work);
+        return result.isPresent()
+                ? new PropagatedBindings(PropagatedBindings.Status.SOLVED, extendBinding(fixed, position, result.get(), work))
+                : new PropagatedBindings(PropagatedBindings.Status.CONFLICT, Collections.emptyMap());
     }
 
     /** Propagate exact flattened contributions through equalities with one unknown at a time. */
@@ -465,19 +508,22 @@ final class ContextSetPattern {
             for (int i = 0; i < left.size(); i++) {
                 work.run();
                 ContextSetPattern lhs = left.get(i), rhs = right.get(i);
-                int leftMissing = lhs.countUnboundPositions(assignment, work);
-                int rightMissing = rhs.countUnboundPositions(assignment, work);
-                if (leftMissing == 0 && rightMissing == 0) {
+                java.util.Set<Integer> missing = new java.util.HashSet<>();
+                lhs.collectVariables(missing, work);
+                rhs.collectVariables(missing, work);
+                missing.removeIf(assignment::containsKey);
+                if (missing.isEmpty()) {
                     if (!lhs.instantiate(assignment, work).semanticallyEquals(rhs.instantiate(assignment, work)))
                         return new PropagatedBindings(PropagatedBindings.Status.CONFLICT, Collections.emptyMap());
-                } else if (leftMissing + rightMissing == 1) {
-                    Optional<Map<Integer, SemanticTermSnapshot>> inferred = leftMissing == 1
-                            ? lhs.inferFromFixedPattern(rhs, assignment, work)
-                            : rhs.inferFromFixedPattern(lhs, assignment, work);
-                    if (!inferred.isPresent())
-                        return new PropagatedBindings(PropagatedBindings.Status.CONFLICT, Collections.emptyMap());
-                    assignment = inferred.get();
-                    progress = true;
+                } else if (missing.size() == 1) {
+                    PropagatedBindings inferred = lhs.inferSharedUnknown(rhs, missing.iterator().next(), assignment, work);
+                    if (inferred.status == PropagatedBindings.Status.CONFLICT) return inferred;
+                    if (inferred.status == PropagatedBindings.Status.SOLVED) {
+                        assignment = inferred.assignment;
+                        progress = true;
+                    } else {
+                        complete = false;
+                    }
                 } else {
                     complete = false;
                 }
@@ -485,17 +531,6 @@ final class ContextSetPattern {
             if (complete) return new PropagatedBindings(PropagatedBindings.Status.SOLVED, assignment);
         } while (progress);
         return new PropagatedBindings(PropagatedBindings.Status.INCOMPLETE, Collections.emptyMap());
-    }
-
-    private int countUnboundPositions(Map<Integer, SemanticTermSnapshot> assignment, Runnable work) {
-        java.util.Set<Integer> positions = new java.util.HashSet<>();
-        collectVariables(positions, work);
-        int missing = 0;
-        for (int position : positions) {
-            work.run();
-            if (!assignment.containsKey(position)) missing++;
-        }
-        return missing;
     }
 
     private static Optional<List<SemanticTermSnapshot>> divideMembers(List<SemanticTermSnapshot> leaves,
