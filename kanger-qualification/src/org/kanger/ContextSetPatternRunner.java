@@ -977,7 +977,7 @@ public final class ContextSetPatternRunner {
         Mind mind = new Mind(user);
         user.setCurrentMind(mind);
         if (!mind.compile("!@x @y @z source(x,y,z)->p([x,x,y,y,y,y,z]), q([z,z]),"
-                + " r([x,x,y,y,y,y,z,Marker,Marker]), s([x,x,x,x,y,y,y,y,y,y,z]);"))
+                + " r([x,x,y,y,y,y,z,Marker,Marker]), s([x,x,x,x,y,y,y,y,y,y,z]), t([x,x,x,x,y,y,y,y,y,y,y,y,y,y,z]);"))
             throw new AssertionError("Fixed residual divisibility fixture");
         Map<String, ContextSetPattern> patterns = capturePatterns(mind);
         List<ContextSetPattern> left = java.util.Collections.singletonList(patterns.get("p"));
@@ -1008,6 +1008,20 @@ public final class ContextSetPatternRunner {
                 || ContextSetPattern.propagateFixedPatterns(tooSmall, right, java.util.Collections.singletonMap(z, doubled),
                         () -> {}).status != ContextSetPattern.PropagatedBindings.Status.CONFLICT)
             throw new AssertionError("Divisible residual can still require a negative count or be too small");
+
+        List<ContextSetPattern> exact = java.util.Collections.singletonList(patterns.get("t"));
+        SemanticTermSnapshot six = SemanticTermSnapshot.capture(mind.getTerms().add(
+                new Object[]{"Marker", "Marker", "Marker", "Marker", "Marker", "Marker"}));
+        SemanticTermSnapshot four = SemanticTermSnapshot.capture(mind.getTerms().add(
+                new Object[]{"Marker", "Marker", "Marker", "Marker"}));
+        Map<Integer, SemanticTermSnapshot> impossibleAnchor = java.util.Collections.singletonMap(z, six);
+        if (ContextSetPattern.propagateFixedPatterns(exact, right, impossibleAnchor, () -> {}).status
+                != ContextSetPattern.PropagatedBindings.Status.CONFLICT
+                || ContextSetPattern.propagateFixedPatterns(right, exact, impossibleAnchor, () -> {}).status
+                        != ContextSetPattern.PropagatedBindings.Status.CONFLICT
+                || ContextSetPattern.propagateFixedPatterns(exact, right, java.util.Collections.singletonMap(z, four),
+                        () -> {}).status != ContextSetPattern.PropagatedBindings.Status.INCOMPLETE)
+            throw new AssertionError("Expected exact local feasibility without selecting a global witness");
     }
 
     private static Map<String, ContextSetPattern> capturePatterns(Mind mind) throws Exception {

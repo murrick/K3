@@ -170,14 +170,7 @@ final class ContextSetPattern {
             throw new IllegalArgumentException("Two nonzero set coefficients required");
         java.util.Iterator<Map.Entry<Integer, Integer>> entries = difference.entrySet().iterator();
         Map.Entry<Integer, Integer> first = entries.next(), second = entries.next();
-        int sign = Integer.signum(first.getValue());
-        boolean opposite = sign != Integer.signum(second.getValue());
-        BigInteger a = BigInteger.valueOf(Math.abs(first.getValue()));
-        BigInteger b = BigInteger.valueOf(Math.abs(second.getValue()));
-        BigInteger gcd = a.gcd(b);
-        a = a.divide(gcd);
-        b = b.divide(gcd);
-        BigInteger inverse = a.modInverse(b);
+        TwoVariableCounts solver = new TwoVariableCounts(first.getValue(), second.getValue());
         List<SemanticTermSnapshot> members = new ArrayList<>(leftConstants);
         members.addAll(rightConstants);
         List<SemanticTermSnapshot> checked = new ArrayList<>();
@@ -186,8 +179,38 @@ final class ContextSetPattern {
             if (countMember(checked, member, work) != 0) continue;
             checked.add(member);
             int residual = countMember(rightConstants, member, work) - countMember(leftConstants, member, work);
+            BigInteger[] counts = solver.solve(residual);
+            if (counts == null) return Optional.empty();
+            appendCopies(values.get(first.getKey()), member, counts[0], work);
+            appendCopies(values.get(second.getKey()), member, counts[1], work);
+        }
+        Map<Integer, SemanticTermSnapshot> assignment = new HashMap<>();
+        for (Map.Entry<Integer, List<ITerm>> entry : values.entrySet()) {
+            work.run();
+            assignment.put(entry.getKey(), captureFlatSet(entry.getValue()));
+        }
+        return Optional.of(Collections.unmodifiableMap(assignment));
+    }
+
+    private static final class TwoVariableCounts {
+        private final int sign;
+        private final boolean opposite;
+        private final BigInteger a, b, gcd, inverse;
+
+        TwoVariableCounts(int first, int second) {
+            sign = Integer.signum(first);
+            opposite = sign != Integer.signum(second);
+            BigInteger firstMagnitude = BigInteger.valueOf(Math.abs(first));
+            BigInteger secondMagnitude = BigInteger.valueOf(Math.abs(second));
+            gcd = firstMagnitude.gcd(secondMagnitude);
+            a = firstMagnitude.divide(gcd);
+            b = secondMagnitude.divide(gcd);
+            inverse = a.modInverse(b);
+        }
+
+        BigInteger[] solve(int residual) {
             BigInteger[] reduced = BigInteger.valueOf((long) sign * residual).divideAndRemainder(gcd);
-            if (reduced[1].signum() != 0) return Optional.empty();
+            if (reduced[1].signum() != 0) return null;
             // Choose the least nonnegative x in its residue class modulo b.
             BigInteger x = reduced[0].multiply(inverse).mod(b);
             BigInteger y = reduced[0].subtract(a.multiply(x)).divide(b);
@@ -200,17 +223,10 @@ final class ContextSetPattern {
                 }
             } else if (y.signum() < 0) {
                 // Increasing x in this class can only decrease y.
-                return Optional.empty();
+                return null;
             }
-            appendCopies(values.get(first.getKey()), member, x, work);
-            appendCopies(values.get(second.getKey()), member, y, work);
+            return new BigInteger[]{x, y};
         }
-        Map<Integer, SemanticTermSnapshot> assignment = new HashMap<>();
-        for (Map.Entry<Integer, List<ITerm>> entry : values.entrySet()) {
-            work.run();
-            assignment.put(entry.getKey(), captureFlatSet(entry.getValue()));
-        }
-        return Optional.of(Collections.unmodifiableMap(assignment));
     }
 
     /** Choose a basis of at most two rows, then replay every supplied equality. */
@@ -471,7 +487,7 @@ final class ContextSetPattern {
         Map<Integer, Integer> difference = new HashMap<>();
         List<SemanticTermSnapshot> left = new ArrayList<>(), right = new ArrayList<>();
         collectDifference(other, difference, left, right, work);
-        int position = -1, coefficient = 0, unknowns = 0;
+        int position = -1, coefficient = 0, previousCoefficient = 0, unknowns = 0;
         BigInteger divisor = BigInteger.ZERO;
         boolean positive = false, negative = false;
         int smallestContribution = Integer.MAX_VALUE;
@@ -486,6 +502,7 @@ final class ContextSetPattern {
                 smallestContribution = Math.min(smallestContribution, Math.abs(count));
                 divisor = divisor.gcd(BigInteger.valueOf(count));
                 position = entry.getKey();
+                previousCoefficient = coefficient;
                 coefficient = count;
                 continue;
             }
@@ -500,8 +517,10 @@ final class ContextSetPattern {
             int gcd = divisor.intValueExact();
             int direction = positive == negative ? 0 : positive ? 1 : -1;
             int minimum = smallestContribution;
-            boolean possible = checkResidualCounts(left, right, residual -> residual % gcd == 0
-                    && (direction == 0 || residual == 0 || direction * residual >= minimum), work);
+            TwoVariableCounts exact = unknowns == 2 ? new TwoVariableCounts(previousCoefficient, coefficient) : null;
+            boolean possible = checkResidualCounts(left, right, residual -> exact != null
+                    ? exact.solve(residual) != null
+                    : residual % gcd == 0 && (direction == 0 || residual == 0 || direction * residual >= minimum), work);
             return new PropagatedBindings(possible ? PropagatedBindings.Status.INCOMPLETE
                     : PropagatedBindings.Status.CONFLICT, Collections.emptyMap());
         }
