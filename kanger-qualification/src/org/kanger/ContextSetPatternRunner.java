@@ -41,6 +41,7 @@ public final class ContextSetPatternRunner {
             checkOneUnknownInWidePattern();
             checkSetBindingPropagation();
             checkSharedUnknownPropagation();
+            checkMultipleCancelledUnknowns();
             checkNativeConditionalCollision();
             checkConditionalCollisionCaptureBoundary();
             checkSourcedSetApplications();
@@ -933,6 +934,33 @@ public final class ContextSetPatternRunner {
                         java.util.Collections.singletonList(patterns.get("t")), fixed, () -> {}).status
                         != ContextSetPattern.PropagatedBindings.Status.CONFLICT)
             throw new AssertionError("Cancelled unknown must distinguish a free position from a constant contradiction");
+    }
+
+    private static void checkMultipleCancelledUnknowns() throws Exception {
+        User user = new User();
+        Mind mind = new Mind(user);
+        user.setCurrentMind(mind);
+        if (!mind.compile("!@x @w @z source(x,w,z)->p([x,w,z]), q([w,z,Marker]),"
+                + " r([w]), s([x,Other]), t([z]), u([w,Marker]), v([w,z,Other]);"))
+            throw new AssertionError("Multiple cancelled positions fixture");
+        Map<String, ContextSetPattern> patterns = capturePatterns(mind);
+        ContextSetPattern p = patterns.get("p"), q = patterns.get("q");
+        ContextSetPattern r = patterns.get("r"), s = patterns.get("s");
+        ContextSetPattern t = patterns.get("t"), u = patterns.get("u");
+        List<ContextSetPattern> left = java.util.Arrays.asList(t, r, p), right = java.util.Arrays.asList(u, s, q);
+        ContextSetPattern.PropagatedBindings result = ContextSetPattern.propagateFixedPatterns(
+                left, right, java.util.Collections.emptyMap(), () -> {});
+        if (result.status != ContextSetPattern.PropagatedBindings.Status.SOLVED || result.assignment.size() != 3)
+            throw new AssertionError("Cancelling two unbound positions must start the propagation chain");
+        for (int i = 0; i < left.size(); i++) {
+            if (!left.get(i).instantiate(result.assignment, () -> {})
+                    .semanticallyEquals(right.get(i).instantiate(result.assignment, () -> {})))
+                throw new AssertionError("Propagated witness must replay every original row");
+        }
+        if (ContextSetPattern.propagateFixedPatterns(java.util.Collections.singletonList(q),
+                java.util.Collections.singletonList(patterns.get("v")), java.util.Collections.emptyMap(), () -> {}).status
+                != ContextSetPattern.PropagatedBindings.Status.CONFLICT)
+            throw new AssertionError("Multiple cancelled positions cannot hide a constant mismatch");
     }
 
     private static Map<String, ContextSetPattern> capturePatterns(Mind mind) throws Exception {
