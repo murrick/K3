@@ -42,6 +42,7 @@ public final class ContextSetPatternRunner {
             checkSetBindingPropagation();
             checkSharedUnknownPropagation();
             checkMultipleCancelledUnknowns();
+            checkPropagationDivisibility();
             checkNativeConditionalCollision();
             checkConditionalCollisionCaptureBoundary();
             checkSourcedSetApplications();
@@ -969,6 +970,32 @@ public final class ContextSetPatternRunner {
                 java.util.Collections.singletonList(patterns.get("v")), java.util.Collections.emptyMap(), () -> {}).status
                 != ContextSetPattern.PropagatedBindings.Status.CONFLICT)
             throw new AssertionError("Multiple cancelled positions cannot hide a constant mismatch");
+    }
+
+    private static void checkPropagationDivisibility() throws Exception {
+        User user = new User();
+        Mind mind = new Mind(user);
+        user.setCurrentMind(mind);
+        if (!mind.compile("!@x @y @z source(x,y,z)->p([x,x,y,y,y,y,z]), q([z,z]);"))
+            throw new AssertionError("Fixed residual divisibility fixture");
+        Map<String, ContextSetPattern> patterns = capturePatterns(mind);
+        List<ContextSetPattern> left = java.util.Collections.singletonList(patterns.get("p"));
+        List<ContextSetPattern> right = java.util.Collections.singletonList(patterns.get("q"));
+        java.util.Set<Integer> positions = new java.util.HashSet<>();
+        right.get(0).collectVariables(positions, () -> {});
+        int z = positions.iterator().next();
+        SemanticTermSnapshot mixed = SemanticTermSnapshot.capture(mind.getTerms().add(new Object[]{"Marker", "Other"}));
+        SemanticTermSnapshot doubled = SemanticTermSnapshot.capture(mind.getTerms().add(new Object[]{"Marker", "Marker"}));
+        Map<Integer, SemanticTermSnapshot> indivisible = java.util.Collections.singletonMap(z, mixed);
+        if (ContextSetPattern.propagateFixedPatterns(left, right, indivisible, () -> {}).status
+                != ContextSetPattern.PropagatedBindings.Status.CONFLICT
+                || ContextSetPattern.propagateFixedPatterns(right, left, indivisible, () -> {}).status
+                != ContextSetPattern.PropagatedBindings.Status.CONFLICT
+                || ContextSetPattern.propagateFixedPatterns(left, right, java.util.Collections.singletonMap(z, doubled),
+                        () -> {}).status != ContextSetPattern.PropagatedBindings.Status.INCOMPLETE
+                || ContextSetPattern.propagateFixedPatterns(left, right, java.util.Collections.emptyMap(),
+                        () -> {}).status != ContextSetPattern.PropagatedBindings.Status.INCOMPLETE)
+            throw new AssertionError("Only a proven indivisible fixed residual may refuse an unresolved row");
     }
 
     private static Map<String, ContextSetPattern> capturePatterns(Mind mind) throws Exception {

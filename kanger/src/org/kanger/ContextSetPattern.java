@@ -355,7 +355,11 @@ final class ContextSetPattern {
             work.run();
             divisor = divisor.gcd(BigInteger.valueOf(coefficient));
         }
-        int gcd = divisor.intValueExact();
+        return residualIsDivisible(leftConstants, rightConstants, divisor.intValueExact(), work);
+    }
+
+    private static boolean residualIsDivisible(List<SemanticTermSnapshot> leftConstants,
+            List<SemanticTermSnapshot> rightConstants, int gcd, Runnable work) {
         List<SemanticTermSnapshot> members = new ArrayList<>(leftConstants);
         members.addAll(rightConstants);
         List<SemanticTermSnapshot> checked = new ArrayList<>();
@@ -465,14 +469,15 @@ final class ContextSetPattern {
         Map<Integer, Integer> difference = new HashMap<>();
         List<SemanticTermSnapshot> left = new ArrayList<>(), right = new ArrayList<>();
         collectDifference(other, difference, left, right, work);
-        int position = -1, coefficient = 0;
+        int position = -1, coefficient = 0, unknowns = 0;
+        BigInteger divisor = BigInteger.ZERO;
         for (Map.Entry<Integer, Integer> entry : difference.entrySet()) {
             work.run();
             int count = entry.getValue();
             if (count == 0) continue;
             if (!fixed.containsKey(entry.getKey())) {
-                if (position >= 0)
-                    return new PropagatedBindings(PropagatedBindings.Status.INCOMPLETE, Collections.emptyMap());
+                unknowns++;
+                divisor = divisor.gcd(BigInteger.valueOf(count));
                 position = entry.getKey();
                 coefficient = count;
                 continue;
@@ -483,6 +488,11 @@ final class ContextSetPattern {
                 work.run();
                 value.visitFlatSetMembers(side::add, work);
             }
+        }
+        if (unknowns > 1) {
+            boolean divisible = residualIsDivisible(left, right, divisor.intValueExact(), work);
+            return new PropagatedBindings(divisible ? PropagatedBindings.Status.INCOMPLETE
+                    : PropagatedBindings.Status.CONFLICT, Collections.emptyMap());
         }
         if (coefficient == 0) {
             boolean equal = left.size() == right.size() && subtractAndDivide(left, right, 1, work).isPresent();
