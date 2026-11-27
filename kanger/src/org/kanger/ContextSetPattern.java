@@ -487,7 +487,8 @@ final class ContextSetPattern {
         Map<Integer, Integer> difference = new HashMap<>();
         List<SemanticTermSnapshot> left = new ArrayList<>(), right = new ArrayList<>();
         collectDifference(other, difference, left, right, work);
-        int position = -1, coefficient = 0, previousCoefficient = 0, unknowns = 0;
+        int position = -1, coefficient = 0, previousCoefficient = 0;
+        List<Integer> unknownPositions = new ArrayList<>();
         BigInteger divisor = BigInteger.ZERO;
         boolean positive = false, negative = false;
         int smallestContribution = Integer.MAX_VALUE;
@@ -496,7 +497,7 @@ final class ContextSetPattern {
             int count = entry.getValue();
             if (count == 0) continue;
             if (!fixed.containsKey(entry.getKey())) {
-                unknowns++;
+                unknownPositions.add(entry.getKey());
                 positive |= count > 0;
                 negative |= count < 0;
                 smallestContribution = Math.min(smallestContribution, Math.abs(count));
@@ -513,11 +514,25 @@ final class ContextSetPattern {
                 value.visitFlatSetMembers(side::add, work);
             }
         }
-        if (unknowns > 1) {
+        if (unknownPositions.size() > 1 && positive != negative
+                && left.size() == right.size() && subtractAndDivide(left, right, 1, work).isPresent()) {
+            Map<Integer, SemanticTermSnapshot> assignment = new HashMap<>();
+            for (Map.Entry<Integer, SemanticTermSnapshot> entry : fixed.entrySet()) {
+                work.run();
+                assignment.put(entry.getKey(), entry.getValue());
+            }
+            SemanticTermSnapshot empty = captureFlatSet(Collections.emptyList());
+            for (int unknown : unknownPositions) {
+                work.run();
+                assignment.put(unknown, empty);
+            }
+            return new PropagatedBindings(PropagatedBindings.Status.SOLVED, assignment);
+        }
+        if (unknownPositions.size() > 1) {
             int gcd = divisor.intValueExact();
             int direction = positive == negative ? 0 : positive ? 1 : -1;
             int minimum = smallestContribution;
-            TwoVariableCounts exact = unknowns == 2 ? new TwoVariableCounts(previousCoefficient, coefficient) : null;
+            TwoVariableCounts exact = unknownPositions.size() == 2 ? new TwoVariableCounts(previousCoefficient, coefficient) : null;
             boolean possible = checkResidualCounts(left, right, residual -> exact != null
                     ? exact.solve(residual) != null
                     : residual % gcd == 0 && (direction == 0 || residual == 0 || direction * residual >= minimum), work);

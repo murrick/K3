@@ -43,6 +43,7 @@ public final class ContextSetPatternRunner {
             checkSharedUnknownPropagation();
             checkMultipleCancelledUnknowns();
             checkPropagationDivisibility();
+            checkForcedEmptyPropagation();
             checkNativeConditionalCollision();
             checkConditionalCollisionCaptureBoundary();
             checkSourcedSetApplications();
@@ -1022,6 +1023,31 @@ public final class ContextSetPatternRunner {
                 || ContextSetPattern.propagateFixedPatterns(exact, right, java.util.Collections.singletonMap(z, four),
                         () -> {}).status != ContextSetPattern.PropagatedBindings.Status.INCOMPLETE)
             throw new AssertionError("Expected exact local feasibility without selecting a global witness");
+    }
+
+    private static void checkForcedEmptyPropagation() throws Exception {
+        User user = new User();
+        Mind mind = new Mind(user);
+        user.setCurrentMind(mind);
+        if (!mind.compile("!@a @b @c @d source(a,b,c,d)->q([a,Marker]),"
+                + " r([a,a,b,b,c,Marker]), s([d]), t([b,Fresh]), u([a,b,Marker]);"))
+            throw new AssertionError("Forced empty fixture");
+        Map<String, ContextSetPattern> patterns = capturePatterns(mind);
+        ContextSetPattern r = patterns.get("r"), q = patterns.get("q"), s = patterns.get("s"), t = patterns.get("t");
+        List<ContextSetPattern> left = java.util.Arrays.asList(s, q), right = java.util.Arrays.asList(t, r);
+        ContextSetPattern.PropagatedBindings result = ContextSetPattern.propagateFixedPatterns(
+                left, right, java.util.Collections.emptyMap(), () -> {});
+        if (result.status != ContextSetPattern.PropagatedBindings.Status.SOLVED || result.assignment.size() != 4
+                || !r.instantiate(result.assignment, () -> {}).semanticallyEquals(q.instantiate(result.assignment, () -> {}))
+                || !s.instantiate(result.assignment, () -> {}).semanticallyEquals(t.instantiate(result.assignment, () -> {})))
+            throw new AssertionError("An all-zero residual must bind all same-sign positions and unlock other rows");
+        if (ContextSetPattern.propagateFixedPatterns(java.util.Collections.singletonList(q),
+                java.util.Collections.singletonList(patterns.get("u")), java.util.Collections.emptyMap(), () -> {}).status
+                != ContextSetPattern.PropagatedBindings.Status.SOLVED)
+            throw new AssertionError("One forced zero and one cancelled position still admit a witness");
+        if (!result.assignment.values().stream().anyMatch(
+                SemanticTermSnapshot.capture(mind.getTerms().add(new Object[]{"Fresh"}))::semanticallyEquals))
+            throw new AssertionError("Propagation did not retain the nonempty downstream assignment");
     }
 
     private static Map<String, ContextSetPattern> capturePatterns(Mind mind) throws Exception {
