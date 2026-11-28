@@ -873,8 +873,8 @@ public final class ContextSetPatternRunner {
         User user = new User();
         Mind mind = new Mind(user);
         user.setCurrentMind(mind);
-        if (!mind.compile("!@x @y source(x,y)->p([x,x]), q([y,y,y,y]), r([x,x,x]),"
-                + " s([y,y,y,y,Marker,Marker]), t([x]), u([y,Marker]), v([y,Other]), w([x,Marker,Marker]);"))
+        if (!mind.compile("!@x @y @z source(x,y,z)->p([x,x]), q([y,y,y,y]), r([x,x,x]),"
+                + " s([y,y,y,y,Marker,Marker]), t([x]), u([y,Marker]), v([y,Other]), w([x,Marker,Marker]), j([x,x,x,z]), k([z]);"))
             throw new AssertionError("Conjunction fixture");
         Map<String, ContextSetPattern> patterns = capturePatterns(mind);
         ContextSetPattern p = patterns.get("p"), q = patterns.get("q"), r = patterns.get("r");
@@ -909,6 +909,23 @@ public final class ContextSetPatternRunner {
         if (!ContextSetPattern.inferTwoPositionConjunction(java.util.Arrays.asList(q, p, p),
                 java.util.Arrays.asList(q, patterns.get("w"), patterns.get("w")), () -> {}).isPresent())
             throw new AssertionError("A variable absent from the selected basis must still be bound");
+
+        ContextSetPattern withFixed = patterns.get("j");
+        java.util.Set<Integer> positions = new java.util.HashSet<>();
+        patterns.get("k").collectVariables(positions, () -> {});
+        int z = positions.iterator().next();
+        SemanticTermSnapshot empty = SemanticTermSnapshot.capture(mind.getTerms().add(new Object[]{}));
+        List<ContextSetPattern> anchoredLeft = java.util.Arrays.asList(p, withFixed, t);
+        ContextSetPattern.PropagatedBindings anchored = ContextSetPattern.propagateFixedPatterns(
+                anchoredLeft, right, java.util.Collections.singletonMap(z, empty), () -> {});
+        if (anchored.status != ContextSetPattern.PropagatedBindings.Status.SOLVED || anchored.assignment.get(z) != empty
+                || !withFixed.instantiate(anchored.assignment, () -> {}).semanticallyEquals(s.instantiate(anchored.assignment, () -> {})))
+            throw new AssertionError("Two unknowns must use and preserve the fixed third value");
+        SemanticTermSnapshot marker = SemanticTermSnapshot.capture(mind.getTerms().add("Marker"));
+        if (ContextSetPattern.propagateFixedPatterns(anchoredLeft, right,
+                java.util.Collections.singletonMap(z, marker), () -> {}).status
+                != ContextSetPattern.PropagatedBindings.Status.CONFLICT)
+            throw new AssertionError("Changing only the fixed contribution can make the system inconsistent");
     }
 
     private static void checkOneUnknownInWidePattern() throws Exception {

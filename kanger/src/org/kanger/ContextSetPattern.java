@@ -692,13 +692,20 @@ final class ContextSetPattern {
             }
         } while (progress);
         java.util.Set<Integer> positions = positionsIn(left, right, work);
-        if (left.size() > 1 && positions.size() == 2 && Collections.disjoint(positions, assignment.keySet())) {
-            int[] rows = selectBasis(left, right, positions, work);
+        positions.removeIf(assignment::containsKey);
+        if (left.size() > 1 && positions.size() == 2) {
+            List<ContextSetPattern> reducedLeft = new ArrayList<>(), reducedRight = new ArrayList<>();
+            for (int i = 0; i < left.size(); i++) {
+                work.run();
+                reducedLeft.add(left.get(i).withFixedMembers(assignment, work));
+                reducedRight.add(right.get(i).withFixedMembers(assignment, work));
+            }
+            int[] rows = selectBasis(reducedLeft, reducedRight, positions, work);
             if (rows[0] == rows[1]) {
-                if (!proportionalResidualsAgree(left, right, rows[0], work))
+                if (!proportionalResidualsAgree(reducedLeft, reducedRight, rows[0], work))
                     return new PropagatedBindings(PropagatedBindings.Status.CONFLICT, Collections.emptyMap());
             } else {
-                Optional<Map<Integer, SemanticTermSnapshot>> joint = replayBasis(left, right, positions, rows, work);
+                Optional<Map<Integer, SemanticTermSnapshot>> joint = replayBasis(reducedLeft, reducedRight, positions, rows, work);
                 if (!joint.isPresent())
                     return new PropagatedBindings(PropagatedBindings.Status.CONFLICT, Collections.emptyMap());
                 // Only independent rows fix both contributions.
@@ -708,6 +715,19 @@ final class ContextSetPattern {
             }
         }
         return new PropagatedBindings(PropagatedBindings.Status.INCOMPLETE, Collections.emptyMap());
+    }
+
+    private ContextSetPattern withFixedMembers(Map<Integer, SemanticTermSnapshot> assignment, Runnable work) {
+        List<Member> reduced = new ArrayList<>();
+        for (Member member : members) {
+            work.run();
+            if (member.variable >= 0 && assignment.containsKey(member.variable)) {
+                reduced.add(new Member(-1, requireBinding(member.variable, assignment)));
+            } else {
+                reduced.add(member);
+            }
+        }
+        return new ContextSetPattern(reduced);
     }
 
     private static Optional<List<SemanticTermSnapshot>> divideMembers(List<SemanticTermSnapshot> leaves,
