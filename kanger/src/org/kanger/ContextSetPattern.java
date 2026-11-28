@@ -272,6 +272,43 @@ final class ContextSetPattern {
         return new int[]{first, second};
     }
 
+    /** Compare proportional rows without materializing a potentially large arbitrary witness. */
+    private static boolean proportionalResidualsAgree(List<ContextSetPattern> left, List<ContextSetPattern> right,
+            int basis, Runnable work) {
+        Map<Integer, Integer> coefficients = new HashMap<>();
+        List<SemanticTermSnapshot> basisLeft = new ArrayList<>(), basisRight = new ArrayList<>();
+        left.get(basis).collectDifference(right.get(basis), coefficients, basisLeft, basisRight, work);
+        int position = -1, coefficient = 0;
+        for (Map.Entry<Integer, Integer> entry : coefficients.entrySet()) {
+            work.run();
+            if (entry.getValue() != 0) {
+                position = entry.getKey();
+                coefficient = entry.getValue();
+                break;
+            }
+        }
+        // The propagation scan has already checked fully cancelled rows.
+        if (position < 0) return true;
+        int basisCoefficient = coefficient;
+        for (int i = 0; i < left.size(); i++) {
+            work.run();
+            if (i == basis) continue;
+            Map<Integer, Integer> row = new HashMap<>();
+            List<SemanticTermSnapshot> rowLeft = new ArrayList<>(), rowRight = new ArrayList<>();
+            left.get(i).collectDifference(right.get(i), row, rowLeft, rowRight, work);
+            int rowCoefficient = row.getOrDefault(position, 0);
+            List<SemanticTermSnapshot> first = new ArrayList<>(basisLeft), second = new ArrayList<>(basisRight);
+            first.addAll(rowLeft);
+            second.addAll(rowRight);
+            if (!checkResidualCounts(first, second, (member, ignored) -> {
+                int basisResidual = countMember(basisRight, member, work) - countMember(basisLeft, member, work);
+                int rowResidual = countMember(rowRight, member, work) - countMember(rowLeft, member, work);
+                return (long) basisCoefficient * rowResidual == (long) rowCoefficient * basisResidual;
+            }, work)) return false;
+        }
+        return true;
+    }
+
     private static Optional<Map<Integer, SemanticTermSnapshot>> replayBasis(List<ContextSetPattern> left,
             List<ContextSetPattern> right, java.util.Set<Integer> positions, int[] rows, Runnable work) throws Exception {
         int first = rows[0], second = rows[1];
@@ -657,10 +694,13 @@ final class ContextSetPattern {
         java.util.Set<Integer> positions = positionsIn(left, right, work);
         if (left.size() > 1 && positions.size() == 2 && Collections.disjoint(positions, assignment.keySet())) {
             int[] rows = selectBasis(left, right, positions, work);
-            Optional<Map<Integer, SemanticTermSnapshot>> joint = replayBasis(left, right, positions, rows, work);
-            if (!joint.isPresent())
-                return new PropagatedBindings(PropagatedBindings.Status.CONFLICT, Collections.emptyMap());
-            if (rows[0] != rows[1]) {
+            if (rows[0] == rows[1]) {
+                if (!proportionalResidualsAgree(left, right, rows[0], work))
+                    return new PropagatedBindings(PropagatedBindings.Status.CONFLICT, Collections.emptyMap());
+            } else {
+                Optional<Map<Integer, SemanticTermSnapshot>> joint = replayBasis(left, right, positions, rows, work);
+                if (!joint.isPresent())
+                    return new PropagatedBindings(PropagatedBindings.Status.CONFLICT, Collections.emptyMap());
                 // Only independent rows fix both contributions.
                 Map<Integer, SemanticTermSnapshot> completed = new HashMap<>(assignment);
                 completed.putAll(joint.get());
