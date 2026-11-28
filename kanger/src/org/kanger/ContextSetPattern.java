@@ -373,11 +373,11 @@ final class ContextSetPattern {
         }
         int gcd = divisor.intValueExact();
         return checkResidualCounts(leftConstants, rightConstants,
-                residual -> gcd == 0 ? residual == 0 : residual % gcd == 0, work);
+                (member, residual) -> gcd == 0 ? residual == 0 : residual % gcd == 0, work);
     }
 
     private static boolean checkResidualCounts(List<SemanticTermSnapshot> leftConstants,
-            List<SemanticTermSnapshot> rightConstants, java.util.function.IntPredicate accepts, Runnable work) {
+            List<SemanticTermSnapshot> rightConstants, java.util.function.BiPredicate<SemanticTermSnapshot, Integer> accepts, Runnable work) {
         List<SemanticTermSnapshot> members = new ArrayList<>(leftConstants);
         members.addAll(rightConstants);
         List<SemanticTermSnapshot> checked = new ArrayList<>();
@@ -386,7 +386,7 @@ final class ContextSetPattern {
             if (countMember(checked, member, work) != 0) continue;
             checked.add(member);
             int residual = countMember(rightConstants, member, work) - countMember(leftConstants, member, work);
-            if (!accepts.test(residual)) return false;
+            if (!accepts.test(member, residual)) return false;
         }
         return true;
     }
@@ -532,10 +532,10 @@ final class ContextSetPattern {
             int gcd = divisor.intValueExact();
             int direction = positive == negative ? 0 : positive ? 1 : -1;
             int minimum = smallestContribution;
-            TwoVariableCounts exact = unknownPositions.size() == 2 ? new TwoVariableCounts(previousCoefficient, coefficient) : null;
-            boolean possible = checkResidualCounts(left, right, residual -> exact != null
-                    ? exact.solve(residual) != null
-                    : residual % gcd == 0 && (direction == 0 || residual == 0 || direction * residual >= minimum), work);
+            if (unknownPositions.size() == 2)
+                return inferTwoPendingInputs(left, right, unknownPositions, previousCoefficient, coefficient, fixed, work);
+            boolean possible = checkResidualCounts(left, right, (member, residual) ->
+                    residual % gcd == 0 && (direction == 0 || residual == 0 || direction * residual >= minimum), work);
             return new PropagatedBindings(possible ? PropagatedBindings.Status.INCOMPLETE
                     : PropagatedBindings.Status.CONFLICT, Collections.emptyMap());
         }
@@ -550,6 +550,38 @@ final class ContextSetPattern {
         return result.isPresent()
                 ? new PropagatedBindings(PropagatedBindings.Status.SOLVED, extendBinding(fixed, position, result.get(), work))
                 : new PropagatedBindings(PropagatedBindings.Status.CONFLICT, Collections.emptyMap());
+    }
+
+    private static PropagatedBindings inferTwoPendingInputs(List<SemanticTermSnapshot> left,
+            List<SemanticTermSnapshot> right, List<Integer> positions, int first, int second,
+            Map<Integer, SemanticTermSnapshot> fixed, Runnable work) throws Exception {
+        TwoVariableCounts solver = new TwoVariableCounts(first, second);
+        Map<SemanticTermSnapshot, BigInteger[]> counts = new java.util.LinkedHashMap<>();
+        boolean[] unique = {!solver.opposite};
+        boolean possible = checkResidualCounts(left, right, (member, residual) -> {
+            BigInteger[] pair = solver.solve(residual);
+            if (pair == null) return false;
+            // With equal signs a second solution increases x by b and decreases y by a.
+            unique[0] &= pair[1].compareTo(solver.a) < 0;
+            if (unique[0]) counts.put(member, pair);
+            return true;
+        }, work);
+        if (!possible) return new PropagatedBindings(PropagatedBindings.Status.CONFLICT, Collections.emptyMap());
+        if (!unique[0]) return new PropagatedBindings(PropagatedBindings.Status.INCOMPLETE, Collections.emptyMap());
+        List<ITerm> firstValues = new ArrayList<>(), secondValues = new ArrayList<>();
+        for (Map.Entry<SemanticTermSnapshot, BigInteger[]> entry : counts.entrySet()) {
+            work.run();
+            appendCopies(firstValues, entry.getKey(), entry.getValue()[0], work);
+            appendCopies(secondValues, entry.getKey(), entry.getValue()[1], work);
+        }
+        Map<Integer, SemanticTermSnapshot> assignment = new HashMap<>();
+        for (Map.Entry<Integer, SemanticTermSnapshot> entry : fixed.entrySet()) {
+            work.run();
+            assignment.put(entry.getKey(), entry.getValue());
+        }
+        assignment.put(positions.get(0), captureFlatSet(firstValues));
+        assignment.put(positions.get(1), captureFlatSet(secondValues));
+        return new PropagatedBindings(PropagatedBindings.Status.SOLVED, assignment);
     }
 
     /** Propagate exact flattened contributions through equalities with one unknown at a time. */

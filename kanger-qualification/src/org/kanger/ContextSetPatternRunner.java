@@ -767,7 +767,7 @@ public final class ContextSetPatternRunner {
         Mind mind = new Mind(user);
         user.setCurrentMind(mind);
         if (!mind.compile("!@x @y source(x,y)->p([x,x,y,y,y,y]),"
-                + " q([y,Marker]), r([y,Marker,Marker,Marker,Marker,Marker]);"))
+                + " q([y,Marker]), r([y,Marker,Marker,Marker,Marker,Marker]), s([y,Marker,Marker,Marker,Marker,Marker,Marker]);"))
             throw new AssertionError("Same-sign coefficient fixture");
         Map<String, ContextSetPattern> patterns = capturePatterns(mind);
         ContextSetPattern p = patterns.get("p"), q = patterns.get("q"), r = patterns.get("r");
@@ -780,6 +780,18 @@ public final class ContextSetPatternRunner {
             if (!p.instantiate(witness, () -> {}).semanticallyEquals(r.instantiate(witness, () -> {})))
                 throw new AssertionError("The nonnegative solution to 2x + 3y = 5 must replay");
         }
+
+        ContextSetPattern.PropagatedBindings unique = ContextSetPattern.propagateFixedPatterns(
+                java.util.Collections.singletonList(p), java.util.Collections.singletonList(r),
+                java.util.Collections.emptyMap(), () -> {});
+        if (unique.status != ContextSetPattern.PropagatedBindings.Status.SOLVED
+                || !p.instantiate(unique.assignment, () -> {}).semanticallyEquals(r.instantiate(unique.assignment, () -> {})))
+            throw new AssertionError("A unique nonempty two-position row must propagate");
+        ContextSetPattern.PropagatedBindings ambiguous = ContextSetPattern.propagateFixedPatterns(
+                java.util.Collections.singletonList(p), java.util.Collections.singletonList(patterns.get("s")),
+                java.util.Collections.emptyMap(), () -> {});
+        if (ambiguous.status != ContextSetPattern.PropagatedBindings.Status.INCOMPLETE || !ambiguous.assignment.isEmpty())
+            throw new AssertionError("Two feasible solutions must not commit either binding");
     }
 
     private static void auditSameSignCoefficients() throws Exception {
@@ -994,7 +1006,7 @@ public final class ContextSetPatternRunner {
                 || ContextSetPattern.propagateFixedPatterns(right, left, indivisible, () -> {}).status
                 != ContextSetPattern.PropagatedBindings.Status.CONFLICT
                 || ContextSetPattern.propagateFixedPatterns(left, right, java.util.Collections.singletonMap(z, doubled),
-                        () -> {}).status != ContextSetPattern.PropagatedBindings.Status.INCOMPLETE
+                        () -> {}).status != ContextSetPattern.PropagatedBindings.Status.SOLVED
                 || ContextSetPattern.propagateFixedPatterns(left, right, java.util.Collections.emptyMap(),
                         () -> {}).status != ContextSetPattern.PropagatedBindings.Status.INCOMPLETE)
             throw new AssertionError("Only a proven indivisible fixed residual may refuse an unresolved row");
@@ -1021,8 +1033,8 @@ public final class ContextSetPatternRunner {
                 || ContextSetPattern.propagateFixedPatterns(right, exact, impossibleAnchor, () -> {}).status
                         != ContextSetPattern.PropagatedBindings.Status.CONFLICT
                 || ContextSetPattern.propagateFixedPatterns(exact, right, java.util.Collections.singletonMap(z, four),
-                        () -> {}).status != ContextSetPattern.PropagatedBindings.Status.INCOMPLETE)
-            throw new AssertionError("Expected exact local feasibility without selecting a global witness");
+                        () -> {}).status != ContextSetPattern.PropagatedBindings.Status.SOLVED)
+            throw new AssertionError("Expected exact local feasibility and its unique control witness");
     }
 
     private static void checkForcedEmptyPropagation() throws Exception {
