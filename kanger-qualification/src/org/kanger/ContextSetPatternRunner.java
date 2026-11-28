@@ -878,6 +878,21 @@ public final class ContextSetPatternRunner {
                 java.util.Arrays.asList(q, s, patterns.get("v")), () -> {}).isPresent())
             throw new AssertionError("A witness of the basis must fail an incompatible third row");
 
+        ContextSetPattern.PropagatedBindings propagated = ContextSetPattern.propagateFixedPatterns(
+                left, right, java.util.Collections.emptyMap(), () -> {});
+        if (propagated.status != ContextSetPattern.PropagatedBindings.Status.SOLVED || propagated.assignment.size() != 2)
+            throw new AssertionError("Independent rows must unblock propagation without a starting value");
+        for (int i = 0; i < left.size(); i++) {
+            if (!left.get(i).instantiate(propagated.assignment, () -> {})
+                    .semanticallyEquals(right.get(i).instantiate(propagated.assignment, () -> {})))
+                throw new AssertionError("Propagated basis solution failed original replay");
+        }
+        if (ContextSetPattern.propagateFixedPatterns(left, java.util.Arrays.asList(q, s, patterns.get("v")),
+                java.util.Collections.emptyMap(), () -> {}).status != ContextSetPattern.PropagatedBindings.Status.CONFLICT
+                || ContextSetPattern.propagateFixedPatterns(java.util.Arrays.asList(p, q), java.util.Arrays.asList(q, p),
+                        java.util.Collections.emptyMap(), () -> {}).status != ContextSetPattern.PropagatedBindings.Status.INCOMPLETE)
+            throw new AssertionError("Basis fallback must reject incompatible residuals and preserve ambiguous rows");
+
         if (!ContextSetPattern.inferTwoPositionConjunction(java.util.Arrays.asList(q, p, p),
                 java.util.Arrays.asList(q, patterns.get("w"), patterns.get("w")), () -> {}).isPresent())
             throw new AssertionError("A variable absent from the selected basis must still be bound");

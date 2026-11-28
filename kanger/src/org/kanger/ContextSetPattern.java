@@ -234,12 +234,23 @@ final class ContextSetPattern {
             List<ContextSetPattern> left, List<ContextSetPattern> right, Runnable work) throws Exception {
         if (left.isEmpty() || left.size() != right.size())
             throw new IllegalArgumentException("Matching nonempty lists of set expressions required");
+        java.util.Set<Integer> positions = positionsIn(left, right, work);
+        if (positions.size() != 2) throw new IllegalArgumentException("Exactly two set positions required");
+        return replayBasis(left, right, positions, selectBasis(left, right, positions, work), work);
+    }
+
+    private static java.util.Set<Integer> positionsIn(List<ContextSetPattern> left, List<ContextSetPattern> right,
+            Runnable work) {
         java.util.Set<Integer> positions = new java.util.HashSet<>();
         for (int i = 0; i < left.size(); i++) {
             left.get(i).collectVariables(positions, work);
             right.get(i).collectVariables(positions, work);
         }
-        if (positions.size() != 2) throw new IllegalArgumentException("Exactly two set positions required");
+        return positions;
+    }
+
+    private static int[] selectBasis(List<ContextSetPattern> left, List<ContextSetPattern> right,
+            java.util.Set<Integer> positions, Runnable work) {
         java.util.Iterator<Integer> iterator = positions.iterator();
         int x = iterator.next(), y = iterator.next();
         int first = 0, second = 0;
@@ -258,6 +269,12 @@ final class ContextSetPattern {
                 break;
             }
         }
+        return new int[]{first, second};
+    }
+
+    private static Optional<Map<Integer, SemanticTermSnapshot>> replayBasis(List<ContextSetPattern> left,
+            List<ContextSetPattern> right, java.util.Set<Integer> positions, int[] rows, Runnable work) throws Exception {
+        int first = rows[0], second = rows[1];
         Optional<Map<Integer, SemanticTermSnapshot>> basis = left.get(first)
                 .inferTwoEqualities(right.get(first), left.get(second), right.get(second), work);
         if (!basis.isPresent()) return Optional.empty();
@@ -637,6 +654,19 @@ final class ContextSetPattern {
                 return new PropagatedBindings(PropagatedBindings.Status.SOLVED, completed);
             }
         } while (progress);
+        java.util.Set<Integer> positions = positionsIn(left, right, work);
+        if (positions.size() == 2 && Collections.disjoint(positions, assignment.keySet())) {
+            int[] rows = selectBasis(left, right, positions, work);
+            if (rows[0] != rows[1]) {
+                // Independent rows fix both contributions. No arbitrary witness is propagated.
+                Optional<Map<Integer, SemanticTermSnapshot>> joint = replayBasis(left, right, positions, rows, work);
+                if (!joint.isPresent())
+                    return new PropagatedBindings(PropagatedBindings.Status.CONFLICT, Collections.emptyMap());
+                Map<Integer, SemanticTermSnapshot> completed = new HashMap<>(assignment);
+                completed.putAll(joint.get());
+                return new PropagatedBindings(PropagatedBindings.Status.SOLVED, completed);
+            }
+        }
         return new PropagatedBindings(PropagatedBindings.Status.INCOMPLETE, Collections.emptyMap());
     }
 
