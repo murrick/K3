@@ -739,6 +739,19 @@ public final class ContextSetPatternRunner {
                 || p.inferTwoEqualities(q, r, t, () -> {}).isPresent())
             throw new AssertionError("Proportional widths can hide inconsistent member residues");
 
+        for (ContextSetPattern.PropagatedBindings conflict : java.util.Arrays.asList(
+                ContextSetPattern.propagateFixedPatterns(java.util.Arrays.asList(p, r), java.util.Arrays.asList(q, t),
+                        java.util.Collections.emptyMap(), () -> {}),
+                ContextSetPattern.propagateFixedPatterns(java.util.Arrays.asList(t, q), java.util.Arrays.asList(r, p),
+                        java.util.Collections.emptyMap(), () -> {}))) {
+            if (conflict.status != ContextSetPattern.PropagatedBindings.Status.CONFLICT || !conflict.assignment.isEmpty())
+                throw new AssertionError("Proportional rows with different residuals must fail in either orientation");
+        }
+        ContextSetPattern.PropagatedBindings pending = ContextSetPattern.propagateFixedPatterns(
+                java.util.Arrays.asList(p, r), java.util.Arrays.asList(q, s), java.util.Collections.emptyMap(), () -> {});
+        if (pending.status != ContextSetPattern.PropagatedBindings.Status.INCOMPLETE || !pending.assignment.isEmpty())
+            throw new AssertionError("A feasible proportional pair cannot publish an arbitrary binding");
+
         Map<Integer, SemanticTermSnapshot> identity = p.inferTwoEqualities(p, q, q, () -> {})
                 .orElseThrow(AssertionError::new);
         SemanticTermSnapshot empty = SemanticTermSnapshot.capture(mind.getTerms().add(new Object[]{}));

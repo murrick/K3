@@ -655,13 +655,13 @@ final class ContextSetPattern {
             }
         } while (progress);
         java.util.Set<Integer> positions = positionsIn(left, right, work);
-        if (positions.size() == 2 && Collections.disjoint(positions, assignment.keySet())) {
+        if (left.size() > 1 && positions.size() == 2 && Collections.disjoint(positions, assignment.keySet())) {
             int[] rows = selectBasis(left, right, positions, work);
+            Optional<Map<Integer, SemanticTermSnapshot>> joint = replayBasis(left, right, positions, rows, work);
+            if (!joint.isPresent())
+                return new PropagatedBindings(PropagatedBindings.Status.CONFLICT, Collections.emptyMap());
             if (rows[0] != rows[1]) {
-                // Independent rows fix both contributions. No arbitrary witness is propagated.
-                Optional<Map<Integer, SemanticTermSnapshot>> joint = replayBasis(left, right, positions, rows, work);
-                if (!joint.isPresent())
-                    return new PropagatedBindings(PropagatedBindings.Status.CONFLICT, Collections.emptyMap());
+                // Only independent rows fix both contributions.
                 Map<Integer, SemanticTermSnapshot> completed = new HashMap<>(assignment);
                 completed.putAll(joint.get());
                 return new PropagatedBindings(PropagatedBindings.Status.SOLVED, completed);
