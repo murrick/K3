@@ -767,7 +767,8 @@ public final class ContextSetPatternRunner {
         Mind mind = new Mind(user);
         user.setCurrentMind(mind);
         if (!mind.compile("!@x @y source(x,y)->p([x,x,y,y,y,y]),"
-                + " q([y,Marker]), r([y,Marker,Marker,Marker,Marker,Marker]), s([y,Marker,Marker,Marker,Marker,Marker,Marker]);"))
+                + " q([y,Marker]), r([y,Marker,Marker,Marker,Marker,Marker]), s([y,Marker,Marker,Marker,Marker,Marker,Marker]),"
+                + " t([y,Marker,Marker,Marker,Marker,Marker,Marker,Other]);"))
             throw new AssertionError("Same-sign coefficient fixture");
         Map<String, ContextSetPattern> patterns = capturePatterns(mind);
         ContextSetPattern p = patterns.get("p"), q = patterns.get("q"), r = patterns.get("r");
@@ -792,6 +793,11 @@ public final class ContextSetPatternRunner {
                 java.util.Collections.emptyMap(), () -> {});
         if (ambiguous.status != ContextSetPattern.PropagatedBindings.Status.INCOMPLETE || !ambiguous.assignment.isEmpty())
             throw new AssertionError("Two feasible solutions must not commit either binding");
+        ContextSetPattern.PropagatedBindings mixed = ContextSetPattern.propagateFixedPatterns(
+                java.util.Collections.singletonList(p), java.util.Collections.singletonList(patterns.get("t")),
+                java.util.Collections.emptyMap(), () -> {});
+        if (mixed.status != ContextSetPattern.PropagatedBindings.Status.CONFLICT || !mixed.assignment.isEmpty())
+            throw new AssertionError("An ambiguous member must not mask another member's contradiction");
     }
 
     private static void auditSameSignCoefficients() throws Exception {
@@ -813,17 +819,38 @@ public final class ContextSetPatternRunner {
             ContextSetPattern left = patterns.get("p");
             for (int residual = 0; residual <= 12; residual++) {
                 ContextSetPattern right = patterns.get("target" + residual);
-                boolean expected = false;
+                int solutions = 0;
                 for (int x = 0; x <= residual / a; x++) {
-                    for (int y = 0; y <= residual / b; y++) expected |= a * x + b * y == residual;
+                    for (int y = 0; y <= residual / b; y++) {
+                        if (a * x + b * y == residual) solutions++;
+                    }
                 }
                 for (java.util.Optional<Map<Integer, SemanticTermSnapshot>> result : java.util.Arrays.asList(
                         left.inferTwoInputs(right, () -> {}), right.inferTwoInputs(left, () -> {}))) {
-                    if (result.isPresent() != expected)
+                    if (result.isPresent() != (solutions > 0))
                         throw new AssertionError("Set solver disagrees with enumeration for " + a + ", " + b + ", " + residual);
                     if (result.isPresent() && !left.instantiate(result.get(), () -> {})
                             .semanticallyEquals(right.instantiate(result.get(), () -> {})))
                         throw new AssertionError("Enumerated positive case did not replay");
+                }
+                ContextSetPattern.PropagatedBindings.Status expected = solutions == 0
+                        ? ContextSetPattern.PropagatedBindings.Status.CONFLICT
+                        : solutions == 1 ? ContextSetPattern.PropagatedBindings.Status.SOLVED
+                                : ContextSetPattern.PropagatedBindings.Status.INCOMPLETE;
+                List<ContextSetPattern> lhs = java.util.Collections.singletonList(left);
+                List<ContextSetPattern> rhs = java.util.Collections.singletonList(right);
+                for (ContextSetPattern.PropagatedBindings propagated : java.util.Arrays.asList(
+                        ContextSetPattern.propagateFixedPatterns(lhs, rhs, java.util.Collections.emptyMap(), () -> {}),
+                        ContextSetPattern.propagateFixedPatterns(rhs, lhs, java.util.Collections.emptyMap(), () -> {}))) {
+                    if (propagated.status != expected)
+                        throw new AssertionError("Propagation disagrees with solution count for " + a + ", " + b + ", " + residual);
+                    if (solutions == 1) {
+                        if (propagated.assignment.size() != 2 || !left.instantiate(propagated.assignment, () -> {})
+                                .semanticallyEquals(right.instantiate(propagated.assignment, () -> {})))
+                            throw new AssertionError("Unique propagation result did not replay");
+                    } else if (!propagated.assignment.isEmpty()) {
+                        throw new AssertionError("Refusal must not expose a partial propagation result");
+                    }
                 }
             }
         }
